@@ -1,6 +1,6 @@
 # 002: Settings module
 
-Status: todo
+Status: done
 Depends on: 001
 UI spec: none
 Needs device: no
@@ -39,3 +39,9 @@ Out of scope: settings UI, applying settings (power policy is task 005).
 - [ ] `lib/settings` has no Arduino includes; `pio test -e native` passes; `pio run -e m5paper` passes.
 
 ## Notes
+- Result: keys `schema_version`, `wake_mode`, `refresh_min`, `idle_s`; schema v1.
+  A missing `schema_version` still loads the fields; save always stamps v1.
+- Known low-severity gap: an NVS key holding the wrong type reads as 0, which is
+  valid for `refresh_min` ("off") instead of the default. Only our code writes the
+  namespace, so this is accepted for now.
+- Verified in an isolated build because task 003 was mid-flight in the checkout.
