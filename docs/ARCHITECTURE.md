@@ -153,6 +153,23 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - Never redraw if nothing changed. Show "last updated" wherever staleness matters.
 - EPD power is turned off before sleeping.
 
+## Hardware facts (measured, task 013 probe, 2026-10-27)
+- ESP32-D0WDQ6-V3 rev 3.0, 240 MHz, 16 MB flash; M5Unified board id 7 (M5Paper).
+- PSRAM: ~4 MB usable (4,192,123 bytes). The module carries 8 MB, but the ESP32 maps only
+  4 MB directly (the rest only via himem). Plan memory with 4 MB.
+- Display: M5GFX rotation 0 = 540x960 (portrait), rotation 1 = 960x540 (landscape).
+  Touch coordinates follow the rotation (no extra mapping needed).
+- Rocker: BtnA = up, BtnC = down, BtnB = push (physical directions as held in portrait).
+- `M5.begin()` took ~2.6 s with default config. Defaults to fix: `serial_baudrate = 0`
+  (Serial is never started) and `clear_display = true` (a full clear on every boot,
+  which would erase the frozen screen on wake). The app must set `clear_display = false`.
+- EPD timings for a small region: fastest 155 ms, fast 468 ms, text 892 ms, quality 886 ms.
+  The full-screen quality figure (460 ms) is suspect and gets remeasured.
+- Touch accuracy by hand: about 1–6 px at the center, up to ~34 px near the corners and edges.
+- RTC (BM8563) was never set and reports low voltage, so time must come from NTP before
+  anything relies on it.
+- SD: the 32 GB card mounts fine over the shared SPI bus, and the display keeps working after.
+
 ## Decisions log
 - 2026-10-27: Target original M5Paper (ESP32), not M5Paper S3. Reason: the user's hardware.
 - 2026-10-27: Arduino + M5Unified/M5GFX on PlatformIO. Reason: maintained M5Paper support with fast partial EPD modes; mature ecosystem.
@@ -178,4 +195,8 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - 2026-10-27: All UI text and icons are positioned by their vertical center (M5GFX middle_* datums); specs give center lines, not top offsets. Reason: user-reported misalignment; one rule for spec, SVG (`dominant-baseline="central"`) and firmware.
 - 2026-10-27: Mockups are reviewed as PNGs rendered with DejaVu and must pass `tools/check_mockups.py`. Reason: SVG viewers substitute fonts (the user saw overflow that DejaVu renders didn't have); the designer can't render, so the check is automated.
 - 2026-10-27: Current UI (spec revision 4) is accepted as the baseline. Later design iterations may use the panel's full 16 grey levels (not only the 5 in STYLE.md). Reason: user direction; greyscale needs the slower GC16/quality EPD mode, so where greys are used must be weighed against refresh speed and ghosting.
+- 2026-10-27: SD card (user has a 32 GB card in the device) is the user-editable store for config and later assets (icons, extra fonts, images). The device imports changed files once into internal flash (LittleFS, partition size revisited when assets exist) and normal wakes never touch the SD card. Reason: SD access costs wake time and power and shares the SPI bus with the display. The card must be FAT32 (exFAT is not enabled in the framework).
+- 2026-10-27: Boot config: `Serial.begin(115200)` before `M5.begin()`, `cfg.clear_display = false`. Reason: the probe showed Serial is off by default and the default boot clears the panel, which breaks "wake into the frozen screen".
+- 2026-10-27: Orientation mapping: portrait = rotation 0, landscape = rotation 1. Reason: measured; the earlier assumption that rotation 0 is landscape was wrong.
+- 2026-10-27: EPD modes: tap feedback and pending/confirmed changes use `epd_fastest` (~155 ms, black/white only); greys and text-heavy regions use `epd_text`/`epd_quality` (~0.9 s). Reason: measured timings; greys cost about 6x the time.
 - 2026-10-27: Pure logic in `lib/`, hardware in `src/`. Reason: native unit tests without the device.

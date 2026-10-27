@@ -1,6 +1,6 @@
 # 013: Hardware probe firmware
 
-Status: in-progress
+Status: done
 Depends on: 001
 UI spec: none (plain diagnostic screens, DejaVu fonts)
 Needs device: yes (user follows on-screen prompts)
@@ -62,3 +62,8 @@ Out of scope: Wi-Fi, sleep/power-off, RTC alarm wake (later power task), any app
 ## Notes
 - Serial: `pio device monitor` needs a TTY; use `tools/serial_capture.py`. Its `--reset`
   uses the DTR+RTS pulse that works on this CP2104 board. Each reset re-runs setup.
+- Result (run 2026-10-27, 58 s, single pass): see "Hardware facts" in ARCHITECTURE.md.
+  Full log was kept in the session scratchpad (not committed; contains SD entry names only).
+- Open: whether the side button is separate from the rocker (the log only shows BtnB);
+  which physical direction BtnA is in landscape; the full-screen quality refresh time;
+  where the 2.6 s in `M5.begin()` goes.

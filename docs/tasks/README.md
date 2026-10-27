@@ -14,4 +14,4 @@
 | 010 | [Orientation setting](010-orientation-setting.md) | done | 002 |
 | 011 | [Layout engine update to the approved compact UI](011-compact-tabs-layout.md) | done | 006 |
 | 012 | [binary_sensor device_class](012-binary-sensor-device-class.md) | done | 004 |
-| 013 | [Hardware probe firmware](013-hardware-probe.md) | in-progress | 001 |
+| 013 | [Hardware probe firmware](013-hardware-probe.md) | done | 001 |
