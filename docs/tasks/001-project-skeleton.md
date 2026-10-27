@@ -53,3 +53,6 @@ Out of scope: any real module (settings, config, HA client, power), Wi-Fi, sleep
 - Deferred to the first on-device task: screen shows title + version; serial line;
   `M5.getBoard()` reports M5Paper; `ESP.getPsramSize()` is ~8 MB.
 - Known tool issue: `pio run -v` crashes in PlatformIO 6.2.0 (SCons printer); non-verbose builds fine.
+- On device (2026-10-27): flash OK; ESP32-D0WDQ6-V3 rev 3.0, 40 MHz, 16 MB flash; the user
+  confirmed the title + version centered, landscape, sharp. The serial line did NOT appear
+  after the ROM log; investigated in task 013.
