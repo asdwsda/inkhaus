@@ -1,6 +1,6 @@
 # 012: binary_sensor device_class
 
-Status: todo
+Status: done
 Depends on: 004
 UI spec: docs/ui/widgets.md (binary_sensor section)
 Needs device: no
@@ -26,3 +26,5 @@ Out of scope: the wording/icon table itself (belongs to the widget drawing task)
 
 ## Notes
 - Raised by ui-designer (revision 4, OPEN-1); the window mockup reads "On" today.
+- Result: one line in `domain_attrs`; parser unchanged (already generic). Verified with a
+  jinja2 render (with and without the attribute) and the full native suite.

@@ -11,6 +11,7 @@ const char* domain_attrs(const std::string& domain) {
     return "current_temperature,temperature,current_humidity,hvac_mode,hvac_action,"
            "min_temp,max_temp,target_temp_step";
   if (domain == "sensor") return "unit_of_measurement,device_class";
+  if (domain == "binary_sensor") return "device_class";
   if (domain == "weather") return "temperature,humidity,temperature_unit";
   if (domain == "vacuum") return "battery_level,status";
   return "";

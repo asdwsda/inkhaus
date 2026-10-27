@@ -31,6 +31,17 @@ void test_template_golden() {
   TEST_ASSERT_EQUAL_STRING(expected, t.c_str());
 }
 
+void test_template_binary_sensor_golden() {
+  std::string t, err;
+  TEST_ASSERT_TRUE(build_state_template({"binary_sensor.window"}, t, err));
+  const char* expected =
+      "{\"binary_sensor.window\": {% set s = states.binary_sensor['window'] %}{% if s %}"
+      "{{ {'s': s.state, 'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
+      "s.attributes.get('friendly_name'), 'device_class': "
+      "s.attributes.get('device_class')}}|tojson }}{% else %}{\"s\": null}{% endif %}}";
+  TEST_ASSERT_EQUAL_STRING(expected, t.c_str());
+}
+
 void test_template_climate_attrs() {
   std::string t, err;
   TEST_ASSERT_TRUE(build_state_template({"climate.x"}, t, err));
@@ -113,6 +124,21 @@ void test_parser_all_domains() {
   TEST_ASSERT_FALSE(r.states[9].available);  // not in response
   TEST_ASSERT_EQUAL_STRING("light.absent", r.states[9].id.c_str());
   TEST_ASSERT_FALSE(r.states[0].current_temperature.has_value());
+}
+
+void test_parser_binary_sensor_device_class() {
+  const char* json =
+      "{\"binary_sensor.w\": {\"s\": \"on\", \"lc\": 1, \"a\": {\"device_class\": "
+      "\"window\"}},"
+      "\"binary_sensor.n\": {\"s\": \"off\", \"lc\": 2, \"a\": {\"device_class\": null}},"
+      "\"binary_sensor.m\": {\"s\": \"off\", \"lc\": 3, \"a\": {}}}";
+  ParseResult r = parse_state_response(json, {"binary_sensor.w", "binary_sensor.n",
+                                              "binary_sensor.m", "binary_sensor.x"});
+  TEST_ASSERT_TRUE(r.ok);
+  TEST_ASSERT_EQUAL_STRING("window", r.states[0].device_class.c_str());
+  TEST_ASSERT_EQUAL_STRING("", r.states[1].device_class.c_str());  // null -> absent
+  TEST_ASSERT_EQUAL_STRING("", r.states[2].device_class.c_str());  // missing -> absent
+  TEST_ASSERT_EQUAL_STRING("", r.states[3].device_class.c_str());  // entity absent
 }
 
 void test_parser_bad_json() {
@@ -459,6 +485,8 @@ void test_client_fallback_edge_cases() {
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_template_golden);
+  RUN_TEST(test_template_binary_sensor_golden);
+  RUN_TEST(test_parser_binary_sensor_device_class);
   RUN_TEST(test_template_climate_attrs);
   RUN_TEST(test_template_request_body_is_json);
   RUN_TEST(test_template_rejects_bad_ids);
