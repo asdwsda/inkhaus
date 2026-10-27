@@ -83,9 +83,11 @@ void test_example_parses_clean() {
   TEST_ASSERT_TRUE(w[1].type == WidgetType::Cover);
   TEST_ASSERT_EQUAL_STRING("downstairs_shutters", w[1].group.c_str());
   TEST_ASSERT_EQUAL_UINT(3, w[1].entities.size());
-  TEST_ASSERT_TRUE(w[1].size.has_value());
-  TEST_ASSERT_EQUAL_INT(2, w[1].size->w);
-  TEST_ASSERT_EQUAL_INT(1, w[1].size->h);
+  // The example sets no size: the per-orientation size table (layout.md section 3) allows
+  // no other size for these types, so any value would be clamped.
+  TEST_ASSERT_FALSE(w[1].size.has_value());
+  for (const auto &t : c.tabs)
+    for (const auto &wd : t.widgets) TEST_ASSERT_FALSE(wd.size.has_value());
 
   // Every widget type appears at least once across the tabs.
   bool seen[9] = {};

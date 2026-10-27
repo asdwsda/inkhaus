@@ -34,7 +34,8 @@ groups:
 # At least one tab (max 16, up to 24 widgets each).
 # Widget type is inferred from the entity domain: cover, light, switch,
 # automation, climate, sensor, binary_sensor, weather, vacuum.
-# Optional `size: WxH` (W and H in 1..4 grid cells) overrides the type default.
+# Optional `size: WxH` (1..4 cells) picks a size within what the widget type allows
+# (docs/ui/layout.md section 3); most types have a fixed size, so it is rarely needed.
 tabs:
   - title: Living room
     widgets:
@@ -42,13 +43,11 @@ tabs:
         name: Shutter            # optional, default: HA friendly_name
       - group: downstairs_shutters
         name: Downstairs shutters  # required for groups
-        size: 2x1
       - entity: light.living_room_ceiling
       - entity: light.living_room_floor_lamp
         name: Floor lamp
       - entity: switch.living_room_fan
       - entity: climate.living_room
-        size: 2x2
       - entity: binary_sensor.living_room_window
   - title: Whole house
     widgets:
@@ -61,7 +60,6 @@ tabs:
       - entity: sensor.outside_temperature
         name: Outside
       - entity: weather.home
-        size: 2x2
       - entity: vacuum.robot
         name: Vacuum
       - entity: person.alice    # no built-in type for this domain, so set it

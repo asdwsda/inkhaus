@@ -17,40 +17,48 @@ bool rectInside(const Rect &i, const Rect &o) {
 Rect inflate(const Rect &r, int by) { return {r.x - by, r.y - by, r.w + 2 * by, r.h + 2 * by}; }
 
 const Grid &gridFor(Orientation o) {
-  static const Grid portrait = {540, 960, 2, 5, 246,
-                                {16, 278, 0, 0},
-                                {56, 216, 376, 536, 696},
-                                {0, 0, 540, 40}, {0, 848, 540, 112}, {16, 56, 508, 784}, 4};
-  static const Grid landscape = {960, 540, 4, 3, 180,
-                                 {176, 372, 568, 764},
-                                 {56, 216, 376, 0, 0},
-                                 {0, 0, 960, 40}, {0, 40, 160, 500}, {176, 56, 768, 464}, 5};
+  static const Grid portrait = {
+      Orientation::Portrait, 540, 960, 2, 7, 248,
+      {16, 276, 0, 0, 0},
+      {68, 184, 300, 416, 532, 648, 764},
+      {0, 0, 540, 56}, {0, 880, 540, 80}, {16, 68, 508, 800},
+      {0, 0, 288, 56}, {412, 0, 112, 56}, {292, 3, 112, 48},
+      {{16, 892, 118, 56}, {146, 892, 118, 56}, {276, 892, 118, 56}, {406, 892, 118, 56}, {}},
+      4};
+  static const Grid landscape = {
+      Orientation::Landscape, 960, 540, 5, 4, 176,
+      {16, 204, 392, 580, 768},
+      {72, 188, 304, 420, 0, 0, 0},
+      {0, 0, 960, 64}, {172, 0, 648, 64}, {16, 72, 928, 452},
+      {16, 4, 144, 56}, {832, 4, 112, 56}, {172, 4, 648, 56},
+      {{172, 4, 120, 56}, {304, 4, 120, 56}, {436, 4, 120, 56}, {568, 4, 120, 56}, {700, 4, 120, 56}},
+      5};
   return o == Orientation::Landscape ? landscape : portrait;
 }
+
+Rect sleepIndicatorRect(Orientation o) { return gridFor(o).sleepIndicator; }
 
 Rect cellRect(const Grid &g, int c, int r, int w, int h) {
   return {g.colX[c], g.rowY[r], w * g.cellW + (w - 1) * kGap, h * kCellH + (h - 1) * kGap};
 }
 
-SizeLimits sizeLimits(WidgetType t) {
+SizeLimits sizeLimits(WidgetType t, Orientation o) {
+  const int wide = o == Orientation::Landscape ? 3 : 2;
   switch (t) {
-    case WidgetType::Cover: return {{2, 1}, {2, 1}, {4, 2}};
+    case WidgetType::Cover:
+    case WidgetType::Climate:
+    case WidgetType::Vacuum: return {{wide, 1}, {wide, 1}, {wide, 1}};
     case WidgetType::Light:
     case WidgetType::Switch:
     case WidgetType::Automation:
-    case WidgetType::Sensor:
-    case WidgetType::BinarySensor: return {{1, 1}, {1, 1}, {2, 1}};
-    case WidgetType::Climate: return {{2, 2}, {2, 2}, {4, 2}};
-    case WidgetType::Weather: return {{2, 1}, {1, 1}, {4, 1}};
-    case WidgetType::Vacuum: return {{2, 1}, {2, 1}, {4, 2}};
+    case WidgetType::BinarySensor: return {{1, 1}, {1, 1}, {1, 1}};
+    case WidgetType::Sensor: return {{1, 1}, {1, 1}, {2, 1}};
+    case WidgetType::Weather: return {{2, 1}, {1, 1}, {2, 1}};
   }
   return {{1, 1}, {1, 1}, {1, 1}};
 }
 
-WidgetSize resolveSize(WidgetType type, const config::Widget &w, const Grid &g,
-                       unsigned *reasons, WidgetSize *requested) {
-  SizeLimits lim = sizeLimits(type);
-  WidgetSize req = w.size ? *w.size : lim.def;
+WidgetSize clampSize(const SizeLimits &lim, WidgetSize req, const Grid &g, unsigned *reasons) {
   WidgetSize s = req;
   unsigned why = 0;
   if (s.w < lim.min.w) { s.w = lim.min.w; why |= kClampTypeMin; }
@@ -59,9 +67,18 @@ WidgetSize resolveSize(WidgetType type, const config::Widget &w, const Grid &g,
   if (s.h > lim.max.h) { s.h = lim.max.h; why |= kClampTypeMax; }
   if (s.w > g.cols) { s.w = g.cols; why |= kClampColumns; }
   if (s.h > g.rows - 1) { s.h = g.rows - 1; why |= kClampRows; }
+  if (s.w < 1) s.w = 1;  // only reachable with a hostile limits table
+  if (s.h < 1) s.h = 1;
   if (reasons) *reasons = why;
-  if (requested) *requested = req;
   return s;
+}
+
+WidgetSize resolveSize(WidgetType type, const config::Widget &w, const Grid &g,
+                       unsigned *reasons, WidgetSize *requested) {
+  SizeLimits lim = sizeLimits(type, g.orientation);
+  WidgetSize req = w.size ? *w.size : lim.def;
+  if (requested) *requested = req;
+  return clampSize(lim, req, g, reasons);
 }
 
 namespace {
@@ -165,6 +182,9 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
   L.statusBar = g.statusBar;
   L.tabBar = g.tabBar;
   L.content = g.content;
+  L.refreshHit = g.refreshHit;
+  L.settingsHit = g.settingsHit;
+  L.sleepIndicator = g.sleepIndicator;
   int T = (int)tabs.size();
   if (T > 0) activeTab = std::min(std::max(activeTab, 0), T - 1);
   else activeTab = 0;
@@ -176,8 +196,7 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
   int per = tabsPerGroup(o, T);
   for (int i = 0; i < g.tabSlots; ++i) {
     TabSlot s;
-    if (o == Orientation::Portrait) s.rect = {16 + i * 131, 864, 115, 80};
-    else s.rect = {16, 56 + i * 96, 128, 80};
+    s.rect = g.slotRect[i];
     if (overflow && i == g.tabSlots - 1) {
       s.kind = SlotKind::Overflow;
     } else {
@@ -193,54 +212,49 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
   L.pager.visible = L.flow.pagerVisible;
   int row = g.rows - 1;
   L.pager.rect = {g.colX[0], g.rowY[row], g.content.w, kCellH};
-  L.pager.prev = {L.pager.rect.x, L.pager.rect.y + 32, 120, 80};
-  L.pager.next = {L.pager.rect.x + L.pager.rect.w - 120, L.pager.rect.y + 32, 120, 80};
-  L.pager.label = {L.pager.rect.x + 136, L.pager.rect.y + 32, L.pager.rect.w - 272, 80};
+  L.pager.prev = {L.pager.rect.x, L.pager.rect.y + 20, 120, 64};
+  L.pager.next = {L.pager.rect.x + L.pager.rect.w - 120, L.pager.rect.y + 20, 120, 64};
+  L.pager.label = {L.pager.rect.x + 132, L.pager.rect.y + 20, L.pager.rect.w - 264, 64};
   for (const Placement &p : L.flow.placements)
     if (p.page == L.pager.subPage) L.widgets.push_back(p);
   return L;
 }
 
-std::vector<SubRegion> subRegions(WidgetType type, WidgetSize size, const Rect &r,
-                                  bool climateModeEnabled) {
+std::vector<SubRegion> subRegions(WidgetType type, WidgetSize, const Rect &r) {
   std::vector<SubRegion> out;
+  const int W = r.w, y = r.y + 20;
   switch (type) {
     case WidgetType::Cover:
-    case WidgetType::Vacuum: {
-      const int n = 3;
-      int W = r.w;
-      int avail = W - 16 - 16 * (n - 1);
-      int bw = avail / n;
-      int rem = avail - n * bw;
-      int x0 = 8 + rem / 2;
-      int y = size.h >= 2 ? 216 : 56;
-      for (int i = 0; i < n; ++i) out.push_back({i + 1, {r.x + x0 + i * (bw + 16), r.y + y, bw, 80}});
+    case WidgetType::Vacuum:
+      out.push_back({1, {r.x + W - 228, y, 64, 64}});
+      out.push_back({2, {r.x + W - 152, y, 64, 64}});
+      out.push_back({3, {r.x + W - 76, y, 64, 64}});
       break;
-    }
     case WidgetType::Climate:
-      out.push_back({1, {r.x + 8, r.y + 120, 80, 80}});
-      out.push_back({2, {r.x + r.w - 88, r.y + 120, 80, 80}});
-      if (climateModeEnabled) out.push_back({3, {r.x + 8, r.y + 216, r.w - 16, 80}});
+      out.push_back({1, {r.x + W - 276, y, 64, 64}});
+      out.push_back({2, {r.x + W - 76, y, 64, 64}});
       break;
     default: break;
   }
   return out;
 }
 
-Hit hitTest(const Layout &L, Point p, bool climateModeEnabled) {
+Hit hitTest(const Layout &L, Point p) {
   for (const TabSlot &s : L.tabSlots) {
     if (!s.rect.contains(p)) continue;
     if (s.kind == SlotKind::Tab) return {HitKind::Tab, s.tabIndex, 0};
     if (s.kind == SlotKind::Overflow) return {HitKind::TabOverflow, 0, 0};
     return {};
   }
+  if (L.refreshHit.contains(p)) return {HitKind::Refresh, 0, 0};
+  if (L.settingsHit.contains(p)) return {HitKind::Settings, 0, 0};
   if (L.pager.visible) {
     if (L.pager.prev.contains(p)) return {HitKind::PagerPrev, 0, 0};
     if (L.pager.next.contains(p)) return {HitKind::PagerNext, 0, 0};
   }
   for (const Placement &w : L.widgets) {
     if (!w.rect.contains(p)) continue;
-    for (const SubRegion &s : subRegions(w.type, {w.cellW, w.cellH}, w.rect, climateModeEnabled))
+    for (const SubRegion &s : subRegions(w.type, {w.cellW, w.cellH}, w.rect))
       if (s.rect.contains(p)) return {HitKind::Widget, w.index, s.id};
     return {HitKind::Widget, w.index, 0};
   }

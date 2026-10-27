@@ -30,7 +30,6 @@ struct FocusEnv {
   int tabCount = 0;
   const Flow *flow = nullptr;                  // flow of state.tab
   std::vector<bool> unavailable;               // by widget index; missing = available
-  bool climateModeEnabled = false;
 };
 
 bool isFocusable(config::WidgetType t);
@@ -45,7 +44,7 @@ enum class Effect {
   FocusMoved,       // ring moved (partial redraw of old/new rect)
   TabChanged,       // new tab: subPage reset, full refresh
   SubPageChanged,   // full refresh
-  RefreshNow,       // LONG_PUSH in TAB mode
+  OpenSettings,     // LONG_PUSH in TAB mode: open the Settings screen (no ring change)
   WidgetAction,     // run action of widgetIndex / sub (0 = single action)
 };
 

@@ -58,8 +58,7 @@ std::vector<int> innerStops(const FocusEnv &env, int widgetIndex) {
   switch (p->type) {
     case WidgetType::Cover:
     case WidgetType::Vacuum: return {1, 2, 3};
-    case WidgetType::Climate:
-      return env.climateModeEnabled ? std::vector<int>{1, 2, 3} : std::vector<int>{1, 2};
+    case WidgetType::Climate: return {1, 2};  // the mode is display-only, not a stop
     default: return {};
   }
 }
@@ -98,13 +97,18 @@ int findPage(const FocusEnv &env, int from, int dir) {
 
 FocusResult focusHandle(FocusState &st, const FocusEnv &env, LogicalKey key) {
   FocusResult res;
+  // The first event after wake both reveals the ring and acts. LONG_PUSH in TAB mode opens
+  // Settings and leaves the ring as it was.
+  const bool ringBefore = st.ringVisible;
   st.ringVisible = true;
   switch (st.mode) {
     case FocusMode::Tab: {
       if (key == LogicalKey::Prev || key == LogicalKey::Next) {
         if (env.tabCount <= 0) return res;
         int d = key == LogicalKey::Next ? 1 : -1;
-        int t = (st.tab + d + env.tabCount) % env.tabCount;
+        // 64-bit and double modulo: any st.tab (even garbage) lands in [0, tabCount).
+        long long m = env.tabCount;
+        int t = (int)((((long long)st.tab + d) % m + m) % m);
         if (t == st.tab) { res.effect = Effect::FocusMoved; return res; }
         changeTab(st, env, t);
         res.effect = Effect::TabChanged;
@@ -115,7 +119,8 @@ FocusResult focusHandle(FocusState &st, const FocusEnv &env, LogicalKey key) {
         st.stop = 1;
         res.effect = Effect::FocusMoved;
       } else {
-        res.effect = Effect::RefreshNow;
+        res.effect = Effect::OpenSettings;
+        st.ringVisible = ringBefore;
       }
       return res;
     }
