@@ -27,7 +27,8 @@ then test, then architect review, then commit.
 - Serial: `timeout 30 pio device monitor`
 
 ## Rules
-- Secrets live in `include/secrets.h` (gitignored, never read by agents).
-  `include/secrets.example.h` shows the expected names.
+- Secrets live in `include/secrets.h` (dev fallback) and in the `connection:`
+  section of the SD card's `config.yaml`. Both are gitignored and never read by
+  agents. `include/secrets.example.h` and `config.example.yaml` show the format.
 - Never `git push`.
 - Shell style: write variables as `"${variable}"`.
