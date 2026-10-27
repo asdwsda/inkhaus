@@ -10,5 +10,5 @@
 | 006 | [UI layout engine](006-layout-engine.md) | todo | 009, 010 |
 | 007 | [Settings screen](007-settings-screen.md) | todo | 006, 010 |
 | 008 | [HTTPS certificate bundle](008-https-ca-bundle.md) | todo | 004 |
-| 009 | [Config schema: tabs, widget size, group names](009-config-tabs.md) | in-progress | 003 |
+| 009 | [Config schema: tabs, widget size, group names](009-config-tabs.md) | done | 003 |
 | 010 | [Orientation setting](010-orientation-setting.md) | done | 002 |

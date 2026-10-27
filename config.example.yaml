@@ -22,20 +22,48 @@ connection:
     token: "long-lived-token"
 
 # Optional device-side entity lists. All members must share one domain.
+# Group names: lowercase letters, digits and underscore only.
 groups:
-  downstairs_shutters: [cover.living_room, cover.kitchen]
+  downstairs_shutters: [cover.living_room_shutter, cover.kitchen_shutter, cover.hall_shutter]
+  all_shutters:
+    - cover.living_room_shutter
+    - cover.kitchen_shutter
+    - cover.hall_shutter
+    - cover.bedroom_shutter
 
-# At least one page (max 16, up to 24 widgets each).
+# At least one tab (max 16, up to 24 widgets each).
 # Widget type is inferred from the entity domain: cover, light, switch,
 # automation, climate, sensor, binary_sensor, weather, vacuum.
-pages:
+# Optional `size: WxH` (W and H in 1..4 grid cells) overrides the type default.
+tabs:
   - title: Living room
     widgets:
-      - entity: light.living_room
-        name: Ceiling            # optional, default: HA friendly_name
+      - entity: cover.living_room_shutter
+        name: Shutter            # optional, default: HA friendly_name
       - group: downstairs_shutters
         name: Downstairs shutters  # required for groups
+        size: 2x1
+      - entity: light.living_room_ceiling
+      - entity: light.living_room_floor_lamp
+        name: Floor lamp
+      - entity: switch.living_room_fan
       - entity: climate.living_room
+        size: 2x2
+      - entity: binary_sensor.living_room_window
+  - title: Whole house
+    widgets:
+      - group: all_shutters
+        name: All shutters
+      - entity: automation.night_mode
+        name: Night mode
+      - entity: climate.bedroom
+      - entity: climate.kitchen
       - entity: sensor.outside_temperature
-        type: sensor             # optional override; normally inferred from domain
-      - entity: cover.living_room   # also in the group above: fetched once
+        name: Outside
+      - entity: weather.home
+        size: 2x2
+      - entity: vacuum.robot
+        name: Vacuum
+      - entity: person.alice    # no built-in type for this domain, so set it
+        type: sensor
+      - entity: cover.living_room_shutter   # also used above: fetched once

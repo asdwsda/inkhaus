@@ -1,6 +1,6 @@
 # 009: Config schema: tabs, widget size, group names
 
-Status: in-progress
+Status: done
 Depends on: 003
 UI spec: none
 Needs device: no
@@ -33,3 +33,8 @@ Adjust config schema v1 in place (nothing is released yet):
       and `pio run -e m5paper` pass.
 
 ## Notes
+- Result: `size` is strict `[1-4]x[1-4]` (lowercase x, no whitespace). Group names
+  `[a-z0-9_]+`. The example config covers all 9 widget types over 2 tabs.
+- Accepted: the example test checks "every type appears" instead of per-widget types;
+  the type override path is covered by `test_error_unsupported_domain`.
+- Cosmetic: an empty group name reports path `groups.` (trailing dot).

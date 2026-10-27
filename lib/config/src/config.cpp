@@ -39,6 +39,25 @@ bool validEntityId(const std::string &id) {
 
 std::string domainOf(const std::string &id) { return id.substr(0, id.find('.')); }
 
+bool validGroupName(const std::string &n) {
+  if (n.empty()) return false;
+  for (char c : n)
+    if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) return false;
+  return true;
+}
+
+// Parses "WxH" with W and H in 1..kMaxWidgetSize.
+bool parseSize(const std::string &s, WidgetSize &out) {
+  size_t x = s.find('x');
+  if (x == std::string::npos) return false;
+  auto dim = [](const std::string &d, int &v) {
+    if (d.size() != 1 || d[0] < '0' || d[0] > '9') return false;
+    v = d[0] - '0';
+    return v >= 1 && v <= kMaxWidgetSize;
+  };
+  return dim(s.substr(0, x), out.w) && dim(s.substr(x + 1), out.h);
+}
+
 bool validIpv4(const std::string &s) {
   int parts = 0;
   size_t i = 0;
@@ -72,7 +91,7 @@ class Validator {
     if (!o["connection"].isNull())
       connection(o["connection"], "connection");
     if (!o["groups"].isNull()) groups(o["groups"]);
-    pages(o["pages"]);
+    tabs(o["tabs"]);
   }
 
  private:
@@ -203,6 +222,8 @@ class Validator {
     for (JsonPairConst kv : v.as<JsonObjectConst>()) {
       std::string name = kv.key().c_str();
       std::string path = "groups." + name;
+      if (!validGroupName(name))
+        err(path, "group name must match [a-z0-9_]+");
       Group g;
       g.name = name;
       if (!kv.value().is<JsonArrayConst>()) {
@@ -243,35 +264,35 @@ class Validator {
     if (std::find(v.begin(), v.end(), id) == v.end()) v.push_back(id);
   }
 
-  void pages(JsonVariantConst v) {
+  void tabs(JsonVariantConst v) {
     if (v.isNull()) {
-      err("pages", "missing required field");
+      err("tabs", "missing required field");
       return;
     }
     if (!v.is<JsonArrayConst>()) {
-      err("pages", "must be a list");
+      err("tabs", "must be a list");
       return;
     }
     JsonArrayConst arr = v.as<JsonArrayConst>();
-    if (arr.size() == 0) err("pages", "at least one page is required");
-    if (arr.size() > kMaxPages)
-      err("pages", "too many pages (max " + std::to_string(kMaxPages) + ")");
+    if (arr.size() == 0) err("tabs", "at least one tab is required");
+    if (arr.size() > kMaxTabs)
+      err("tabs", "too many tabs (max " + std::to_string(kMaxTabs) + ")");
     size_t i = 0;
     for (JsonVariantConst p : arr) {
-      std::string path = "pages[" + std::to_string(i++) + "]";
-      if (i > kMaxPages) break;  // already reported
-      page(p, path);
+      std::string path = "tabs[" + std::to_string(i++) + "]";
+      if (i > kMaxTabs) break;  // already reported
+      tab(p, path);
     }
   }
 
-  void page(JsonVariantConst v, const std::string &path) {
+  void tab(JsonVariantConst v, const std::string &path) {
     if (!v.is<JsonObjectConst>()) {
       err(path, "must be a mapping");
       return;
     }
     JsonObjectConst o = v.as<JsonObjectConst>();
-    Page pg;
-    str(o, "title", path, true, pg.title);
+    Tab tb;
+    str(o, "title", path, true, tb.title);
     JsonVariantConst w = o["widgets"];
     const std::string wpath = path + ".widgets";
     if (w.isNull()) {
@@ -280,19 +301,19 @@ class Validator {
       err(wpath, "must be a list");
     } else {
       JsonArrayConst arr = w.as<JsonArrayConst>();
-      if (arr.size() > kMaxWidgetsPerPage)
-        err(wpath, "too many widgets (max " + std::to_string(kMaxWidgetsPerPage) + ")");
+      if (arr.size() > kMaxWidgetsPerTab)
+        err(wpath, "too many widgets (max " + std::to_string(kMaxWidgetsPerTab) + ")");
       size_t i = 0;
       for (JsonVariantConst wv : arr) {
         std::string p = wpath + "[" + std::to_string(i++) + "]";
-        if (i > kMaxWidgetsPerPage) break;
-        widget(wv, p, pg);
+        if (i > kMaxWidgetsPerTab) break;
+        widget(wv, p, tb);
       }
     }
-    r_.config.pages.push_back(std::move(pg));
+    r_.config.tabs.push_back(std::move(tb));
   }
 
-  void widget(JsonVariantConst v, const std::string &path, Page &pg) {
+  void widget(JsonVariantConst v, const std::string &path, Tab &tb) {
     if (!v.is<JsonObjectConst>()) {
       err(path, "must be a mapping");
       return;
@@ -307,6 +328,15 @@ class Validator {
       return;
     }
     str(o, "name", path, false, w.name);
+    std::string sizeText;
+    if (str(o, "size", path, false, sizeText)) {
+      WidgetSize sz;
+      if (parseSize(sizeText, sz))
+        w.size = sz;
+      else
+        err(path + ".size", "invalid size '" + sizeText + "', expected WxH with W and H in 1.." +
+                                std::to_string(kMaxWidgetSize));
+    }
 
     std::string typeName;
     bool hasType = str(o, "type", path, false, typeName);
@@ -349,7 +379,7 @@ class Validator {
       return;
     }
     for (const auto &e : w.entities) addEntity(e);
-    pg.widgets.push_back(std::move(w));
+    tb.widgets.push_back(std::move(w));
   }
 };
 

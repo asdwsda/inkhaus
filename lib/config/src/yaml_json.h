@@ -11,7 +11,7 @@
 
 namespace config {
 
-// Maps a node path ("pages[0].title") to the 1-based line where its value starts.
+// Maps a node path ("tabs[0].title") to the 1-based line where its value starts.
 using LineMap = std::map<std::string, int>;
 
 // Returns true on success. On failure appends one error (with line) to errors.
