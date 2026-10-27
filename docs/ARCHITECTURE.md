@@ -139,4 +139,5 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - 2026-10-27: Charts rendered on device first, server-side rendering as fallback. Reason: self-contained; switch only if measured cost is too high.
 - 2026-10-27: Credentials in `config.yaml` on SD, `secrets.h` only as dev fallback. Reason: a published firmware can't have credentials compiled in. Accepted: plaintext token on SD for now.
 - 2026-10-27: libyaml used directly instead of an Arduino YAML wrapper. Reason: plain C builds for `native` tests too.
+- 2026-10-27: C++17 (`gnu++17`) in both envs. Reason: `lib/` uses std::optional etc.; the toolchain (GCC 8.4) supports it, the core just defaults to gnu++11.
 - 2026-10-27: Pure logic in `lib/`, hardware in `src/`. Reason: native unit tests without the device.
