@@ -35,6 +35,39 @@ void test_defaults_with_empty_store() {
     TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Button);
     TEST_ASSERT_EQUAL_INT32(60, s.refresh_interval_min);
     TEST_ASSERT_EQUAL_INT32(20, s.idle_timeout_s);
+    TEST_ASSERT_TRUE(s.orientation == Orientation::Portrait);
+}
+
+void test_orientation_default_on_pre_orientation_store() {
+    FakeStore st;
+    st.data[kKeySchemaVersion] = kSchemaVersion;
+    st.data[kKeyWakeMode] = 1;
+    st.data[kKeyRefreshMin] = 15;
+    st.data[kKeyIdleTimeoutS] = 10;
+    Settings s = load(st);
+    TEST_ASSERT_TRUE(s.orientation == Orientation::Portrait);
+    TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Touch);
+    TEST_ASSERT_EQUAL_INT32(15, s.refresh_interval_min);
+    TEST_ASSERT_EQUAL_INT32(10, s.idle_timeout_s);
+}
+
+void test_orientation_invalid_defaults_only_that_field() {
+    const int32_t bad[] = {-1, 2, 99, INT32_MIN, INT32_MAX};
+    for (int32_t b : bad) {
+        FakeStore st;
+        st.data[kKeyWakeMode] = 1;
+        st.data[kKeyRefreshMin] = 15;
+        st.data[kKeyIdleTimeoutS] = 10;
+        st.data[kKeyOrientation] = b;
+        Settings s = load(st);
+        TEST_ASSERT_TRUE(s.orientation == Orientation::Portrait);
+        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Touch);
+        TEST_ASSERT_EQUAL_INT32(15, s.refresh_interval_min);
+        TEST_ASSERT_EQUAL_INT32(10, s.idle_timeout_s);
+    }
+    FakeStore st;
+    st.data[kKeyOrientation] = 1;
+    TEST_ASSERT_TRUE(load(st).orientation == Orientation::Landscape);
 }
 
 void test_invalid_value_defaults_only_that_field() {
@@ -54,12 +87,14 @@ void test_invalid_value_defaults_only_that_field() {
 void test_roundtrip_all_allowed_values() {
     for (WakeMode w : kWakeModeValues)
         for (int32_t r : kRefreshIntervalMinValues)
-            for (int32_t i : kIdleTimeoutSValues) {
+            for (int32_t i : kIdleTimeoutSValues)
+              for (Orientation o : kOrientationValues) {
                 FakeStore st;
                 Settings in;
                 in.wake_mode = w;
                 in.refresh_interval_min = r;
                 in.idle_timeout_s = i;
+                in.orientation = o;
                 save(st, in);
                 TEST_ASSERT_TRUE(load(st) == in);
             }
@@ -77,6 +112,11 @@ void test_save_skips_unchanged_fields() {
     s.idle_timeout_s = 60;
     save(st, s);
     TEST_ASSERT_EQUAL_INT(first + 1, st.writes);
+
+    s.orientation = Orientation::Landscape;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT(first + 2, st.writes);
+    TEST_ASSERT_EQUAL_INT32(1, st.data[kKeyOrientation]);
 }
 
 void test_unknown_schema_version_loads_defaults() {
@@ -169,6 +209,12 @@ void test_save_writes_only_changed_field_and_repairs_invalid() {
     TEST_ASSERT_EQUAL_INT(1, st.writes);
     TEST_ASSERT_EQUAL_INT32(20, st.data[kKeyIdleTimeoutS]);
     TEST_ASSERT_TRUE(load(st) == s);
+
+    st.writes = 0;
+    s.orientation = Orientation::Landscape;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT(1, st.writes);
+    TEST_ASSERT_TRUE(load(st) == s);
 }
 
 void test_save_into_future_schema_store_stamps_current_version() {
@@ -187,6 +233,12 @@ void test_keys_fit_nvs_limit_and_lists_are_valid() {
     TEST_ASSERT_TRUE(strlen(kKeyWakeMode) <= 15);
     TEST_ASSERT_TRUE(strlen(kKeyRefreshMin) <= 15);
     TEST_ASSERT_TRUE(strlen(kKeyIdleTimeoutS) <= 15);
+    TEST_ASSERT_TRUE(strlen(kKeyOrientation) <= 15);
+    TEST_ASSERT_TRUE(kOrientationValues.front() == Orientation::Portrait);
+    TEST_ASSERT_TRUE(kOrientationValues.back() == Orientation::Landscape);
+    for (Orientation o : kOrientationValues)
+        TEST_ASSERT_TRUE(isValidOrientation(static_cast<int32_t>(o)));
+    TEST_ASSERT_FALSE(isValidOrientation(2));
     for (WakeMode w : kWakeModeValues) TEST_ASSERT_TRUE(isValidWakeMode(static_cast<int32_t>(w)));
     for (int32_t r : kRefreshIntervalMinValues) TEST_ASSERT_TRUE(isValidRefreshIntervalMin(r));
     for (int32_t i : kIdleTimeoutSValues) TEST_ASSERT_TRUE(isValidIdleTimeoutS(i));
@@ -199,6 +251,8 @@ void test_keys_fit_nvs_limit_and_lists_are_valid() {
 int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_defaults_with_empty_store);
+    RUN_TEST(test_orientation_default_on_pre_orientation_store);
+    RUN_TEST(test_orientation_invalid_defaults_only_that_field);
     RUN_TEST(test_invalid_value_defaults_only_that_field);
     RUN_TEST(test_roundtrip_all_allowed_values);
     RUN_TEST(test_save_skips_unchanged_fields);
