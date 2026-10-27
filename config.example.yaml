@@ -1,0 +1,41 @@
+# M5Paper HA remote: example configuration (schema v1).
+#
+# Copy this file to the ROOT of the SD card and name it `config.yaml`.
+# The real config.yaml holds credentials: it is gitignored, never commit it.
+# All values below are fake.
+
+version: 1
+
+# Optional. If missing, the firmware falls back to include/secrets.h (dev only).
+connection:
+  wifi:
+    ssid: "MyWifi"
+    password: "secret"
+    static_ip:                 # optional; if present, all four fields are required
+      ip: 192.168.1.50
+      gateway: 192.168.1.1
+      subnet: 255.255.255.0
+      dns: 192.168.1.1
+  home_assistant:
+    internal_url: http://192.168.1.10:8123
+    external_url: https://example.ui.nabu.casa   # optional, must be https
+    token: "long-lived-token"
+
+# Optional device-side entity lists. All members must share one domain.
+groups:
+  downstairs_shutters: [cover.living_room, cover.kitchen]
+
+# At least one page (max 16, up to 24 widgets each).
+# Widget type is inferred from the entity domain: cover, light, switch,
+# automation, climate, sensor, binary_sensor, weather, vacuum.
+pages:
+  - title: Living room
+    widgets:
+      - entity: light.living_room
+        name: Ceiling            # optional, default: HA friendly_name
+      - group: downstairs_shutters
+        name: Downstairs shutters  # required for groups
+      - entity: climate.living_room
+      - entity: sensor.outside_temperature
+        type: sensor             # optional override; normally inferred from domain
+      - entity: cover.living_room   # also in the group above: fetched once

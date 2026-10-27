@@ -1,6 +1,6 @@
 # 003: config.yaml schema and parser
 
-Status: todo
+Status: done
 Depends on: 001
 UI spec: none
 Needs device: no
@@ -77,3 +77,11 @@ Out of scope: caching the parsed model, remote editing, UI for errors.
 
 ## Notes
 - Never read or create a real `config.yaml`; it's gitignored and holds credentials.
+- Result: model header is `config_model.h` (libyaml's `yaml_private.h` includes a
+  file named `config.h`). Aliases and duplicate keys are rejected; unknown keys are
+  ignored for forward compatibility. Max YAML depth 12. Validated with ASan/UBSan.
+- Follow-up (small, fold into the next config change): restrict group names to
+  `[a-z0-9_]+`. Dotted names make error paths and duplicate-key detection
+  ambiguous (`lib/config/src/yaml_json.cpp:80`, `config.cpp:85-94`).
+- Needs on-device check later: SD read via shared SPI doesn't disturb the display;
+  missing card gives `NoCard` cleanly.
