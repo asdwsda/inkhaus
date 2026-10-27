@@ -160,11 +160,21 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - Display: M5GFX rotation 0 = 540x960 (portrait), rotation 1 = 960x540 (landscape).
   Touch coordinates follow the rotation (no extra mapping needed).
 - Rocker: BtnA = up, BtnC = down, BtnB = push (physical directions as held in portrait).
+  In landscape (rotation 1) BtnA points left, so "up/left = prev" holds and `invert` stays false.
+  The rocker push is the only user button; the button on the back is reset (power-on via the
+  rocker push and power-off behaviour on battery are verified in the power task, USB unplugged).
 - `M5.begin()` took ~2.6 s with default config. Defaults to fix: `serial_baudrate = 0`
   (Serial is never started) and `clear_display = true` (a full clear on every boot,
   which would erase the frozen screen on wake). The app must set `clear_display = false`.
 - EPD timings for a small region: fastest 155 ms, fast 468 ms, text 892 ms, quality 886 ms.
   The full-screen quality figure (460 ms) is suspect and gets remeasured.
+- Task 015 (200x200 box, 72 px digit, 6 updates each, user-judged): fastest 166 ms leaves the
+  background grey; fast 486 ms ghosts; text 910 ms ghosts heavily. Only "white fill with quality,
+  then the digit with fastest" (1077 ms) is clean. In fast mode, thresholded black/white text is
+  slightly cleaner than anti-aliased text.
+- The panel keeps its image across a restart with both the stock start-up (~1070 ms) and a
+  hand-built start-up without the IT8951 reset pulse (~69 ms); touch and partial refresh work
+  after the latter.
 - Touch accuracy by hand: about 1–6 px at the center, up to ~34 px near the corners and edges.
 - RTC (BM8563) was never set and reports low voltage, so time must come from NTP before
   anything relies on it.
@@ -199,4 +209,9 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - 2026-10-27: Boot config: `Serial.begin(115200)` before `M5.begin()`, `cfg.clear_display = false`. Reason: the probe showed Serial is off by default and the default boot clears the panel, which breaks "wake into the frozen screen".
 - 2026-10-27: Orientation mapping: portrait = rotation 0, landscape = rotation 1. Reason: measured; the earlier assumption that rotation 0 is landscape was wrong.
 - 2026-10-27: EPD modes: tap feedback and pending/confirmed changes use `epd_fastest` (~155 ms, black/white only); greys and text-heavy regions use `epd_text`/`epd_quality` (~0.9 s). Reason: measured timings; greys cost about 6x the time.
+- 2026-10-27: After every boot/wake, the full current screen is re-rendered into the IT8951's image memory without a panel refresh, and only changed regions are refreshed. Reason: a reset clears the controller's memory while the panel keeps its picture; refreshing from blank memory erased the title in the task 014 test (user report).
+- 2026-10-27: Yes/no prompts on the rocker: UP = yes, DOWN = no, PUSH = skip/cancel. Push is never the "yes" answer. Reason: user feedback that a push easily tilts the rocker, so confirmations need distinct directions. (Push stays "activate" for focused UI controls; the UI spec gets this rule for dialogs.)
+- 2026-10-27: Display start-up without the IT8951 reset (hand-built Panel_IT8951 + Touch_GT911 config, as in epdtest variant B), falling back to the stock M5GFX start-up if the controller doesn't answer. Reason: measured 69 ms vs 1070 ms, and the image is kept either way.
+- 2026-10-27: Refresh strategy: immediate feedback with `epd_fastest` (166 ms, black/white, thresholded text); every region updated that way is tracked and gets one clean quality refresh before sleep (and on page changes). Reason: task 015 showed only a quality white pass gives a clean result, and it costs ~1 s, too slow for tap feedback.
+- 2026-10-27: The app tracks what it last drew (a screen id + content hash in NVS). If the record is missing or doesn't match (first boot, another firmware ran, crash), the boot does one full quality redraw instead of partial updates. Reason: after a foreign firmware or an unknown state, partial updates over an unknown picture produce garbage.
 - 2026-10-27: Pure logic in `lib/`, hardware in `src/`. Reason: native unit tests without the device.
