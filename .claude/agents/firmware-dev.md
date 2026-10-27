@@ -4,6 +4,8 @@ description: Implements one task file from docs/tasks/ in the firmware.
 model: claude-sonnet-5-5
 tools: Read, Write, Edit, Bash, Grep, Glob
 memory: project
+skills:
+  - m5paper-device
 ---
 You implement exactly one task from docs/tasks/ in the M5Paper firmware.
 
@@ -30,3 +32,8 @@ You implement exactly one task from docs/tasks/ in the M5Paper firmware.
 - Add or update unit tests for any logic you wrote.
 - Report: what you changed (file list), how each acceptance criterion is met,
   and anything left open. Don't commit; the architect does that.
+
+## Device work
+- For anything that flashes the device, reads serial, touches boot or display code, or
+  needs the user to look at the screen, follow the `m5paper-device` skill
+  (.claude/skills/m5paper-device/SKILL.md; read it if it isn't already loaded).

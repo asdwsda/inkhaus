@@ -23,8 +23,9 @@ then test, then architect review, then commit.
 ## Commands
 - Build: `pio run`
 - Native tests: `pio test -e native`
-- Flash (device connected): `pio run -t upload`
-- Serial: `timeout 30 pio device monitor`
+- Flash (device connected): `pio run -e m5paper -t upload --upload-port /dev/ttyUSB0`
+- Serial: `tools/serial_capture.py --reset --seconds 15` (`pio device monitor` needs a TTY)
+- Device how-to and pitfalls: `.claude/skills/m5paper-device/SKILL.md`
 
 ## Rules
 - Secrets live in `include/secrets.h` (dev fallback) and in the `connection:`
