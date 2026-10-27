@@ -1,6 +1,6 @@
 # 001: Project skeleton
 
-Status: in-progress
+Status: done
 Depends on: none
 UI spec: none
 Needs device: no
@@ -48,3 +48,8 @@ Out of scope: any real module (settings, config, HA client, power), Wi-Fi, sleep
 ## Notes
 - On-device check comes later (device not available): screen shows the title + version.
 - Report which board id and platform version you chose and why.
+- Result: board `m5stack-fire` stand-in on `espressif32@6.12.0` (Arduino 2.0.17),
+  `default_16MB.csv`, libyaml 0.2.5 from git with version defines in `platformio.ini`.
+- Deferred to the first on-device task: screen shows title + version; serial line;
+  `M5.getBoard()` reports M5Paper; `ESP.getPsramSize()` is ~8 MB.
+- Known tool issue: `pio run -v` crashes in PlatformIO 6.2.0 (SCons printer); non-verbose builds fine.
