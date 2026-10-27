@@ -1,6 +1,6 @@
 # 004: Home Assistant client core
 
-Status: todo
+Status: done
 Depends on: 001
 UI spec: none
 Needs device: no
@@ -67,3 +67,13 @@ Out of scope: Wi-Fi, history API, WebSocket, TLS session resumption (later).
 
 ## Notes
 - Token permission for `/api/template` is verified later on a real HA instance.
+- Result after 3 test rounds: template uses `states.<domain>['<object_id>']` (digit-leading
+  ids are valid in HA); candidate URLs de-duplicated; all numbers range-checked;
+  bodies read via `HTTPClient::writeToStream` into a capped sink (64 KB, chunked-safe),
+  `HaError::TooLarge` doesn't trigger fallback; 15 s overall deadline while data flows.
+- Accepted limits: a server stalling mid-body isn't bounded inside HTTPClient (covered by
+  the network task + 120 s hard cap, see ARCHITECTURE.md); a 2xx with no body on an
+  already-closed socket would read as "not connected". HA's endpoints always return a
+  JSON body, so this is not hardened.
+- Verified on host only (fixtures, fake transport, jinja2 render, ASan/UBSan). Real HA and
+  token permission for `/api/template` still to check on device.

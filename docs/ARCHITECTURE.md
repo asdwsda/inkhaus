@@ -87,11 +87,32 @@ Hardware wrappers are thin and live in `src/`.
 | `config` | lib + src | Lib: YAML/JSON → typed config model, validation errors. Src: SD/LittleFS IO and cache. |
 | `settings` | lib + src | Lib: typed settings with defaults and validation, over a key-value interface. Src: NVS backend. |
 | `model` | lib | Entity state store: values, availability, last-updated, pending commands. |
-| `ui` | lib + src | Lib: pages, widgets, hit-testing, focus for rocker navigation, dirty regions. Src: drawing through M5GFX. |
+| `ui` | lib + src | Lib: layout engine (tabs, grid, sub-pages), hit-testing, rocker focus, dirty regions. Src: widget drawing through M5GFX. |
 | `input` | src + lib | Touch and rocker → abstract events (tap, long press, up/down/push). |
 
 Dependency direction: `app` → everything; `ui` → `model`, `config`, `settings`;
 `ha_client` → `model`; nothing in `lib/` depends on `src/`.
+
+## UI layout
+The UI is generated from `config.yaml`; there are no hand-placed screens except
+Settings (and system screens like low battery / errors).
+- **Tabs:** the user defines tabs in config, each with a title and a list of
+  widgets. A tab bar switches between them; the rocker up/down also cycles tabs.
+- **Widgets:** one widget type per entity domain (cover, light, switch,
+  automation, climate, sensor/binary_sensor, weather, vacuum). Each type has a
+  default size in grid cells (e.g. 1x1 toggle, 2x1 cover with up/stop/down,
+  2x2 thermostat), overridable per widget in config.
+- **Layout engine (`lib/ui`, pure):** given the screen size and the tab's widget
+  list, flows widgets into a fixed-cell grid (row-major, first fit), splits into
+  sub-pages when a tab overflows, and returns pixel rectangles for drawing,
+  hit-testing and dirty-region refresh. No widget code knows absolute positions.
+- **Orientation is a setting** (`portrait` default, `landscape`). Because every
+  position comes from the layout engine, rotation means a different grid
+  (portrait 540x960: 2 columns; landscape 960x540: 4 columns, final numbers in
+  docs/ui/STYLE.md) plus `setRotation()`. M5Unified rotates touch coordinates;
+  rocker up/down mapping follows the rotation. Changing it triggers a full redraw.
+- Specs in docs/ui/ describe widgets in cell-relative coordinates for both grids,
+  not as fixed screens.
 
 ## Power and refresh strategy
 Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA**.
@@ -141,4 +162,7 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - 2026-10-27: libyaml used directly instead of an Arduino YAML wrapper. Reason: plain C builds for `native` tests too.
 - 2026-10-27: C++17 (`gnu++17`) in both envs. Reason: `lib/` uses std::optional etc.; the toolchain (GCC 8.4) supports it, the core just defaults to gnu++11.
 - 2026-10-27: Idle timer runs on a monotonic clock (`millis()`), RTC alarms on wall time. Reason: an NTP/RTC step would otherwise stretch or cut the awake time.
+- 2026-10-27: UI fully config-driven: user-defined tabs with widget lists, laid out by a grid engine. Reason: the user wants to define what they see without reflashing.
+- 2026-10-27: Orientation is a setting, portrait default. Reason: with a grid layout engine both orientations cost only a second grid definition, not a second set of screens.
+- 2026-10-27: All network I/O runs in its own FreeRTOS task; the main loop owns input, UI and the idle hard cap. Reason: a stalled HTTP read can't be bounded inside HTTPClient, but it must never keep the device awake past the 120 s cap.
 - 2026-10-27: Pure logic in `lib/`, hardware in `src/`. Reason: native unit tests without the device.
