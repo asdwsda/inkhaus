@@ -1,6 +1,6 @@
 # 005: Power policy (logic only)
 
-Status: todo
+Status: done
 Depends on: 002
 UI spec: none
 Needs device: no
@@ -44,3 +44,8 @@ Out of scope: any hardware access, quiet hours.
 - [ ] `lib/power` has no Arduino includes; `pio test -e native` and `pio run -e m5paper` pass.
 
 ## Notes
+- Result: `plan_sleep` takes a UTC offset; alarms align to local-midnight-based
+  boundaries (all allowed intervals divide 24 h). Hard cap = max(120 s, idle timeout),
+  measured from the last input.
+- For the integration task: feed `IdleTimer` a monotonic clock (`millis()`), not
+  wall time; battery curve points need tuning on the real device.
