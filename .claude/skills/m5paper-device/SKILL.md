@@ -62,8 +62,16 @@ the architect.
 - **Auto-display is off** (`setAutoDisplay(false)`). Every draw path must call
   `display(x, y, w, h)` and `waitDisplay()` itself. With auto-display on, any `endWrite()`
   refreshes the whole accumulated range. That caused a full-screen flash and a grey veil.
-- Known open bug (task 016): `readRectRGB` hangs on a warm boot. Don't add new memory reads
-  until that is fixed.
+- **Reads leave the controller in a read state.** Panel_IT8951 never sends `MEM_BST_END` after
+  `readRect` or the register read in `waitDisplay`; after `ESP.restart()` (warm controller)
+  the next command then stalls BUSY for 4 s timeouts at a time. Rule: the **last controller
+  operation before any restart or sleep is `boot::endBurstRead()`**, and every memory read is
+  followed by it. Every BUSY wait in our code is bounded (300 ms) with a recovery path
+  (`boot::ensureControllerReady()`: reset + init, treated as cold).
+- **Watchdog:** setup runs under a 15 s task watchdog. A crash counter in RTC no-init memory
+  gives a stock-fallback boot after 2 consecutive crashes, and gives up (power off, rocker
+  push wakes) after 4. Feed it during long work in setup; `boot::setupDone()` ends watchdog
+  coverage.
 
 ## Refresh modes (measured)
 

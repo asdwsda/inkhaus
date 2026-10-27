@@ -17,4 +17,5 @@
 | 013 | [Hardware probe firmware](013-hardware-probe.md) | done | 001 |
 | 014 | [Boot path on the device](014-boot-path.md) | done | 002, 013 |
 | 015 | [E-ink persistence and refresh-mode experiment](015-epd-persistence-experiment.md) | done | 013, 014 |
-| 016 | [Software restart hangs in panelSignature()](016-warm-boot-hang.md) | todo | 014 |
+| 016 | [Software restart hangs in panelSignature()](016-warm-boot-hang.md) | done | 014 |
+| 017 | [Render the real UI on the device (demo data)](017-render-ui-demo.md) | todo | 011, 014, 016 |

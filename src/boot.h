@@ -31,6 +31,33 @@ void logHealth();
 // Milliseconds since boot::begin() started.
 uint32_t elapsedMs();
 
+// ---- controller protocol and bounded waits (task 016) --------------------------------------------
+
+// Polls the IT8951 BUSY pin (high = ready) for at most `timeoutMs`. Logs
+// "BOOT: busy_timeout=<what>" on failure.
+bool waitBusyHigh(uint32_t timeoutMs, const char* what);
+
+// Sends MEM_BST_END. Every memory read (MEM_BST_RD_S) opens a burst that the controller keeps
+// open until this command; Panel_IT8951::readRect never sends it. Call it after each readRectRGB.
+// Bounded; false if the controller did not accept it.
+bool endBurstRead();
+
+// Bounded check that the controller answers (BUSY high). If it does not, resets it (hardware
+// reset pulse, full panel init) and reports it as cold. Returns true when no recovery was needed.
+bool ensureControllerReady(const char* where);
+
+// ---- watchdog ----------------------------------------------------------------------------------
+
+// True when this boot follows >= 2 consecutive watchdog resets/panics: the stock display start-up
+// is used, and the caller should draw the whole screen.
+bool fallbackActive();
+
+// Arms the task watchdog for the calling task (boot::begin() does it). Feed it from long stages.
+void feed();
+
+// Call at the end of setup(): disarms the setup watchdog and clears the crash counter.
+void setupDone();
+
 // Plain "BOOT: key=value" lines.
 void log(const char* key, const char* value);
 void log(const char* key, long value);

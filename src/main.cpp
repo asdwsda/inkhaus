@@ -64,18 +64,28 @@ static uint32_t contentHash(int rotation) {
 // Hash of a few sample lines through the title and the version, read back from the controller's
 // image memory (not from the panel). A different firmware, or a reset that cleared the memory,
 // gives a different value.
-static uint32_t panelSignature() {
+//
+// Every read is bounded: BUSY is checked before each line, and each read burst is ended with
+// MEM_BST_END (boot::endBurstRead). Without that the controller stays in the burst after an
+// ESP restart and BUSY never releases (task 016, boot.cpp). Returns false if the controller does
+// not answer; `out` is then meaningless.
+static bool panelSignature(uint32_t &out) {
   auto &d = M5.Display;
   uint8_t line[300 * 3];
   uint32_t h = screen_track::kFnvSeed;
   const int ys[] = {cy() - 52, cy() - 40, cy() - 28, cy() + 20};
+  bool ok = true;
   d.startWrite();
   for (int y : ys) {
+    if (!boot::waitBusyHigh(300, "sig_line")) { ok = false; break; }
     d.readRectRGB(cx() - 150, y, 300, 1, line);
     h = screen_track::fnv1a(line, sizeof(line), h);
+    if (!boot::endBurstRead()) { ok = false; break; }
   }
   d.endWrite();
-  return h;
+  boot::feed();
+  out = h;
+  return ok;
 }
 
 // ---- NVS --------------------------------------------------------------------------------------
@@ -94,13 +104,29 @@ static screen_track::Record loadRecord() {
   return r;
 }
 
-static void saveRecord(const screen_track::Record &r) {
+// Forgets the record (a partial key set reads as "no record"). Called before a full draw starts, so
+// a power loss mid-draw leads to another full draw next time.
+static bool invalidateRecord() {
   Preferences p;
-  if (!p.begin(kDiagNs, false)) return;
-  p.putUInt(kKeyScr, r.screen_id);
-  p.putUInt(kKeyHash, r.content_hash);
-  p.putUInt(kKeySig, r.panel_sig);
+  if (!p.begin(kDiagNs, false)) return false;
+  p.remove(kKeyScr);
+  p.remove(kKeyHash);
+  p.remove(kKeySig);
+  const bool gone = !p.isKey(kKeyScr) && !p.isKey(kKeyHash) && !p.isKey(kKeySig);
   p.end();
+  return gone;
+}
+
+// Writes all three keys and reads them back; returns false if anything did not stick.
+static bool saveRecord(const screen_track::Record &r) {
+  Preferences p;
+  if (!p.begin(kDiagNs, false)) return false;
+  const size_t a = p.putUInt(kKeyScr, r.screen_id);
+  const size_t b = p.putUInt(kKeyHash, r.content_hash);
+  const size_t c = p.putUInt(kKeySig, r.panel_sig);
+  const bool ok = a && b && c && p.getUInt(kKeySig, ~r.panel_sig) == r.panel_sig;
+  p.end();
+  return ok;
 }
 
 // Increments and returns the boot counter (this boot's number, starting at 1).
@@ -170,7 +196,8 @@ static void refresh(epd_mode_t mode, const Rect *r) {
   if (r) d.display(r->x, r->y, r->w, r->h);
   else d.display();
   const uint32_t t1 = micros();
-  d.waitDisplay();
+  d.waitDisplay();  // bounded: Panel_IT8951::_check_afsr gives up after 3 s
+  boot::feed();
   Serial.printf("BOOT: refresh_mode=%d call_ms=%u wait_ms=%u\n", (int)mode, (unsigned)((t1 - t0) / 1000),
                 (unsigned)((micros() - t1) / 1000));
 }
@@ -217,14 +244,25 @@ void setup() {
   const uint32_t chash = contentHash(rotation);
   const screen_track::Record stored = loadRecord();
   const uint32_t t0 = micros();
-  const uint32_t sigNow = panelSignature();
+  uint32_t sigNow = 0;
+  bool sigOk = boot::ensureControllerReady("before_sig") && panelSignature(sigNow);
+  if (!sigOk) {
+    // The controller did not answer in time; reset it (cold) instead of hanging.
+    boot::ensureControllerReady("sig_failed");
+    sigNow = 0;
+  }
   boot::log("sig_ms", (long)((micros() - t0) / 1000));
   boot::log("sig_now", (long)sigNow);
   boot::log("sig_stored", stored.valid ? (long)stored.panel_sig : -1L);
   // A power-cycled controller has an empty image memory, so the signature says nothing then.
-  const bool sigComparable = !boot::controllerWasCold();
+  const bool sigComparable = sigOk && !boot::controllerWasCold();
   boot::log("sig_match", (stored.valid && stored.panel_sig == sigNow) ? 1L : 0L);
-  const auto decision = screen_track::decide(stored, kScreenBoot, chash, sigNow, sigComparable);
+  auto decision = screen_track::decide(stored, kScreenBoot, chash, sigNow, sigComparable);
+  if (boot::fallbackActive() && !decision.full) {
+    // After repeated watchdog resets nothing is known about the controller state: redraw.
+    decision.full = true;
+    decision.reason = screen_track::Reason::PanelMismatch;
+  }
 
   boot::log("boots", (long)boots);
   boot::log("draw", decision.full ? "full" : "partial");
@@ -233,12 +271,22 @@ void setup() {
     boot::log("reason_detail", screen_track::reasonDetail(decision.reason));
   }
 
+#ifdef BOOT_TEST_HANG
+  // Forced hang for the watchdog test: 1 = skipped once the fallback is active, 2 = always.
+  if (BOOT_TEST_HANG >= 2 || !boot::fallbackActive()) {
+    boot::log("test_hang", "blocking");
+    while (true) delay(100);
+  }
+#endif
   DirtyTracker tracker;
   if (decision.full) {
     // Unknown picture on the panel: one full quality redraw, nothing partial over it.
     // Strongest clearing waveform the panel driver exposes: GC16 (epd_quality), which drives every
     // pixel. A white GC16 pass first wipes the old picture, then the content is drawn with GC16
     // again. (UPDATE_MODE_INIT is private in Panel_IT8951.)
+    // The picture is about to change: forget the old record first, so that a power loss during
+    // the draw leads to another full draw (the new record is written after it finished).
+    boot::log("record_invalidated", invalidateRecord() ? 1L : 0L);
     boot::log("full_mode", "gc16_white_then_gc16");
     d.startWrite();
     d.setEpdMode(epd_mode_t::epd_quality);
@@ -252,8 +300,15 @@ void setup() {
     rec.valid = true;
     rec.screen_id = kScreenBoot;
     rec.content_hash = chash;
-    rec.panel_sig = panelSignature();
-    saveRecord(rec);
+    uint32_t sigAfter = 0;
+    if (panelSignature(sigAfter)) {
+      rec.panel_sig = sigAfter;
+      if (saveRecord(rec)) boot::log("sig_saved", (long)sigAfter);
+      else boot::log("sig_saved", "skipped_nvs_write_failed");
+    } else {
+      // stays invalid: next boot draws fully
+      boot::log("sig_saved", "skipped_readback_failed");
+    }
   } else {
     // The panel shows our screen. If the controller's image memory is not known to hold it (it
     // was power-cycled, or the signature differs), re-render all of it into that memory first,
@@ -292,6 +347,9 @@ void setup() {
   boot::log("version", FW_VERSION);
   boot::log("orientation", (long)rotation);
   boot::logHealth();
+  // Leave the controller idle: close any read burst before a restart or sleep.
+  boot::log("settle_bst_end", boot::endBurstRead() ? 1L : 0L);
+  boot::setupDone();
 }
 
 #ifdef BOOT_TEST_RESTART

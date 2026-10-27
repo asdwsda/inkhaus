@@ -1,6 +1,6 @@
 # 016: Software restart hangs in panelSignature()
 
-Status: todo
+Status: done
 Depends on: 014
 UI spec: none
 Needs device: yes (no user interaction; flashes and serial only)
@@ -44,3 +44,16 @@ mode) is also a warm boot for the controller, so the same path will be hit there
 - [ ] `pio test -e native` and the m5paper/probe/epdtest builds pass.
 
 ## Notes
+- Root cause: Panel_IT8951 never sends `MEM_BST_END` after reads (`readRect`, the `_check_afsr`
+  register read); after `ESP.restart()` the warm controller stays in a read state and BUSY stalls
+  through 4 s library timeouts. Fix: `boot::endBurstRead()` sends `MEM_BST_END` as a raw command
+  (no private-member hack) after each read and as the last controller operation of setup; bounded
+  BUSY waits with `ensureControllerReady()` recovery; task watchdog 15 s over setup; crash guard
+  (fallback at 2–3 crashes, give-up = power off + rocker wake at 4+); record invalidated before
+  every full draw, saved only after a verified read-back.
+- Device-log verified: warm boot 76–78 ms with `sig_match=1`; watchdog sequence ending in the
+  stock fallback; cold partial unchanged.
+- Carried into task 017: log the `esp_task_wdt_init` return code and prove the 15 s timeout
+  (the device test used 5 s, the default); `invalidateRecord()` failure should block the full draw
+  from leaving a valid record; `waitBusyHigh` shouldn't drop BUSY's pull-up (`pinMode`);
+  `refresh()` ignores `waitDisplay` failures (no recovery).

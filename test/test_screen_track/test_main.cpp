@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "crash_guard.h"
 #include "screen_track.h"
 
 using namespace screen_track;
@@ -226,6 +227,112 @@ void test_fnv_uint32_is_little_endian_bytes() {
     TEST_ASSERT_EQUAL_UINT32(fnv1a("ab"), fnv1a("b", fnv1a("a")));
 }
 
+static CrashState st(uint32_t magic, uint32_t count) {
+    CrashState s;
+    s.magic = magic;
+    s.count = count;
+    return s;
+}
+
+void test_crash_guard_normal_reset_clears() {
+    auto d = crashGuard(st(kCrashMagic, 3), false);
+    TEST_ASSERT_EQUAL_UINT32(0, d.next.count);
+    TEST_ASSERT_EQUAL_UINT32(kCrashMagic, d.next.magic);
+    TEST_ASSERT_TRUE(d.mode == BootMode::Normal);
+}
+
+void test_crash_guard_garbage_rtc_counts_as_first() {
+    auto d = crashGuard(st(0x12345678u, 99), true);
+    TEST_ASSERT_EQUAL_UINT32(1, d.next.count);
+    TEST_ASSERT_TRUE(d.mode == BootMode::Normal);
+}
+
+void test_crash_guard_second_crash_falls_back() {
+    auto d = crashGuard(crashGuard(st(0, 0), true).next, true);
+    TEST_ASSERT_EQUAL_UINT32(2, d.next.count);
+    TEST_ASSERT_TRUE(d.mode == BootMode::StockFallback);
+}
+
+void test_crash_guard_never_loops_forever() {
+    CrashState s;
+    BootMode m = BootMode::Normal;
+    for (int i = 0; i < 100; ++i) {
+        auto d = crashGuard(s, true);
+        s = d.next;
+        m = d.mode;
+    }
+    TEST_ASSERT_TRUE(m == BootMode::GiveUp);
+    TEST_ASSERT_EQUAL_UINT32(kGiveUpAfter, s.count);  // saturated
+}
+
+void test_crash_guard_sequence_modes() {
+    CrashState s;
+    const BootMode want[] = {BootMode::Normal, BootMode::StockFallback, BootMode::StockFallback,
+                             BootMode::GiveUp};
+    for (BootMode w : want) {
+        auto d = crashGuard(s, true);
+        s = d.next;
+        TEST_ASSERT_TRUE(d.mode == w);
+    }
+}
+
+// boot.cpp's retry after the give-up sleep: state {magic, kFallbackAfter-1} plus one crash.
+void test_crash_guard_retry_after_give_up_starts_with_fallback() {
+    auto d = crashGuard(st(kCrashMagic, kFallbackAfter - 1), true);
+    TEST_ASSERT_TRUE(d.mode == BootMode::StockFallback);
+    // A second crash in the fallback leads to give-up again, not to a loop.
+    TEST_ASSERT_TRUE(crashGuard(crashGuard(d.next, true).next, true).mode == BootMode::GiveUp);
+    // A clean start-up clears the counter.
+    TEST_ASSERT_EQUAL_UINT32(0, crashGuard(d.next, false).next.count);
+}
+
+// ---- crash_guard gaps (task 016 verification) ----
+void test_crash_guard_third_crash_still_fallback() {
+    auto d = crashGuard(st(kCrashMagic, 2), true);
+    TEST_ASSERT_EQUAL_UINT32(3, d.next.count);
+    TEST_ASSERT_TRUE(d.mode == BootMode::StockFallback);
+}
+
+void test_crash_guard_fourth_crash_gives_up_and_saturates() {
+    auto d = crashGuard(st(kCrashMagic, kGiveUpAfter - 1), true);
+    TEST_ASSERT_TRUE(d.mode == BootMode::GiveUp);
+    d = crashGuard(st(kCrashMagic, kGiveUpAfter), true);
+    TEST_ASSERT_TRUE(d.mode == BootMode::GiveUp);
+    TEST_ASSERT_EQUAL_UINT32(kGiveUpAfter, d.next.count);
+}
+
+void test_crash_guard_huge_valid_count_does_not_overflow() {
+    auto d = crashGuard(st(kCrashMagic, 0xFFFFFFFFu), true);
+    TEST_ASSERT_TRUE(d.mode == BootMode::GiveUp);
+    TEST_ASSERT_EQUAL_UINT32(0xFFFFFFFFu, d.next.count);  // not incremented; documents behaviour
+}
+
+void test_crash_guard_garbage_non_crash_resets_and_arms_magic() {
+    auto d = crashGuard(st(0xDEADBEEFu, 77), false);
+    TEST_ASSERT_EQUAL_UINT32(0, d.next.count);
+    TEST_ASSERT_EQUAL_UINT32(kCrashMagic, d.next.magic);
+    TEST_ASSERT_TRUE(d.mode == BootMode::Normal);
+}
+
+void test_crash_guard_zeroed_rtc_counts_first_crash_as_one() {
+    auto d = crashGuard(CrashState(), true);
+    TEST_ASSERT_EQUAL_UINT32(1, d.next.count);
+    TEST_ASSERT_TRUE(d.mode == BootMode::Normal);
+}
+
+void test_crash_guard_clean_boot_between_crashes_restarts_sequence() {
+    CrashState s = crashGuard(CrashState(), true).next;     // 1
+    s = crashGuard(s, false).next;                          // setup finished
+    auto d = crashGuard(s, true);                           // 1 again, not 2
+    TEST_ASSERT_EQUAL_UINT32(1, d.next.count);
+    TEST_ASSERT_TRUE(d.mode == BootMode::Normal);
+}
+
+void test_crash_guard_thresholds_sane() {
+    TEST_ASSERT_TRUE(kFallbackAfter >= 1);
+    TEST_ASSERT_TRUE(kGiveUpAfter > kFallbackAfter);
+}
+
 int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_fnv_known_values);
@@ -248,5 +355,18 @@ int main(int, char**) {
     RUN_TEST(test_tracker_entries_disjoint_without_overflow);
     RUN_TEST(test_tracker_clear_then_reuse);
     RUN_TEST(test_fnv_uint32_is_little_endian_bytes);
+    RUN_TEST(test_crash_guard_normal_reset_clears);
+    RUN_TEST(test_crash_guard_garbage_rtc_counts_as_first);
+    RUN_TEST(test_crash_guard_second_crash_falls_back);
+    RUN_TEST(test_crash_guard_never_loops_forever);
+    RUN_TEST(test_crash_guard_sequence_modes);
+    RUN_TEST(test_crash_guard_retry_after_give_up_starts_with_fallback);
+    RUN_TEST(test_crash_guard_third_crash_still_fallback);
+    RUN_TEST(test_crash_guard_fourth_crash_gives_up_and_saturates);
+    RUN_TEST(test_crash_guard_huge_valid_count_does_not_overflow);
+    RUN_TEST(test_crash_guard_garbage_non_crash_resets_and_arms_magic);
+    RUN_TEST(test_crash_guard_zeroed_rtc_counts_first_crash_as_one);
+    RUN_TEST(test_crash_guard_clean_boot_between_crashes_restarts_sequence);
+    RUN_TEST(test_crash_guard_thresholds_sane);
     return UNITY_END();
 }

@@ -2,10 +2,16 @@
 
 #include <M5Unified.h>
 #include <esp_system.h>
+#include <esp_task_wdt.h>
+
+#include "crash_guard.h"
+
+#include <esp_sleep.h>
 
 #include "lgfx/v1/panel/Panel_IT8951.hpp"
 #include "lgfx/v1/touch/Touch_GT911.hpp"
 
+// Build with -DBOOT_WDT_S=<seconds> to change the setup watchdog timeout (default 15).
 // Build with -DBOOT_FORCE_STOCK to exercise the fallback path (stock autodetect with reset).
 
 namespace boot {
@@ -14,6 +20,25 @@ namespace {
 uint32_t g_t0Us = 0;
 Start g_start = Start::Stock;
 uint32_t g_readyWaitMs = 0;  // how long BUSY was low at start-up (controller booting)
+bool g_recoveredCold = false;  // we reset the controller ourselves: its image memory is garbage
+
+#ifndef BOOT_WDT_S
+#define BOOT_WDT_S 15
+#endif
+constexpr uint32_t kWatchdogS = BOOT_WDT_S;
+constexpr uint32_t kReadyWaitMs = 300;  // BUSY should be high between commands
+constexpr uint16_t kCmdMemBstEnd = 0x0015;  // IT8951 MEM_BST_END (Panel_IT8951.inl:54)
+
+// Crash counter in RTC memory: survives watchdog resets, panics and ESP.restart(); garbage after
+// power-on (screen_track::crashGuard checks the magic).
+RTC_NOINIT_ATTR screen_track::CrashState g_crashState;
+// Set just before the give-up deep sleep; a wake-up from that sleep then starts with the stock
+// fallback instead of the normal path.
+constexpr uint32_t kRetryMagic = 0x7E7B0071u;
+RTC_NOINIT_ATTR uint32_t g_retryMagic;
+constexpr int kPinRockerPush = 38;  // BtnB: external pull-up, low when pressed
+screen_track::BootMode g_bootMode = screen_track::BootMode::Normal;
+uint32_t g_crashCount = 0;
 
 const char* resetReasonName(esp_reset_reason_t r) {
     switch (r) {
@@ -164,7 +189,14 @@ bool attachNoResetDisplay() {
     d.setPanel(&g_parts->panel);
     d.setBaseColor(TFT_WHITE);
     d.setTextColor(TFT_BLACK, TFT_WHITE);
-    if (!g_parts->panel.init(false)) return false;  // init(false): no reset pulse
+    // The library's own waits last up to 4 s each; check BUSY first and, if the controller is
+    // stuck, let init() pulse the reset line (the image memory is then garbage: cold).
+    bool useReset = false;
+    if (!boot::waitBusyHigh(kReadyWaitMs, "pre_init")) {
+        useReset = true;
+        g_recoveredCold = true;
+    }
+    if (!g_parts->panel.init(useReset)) return false;  // init(false): no reset pulse
     d.startWrite();
     d.invertDisplay(g_parts->panel.getInvert());
     d.setColorDepth(g_parts->panel.getWriteDepth());
@@ -184,17 +216,116 @@ uint32_t elapsedMs() { return (micros() - g_t0Us) / 1000; }
 Start startMode() { return g_start; }
 // The IT8951 loses power on a hardware reset (EN: reset button, USB RTS) and takes ~0.85 s to boot
 // with an empty image memory. After a software restart it just keeps running.
-bool controllerWasCold() { return g_start == Start::NoReset && g_readyWaitMs > 100; }
+bool controllerWasCold() {
+    return g_start == Start::NoReset && (g_readyWaitMs > 100 || g_recoveredCold);
+}
+bool fallbackActive() { return g_bootMode == screen_track::BootMode::StockFallback; }
+void feed() { esp_task_wdt_reset(); }
+
+bool waitBusyHigh(uint32_t timeoutMs, const char* what) {
+    pinMode(kPinEpdBusy, INPUT);
+    const uint32_t t = millis();
+    while (digitalRead(kPinEpdBusy) == LOW) {
+        if (millis() - t >= timeoutMs) {
+            log("busy_timeout", what);
+            return false;
+        }
+        delay(1);
+    }
+    return true;
+}
+
+bool endBurstRead() {
+    if (M5.getBoard() != m5::board_t::board_M5Paper) return false;
+    auto* p = static_cast<lgfx::Panel_IT8951*>(M5.Display.getPanel());
+    if (!p || !p->getBus() || !waitBusyHigh(kReadyWaitMs, "bst_end")) return false;
+    // Raw command like probeController, with the panel's own conventions: inside a transaction CS
+    // is low only while sending; endWrite() releases CS and the bus as Panel_IT8951 expects.
+    auto* bus = p->getBus();
+    p->startWrite();
+    bus->wait();
+    digitalWrite(kPinEpdCs, HIGH);
+    bool ok = waitBusyHigh(kReadyWaitMs, "bst_end_cs");
+    if (ok) {
+        digitalWrite(kPinEpdCs, LOW);
+        bus->writeData(__builtin_bswap16(0x6000) | (uint32_t)__builtin_bswap16(kCmdMemBstEnd) << 16, 32);
+        bus->wait();
+    }
+    digitalWrite(kPinEpdCs, HIGH);
+    p->endWrite();
+    return ok && waitBusyHigh(kReadyWaitMs, "after_bst_end");
+}
+
+bool ensureControllerReady(const char* where) {
+    if (waitBusyHigh(kReadyWaitMs, where)) return true;
+    // Stuck: hardware reset of the controller and a full panel init (rotation is restored by it).
+    log("controller_recover", where);
+    auto* p = static_cast<lgfx::Panel_IT8951*>(M5.Display.getPanel());
+    if (p) p->init(true);
+    g_recoveredCold = true;
+    feed();
+    return false;
+}
 
 void log(const char* key, const char* value) { Serial.printf("BOOT: %s=%s\n", key, value); }
 void log(const char* key, long value) { Serial.printf("BOOT: %s=%ld\n", key, value); }
 
-void mark(const char* stage) { Serial.printf("BOOT: t_%s_ms=%u\n", stage, (unsigned)elapsedMs()); }
+void mark(const char* stage) {
+    feed();
+    Serial.printf("BOOT: t_%s_ms=%u\n", stage, (unsigned)elapsedMs());
+}
+
+void setupDone() {
+    // Setup finished: the next reset is not a crash loop, and later code must not be killed by
+    // a watchdog that only guards the start-up path.
+    esp_task_wdt_delete(NULL);
+    g_crashState = screen_track::crashGuard(g_crashState, false).next;
+}
 
 void begin() {
     Serial.begin(115200);
     g_t0Us = micros();
+    // Crash counter first: decides between the normal and the fallback start-up, and whether to
+    // give up. A watchdog reset or a panic counts; anything else (power-on, button, software
+    // restart, deep sleep) starts over.
+    const esp_reset_reason_t rr = esp_reset_reason();
+    const bool crashed = rr == ESP_RST_TASK_WDT || rr == ESP_RST_INT_WDT || rr == ESP_RST_WDT ||
+                         rr == ESP_RST_PANIC;
+    // Woken from the give-up sleep by the rocker: retry, starting with the stock fallback (count 1
+    // plus this crash = kFallbackAfter).
+    const bool retry = rr == ESP_RST_DEEPSLEEP && g_retryMagic == kRetryMagic;
+    g_retryMagic = 0;
+    if (retry) {
+        g_crashState.magic = screen_track::kCrashMagic;
+        g_crashState.count = screen_track::kFallbackAfter - 1;
+    }
+    const auto cd = screen_track::crashGuard(g_crashState, crashed || retry);
+    g_crashState = cd.next;
+    g_bootMode = cd.mode;
+    g_crashCount = cd.next.count;
+    // Arm the watchdog for this task (the loop task): a hang anywhere in setup ends in a reset.
+    esp_task_wdt_init(kWatchdogS, true);
+    esp_task_wdt_add(NULL);
     mark("pre_begin");
+    log("reset_reason_early", resetReasonName(rr));
+    log("crash_count", (long)g_crashCount);
+    log("wdt_timeout_s", (long)kWatchdogS);
+    if (g_bootMode == screen_track::BootMode::GiveUp) {
+        // Even the stock start-up keeps crashing. Do not loop: switch the device off. (Pressing
+        // the power button starts it again with a clean counter.)
+        log("give_up", 1);
+        Serial.flush();
+        esp_task_wdt_delete(NULL);
+        g_crashState = screen_track::CrashState();
+        g_retryMagic = kRetryMagic;
+        pinMode(kPinPwr, OUTPUT);
+        digitalWrite(kPinPwr, LOW);
+        // On battery the power is gone now. On USB the device stays up: the rocker push wakes it.
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)kPinRockerPush, 0);
+        delay(1000);
+        esp_deep_sleep_start();
+    }
+    if (g_bootMode == screen_track::BootMode::StockFallback) log("boot_mode", "stock_fallback");
 
     auto cfg = M5.config();
     cfg.serial_baudrate = 0;    // Serial is started above
@@ -211,7 +342,7 @@ void begin() {
     const uint32_t d0 = micros();
     bool noReset = false;
 #ifndef BOOT_FORCE_STOCK
-    noReset = attachNoResetDisplay();
+    if (g_bootMode == screen_track::BootMode::Normal) noReset = attachNoResetDisplay();
 #else
     Serial.println("BOOT: forced_stock=1");
 #endif
