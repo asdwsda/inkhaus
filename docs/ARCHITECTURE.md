@@ -175,6 +175,12 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - The panel keeps its image across a restart with both the stock start-up (~1070 ms) and a
   hand-built start-up without the IT8951 reset pulse (~69 ms); touch and partial refresh work
   after the latter.
+- A hardware reset (EN/RTS, reset button, flashing, power-on) power-cycles the IT8951: about
+  857 ms until BUSY releases, and its image memory is garbage. `ESP.restart()` keeps it warm
+  (display start-up 78 ms, memory intact). Wake from full power-off is therefore always cold
+  (~1.06 s display start-up + ~0.1 s re-render).
+- The first refresh after a cold controller start takes ~430 ms even for a small box; later
+  ones ~135 ms.
 - Touch accuracy by hand: about 1–6 px at the center, up to ~34 px near the corners and edges.
 - RTC (BM8563) was never set and reports low voltage, so time must come from NTP before
   anything relies on it.
@@ -214,4 +220,6 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - 2026-10-27: Display start-up without the IT8951 reset (hand-built Panel_IT8951 + Touch_GT911 config, as in epdtest variant B), falling back to the stock M5GFX start-up if the controller doesn't answer. Reason: measured 69 ms vs 1070 ms, and the image is kept either way.
 - 2026-10-27: Refresh strategy: immediate feedback with `epd_fastest` (166 ms, black/white, thresholded text); every region updated that way is tracked and gets one clean quality refresh before sleep (and on page changes). Reason: task 015 showed only a quality white pass gives a clean result, and it costs ~1 s, too slow for tap feedback.
 - 2026-10-27: The app tracks what it last drew (a screen id + content hash in NVS). If the record is missing or doesn't match (first boot, another firmware ran, crash), the boot does one full quality redraw instead of partial updates. Reason: after a foreign firmware or an unknown state, partial updates over an unknown picture produce garbage.
+- 2026-10-27: Panel auto-display is off (`setAutoDisplay(false)`): every draw path must call `display(x,y,w,h)` explicitly. On a cold boot, the screen is re-rendered into controller memory without a refresh, then only the changed regions are refreshed. Reason: with auto-display, the re-render triggered a full-screen fastest refresh (user-visible flash and grey veil, task 014 round 3).
+- 2026-10-27: Full redraws over an unknown screen: GC16 white fill, then content with GC16. Reason: cleared the residue of earlier screens (user-confirmed); the IT8951 INIT waveform is not exposed by M5GFX.
 - 2026-10-27: Pure logic in `lib/`, hardware in `src/`. Reason: native unit tests without the device.

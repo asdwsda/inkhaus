@@ -15,5 +15,6 @@
 | 011 | [Layout engine update to the approved compact UI](011-compact-tabs-layout.md) | done | 006 |
 | 012 | [binary_sensor device_class](012-binary-sensor-device-class.md) | done | 004 |
 | 013 | [Hardware probe firmware](013-hardware-probe.md) | done | 001 |
-| 014 | [Boot path on the device](014-boot-path.md) | in-progress | 002, 013 |
+| 014 | [Boot path on the device](014-boot-path.md) | done | 002, 013 |
 | 015 | [E-ink persistence and refresh-mode experiment](015-epd-persistence-experiment.md) | done | 013, 014 |
+| 016 | [Software restart hangs in panelSignature()](016-warm-boot-hang.md) | todo | 014 |
