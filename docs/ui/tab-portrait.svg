@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans, Verdana, sans-serif">
+  <!-- Portrait 540x960, tab "Living room" of config.example.yaml. Spec: docs/ui/STYLE.md, layout.md, widgets.md.
+       Greys only: #000 (0), #444 (4), #888 (8), #ccc (12), #fff (15). No pager (everything fits in 5 rows). -->
+  <defs>
+    <symbol id="i-up" viewBox="0 0 24 24"><polygon points="12,5 21,19 3,19" fill="currentColor"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><polygon points="12,19 21,5 3,5" fill="currentColor"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" fill="currentColor"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M12 2 a7 7 0 0 0 -4 12.7 V18 h8 v-3.3 A7 7 0 0 0 12 2z" fill="currentColor"/><rect x="8.5" y="19.5" width="7" height="2.5" fill="currentColor"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2 C12 2 5 10 5 15 a7 7 0 0 0 14 0 C19 10 12 2 12 2z" fill="currentColor"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/><rect x="10.5" y="4" width="3" height="16" fill="currentColor"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2 C13 7 19 9 19 15 a7 7 0 0 1 -14 0 C5 11 8 10 8.5 6 C10 7 11 5 12 2z" fill="currentColor"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="1.8" fill="currentColor"/></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3 H17 V8 L12 12 L17 16 V21 H7 V16 L12 12 L7 8 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  </defs>
+
+  <rect x="0" y="0" width="540" height="960" fill="#fff"/>
+
+  <!-- Status bar (0,0,540,40) -->
+  <use xlink:href="#i-wifi" href="#i-wifi" x="16" y="8" width="24" height="24" color="#000"/>
+  <text x="48" y="20" font-size="18" fill="#000" dominant-baseline="central">updated 14:05</text>
+  <rect x="429" y="11" width="34" height="18" fill="none" stroke="#000" stroke-width="2"/>
+  <rect x="464" y="15" width="4" height="10" fill="#000"/>
+  <rect x="430" y="12" width="25" height="16" fill="#000"/>
+  <text x="524" y="20" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+  <rect x="0" y="38" width="540" height="2" fill="#000"/>
+
+  <!-- Light "Ceiling" (16,56) 246x144, on -->
+  <g transform="translate(16,56)">
+    <rect x="1" y="1" width="244" height="142" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+    <use xlink:href="#i-bulb" href="#i-bulb" x="12" y="12" width="40" height="40" color="#fff"/>
+    <text x="60" y="32" font-size="24" fill="#fff" dominant-baseline="central">On</text>
+    <text x="12" y="78" font-size="24" fill="#fff" dominant-baseline="central">Ceiling</text>
+  </g>
+
+  <!-- Sensor "Outside temperature" (278,56) 246x144 -->
+  <g transform="translate(278,56)">
+    <rect x="1" y="1" width="244" height="142" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="123" y="44" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="central">8.4<tspan font-size="24">°C</tspan></text>
+    <text x="123" y="103" font-size="18" fill="#444" text-anchor="middle" dominant-baseline="central">Outside temperature</text>
+  </g>
+
+  <!-- Cover group "Downstairs shutters" (16,216) 508x144; up button pending -->
+  <g transform="translate(16,216)">
+    <rect x="1" y="1" width="506" height="142" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="8" y="24" font-size="24" fill="#000" dominant-baseline="central">Downstairs shutters</text>
+    <text x="468" y="24" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">Closed</text>
+    <rect x="9.5" y="57.5" width="150" height="77" rx="8" fill="#fff" stroke="#000" stroke-width="3" stroke-dasharray="8 6"/>
+    <use xlink:href="#i-hourglass" href="#i-hourglass" x="64" y="76" width="40" height="40" color="#000"/>
+    <rect x="178" y="57" width="151" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use xlink:href="#i-stop" href="#i-stop" x="233" y="76" width="40" height="40" color="#000"/>
+    <rect x="347" y="57" width="151" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use xlink:href="#i-down" href="#i-down" x="402" y="76" width="40" height="40" color="#000"/>
+  </g>
+
+  <!-- Climate "Living room" (16,376) 508x304 -->
+  <g transform="translate(16,376)">
+    <rect x="1" y="1" width="506" height="302" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="8" y="24" font-size="24" fill="#000" dominant-baseline="central">Living room</text>
+    <text x="8" y="80" font-size="56" fill="#000" dominant-baseline="central">21.5<tspan font-size="40">°C</tspan></text>
+    <use xlink:href="#i-drop" href="#i-drop" x="388" y="52" width="24" height="24" color="#000"/>
+    <text x="500" y="64" font-size="24" fill="#000" text-anchor="end" dominant-baseline="central">45%</text>
+    <text x="500" y="94" font-size="18" fill="#444" text-anchor="end" dominant-baseline="central">Heating</text>
+    <rect x="9" y="121" width="78" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use xlink:href="#i-minus" href="#i-minus" x="28" y="140" width="40" height="40" color="#000"/>
+    <rect x="421" y="121" width="78" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use xlink:href="#i-plus" href="#i-plus" x="440" y="140" width="40" height="40" color="#000"/>
+    <text x="254" y="132" font-size="18" fill="#444" text-anchor="middle" dominant-baseline="central">Target</text>
+    <text x="254" y="172" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="central">22.0°</text>
+    <line x1="8" y1="216.5" x2="500" y2="216.5" stroke="#888" stroke-width="1"/>
+    <use xlink:href="#i-flame" href="#i-flame" x="24" y="236" width="40" height="40" color="#000"/>
+    <text x="76" y="256" font-size="24" fill="#000" dominant-baseline="central">Mode: Heat</text>
+  </g>
+
+  <!-- Cover "Living room shutter" (16,696) 508x144, opening: up filled -->
+  <g transform="translate(16,696)">
+    <rect x="1" y="1" width="506" height="142" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text x="8" y="24" font-size="24" fill="#000" dominant-baseline="central">Living room shutter</text>
+    <text x="468" y="24" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">Opening 40%</text>
+    <rect x="8" y="56" width="153" height="80" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+    <use xlink:href="#i-up" href="#i-up" x="64" y="76" width="40" height="40" color="#fff"/>
+    <rect x="178" y="57" width="151" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use xlink:href="#i-stop" href="#i-stop" x="233" y="76" width="40" height="40" color="#000"/>
+    <rect x="347" y="57" width="151" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use xlink:href="#i-down" href="#i-down" x="402" y="76" width="40" height="40" color="#000"/>
+  </g>
+
+  <!-- Tab bar (0,848,540,112): 4 slots, no overflow -->
+  <rect x="0" y="848" width="540" height="2" fill="#000"/>
+  <rect x="16" y="864" width="115" height="80" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+  <text x="73.5" y="893" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Living</text>
+  <text x="73.5" y="915" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">room</text>
+  <rect x="148" y="865" width="113" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="204.5" y="904" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Kitchen</text>
+  <rect x="279" y="865" width="113" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="335.5" y="904" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Bedroom</text>
+  <rect x="410" y="865" width="113" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="466.5" y="904" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Garage</text>
+</svg>
