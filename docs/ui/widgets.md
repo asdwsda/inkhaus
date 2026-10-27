@@ -1,57 +1,126 @@
 # Widget specs
 
-All coordinates are **widget-relative** `(x, y, w, h)`, origin at the widget's
-top-left. `W` and `H` are the widget's pixel size (STYLE.md section 4):
-W = 246 / 508 (portrait, 1 / 2 cells), 180 / 376 / 572 / 768 (landscape, 1 / 2 /
-3 / 4 cells); H = 144 (1 row) or 304 (2 rows). Fonts, greys, spacing, button
-formula, badge slot and state looks come from STYLE.md. Sizes and clamping:
-layout.md section 3.
+Revision 4. Cause of the revision 3 defects (sensor value outside its frame, a
+crowded thermostat): the vertical budgets were computed from centre lines without
+the real text box heights. Every widget below now has a **vertical budget table**
+built from text boxes of 1.2 x font size.
 
-Common to all widgets:
-- Frame: rect (0, 0, W, H), radius 8, border 2 INK, fill PAPER (INK when "on").
-- Badge slot: (W-32, 8, 24, 24): hourglass (pending), alert (failed), warn
-  (unavailable), else empty.
+All coordinates are **widget-relative** `(x, y, w, h)`, origin at the widget's
+top-left. `W` is the widget's pixel width, `H = 104` always (STYLE.md section 4):
+
+| Size | Portrait W | Landscape W |
+|------|-----------|-------------|
+| 1x1 | 248 | 176 |
+| 2x1 | 508 ("wide" in portrait) | 364 |
+| 3x1 | n/a | 552 ("wide" in landscape) |
+
+"Wide" = 2 cells in portrait (W = 508), 3 cells in landscape (W = 552). Sizes and
+clamping: layout.md section 3.
+
+## 0. Conventions used by every widget
+
+- **Frame** (0, 0, W, 104), radius 8, border 2, fill PAPER (INK when "on").
+  **Content box** = frame minus 12 px padding on every side = (12, 12, W-24, 80),
+  vertically y = 12..92. Every text box, icon and badge lies inside it. Buttons are
+  the only exception: 64 x 64 at y = 20..84 (also inside it), and the checker
+  ignores `*-btn` outlines.
+- **Fonts**: only F18, F24, F40, F56 (STYLE.md section 2). A name never steps down
+  to a smaller font: it is truncated with `…` (toggle names: F24 always).
+- **Text box** = height 1.2 x font size, centred on the line's centre line `cy`:
+  F18 21.6, F24 28.8, F40 48, F56 67.2. Text boxes of neighbouring lines in a
+  stack are >= 4 px apart. At most **2 text lines** per 1-row widget.
+- **Baseline for the SVG and for mixed runs.** The glyph ink of a line sits on a
+  baseline `by = cy + k`, with k = 6 (F18), 8 (F24), 14 (F40), 19 (F56) (this is
+  0.346 x size, the DejaVu em-box centre). The SVGs draw widget text with
+  `dominant-baseline="alphabetic"` at that `by`, so they do not depend on a viewer's
+  `central` support. Firmware may use `middle_left` at `cy` for single-size lines.
+- **Value + unit runs** (`21.5°C`, `12°C`): the unit is the same size as the value or
+  one step smaller, and **shares the baseline**: both drawn with the M5GFX datum
+  `baseline_left` at the same `by` (unit x = value x + value width + 2). No "+6 px"
+  offsets. In the SVG it is one `<text dominant-baseline="alphabetic" y="by">` with
+  a `<tspan font-size=... dx="2">` for the unit.
+- **Names / strings** come from config `name`, else HA `friendly_name`. Truncation
+  to a width: drop characters from the end and append `…` (U+2026, one glyph, 1 em
+  wide) until it fits.
 - Text colour: INK on PAPER, PAPER on INK; OFF grey when stale, loading or
-  unavailable. Names come from config `name`, else HA `friendly_name`.
+  unavailable; secondary lines (state, condition, sensor name) DIM (PAPER on INK
+  fills).
 - "Stale" is global (status-bar chip). A stale widget differs only by OFF-grey
   value text.
+- **Badge slot** (24 x 24): hourglass (pending), alert (failed), warn
+  (unavailable), else empty. Position per widget below. **Cover and vacuum show
+  pending only in the tapped button**, never as a badge.
 - Redraw: partial, only the listed element rects (STYLE.md section 10).
-- Button-row formula (n buttons): `bw = floor((W-16-16(n-1))/n)`, start
-  `x0 = 8 + floor(rem/2)`, button i at `x0 + i*(bw+16)`.
-  For n = 3: portrait W=508 -> bw 153, x = 8, 177, 346; landscape W=376 -> bw 109,
-  x = 8, 133, 258; W=246 -> bw 71 (too small; 3-button widgets are never 1 cell wide).
+- Button row (three buttons): x = W-228, W-152, W-76; y = 20; 64 x 64; glyph M at
+  (x+12, 32). Pending: tapped button 3 px dashed + hourglass M instead of glyph.
+- **Fill check** (STYLE.md 4b): each widget gives horizontal span (reserved boxes
+  over the inner width W-24) and vertical span (top of the first text box or icon
+  to the bottom of the last, over 80). Target: >= 75 % horizontal, >= 60 % vertical.
+- **Element ids in the mockups**: `<g id="w-N">`, border `w-N-frame`; text and icons
+  `w-N-name`, `w-N-state`, `w-N-icon`, ...; buttons `w-N-<which>-btn` with the glyph
+  `w-N-<which>-icon`. Checked by `tools/check_mockups.py`.
 
-## 1. Cover (single shutter)
+### Standard stacks (used below)
+
+Stack A, two F24 lines (cover, vacuum, climate left, weather 2x1):
+
+| Line | Font | cy | Baseline | Box top | Box bottom | Gap below |
+|------|------|----|----------|---------|------------|-----------|
+| 1 | F24 | 36 | 44 | 21.6 | 50.4 | 4.2 |
+| 2 | F24 | 69 | 77 | 54.6 | 83.4 | |
+
+Total 21.6..83.4 = **61.8 px** of the 80 (margin 9.6 above, 8.6 below).
+
+Stack B, value F40 over caption F18 (sensor 1x1, weather 1x1):
+
+| Line | Font | cy | Baseline | Box top | Box bottom | Gap below |
+|------|------|----|----------|---------|------------|-----------|
+| 1 | F40 | 39 | 53 | 15.0 | 63.0 | 4.2 |
+| 2 | F18 | 78 | 84 | 67.2 | 88.8 | |
+
+Total 15.0..88.8 = **73.8 px** of 80 (margin 3 above, 3.2 below).
+
+## 1. Cover (single shutter), wide
 
 HA: entity domain `cover`; state (`open`, `closed`, `opening`, `closing`,
 `unavailable`); attribute `current_position` (0..100); `friendly_name`.
 Services (004): `cover.open_cover`, `cover.stop_cover`, `cover.close_cover`.
-Sizes: 2x1 (default) up to 4x2.
+Size: wide x 1 only (portrait 2x1 = 508, landscape 3x1 = 552).
 
-### 2x1 layout (H = 144)
+Vertical budget (left block = Stack A; buttons beside it):
 
-| Element | Rect | Font / grey | Content |
-|---------|------|-------------|---------|
-| Name | (8, 8, W-176, 32) | F24 INK, left | name (fit rule STYLE.md section 2) |
-| Status text | (W-160, 8, 120, 32) | F18 INK, right-aligned at W-40 | see below |
-| Badge | (W-32, 8, 24, 24) | S icon | pending/failed/unavailable |
-| Button 1 "up" | (x0, 56, bw, 80) | glyph M | sub-region 1 |
-| Button 2 "stop" | (x0+bw+16, 56, bw, 80) | glyph M | sub-region 2 |
-| Button 3 "down" | (x0+2(bw+16), 56, bw, 80) | glyph M | sub-region 3 |
+| Line | Font | cy | Box top | Box bottom | Gap |
+|------|------|----|---------|------------|-----|
+| Name | F24 | 36 | 21.6 | 50.4 | 4.2 |
+| State | F24 | 69 | 54.6 | 83.4 | |
+| Buttons | 64 px | 52 | 20 | 84 | (beside, not stacked) |
+| **Sum (text block)** | | | | | **61.8 of 80** |
 
-Status text: `closed` -> `Closed`; `open` with position p -> `p%` (or `Open` if p
-is missing); `opening` -> `Opening p%`; `closing` -> `Closing p%` (omit `p%` if
-missing). Unavailable -> `n/a`; loading -> `-`.
+| Element | Box (x, y, w, h) | cy / baseline | Font / grey | Content |
+|---------|------------------|---------------|-------------|---------|
+| Name `w-N-name` | (12, 21.6, W-252, 28.8) | 36 / 44 | F24 INK, left | name; right edge W-240 |
+| State `w-N-state` | (12, 54.6, W-284, 28.8) | 69 / 77 | F24 DIM, left | see below; right edge W-272 |
+| Badge | (W-264, 57, 24, 24) | 69 | S icon | **failed / unavailable only** (not pending) |
+| Button 1 "up" | (W-228, 20, 64, 64) | 52 | glyph M at (W-216, 32) | sub-region 1 |
+| Button 2 "stop" | (W-152, 20, 64, 64) | 52 | glyph M at (W-140, 32) | sub-region 2 |
+| Button 3 "down" | (W-76, 20, 64, 64) | 52 | glyph M at (W-64, 32) | sub-region 3 |
 
-### 2x2 layout (H = 304; adds position display)
+Portrait (W = 508): name box (12,21.6,256,28.8), state box (12,54.6,224,28.8), badge
+(244,57,24,24), buttons x = 280, 356, 432. Landscape (W = 552): name box
+(12,21.6,300,28.8), state box (12,54.6,268,28.8), badge (288,57,24,24), buttons x =
+324, 400, 476.
 
-Name, status text, badge as above. Then:
-- Position value (8, 48, W-16, 72), F56 centre: `p%` or `-`.
-- Position bar (8, 128, W-16, 24): 2 px INK outline, TRACK fill, INK fill from
-  the left, width `round((W-20) * p / 100)`; shown only if p is known.
-- State word (8, 160, W-16, 32), F24 DIM centre: `Open`, `Closed`, `Opening`,
-  `Closing`.
-- Buttons row at y = 216 (instead of 56): (x_i, 216, bw, 80).
+State text: `closed` -> `Closed`; `open` with position p -> `Open p%` (just `Open`
+if p is missing or 100); `opening` -> `Opening p%`; `closing` -> `Closing p%` (omit
+` p%` if missing). Unavailable -> `n/a`; loading -> `-`. Longest, `Opening 100%`,
+is about 160 px at F24, fits both state boxes.
+
+Name widths: the longest realistic name (`Downstairs shutters`, 240 px at F24)
+fits the portrait box (256) and the landscape box (300); longer names are
+truncated with `…`.
+
+Fill: horizontal 12..W-12 = 100 % (text left, buttons right); vertical buttons 64 /
+80 = 80 %, text block 61.8 / 80 = 77 %, both centred about cy = 52.
 
 ### Actions
 
@@ -67,50 +136,77 @@ Name, status text, badge as above. Then:
 | State | Look |
 |-------|------|
 | Normal | outline buttons; `opening` -> button 1 INK-filled (PAPER glyph); `closing` -> button 3 filled; otherwise none filled |
-| Pending | tapped button: dashed 3 px border, hourglass M instead of glyph; other buttons unchanged. Confirmed when the next fetch shows the matching state or position change (or after 2 fetches without change -> Failed) |
+| Pending | tapped button: dashed 3 px border, **one hourglass M in that button instead of its glyph**; no badge, state text unchanged; other buttons unchanged. Confirmed when the next fetch shows the matching state or position change (or after 2 fetches without change -> Failed) |
 | Failed | alert badge; buttons normal |
-| Unavailable | dotted OFF frame and buttons, OFF glyphs, warn badge, status `n/a` |
-| Loading | status `-`, buttons normal |
-| Stale | status text OFF grey |
+| Unavailable | dotted OFF frame and buttons, OFF glyphs, warn badge, state `n/a` |
+| Loading | state `-`, buttons normal |
+| Stale | state text OFF grey |
 
-Redraw: status text rect (and position elements in 2x2); the two affected
-buttons when the fill moves (old and new); badge rect; the tapped button on
-pending. Rocker INNER focus: tapped button border.
+Redraw: state box; the two affected buttons when the fill moves (old and new);
+badge; the tapped button on pending. Rocker INNER focus: tapped button border.
 
-## 2. Cover group
+## 2. Cover group, wide
 
 HA: members' states and `current_position` (fetched once per distinct entity,
 shared with single-cover widgets); name is required in config (`name`).
 Services: the same three, with `entity_id` listing **all member ids** (004).
-Layout, sub-regions, sizes and actions: identical to Cover.
+Layout, vertical budget, sub-regions, sizes and actions: identical to Cover.
 
-Aggregation for the status text:
+Aggregation for the state text:
 1. any member `opening` -> `Opening`; any `closing` -> `Closing` (position
    omitted);
 2. else all `closed` -> `Closed`;
-3. else all available members have the same `current_position` p -> `p%`;
+3. else all available members have the same `current_position` p -> `Open p%`;
 4. else `Mixed`.
 
 Button fill: `Opening` -> up filled, `Closing` -> down filled.
 Unavailable only if **all** members are unavailable. If some members are
-unavailable: status keeps going from available ones and the badge shows the
+unavailable: state keeps going from available ones and the badge shows the
 alert icon (not warn); controls stay active.
 
-## 3. Light
+## 3. Light, 1x1
 
 HA: domain `light`; state `on`/`off`; attribute `brightness` (0..255,
 percent = round(b*100/255)); `friendly_name`. Service: `light.toggle`.
-Sizes: 1x1 (default), 2x1.
+Size 1x1 only.
 
-| Element | Rect | Font / grey |
-|---------|------|-------------|
-| Icon bulb (M) | (12, 12, 40, 40) | INK, or PAPER on INK |
-| State text | (60, 12, W-100, 40) | F24, left |
-| Name | (12, 64, W-24, 68) | F24, top, max 2 lines, line height 28 |
-| Badge | (W-32, 8, 24, 24) | S |
+**Toggle layout (light, switch, automation, binary_sensor).** Line 1 is the name,
+F24, over the full content width; line 2 is the icon M with the state text to its
+right. Reason: the name needs the full width (`Floor lamp` 127 px and `Night
+mode` 140 px at F24 only fit 152 px if they are not squeezed next to an icon), so
+the name font is F24 everywhere and never steps down.
 
-State text: off -> `Off`; on -> `On`, and in 2x1 (W >= 376) `On 80%` when
-brightness is known. The bulb icon: outline when off, solid-filled body when on.
+Vertical budget:
+
+| Line | Font / size | cy | Baseline | Box top | Box bottom | Gap below |
+|------|-------------|----|----------|---------|------------|-----------|
+| 1 Name | F24 | 30 | 38 | 15.6 | 44.4 | 4.6 |
+| 2 Icon | M 40 | 69 | n/a | 49.0 | 89.0 | |
+| 2 State (beside icon) | F24 | 69 | 77 | 54.6 | 83.4 | (inside icon span) |
+| **Sum** | | | | 15.6..89.0 | | **73.4 of 80** |
+
+| Element | Box (x, y, w, h) | Font / grey |
+|---------|------------------|-------------|
+| Name `w-N-name` | (12, 15.6, W-24, 28.8) | F24 INK / PAPER on INK, left; truncated with `…` |
+| Icon `w-N-icon` | (12, 49, 40, 40) | bulb (plug, auto, window); INK, or PAPER on INK |
+| State `w-N-state` | (58, 54.6, W-98, 28.8) | F24 DIM / PAPER on INK, left; right limit W-40 |
+| Badge | (W-36, 57, 24, 24) | S; right end of line 2 |
+
+Landscape (W = 176): name box (12,15.6,152,28.8), state box (58,54.6,78,28.8), badge
+(140,57,24,24). Portrait (W = 248): name (12,15.6,224,28.8), state (58,54.6,150,28.8),
+badge (212,57,24,24).
+
+State text: off -> `Off`; on -> `On`, or `On 80%` when brightness is known (about 95
+px at F24; it ends at x = 153 and would run under the badge at 140, so **while a
+badge is shown the text is just `On`**). Bulb icon: outline (`bulb_off`) when off,
+solid (`bulb`) when on.
+
+Name widths at F24 (DejaVu): `Ceiling` 82 px, `Floor lamp` 127 px, `Night mode`
+140 px: all fit the landscape name width 152 without truncation. Longer names
+are cut with `…` (landscape: about 13 characters).
+
+Fill: horizontal name 152 / 152 = 100 %; vertical 73.4 / 80 = 92 % (icon 40 / 80 =
+50 % on its own line).
 
 Sub-regions: none. The whole widget rect is the toggle (id 0). Action: toggle.
 
@@ -120,59 +216,89 @@ Sub-regions: none. The whole widget rect is the toggle (id 0). Action: toggle.
 | On | **INK fill**, PAPER content |
 | Pending | flips to the requested fill at once; dashed 3 px border; hourglass badge |
 | Failed | real state; alert badge |
-| Unavailable | dotted OFF frame, OFF content, state text `n/a`, warn badge, taps ignored |
-| Loading | state text `-`, PAPER fill |
+| Unavailable | dotted OFF frame, OFF content, state `n/a`, warn badge, taps ignored |
+| Loading | state `-`, PAPER fill |
 | Stale | name stays; state text OFF grey (on INK fill: no change, the status-bar chip carries it) |
 
 Redraw: the whole widget rect on any change (small, one region). Brightness-only
-change: state text rect.
+change: state box.
 
-## 4. Switch
+## 4. Switch, 1x1
 
 HA: domain `switch`; state `on`/`off`. Service: `switch.toggle`.
-Same layout, states and redraw as Light with the plug icon; no brightness.
-Sizes 1x1 (default), 2x1.
+Same layout, budget, states and redraw as Light with the plug icon; no brightness.
 
-## 5. Automation
+## 5. Automation, 1x1
 
 HA: domain `automation`; state `on` (enabled) / `off` (disabled).
 Services: `automation.turn_off` when on, `automation.turn_on` when off
-(004). Layout as Light with the auto icon; state text `Enabled` / `Disabled`
-(F24; in a 180 px wide widget the text rect is 80 px, so it fits by the
-text fit rule stepping down to F18). On = INK fill. Pending/failed/unavailable
-identical to Light. Sizes 1x1 (default), 2x1.
+(004). Layout and budget as Light with the auto icon. State text is `On` / `Off`
+(enabled / disabled). On = INK fill. Pending / failed / unavailable identical to
+Light.
 
-## 6. Climate (thermostat)
+## 6. Climate (thermostat), wide, one row
 
 HA: domain `climate`; state (= hvac mode); attributes `current_temperature`,
 `temperature` (target), `current_humidity`, `hvac_mode`, `hvac_action`,
 `min_temp`, `max_temp`, `target_temp_step`, `friendly_name`.
 Service: `climate.set_temperature` (clamped to min/max, rounded to step by
-the action builder, 004). Sizes 2x2 (default), up to 4x2; the layout is fixed
-height 304 and the elements are anchored left/right as given.
+the action builder, 004). Size: wide x 1 only (portrait 2x1, landscape 3x1).
 
-| Element | Rect | Font / grey | Content |
-|---------|------|-------------|---------|
-| Name | (8, 8, W-48, 32) | F24 INK | name |
-| Badge | (W-32, 8, 24, 24) | S | |
-| Current temperature | (8, 48, W-136, 64) | F56 INK left; unit F40 | `21.5` + `°C` (unit from HA config, default `°C`) |
-| Humidity icon | (W-120, 52, 24, 24) | drop S | only if `current_humidity` known |
-| Humidity text | (W-92, 48, 84, 32) | F24 right | `45%` |
-| Action text | (W-120, 80, 112, 28) | F18 DIM right | `Heating` / `Cooling` / `Idle` / `Off` from `hvac_action` (mode if missing) |
-| Button "-" | (8, 120, 80, 80) | minus M | sub-region 1 |
-| Button "+" | (W-88, 120, 80, 80) | plus M | sub-region 2 |
-| Target label | (96, 120, W-192, 24) | F18 DIM centre | `Target` |
-| Target value | (96, 144, W-192, 56) | F40 INK centre | `22.0°` (decimals: 1 if step < 1 else 0) |
-| Mode row | (8, 216, W-16, 80) | see below | sub-region 3 |
+Left block = Stack A (name, then current temperature + humidity + action on one
+line); right cluster `[-] target [+]` centred on cy = 52, no caption.
+`Lx` = left block right edge = W-288 (portrait 220, landscape 264).
 
-Mode row, read-only (default): no border; a 1 px OFF rule on its top edge, mode
-icon M at (24, 236, 40, 40) (flame/snow/auto/power/fan/drop for
-`heat`/`cool`/`heat_cool`+`auto`/`off`/`fan_only`/`dry`) and text
-`Mode: Heat` at (76, 216, W-92, 80), F24, left. No hit region.
-OPEN (needs architect): changing the mode requires a `climate.set_hvac_mode`
-action and the `hvac_modes` attribute, neither in task 004. If added, the mode
-row becomes a normal button (2 px border, whole row = sub-region 3) and each
-tap cycles to the next mode in `hvac_modes` (pending, then confirmed).
+Vertical budget:
+
+| Line | Font / size | cy | Baseline | Box top | Box bottom | Gap below |
+|------|-------------|----|----------|---------|------------|-----------|
+| 1 Name | F24 | 36 | 44 | 21.6 | 50.4 | 4.2 |
+| 2 Temp / humidity / action | F24 text, S icons | 69 | 77 | 54.6 | 83.4 | |
+| **Sum (left block)** | | | | | | **61.8 of 80** |
+| Target value | F40 | 52 | 66 | 28.0 | 76.0 | single line |
+| Buttons | 64 px | 52 | n/a | 20 | 84 | |
+
+(The current temperature is F24, not F40: F40 on line 2 would need
+28.8 + 4 + 48 = 80.8 px, which does not fit 80. The target value keeps F40.)
+
+| Element | Box (x, y, w, h) | Font / grey | Content |
+|---------|------------------|-------------|---------|
+| Name `w-N-name` | (12, 21.6, W-328, 28.8) | F24 INK, left | name; portrait box width 180, landscape 224 |
+| Badge | (W-312, 24, 24, 24) | S | pending / failed / unavailable; right of the name box, cy 36 |
+| Current temp `w-N-temp` | starts x = 12, baseline 77, box h 28.8 | F24 INK | `21.5°` (degree sign only, no `C`: the unit is the same F24 and the button value uses it too) |
+| Humidity icon `w-N-hum-icon` | (92, 57, 24, 24) | S `drop` INK | omitted with its text when `current_humidity` is unknown |
+| Humidity text `w-N-hum-text` | starts x = 120, baseline 77 | F24 INK | `45%` |
+| Action icon `w-N-act-icon` | (186, 57, 24, 24) | S INK | see below |
+| Button "-" | (W-276, 20, 64, 64) | glyph M at (W-264, 32) | sub-region 1 |
+| Target value `w-N-target` | centred at cx = W-144, baseline 66 | F40 INK | `22.0°` (decimals: 1 if step < 1 else 0) |
+| Button "+" | (W-76, 20, 64, 64) | glyph M at (W-64, 32) | sub-region 2 |
+
+Portrait (W = 508): minus (232,20,64,64), value centre x = 364, plus (432,20,64,64).
+Landscape (W = 552): minus (276,20,64,64), value centre x = 408, plus
+(476,20,64,64).
+
+**Line 2 horizontal budget (F24 widths, DejaVu):** `21.5°` = 65 px (12..77), 15 px
+gap, drop icon 92..116, 4 px, `45%` = 53 px (120..173), 12 px gap, action icon
+186..210. Ends at x = 210 < Lx = 220 (portrait), 10 px spare and 22 px to the minus
+button (232). Worst realistic: `-12.5°` (74 px) with `99%` (53 px) still ends at
+x = 217 (< 220): the line has room for 99 % humidity and one negative decimal temperature. If
+the line would still pass Lx (humidity `100%`), the humidity drop icon is dropped
+(text stays) so the action icon keeps its place.
+
+**Action icon** (hvac_action): `flame` heating, `snow` cooling, `dry` drying,
+`fan` fan, `pause` idle. Unknown or `off`: the mode icon (`flame` heat, `snow` cool,
+`auto` heat_cool/auto, `power` off, `fan` fan_only, `dry` dry). The humidity drop
+is never an action icon; the humidity and action icons always differ. The `flame`
+has two tongues and a hollow in the middle so that it cannot be mistaken for the
+solid, symmetric drop. Mode and action are read-only: no hit region, no rocker stop.
+
+**Target between the buttons.** The value is centred between the buttons
+(portrait: minus ends x = 296, plus starts 432, 136 px of room). `28.5°` at F40 is
+109 px wide, leaving 13.5 px each side; `Off` is narrower. Value vertical box
+28..76 is centred on the button centre line 52.
+
+Fill: horizontal 12..W-12 = 100 %; vertical: left block 61.8 / 80 = 77 %, cluster 64 /
+80 = 80 %.
 
 Actions:
 
@@ -180,42 +306,90 @@ Actions:
 |------------|--------|
 | 1 "-" | target := target - step (min_temp bound) |
 | 2 "+" | target := target + step (max_temp bound) |
-| 3 mode | only if enabled (see OPEN) |
+| 0 | nothing |
 
-Taps change the displayed target at once (pending look on the value rect);
-the service call is sent once, 1.5 s after the last tap or immediately when the
-session ends. Reaching min/max leaves the value unchanged (no pending).
+Taps change the displayed target at once (pending look); the service call is sent
+once, 1.5 s after the last tap or immediately when the session ends. Reaching
+min/max leaves the value unchanged (no pending).
 
 States:
 
 | State | Look |
 |-------|------|
-| Normal | as above; `hvac_mode off` shows target `Off` (F40) and the action text `Off`; buttons still active |
-| Pending | target value: dashed 3 px underline (96, 196, W-192, 3) and hourglass badge; value is the requested target |
+| Normal | as above; `hvac_mode off` shows target `Off` (F40) and the `power` icon as action icon; buttons still active |
+| Pending | the tapped button gets the 3 px dashed border, the badge shows the hourglass, the target value is the requested one |
 | Failed | real target; alert badge |
-| Unavailable | dotted OFF frame, buttons dotted, temperatures `n/a` (F40 OFF), warn badge, no humidity |
+| Unavailable | dotted OFF frame, buttons dotted, line 2 shows `n/a` (F24 OFF, no icons), target `n/a` (F40 OFF), warn badge |
 | Loading | temperatures `-`; buttons active (a tap needs a known target, so it is ignored until the first value) |
-| Stale | temperatures OFF grey |
+| Stale | current temperature, humidity and target OFF grey |
 
-Redraw: current temperature rect; humidity icon+text; action text; target value
-rect (+ label unchanged); mode row; badge. A target tap redraws only target
-value rect and badge.
+Redraw: line 2 (box (12, 54.6, Lx-12, 28.8)); target value box; badge. A target tap
+redraws the tapped button, the target value box and the badge only.
 
-## 7. Sensor
+## 7. Sensor, 1x1 or 2x1
 
 HA: domain `sensor`; state (numeric or text); attributes
 `unit_of_measurement`, `device_class`; `friendly_name`. Read-only.
 Sizes 1x1 (default), 2x1. Not focusable, no hit regions.
 
-| Element | Rect | Font / grey |
-|---------|------|-------------|
-| Value + unit | (8, 12, W-16, 64) | value F40, unit F24 (F56 / F40 when W >= 376), centre |
-| Name | (8, 92, W-16, 44) | F18 DIM, centre, max 2 lines (F24 single line when W >= 376, rect (8, 88, W-16, 40)) |
-| Badge | (W-32, 8, 24, 24) | S |
+### 1x1 (W = 176 or 248): centred 2-line stack (Stack B)
 
-Value formatting: numeric states rounded to 1 decimal (drop `.0`); non-numeric
-text uses F24, centred, max 2 lines. Unit appended without space for `°C`/`%`,
+Vertical budget:
+
+| Line | Font | cy | Baseline | Box top | Box bottom | Gap below |
+|------|------|----|----------|---------|------------|-----------|
+| 1 Value + unit | F40 value, F24 unit | 39 | 53 (shared) | 15.0 | 63.0 | 4.2 |
+| 2 Name | F18 | 78 | 84 | 67.2 | 88.8 | |
+| **Sum** | | | | 15.0..88.8 | | **73.8 of 80** |
+
+| Element | Box (x, y, w, h) | Font / grey |
+|---------|------------------|-------------|
+| Value + unit `w-N-value` | centred at cx = W/2, box (12, 15, W-24, 48) | value F40 INK, unit F24 INK, same baseline 53 (`baseline_left` for both) |
+| Name `w-N-name` | (12, 67.2, W-24, 21.6), centred | F18 DIM, one line, truncated with `…` |
+| Badge | (W-36, 12, 24, 24) | S; used only with the short `n/a` / `-` value, which does not reach it |
+
+Value and unit are one centred group: group width = value width + 2 + unit width.
+`8.4°C`: value 64 px (F40), unit 29 px (`°C` at F24), group 94 px; start x = W/2 - 47
+(41 in landscape, 77 in portrait). Unit appended without space for `°C`/`°F`/`%`,
 with a space otherwise.
+
+Checks (landscape, content width 152): `8.4°C` 94 px; **`-12.5°C` = 104 + 2 + 29 = 135
+px, fits**, with 8.5 px on each side. Check on height: the value box 15..63 and the
+name box 67.2..88.8 lie inside 12..92, 4.2 px apart; no part of the value touches
+the frame (digits cap height 29 px: ink 24..53). If a value is wider than W-24 the
+rule is: drop one decimal, then the value goes to F24 with the unit at F18
+(same baseline); never wrap.
+
+Names: one line only at F18, width 152 (landscape) / 224 (portrait), truncated
+with `…` (e.g. `Living room temperat…`). No wrapping.
+
+Non-numeric state text: F24 INK centred in the value box (baseline 53 + the F24
+offset: cy 39, baseline 47), single line truncated with `…`.
+
+Fill: horizontal reserved 152 / 152 = 100 % (typical group 62 %); vertical 73.8 / 80
+= 92 %.
+
+### 2x1 (W = 364 or 508): row
+
+Vertical budget:
+
+| Element | Font | cy | Baseline | Box top | Box bottom |
+|---------|------|----|----------|---------|------------|
+| Value + unit | F56 value, F40 unit | 52 | 71 (shared) | 18.4 | 85.6 |
+| Name, one line | F24 | 52 | 60 | 37.6 | 66.4 |
+| Name, two lines (Stack A) | F24 x 2 | 36 / 69 | 44 / 77 | 21.6 / 54.6 | 50.4 / 83.4 |
+
+Sum: value 67.2 of 80; name 28.8 or 61.8 of 80 (the two stacks never coexist).
+
+| Element | Box (x, y, w, h) | Font / grey |
+|---------|------------------|-------------|
+| Name `w-N-name` | (12, y per above, W-232, h) | F24 INK, left; up to 2 lines, then `…` |
+| Value + unit `w-N-value` | right-aligned at x = W-12, box (W-208, 18.4, 196, 67.2) | value F56 INK, unit F40 INK, same baseline 71 |
+| Badge | (W-224, 40, 24, 24) | S; only with the short `n/a`, which is 88 px wide |
+
+Widths: `-12.5°C` = F56 145 + 2 + F40 48 = 195 px = the value box, so the name column
+is W-232 (landscape 132, portrait 276). Fill: horizontal 100 %, vertical 67.2 / 80 =
+84 %.
 
 | State | Look |
 |-------|------|
@@ -224,109 +398,182 @@ with a space otherwise.
 | Loading | value `-` OFF |
 | Stale | value OFF grey |
 
-Redraw: value rect only. Pending: n/a.
+Redraw: value group box only. Pending: n/a.
 
-## 8. Binary sensor
+## 8. Binary sensor, 1x1
 
-HA: domain `binary_sensor`; state `on`/`off`; `friendly_name`. Read-only, 1x1
-(default) / 2x1, not focusable.
+HA: domain `binary_sensor`; state `on`/`off`; `friendly_name`. Read-only, 1x1,
+not focusable.
 OPEN (needs architect): the 004 attribute list has no `device_class` for
-binary_sensor, so wording is generic (`On`/`Off`); adding `device_class` would
-allow `Open`/`Closed`, `Detected`/`Clear`.
+binary_sensor, so wording is generic (`On`/`Off`) and the icon cannot be chosen.
+With `device_class` the icon and wording follow it (window: `window` icon,
+`Open`/`Closed`; door, motion, ...). Until decided, the mockup shows a window
+sensor and the generic fallback icon is `dot_on` / `dot_off` (filled / outline ring).
 
-| Element | Rect | Content |
-|---------|------|---------|
-| Indicator | (W/2-20, 16, 40, 40) | circle d=40: INK-filled = on, 2 px outline = off |
-| State text | (8, 64, W-16, 28) | F24 centre: `On` / `Off` |
-| Name | (8, 96, W-16, 44) | F18 DIM, centre, max 2 lines |
-| Badge | (W-32, 8, 24, 24) | S |
+Same toggle layout, budget and boxes as Light (section 3), with a sensor icon
+instead of the bulb: **`window_on`** (window outline, 18 x 18 of the 24 grid,
+cross mullions, panes **filled INK**) when on, **`window_off`** (the same outline,
+panes empty) when off. State is carried by fill, not by grey.
 
-Unavailable: dotted OFF frame, indicator drawn as warn icon (40), text `n/a`.
-Redraw: indicator + state text rect (8, 16, W-16, 76).
+| Element | Box (x, y, w, h) | Content |
+|---------|------------------|---------|
+| Name `w-N-name` | (12, 15.6, W-24, 28.8) | F24 INK, truncated with `…` |
+| Icon `w-N-icon` | (12, 49, 40, 40) | window_on / window_off |
+| State `w-N-state` | (58, 54.6, W-98, 28.8) | F24 DIM: `On` / `Off` |
+| Badge | (W-36, 57, 24, 24) | S (not used: the icon shows unavailable) |
 
-## 9. Weather
+The frame stays PAPER in both states (the icon carries the state; the widget
+is read-only so the INK fill is reserved for things you can toggle).
+Unavailable: dotted OFF frame, icon replaced by the `warn` M icon in OFF, state
+`n/a`. Vertical budget 73.4 of 80 as Light. Redraw: icon + state box.
+
+## 9. Weather, 2x1 (default) or 1x1
 
 HA: domain `weather`; state = condition; attributes `temperature`, `humidity`,
-`temperature_unit`; `friendly_name`. Read-only. Sizes 2x1 (default), 1x1 to
-4x1. Not focusable.
+`temperature_unit`; `friendly_name`. Read-only. Not focusable.
 
-### 2x1 and wider (H = 144)
+### 2x1 (W = 364 or 508)
 
-| Element | Rect | Font / grey |
-|---------|------|-------------|
-| Name | (8, 8, W-48, 32) | F24 INK |
-| Badge | (W-32, 8, 24, 24) | S |
-| Condition icon | (12, 56, 64, 64) | L |
-| Temperature | (88, 52, 170, 72) | F56 left, unit F40: `12°C` (integer) |
-| Humidity icon | (W-112, 56, 24, 24) | drop S |
-| Humidity text | (W-84, 52, 76, 32) | F24 right: `76%` |
-| Condition text | (W-120, 92, 112, 28) | F18 DIM right |
+Left block = Stack A with the humidity moved onto the condition line; the
+temperature is alone on the right (one line, no 2-line stack there).
+
+Vertical budget:
+
+| Line | Font / size | cy | Baseline | Box top | Box bottom | Gap below |
+|------|-------------|----|----------|---------|------------|-----------|
+| 1 Name | F24 | 36 | 44 | 21.6 | 50.4 | 4.2 |
+| 2 Condition + humidity | F24, S icon | 69 | 77 | 54.6 | 83.4 | |
+| **Sum (left block)** | | | | | | **61.8 of 80** |
+| Temperature (right) | F40 value, F24 unit | 52 | 66 (shared) | 28.0 | 76.0 | single line |
+| Icon | L 48 | 52 | n/a | 28 | 76 | |
+
+| Element | Box (x, y, w, h) | Font / grey |
+|---------|------------------|-------------|
+| Condition icon `w-N-icon` | (12, 28, 48, 48) | L, INK |
+| Name `w-N-name` | (68, 21.6, W-174, 28.8) | F24 INK, left, truncated with `…` |
+| Condition `w-N-cond` | starts x = 68, baseline 77 | F24 DIM, left |
+| Humidity icon `w-N-hum-icon` | (x_c + 12, 57, 24, 24) | S `drop` INK; x_c = end of the condition text |
+| Humidity text `w-N-hum-text` | starts at drop x + 28, baseline 77 | F24 INK: `76%` |
+| Temperature `w-N-temp` | right-aligned at x = W-13, baseline 66 | value F40 + unit F24 (`baseline_left`), INK; `12°C` (integer) |
+| Badge | (68, 57, 24, 24) | S, only when unavailable (condition line is then empty) |
+
+Widths (landscape W = 364): temperature `12°C` = 51 + 2 + 29 = 82 px, so it starts
+at x = 270 (`-12°C` = 96 px, x = 256). Condition + humidity run: `Cloudy` 83 px
+(68..151), 12 px gap, drop 163..187, `76%` 53 px 191..244. Gap to the temperature
+(270) is 26 px. Worst case `Pouring` (91 px) ends the run at x = 252, 18 px to the
+temperature. Name box ends at x = W-106: 258 (landscape) / 402 (portrait). Portrait
+has more room; the run is left-aligned in both.
 
 Condition text (short): Sunny, Clear, Cloudy, Partly, Rain, Pouring, Snow, Fog,
-Wind, Storm, else the raw state truncated.
-Humidity is omitted if unknown.
+Wind, Storm, else the raw state truncated. Humidity (with its drop) is omitted if
+unknown.
 
-### 1x1 (H = 144)
+Fill: horizontal 12..W-12 = 100 %; vertical: left block 61.8 / 80 = 77 %, icon and
+temperature 48 / 80 = 60 %.
 
-Name (8, 8, W-48, 28) F18 DIM; icon M (12, 44, 40, 40); temperature
-(56, 40, W-64, 56) F40 left, unit F24; condition text (8, 108, W-16, 28) F18
-DIM centre. No humidity.
+### 1x1 (W = 176 or 248): Stack B
 
-States: Unavailable: icon `unknown` OFF, temperature `n/a`, dotted frame, warn
-badge. Loading: `-`. Stale: temperature OFF grey. Redraw: icon + temperature +
-humidity + condition rects individually.
+Vertical budget:
 
-## 10. Vacuum
+| Line | Font | cy | Baseline | Box top | Box bottom | Gap below |
+|------|------|----|----------|---------|------------|-----------|
+| 1 Temperature | F40 value, F24 unit | 39 | 53 (shared) | 15.0 | 63.0 | 4.2 |
+| 2 Condition | F18 | 78 | 84 | 67.2 | 88.8 | |
+| **Sum** | | | | 15.0..88.8 | | **73.8 of 80** |
+| Icon | L 48 | 52 | n/a | 28 | 76 | beside the stack |
+
+| Element | Box (x, y, w, h) | Font / grey |
+|---------|------------------|-------------|
+| Condition icon `w-N-icon` | (12, 28, 48, 48) | L, INK |
+| Temperature `w-N-temp` | starts x = 64, baseline 53 | value F40 + unit F24 (`baseline_left`) INK; `12°C` |
+| Condition `w-N-cond` | (64, 67.2, W-76, 21.6), baseline 84 | F18 DIM, left, truncated with `…` |
+| Badge | (64, 66, 24, 24) | S, unavailable only (condition empty) |
+
+Widths: column x = 64..164 = 100 px; `-12°C` = 96 px fits; `Pouring` at F18 = 68 px.
+No name and no humidity at 1x1. Fill: horizontal 12..W-12 = 100 %; vertical text
+73.8 / 80 = 92 %, icon 48 / 80 = 60 %.
+
+States (both): Unavailable: icon `unknown` OFF, temperature `n/a` (F40 OFF), dotted
+frame, warn badge, no humidity and no condition. Loading: `-`. Stale: temperature
+OFF grey. Redraw: icon + temperature + humidity + condition boxes individually.
+
+## 10. Vacuum, wide
 
 HA: domain `vacuum`; state (`cleaning`, `docked`, `idle`, `paused`,
 `returning`, `error`, `unavailable`); attributes `battery_level` (0..100),
 `status` (text, used only for the error text), `friendly_name`.
 Services (004): `vacuum.start`, `vacuum.pause`, `vacuum.return_to_base`.
-Sizes 2x1 (default) up to 4x2.
+Size: wide x 1 only (portrait 2x1, landscape 3x1).
 
-### 2x1 (H = 144)
+Same grid and vertical budget as Cover (Stack A: name cy 36, status line cy 69;
+text block 61.8 of 80; buttons at the right):
 
-| Element | Rect | Font / grey |
-|---------|------|-------------|
-| Name | (8, 8, W-232, 32) | F24 INK |
-| Status text | (W-216, 8, 108, 32) | F18 INK, right: `Cleaning`, `Docked`, `Idle`, `Paused`, `Returning`, `Error` |
-| Battery icon | (W-104, 12, 24, 24) | S battery (fill = pct) |
-| Battery text | (W-76, 8, 40, 32) | F18 right: `85%` |
-| Badge | (W-32, 8, 24, 24) | S |
-| Button 1 "start" | (x_0, 56, bw, 80) | play M, sub-region 1 |
-| Button 2 "pause" | (x_1, 56, bw, 80) | pause M, sub-region 2 |
-| Button 3 "dock" | (x_2, 56, bw, 80) | dock M, sub-region 3 |
+| Element | Box (x, y, w, h) | cy | Font / grey |
+|---------|------------------|----|-------------|
+| Name | (12, 21.6, W-252, 28.8) | 36 | F24 INK, left |
+| Status text | starts x = 12, box h 28.8 | 69 | F24 DIM: `Cleaning`, `Docked`, `Idle`, `Paused`, `Returning`, `Error` |
+| Battery icon S | 12 px right of the status text | 69 | S battery (fill = pct) |
+| Battery text | 4 px right of the icon | 69 | F18 INK: `85%` (box h 21.6) |
+| Badge | (W-264, 57, 24, 24) | 69 | S, failed / unavailable only |
+| Button 1 "start" | (W-228, 20, 64, 64) | 52 | play M, sub-region 1 |
+| Button 2 "pause" | (W-152, 20, 64, 64) | 52 | pause M, sub-region 2 |
+| Button 3 "dock" | (W-76, 20, 64, 64) | 52 | dock M, sub-region 3 |
 
-2x2 (H = 304): status big (8, 48, W-16, 56) F40 centre; battery bar
-(8, 112, W-16, 24) as the cover position bar with the percent text
-(8, 144, W-16, 32) F24 centre; buttons at y = 216. Name, status, badge as in
-2x1 are replaced by: name (8, 8, W-48, 32); no top-row status/battery.
+The status line group must end before the badge, x <= W-272: widest `Returning`
+(118 px) + 12 + 24 + 4 + `100%` at F18 (52 px) = 210, ends at x = 222 (portrait
+limit 236). Fill: as Cover (100 % / 80 % / 77 %).
 
 Actions: 1 -> `vacuum.start`; 2 -> `vacuum.pause`; 3 -> `vacuum.return_to_base`;
-0 -> none. All -> pending.
+0 -> none. All -> pending (tapped button dashed + hourglass M, no badge).
 
 Fill (current mode): `cleaning` -> start filled; `paused` -> pause filled;
 `docked` or `returning` -> dock filled; `idle`/`error` -> none. `error` shows
-the `status` text in the status rect (truncated) and the alert badge.
+the `status` text in the status position (truncated, no battery group) and the
+alert badge.
 
-States: Pending (tapped button dashed + hourglass M, confirmed by the next
-fetch with a different state); Unavailable (dotted, `n/a`, battery `-`, buttons
-dotted); Loading (`-`); Stale (status/battery text OFF grey). Battery <= 15 %:
-battery icon with the "!" glyph (as status bar).
+States: Pending (confirmed by the next fetch with a different state); Unavailable
+(dotted, `n/a`, battery `-`, buttons dotted); Loading (`-`); Stale (status/battery
+text OFF grey). Battery <= 15 %: battery icon with the "!" glyph (as status bar).
 
-Redraw: status text, battery icon+text, affected buttons, badge.
+Redraw: status line, affected buttons, badge.
 
 ## Summary table
 
-| Widget | Sub-regions (id) | Focusable | Read-only |
-|--------|------------------|-----------|-----------|
-| cover / group | 1 up, 2 stop, 3 down | yes (INNER mode, entry = stop) | no |
-| light, switch, automation | whole widget = id 0 | yes (push = action) | no |
-| climate | 1 minus, 2 plus, 3 mode (optional) | yes (INNER, entry = minus) | no |
-| sensor, binary_sensor, weather | none | no | yes |
-| vacuum | 1 start, 2 pause, 3 dock | yes (INNER, entry = start) | no |
+| Widget | Sizes (portrait / landscape) | Sub-regions (id) | Focusable | Read-only |
+|--------|------------------------------|------------------|-----------|-----------|
+| cover / group | 2x1 / 3x1 | 1 up, 2 stop, 3 down | yes (INNER mode, entry = stop) | no |
+| light, switch, automation | 1x1 | whole widget = id 0 | yes (push = action) | no |
+| climate | 2x1 / 3x1 | 1 minus, 2 plus (mode is display-only, no sub-region) | yes (INNER, entry = minus) | no |
+| sensor | 1x1, 2x1 | none | no | yes |
+| binary_sensor | 1x1 | none | no | yes |
+| weather | 1x1, 2x1 | none | no | yes |
+| vacuum | 2x1 / 3x1 | 1 start, 2 pause, 3 dock | yes (INNER, entry = start) | no |
 
-Sub-region rects for the engine (`subRegions`): cover/group/vacuum: three
-buttons from the button-row formula at y = 56 (H=144) or y = 216 (H=304);
-climate: minus (8,120,80,80), plus (W-88,120,80,80), mode (8,216,W-16,80) only
-when enabled.
+Sub-region rects for the engine (`subRegions`), widget-relative: cover / group /
+vacuum: `(W-228, 20, 64, 64)`, `(W-152, 20, 64, 64)`, `(W-76, 20, 64, 64)`;
+climate: minus `(W-276, 20, 64, 64)`, plus `(W-76, 20, 64, 64)`. Unchanged in
+revision 4 (so layout.md section 8 is unchanged).
+
+## Fill check summary
+
+| Widget | Horizontal | Vertical | Meets ~25 % empty? |
+|--------|-----------|----------|--------------------|
+| cover, group, vacuum (wide) | 100 % | 80 % (buttons), 77 % (text) | yes |
+| climate (wide) | 100 % | 77 % (left), 80 % (cluster) | yes |
+| sensor 1x1 | 100 % reserved (62 % typical ink) | 92 % | yes |
+| sensor 2x1 | 100 % | 84 % | yes |
+| weather 2x1 | 100 % | 77 % (left), 60 % (icon, temperature) | yes |
+| weather 1x1 | 100 % | 92 % (text), 60 % (icon) | yes |
+| light, switch, automation, binary_sensor 1x1 | 100 % | 92 % (text + icon), 50 % (icon alone) | yes |
+
+## Budget totals (revision 4)
+
+| Widget | Text/content stack height | Limit |
+|--------|---------------------------|-------|
+| cover, group, vacuum | 61.8 | 80 |
+| toggles, binary_sensor | 73.4 | 80 |
+| climate left block | 61.8 | 80 |
+| sensor 1x1 | 73.8 | 80 |
+| sensor 2x1 | 67.2 (value) / 61.8 (two-line name) | 80 |
+| weather 2x1 left block | 61.8 | 80 |
+| weather 1x1 | 73.8 | 80 |

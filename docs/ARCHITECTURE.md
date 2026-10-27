@@ -99,18 +99,23 @@ Settings (and system screens like low battery / errors).
 - **Tabs:** the user defines tabs in config, each with a title and a list of
   widgets. A tab bar switches between them; the rocker up/down also cycles tabs.
 - **Widgets:** one widget type per entity domain (cover, light, switch,
-  automation, climate, sensor/binary_sensor, weather, vacuum). Each type has a
-  default size in grid cells (e.g. 1x1 toggle, 2x1 cover with up/stop/down,
-  2x2 thermostat), overridable per widget in config.
+  automation, climate, sensor/binary_sensor, weather, vacuum). Every widget is one
+  grid row tall; toggles are 1x1, covers/climate/vacuum are wide (2 cells portrait,
+  3 cells landscape). Allowed sizes per type are in docs/ui/layout.md section 3;
+  config `size` can only choose within them.
 - **Layout engine (`lib/ui`, pure):** given the screen size and the tab's widget
   list, flows widgets into a fixed-cell grid (row-major, first fit), splits into
   sub-pages when a tab overflows, and returns pixel rectangles for drawing,
   hit-testing and dirty-region refresh. No widget code knows absolute positions.
 - **Orientation is a setting** (`portrait` default, `landscape`). Because every
-  position comes from the layout engine, rotation means a different grid
-  (portrait 540x960: 2 columns; landscape 960x540: 4 columns, final numbers in
-  docs/ui/STYLE.md) plus `setRotation()`. M5Unified rotates touch coordinates;
-  rocker up/down mapping follows the rotation. Changing it triggers a full redraw.
+  position comes from the layout engine, rotation means a different grid plus
+  `setRotation()`: portrait 2x7 cells, bottom tab bar; landscape 5x4 cells, one
+  combined top bar (refresh label, tabs, battery). Cells are 104 px high, 12 px gaps,
+  64 px minimum touch targets (tab bar: 56 px high exception). M5Unified rotates touch
+  coordinates; rocker mapping has an `invert` flag until verified on the device.
+- **Fonts:** only M5GFX's built-in DejaVu at 18/24/40/56 px. Mockups are reviewed as
+  PNGs rendered with DejaVu (`tools/render_mockups.sh`) and checked for overflow and
+  overlap (`tools/check_mockups.py`), because SVG rendering depends on the viewer's fonts.
 - Specs in docs/ui/ describe widgets in cell-relative coordinates for both grids,
   not as fixed screens.
 
@@ -165,4 +170,11 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - 2026-10-27: UI fully config-driven: user-defined tabs with widget lists, laid out by a grid engine. Reason: the user wants to define what they see without reflashing.
 - 2026-10-27: Orientation is a setting, portrait default. Reason: with a grid layout engine both orientations cost only a second grid definition, not a second set of screens.
 - 2026-10-27: All network I/O runs in its own FreeRTOS task; the main loop owns input, UI and the idle hard cap. Reason: a stalled HTTP read can't be bounded inside HTTPClient, but it must never keep the device awake past the 120 s cap.
+- 2026-10-27: Thermostats: only the target temperature is changeable; mode is display-only. Reason: user preference; no `set_hvac_mode` needed.
+- 2026-10-27: Rocker long-press (TAB level) opens Settings; "refresh now" is a tap on the status bar's "updated" label (Settings has it too). Reason: user choice (option a).
+- 2026-10-27: Tab chrome made compact (user feedback on first mockups); layout engine follows the revised spec in a separate task. Reason: tabs took too much screen space.
+- 2026-10-27: Sleep indicator in the status bar, drawn (partial refresh of its region only) right before every power-off/deep sleep and cleared on wake. Two variants picked by the sleep plan: `touch_wake = false` (Button mode, low battery) shows "press the side button"; `touch_wake = true` shows "tap to wake". Reason: the frozen e-ink image otherwise looks awake, and the user should know how to wake it.
+- 2026-10-27: Minimum touch target 64x64 px (~7 mm at 234 ppi), down from 80. Reason: user feedback that widgets were oversized; 7 mm matches common mobile touch guidance and allows ~112 px cells.
+- 2026-10-27: All UI text and icons are positioned by their vertical center (M5GFX middle_* datums); specs give center lines, not top offsets. Reason: user-reported misalignment; one rule for spec, SVG (`dominant-baseline="central"`) and firmware.
+- 2026-10-27: Mockups are reviewed as PNGs rendered with DejaVu and must pass `tools/check_mockups.py`. Reason: SVG viewers substitute fonts (the user saw overflow that DejaVu renders didn't have); the designer can't render, so the check is automated.
 - 2026-10-27: Pure logic in `lib/`, hardware in `src/`. Reason: native unit tests without the device.

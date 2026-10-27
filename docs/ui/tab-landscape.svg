@@ -1,100 +1,158 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans, Verdana, sans-serif">
-  <!-- Landscape 960x540, tab "Living room" of config.example.yaml. Spec: docs/ui/STYLE.md, layout.md, widgets.md.
-       Greys only: #000 (0), #444 (4), #888 (8), #ccc (12), #fff (15). No pager (everything fits in 3 rows). -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
+  <!-- Landscape 960x540, tab "Living room" of config.example.yaml (+ sensor, automation, weather appended). Spec: docs/ui/STYLE.md, layout.md, widgets.md (revision 4).
+       Greys only: #000 (0), #444 (4), #888 (8), #fff (15). No pager (10 widgets fit in 4 rows).
+       Top bar (0,0,960,64) = status + tabs. Grid: 5 columns x 176 at x=16,204,392,580,768; 4 rows x 104 at y=72,188,304,420; gap 12. Wide = 3 cells = 552.
+       Widget ids: <g id="w-N"> with <rect id="w-N-frame">; every text/icon inside has an id starting "w-N-"; buttons end in "-btn".
+       Widget text uses dominant-baseline="alphabetic" at an explicit baseline y = cy + 6 (F18) / 8 (F24) / 14 (F40) / 19 (F56), so the render does not depend on dominant-baseline support.
+       Text box = 1.2 x font size centred on cy; every box lies inside the frame minus 12 px (see the budget tables in widgets.md).
+       Status bar and tab text still use dominant-baseline="central" (unchanged).
+       5 tabs configured = 5 slots (x=172,304,436,568,700, w=120, y=4, h=56), so no overflow slot.
+       Invisible hit areas: refresh (16,4,144,56); settings (832,4,112,56). -->
   <defs>
     <symbol id="i-up" viewBox="0 0 24 24"><polygon points="12,5 21,19 3,19" fill="currentColor"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><polygon points="12,19 21,5 3,5" fill="currentColor"/></symbol>
     <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" fill="currentColor"/></symbol>
     <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M12 2 a7 7 0 0 0 -4 12.7 V18 h8 v-3.3 A7 7 0 0 0 12 2z" fill="currentColor"/><rect x="8.5" y="19.5" width="7" height="2.5" fill="currentColor"/></symbol>
+    <symbol id="i-bulb-off" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 a6.5 6.5 0 0 0 -3.6 11.9 V18 h7.2 v-3.1 A6.5 6.5 0 0 0 12 3z"/><path d="M9 21 H15"/></g></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><rect x="8" y="2" width="2.5" height="6" fill="currentColor"/><rect x="13.5" y="2" width="2.5" height="6" fill="currentColor"/><path d="M6 8 H18 V12 A6 6 0 0 1 6 12 Z" fill="currentColor"/><rect x="10.75" y="17.5" width="2.5" height="4.5" fill="currentColor"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.5 12 A7.5 7.5 0 0 1 19.5 12"/><path d="M19.5 12 A7.5 7.5 0 0 1 4.5 12"/></g><polygon points="15.5,10.5 23.5,10.5 19.5,15.5" fill="currentColor"/><polygon points="0.5,13.5 8.5,13.5 4.5,8.5" fill="currentColor"/></symbol>
     <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2 C12 2 5 10 5 15 a7 7 0 0 0 14 0 C19 10 12 2 12 2z" fill="currentColor"/></symbol>
     <symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/><rect x="10.5" y="4" width="3" height="16" fill="currentColor"/></symbol>
-    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2 C13 7 19 9 19 15 a7 7 0 0 1 -14 0 C5 11 8 10 8.5 6 C10 7 11 5 12 2z" fill="currentColor"/></symbol>
+    <!-- flame: two tongues (tip at 14,1.5 and 7.6,8.2) and a hollow teardrop, so it never reads as a drop -->
+    <symbol id="i-flame" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22 C7.5 22 4.5 19 4.5 15 C4.5 12 6.2 10.2 7.6 8.2 C8.2 9.4 8.6 10.2 9.4 10.8 C9.6 7 11.2 3.6 14 1.5 C14.2 5 16.8 7 18.2 10.2 C19.6 13.4 19.5 15 19.5 15 C19.5 19 16.5 22 12 22 Z M12 20 C10.2 20 8.8 18.8 8.8 17.2 C8.8 15.8 10.2 14.8 12 12.6 C13.8 14.8 15.2 15.8 15.2 17.2 C15.2 18.8 13.8 20 12 20 Z" fill="currentColor"/></symbol>
+    <symbol id="i-window-off" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M12 3 V21 M3 12 H21"/></g></symbol>
+    <symbol id="i-window-on" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1" fill="currentColor"/><path d="M12 3 V21 M3 12 H21" fill="none" stroke="#fff" stroke-width="2"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 19 A4.5 4.5 0 0 1 6.6 10.05 A6 6 0 0 1 18.2 9.2 A5 5 0 0 1 17.5 19 Z" fill="currentColor"/></symbol>
     <symbol id="i-wifi" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="1.8" fill="currentColor"/></symbol>
     <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3 H17 V8 L12 12 L17 16 V21 H7 V16 L12 12 L7 8 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
   </defs>
 
   <rect x="0" y="0" width="960" height="540" fill="#fff"/>
 
-  <!-- Status bar (0,0,960,40) -->
-  <use xlink:href="#i-wifi" href="#i-wifi" x="16" y="8" width="24" height="24" color="#000"/>
-  <text x="48" y="20" font-size="18" fill="#000" dominant-baseline="central">updated 14:05</text>
-  <rect x="849" y="11" width="34" height="18" fill="none" stroke="#000" stroke-width="2"/>
-  <rect x="884" y="15" width="4" height="10" fill="#000"/>
-  <rect x="850" y="12" width="25" height="16" fill="#000"/>
-  <text x="944" y="20" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
-  <rect x="0" y="38" width="960" height="2" fill="#000"/>
+  <!-- Top bar, status part. Connection icon (16,20,24,24), centre line y=32; label x=56, two lines at cy 21 and 43 -->
+  <use xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+  <text x="56" y="21" font-size="18" fill="#000" dominant-baseline="central">updated</text>
+  <text x="56" y="43" font-size="18" fill="#000" dominant-baseline="central">14:05</text>
+  <!-- Battery icon at (848,22): body (848,22,36,20), inner (850,24,32,16), level fill 25 px (78 %), nub (884,27,4,10); percent right edge x=944, cy 32 -->
+  <rect x="848" y="22" width="36" height="20" fill="#000"/>
+  <rect x="850" y="24" width="32" height="16" fill="#fff"/>
+  <rect x="850" y="24" width="25" height="16" fill="#000"/>
+  <rect x="884" y="27" width="4" height="10" fill="#000"/>
+  <text x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
 
-  <!-- Tab bar (0,40,160,500): 5 slots, 4 tabs, slot 5 empty -->
-  <rect x="158" y="40" width="2" height="500" fill="#000"/>
-  <rect x="16" y="56" width="128" height="80" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
-  <text x="80" y="85" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Living</text>
-  <text x="80" y="107" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">room</text>
-  <rect x="17" y="153" width="126" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-  <text x="80" y="192" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Kitchen</text>
-  <rect x="17" y="249" width="126" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-  <text x="80" y="288" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Bedroom</text>
-  <rect x="17" y="345" width="126" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-  <text x="80" y="384" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Garage</text>
+  <!-- Tab strip (172,0,648,64): 5 slots at x=172,304,436,568,700, y=4, 120x56, cy 32 (two-line labels at cy 21 / 43) -->
+  <rect x="172" y="4" width="120" height="56" rx="8" fill="#000"/>
+  <text x="232" y="21" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Living</text>
+  <text x="232" y="43" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">room</text>
+  <rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="364" y="21" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Whole</text>
+  <text x="364" y="43" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">house</text>
+  <rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Kitchen</text>
+  <rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Bedroom</text>
+  <rect x="701" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="760" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Garage</text>
 
-  <!-- Light "Ceiling" cell (0,0) = (176,56) 180x144, on -->
-  <g transform="translate(176,56)">
-    <rect x="1" y="1" width="178" height="142" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
-    <use xlink:href="#i-bulb" href="#i-bulb" x="12" y="12" width="40" height="40" color="#fff"/>
-    <text x="60" y="32" font-size="24" fill="#fff" dominant-baseline="central">On</text>
-    <text x="12" y="78" font-size="24" fill="#fff" dominant-baseline="central">Ceiling</text>
+  <!-- w-1 Cover "Shutter" wide (16,72) 552x104, opening: up filled. Stack cy 36 / 69 (baselines 44 / 77). Buttons x = W-228 = 324, 400, 476, y=20 -->
+  <g id="w-1" transform="translate(16,72)">
+    <rect id="w-1-frame" x="1" y="1" width="550" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-1-name" x="12" y="44" font-size="24" fill="#000" dominant-baseline="alphabetic">Shutter</text>
+    <text id="w-1-state" x="12" y="77" font-size="24" fill="#444" dominant-baseline="alphabetic">Opening 40%</text>
+    <rect id="w-1-up-btn" x="324" y="20" width="64" height="64" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+    <use id="w-1-up-icon" xlink:href="#i-up" href="#i-up" x="336" y="32" width="40" height="40" color="#fff"/>
+    <rect id="w-1-stop-btn" x="401" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-1-stop-icon" xlink:href="#i-stop" href="#i-stop" x="412" y="32" width="40" height="40" color="#000"/>
+    <rect id="w-1-down-btn" x="477" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-1-down-icon" xlink:href="#i-down" href="#i-down" x="488" y="32" width="40" height="40" color="#000"/>
   </g>
 
-  <!-- Cover group "Downstairs shutters" cell (1,0) = (372,56) 376x144; up button pending -->
-  <g transform="translate(372,56)">
-    <rect x="1" y="1" width="374" height="142" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <text x="8" y="24" font-size="18" fill="#000" dominant-baseline="central">Downstairs shutt…</text>
-    <text x="336" y="24" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">Closed</text>
-    <rect x="9.5" y="57.5" width="106" height="77" rx="8" fill="#fff" stroke="#000" stroke-width="3" stroke-dasharray="8 6"/>
-    <use xlink:href="#i-hourglass" href="#i-hourglass" x="42" y="76" width="40" height="40" color="#000"/>
-    <rect x="134" y="57" width="107" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <use xlink:href="#i-stop" href="#i-stop" x="167" y="76" width="40" height="40" color="#000"/>
-    <rect x="259" y="57" width="107" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <use xlink:href="#i-down" href="#i-down" x="292" y="76" width="40" height="40" color="#000"/>
+  <!-- w-2 Cover group "Downstairs shutters" wide (16,188) 552x104. Up pending: dashed button + ONE hourglass in the button, no badge -->
+  <g id="w-2" transform="translate(16,188)">
+    <rect id="w-2-frame" x="1" y="1" width="550" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-2-name" x="12" y="44" font-size="24" fill="#000" dominant-baseline="alphabetic">Downstairs shutters</text>
+    <text id="w-2-state" x="12" y="77" font-size="24" fill="#444" dominant-baseline="alphabetic">Closed</text>
+    <rect id="w-2-up-btn" x="325.5" y="21.5" width="61" height="61" rx="8" fill="#fff" stroke="#000" stroke-width="3" stroke-dasharray="8 6"/>
+    <use id="w-2-up-icon" xlink:href="#i-hourglass" href="#i-hourglass" x="336" y="32" width="40" height="40" color="#000"/>
+    <rect id="w-2-stop-btn" x="401" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-2-stop-icon" xlink:href="#i-stop" href="#i-stop" x="412" y="32" width="40" height="40" color="#000"/>
+    <rect id="w-2-down-btn" x="477" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-2-down-icon" xlink:href="#i-down" href="#i-down" x="488" y="32" width="40" height="40" color="#000"/>
   </g>
 
-  <!-- Sensor "Outside temperature" cell (3,0) = (764,56) 180x144 -->
-  <g transform="translate(764,56)">
-    <rect x="1" y="1" width="178" height="142" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <text x="90" y="44" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="central">8.4<tspan font-size="24">°C</tspan></text>
-    <text x="90" y="103" font-size="18" fill="#444" text-anchor="middle" dominant-baseline="central">Outside</text>
-    <text x="90" y="125" font-size="18" fill="#444" text-anchor="middle" dominant-baseline="central">temperature</text>
+  <!-- w-3 Light "Ceiling" 1x1 (580,72) 176x104, on. Name F24 cy 30 (baseline 38) full width; line 2: icon M (12,49,40,40) cy 69 + state F24 x=58 baseline 77 -->
+  <g id="w-3" transform="translate(580,72)">
+    <rect id="w-3-frame" x="1" y="1" width="174" height="102" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+    <text id="w-3-name" x="12" y="38" font-size="24" fill="#fff" dominant-baseline="alphabetic">Ceiling</text>
+    <use id="w-3-icon" xlink:href="#i-bulb" href="#i-bulb" x="12" y="49" width="40" height="40" color="#fff"/>
+    <text id="w-3-state" x="58" y="77" font-size="24" fill="#fff" dominant-baseline="alphabetic">On 80%</text>
   </g>
 
-  <!-- Climate "Living room" cell (0,1) = (176,216) 376x304 -->
-  <g transform="translate(176,216)">
-    <rect x="1" y="1" width="374" height="302" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <text x="8" y="24" font-size="24" fill="#000" dominant-baseline="central">Living room</text>
-    <text x="8" y="80" font-size="56" fill="#000" dominant-baseline="central">21.5<tspan font-size="40">°C</tspan></text>
-    <use xlink:href="#i-drop" href="#i-drop" x="256" y="52" width="24" height="24" color="#000"/>
-    <text x="368" y="64" font-size="24" fill="#000" text-anchor="end" dominant-baseline="central">45%</text>
-    <text x="368" y="94" font-size="18" fill="#444" text-anchor="end" dominant-baseline="central">Heating</text>
-    <rect x="9" y="121" width="78" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <use xlink:href="#i-minus" href="#i-minus" x="28" y="140" width="40" height="40" color="#000"/>
-    <rect x="289" y="121" width="78" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <use xlink:href="#i-plus" href="#i-plus" x="308" y="140" width="40" height="40" color="#000"/>
-    <text x="192" y="132" font-size="18" fill="#444" text-anchor="middle" dominant-baseline="central">Target</text>
-    <text x="192" y="172" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="central">22.0°</text>
-    <line x1="8" y1="216.5" x2="368" y2="216.5" stroke="#888" stroke-width="1"/>
-    <use xlink:href="#i-flame" href="#i-flame" x="24" y="236" width="40" height="40" color="#000"/>
-    <text x="76" y="256" font-size="24" fill="#000" dominant-baseline="central">Mode: Heat</text>
+  <!-- w-4 Light "Floor lamp" 1x1 (768,72), off: outline bulb. F24, 127 px fits the 152 px name width -->
+  <g id="w-4" transform="translate(768,72)">
+    <rect id="w-4-frame" x="1" y="1" width="174" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-4-name" x="12" y="38" font-size="24" fill="#000" dominant-baseline="alphabetic">Floor lamp</text>
+    <use id="w-4-icon" xlink:href="#i-bulb-off" href="#i-bulb-off" x="12" y="49" width="40" height="40" color="#000"/>
+    <text id="w-4-state" x="58" y="77" font-size="24" fill="#444" dominant-baseline="alphabetic">Off</text>
   </g>
 
-  <!-- Cover "Living room shutter" cell (2,1) = (568,216) 376x144, opening: up filled -->
-  <g transform="translate(568,216)">
-    <rect x="1" y="1" width="374" height="142" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <text x="8" y="24" font-size="18" fill="#000" dominant-baseline="central">Living room shutt…</text>
-    <text x="336" y="24" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">Opening 40%</text>
-    <rect x="8" y="56" width="109" height="80" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
-    <use xlink:href="#i-up" href="#i-up" x="42" y="76" width="40" height="40" color="#fff"/>
-    <rect x="134" y="57" width="107" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <use xlink:href="#i-stop" href="#i-stop" x="167" y="76" width="40" height="40" color="#000"/>
-    <rect x="259" y="57" width="107" height="78" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-    <use xlink:href="#i-down" href="#i-down" x="292" y="76" width="40" height="40" color="#000"/>
+  <!-- w-5 Switch "Fan" 1x1 (580,188), off -->
+  <g id="w-5" transform="translate(580,188)">
+    <rect id="w-5-frame" x="1" y="1" width="174" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-5-name" x="12" y="38" font-size="24" fill="#000" dominant-baseline="alphabetic">Fan</text>
+    <use id="w-5-icon" xlink:href="#i-plug" href="#i-plug" x="12" y="49" width="40" height="40" color="#000"/>
+    <text id="w-5-state" x="58" y="77" font-size="24" fill="#444" dominant-baseline="alphabetic">Off</text>
+  </g>
+
+  <!-- w-7 Binary sensor "Window" 1x1 (768,188), on: window icon with filled panes; frame stays PAPER (read-only) -->
+  <g id="w-7" transform="translate(768,188)">
+    <rect id="w-7-frame" x="1" y="1" width="174" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-7-name" x="12" y="38" font-size="24" fill="#000" dominant-baseline="alphabetic">Window</text>
+    <use id="w-7-icon" xlink:href="#i-window-on" href="#i-window-on" x="12" y="49" width="40" height="40" color="#000"/>
+    <text id="w-7-state" x="58" y="77" font-size="24" fill="#444" dominant-baseline="alphabetic">On</text>
+  </g>
+
+  <!-- w-6 Climate "Living room" wide (16,304) 552x104. Left: name cy 36 (baseline 44); line 2 cy 69 (baseline 77): temp x=12, drop x=92, humidity x=120, flame x=186.
+       Right: minus btn (276,20), target F40 centred at cx = W-144 = 408, baseline 66 (cy 52), plus btn (476,20). No caption. -->
+  <g id="w-6" transform="translate(16,304)">
+    <rect id="w-6-frame" x="1" y="1" width="550" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-6-name" x="12" y="44" font-size="24" fill="#000" dominant-baseline="alphabetic">Living room</text>
+    <text id="w-6-temp" x="12" y="77" font-size="24" fill="#000" dominant-baseline="alphabetic">21.5°</text>
+    <use id="w-6-hum-icon" xlink:href="#i-drop" href="#i-drop" x="92" y="57" width="24" height="24" color="#000"/>
+    <text id="w-6-hum-text" x="120" y="77" font-size="24" fill="#000" dominant-baseline="alphabetic">45%</text>
+    <use id="w-6-act-icon" xlink:href="#i-flame" href="#i-flame" x="186" y="57" width="24" height="24" color="#000"/>
+    <rect id="w-6-minus-btn" x="277" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-6-minus-icon" xlink:href="#i-minus" href="#i-minus" x="288" y="32" width="40" height="40" color="#000"/>
+    <text id="w-6-target" x="408" y="66" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">22.0°</text>
+    <rect id="w-6-plus-btn" x="477" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-6-plus-icon" xlink:href="#i-plus" href="#i-plus" x="488" y="32" width="40" height="40" color="#000"/>
+  </g>
+
+  <!-- w-8 Sensor "Outside" 1x1 (580,304): value F40 cy 39 (baseline 53) with unit F24 on the same baseline, centred at cx 88; name F18 cy 78 (baseline 84) -->
+  <g id="w-8" transform="translate(580,304)">
+    <rect id="w-8-frame" x="1" y="1" width="174" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-8-value" x="88" y="53" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">8.4<tspan font-size="24" dx="2">°C</tspan></text>
+    <text id="w-8-name" x="88" y="84" font-size="18" fill="#444" text-anchor="middle" dominant-baseline="alphabetic">Outside</text>
+  </g>
+
+  <!-- w-9 Automation "Night mode" 1x1 (768,304), enabled = on. F24, 140 px fits the 152 px name width -->
+  <g id="w-9" transform="translate(768,304)">
+    <rect id="w-9-frame" x="1" y="1" width="174" height="102" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+    <text id="w-9-name" x="12" y="38" font-size="24" fill="#fff" dominant-baseline="alphabetic">Night mode</text>
+    <use id="w-9-icon" xlink:href="#i-auto" href="#i-auto" x="12" y="49" width="40" height="40" color="#fff"/>
+    <text id="w-9-state" x="58" y="77" font-size="24" fill="#fff" dominant-baseline="alphabetic">On</text>
+  </g>
+
+  <!-- w-10 Weather "Home" 2x1 (16,420) 364x104. Icon L (12,28,48,48); name x=68 baseline 44; line 2 baseline 77: condition x=68, drop x=163, humidity x=191.
+       Right: temperature F40 + unit F24 on baseline 66 (cy 52), right edge x = W-13 = 351 -->
+  <g id="w-10" transform="translate(16,420)">
+    <rect id="w-10-frame" x="1" y="1" width="362" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-10-icon" xlink:href="#i-cloud" href="#i-cloud" x="12" y="28" width="48" height="48" color="#000"/>
+    <text id="w-10-name" x="68" y="44" font-size="24" fill="#000" dominant-baseline="alphabetic">Home</text>
+    <text id="w-10-cond" x="68" y="77" font-size="24" fill="#444" dominant-baseline="alphabetic">Cloudy</text>
+    <use id="w-10-hum-icon" xlink:href="#i-drop" href="#i-drop" x="163" y="57" width="24" height="24" color="#000"/>
+    <text id="w-10-hum-text" x="191" y="77" font-size="24" fill="#000" dominant-baseline="alphabetic">76%</text>
+    <text id="w-10-temp" x="351" y="66" font-size="40" fill="#000" text-anchor="end" dominant-baseline="alphabetic">12<tspan font-size="24" dx="2">°C</tspan></text>
   </g>
 </svg>
