@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build docs/ui/flow.gif from the storyboard in docs/ui/flow/.
 # Frame order, file names and durations come from the table in docs/ui/flow/flow.md:
-# the first column is the SVG file name, and the first column whose header contains
+# the column headed "File" (or "Frame"; else the first column) is the SVG file name, and the column headed
 # "ms" is the duration. Frames are rendered with Inkscape (DejaVu Sans) and assembled
 # with ImageMagick.
 set -euo pipefail
@@ -24,10 +24,11 @@ python3 - "${manifest}" >"${work}/frames.tsv" <<'PY'
 import re, sys
 rows = [l.strip() for l in open(sys.argv[1], encoding="utf-8") if l.strip().startswith("|")]
 header = [c.strip().lower() for c in rows[0].strip("|").split("|")]
-ms_col = next(i for i, h in enumerate(header) if "ms" in h)
+ms_col = next(i for i, h in enumerate(header) if re.search(r"\bms\b", h))
+file_col = next((i for i, h in enumerate(header) if h in ("file", "frame")), 0)
 for row in rows[2:]:
     cells = [c.strip() for c in row.strip("|").split("|")]
-    name = re.sub(r"[`\[\]]|\(.*?\)", "", cells[0]).strip()
+    name = re.sub(r"[`\[\]]|\(.*?\)", "", cells[file_col]).strip()
     ms = int(re.sub(r"[^0-9]", "", cells[ms_col]))
     print(f"{name}\t{ms}")
 PY

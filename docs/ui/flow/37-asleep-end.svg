@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="1040" viewBox="0 0 540 1040" font-family="DejaVu Sans">
+<!-- Flow frame 37: idle timeout, ASLEEP again (Button variant sleep indicator, region 292,3,112,48). Wake mode is still Button (saved value). Final frame, 2500 ms. -->
+<defs>
+<symbol id="i-up" viewBox="0 0 24 24"><polygon points="12,5 21,19 3,19" fill="currentColor"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><polygon points="12,19 21,5 3,5" fill="currentColor"/></symbol>
+<symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" fill="currentColor"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><polygon points="7,4 20,12 7,20" fill="currentColor"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4.5" height="14" fill="currentColor"/><rect x="13.5" y="5" width="4.5" height="14" fill="currentColor"/></symbol>
+<symbol id="i-dock" viewBox="0 0 24 24"><path d="M3 11 L12 3 L21 11 V21 H3 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><polygon points="12,19 7.5,13.5 16.5,13.5" fill="currentColor"/></symbol>
+<symbol id="i-batt" viewBox="0 0 24 24"><rect x="1" y="6" width="19" height="12" fill="none" stroke="currentColor" stroke-width="2"/><rect x="21" y="9.5" width="2" height="5" fill="currentColor"/><rect x="2" y="7" width="14.5" height="10" fill="currentColor"/></symbol>
+<symbol id="i-auto" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.5 12 A7.5 7.5 0 0 1 19.5 12"/><path d="M19.5 12 A7.5 7.5 0 0 1 4.5 12"/></g><polygon points="15.5,10.5 23.5,10.5 19.5,15.5" fill="currentColor"/><polygon points="0.5,13.5 8.5,13.5 4.5,8.5" fill="currentColor"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2 C12 2 5 10 5 15 a7 7 0 0 0 14 0 C19 10 12 2 12 2z" fill="currentColor"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/><rect x="10.5" y="4" width="3" height="16" fill="currentColor"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22 C7.5 22 4.5 19 4.5 15 C4.5 12 6.2 10.2 7.6 8.2 C8.2 9.4 8.6 10.2 9.4 10.8 C9.6 7 11.2 3.6 14 1.5 C14.2 5 16.8 7 18.2 10.2 C19.6 13.4 19.5 15 19.5 15 C19.5 19 16.5 22 12 22 Z M12 20 C10.2 20 8.8 18.8 8.8 17.2 C8.8 15.8 10.2 14.8 12 12.6 C13.8 14.8 15.2 15.8 15.2 17.2 C15.2 18.8 13.8 20 12 20 Z" fill="currentColor"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 19 A4.5 4.5 0 0 1 6.6 10.05 A6 6 0 0 1 18.2 9.2 A5 5 0 0 1 17.5 19 Z" fill="currentColor"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="1.8" fill="currentColor"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24"><circle cx="4.5" cy="12" r="2.5" fill="currentColor"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><circle cx="19.5" cy="12" r="2.5" fill="currentColor"/></symbol>
+<symbol id="i-chev-l" viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+<symbol id="i-chev-r" viewBox="0 0 24 24"><polyline points="9,4 17,12 9,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M16.5 4.2 A9 9 0 1 0 20.46 15.08 A7 7 0 0 1 16.5 4.2 Z" fill="currentColor"/></symbol>
+<symbol id="i-sidebtn" viewBox="0 0 24 24"><line x1="2" y1="12" x2="13" y2="12" stroke="currentColor" stroke-width="2.5"/><polygon points="12,6 18,12 12,18" fill="currentColor"/><rect x="20" y="5" width="3" height="14" rx="1.5" fill="currentColor"/></symbol>
+</defs>
+<g id="screen">
+<rect x="0" y="0" width="540" height="960" fill="#fff"/>
+<use xlink:href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
+<text x="48" y="27" font-size="18" fill="#000" dominant-baseline="central">updated 14:32</text>
+<rect x="428" y="17" width="36" height="20" fill="#000"/>
+<rect x="430" y="19" width="32" height="16" fill="#fff"/>
+<rect x="430" y="19" width="25" height="16" fill="#000"/>
+<rect x="464" y="22" width="4" height="10" fill="#000"/>
+<text x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/>
+<rect x="292" y="3" width="112" height="48" rx="8" fill="#000"/>
+<use xlink:href="#i-moon" x="300" y="7" width="40" height="40" color="#fff"/>
+<use xlink:href="#i-sidebtn" x="356" y="7" width="40" height="40" color="#fff"/>
+
+<g id="w-1" transform="translate(16,68)" dominant-baseline="alphabetic">
+<rect id="w-1-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-name" x="12" y="44" font-size="24" fill="#000">All shutters</text>
+<text id="w-1-state" x="12" y="77" font-size="24" fill="#444">Opening</text>
+<rect id="w-1-up-btn" x="280" y="20" width="64" height="64" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<use id="w-1-up-icon" xlink:href="#i-up" x="292" y="32" width="40" height="40" color="#fff"/>
+<rect id="w-1-stop-btn" x="357" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-stop-icon" xlink:href="#i-stop" x="368" y="32" width="40" height="40" color="#000"/>
+<rect id="w-1-down-btn" x="433" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-down-icon" xlink:href="#i-down" x="444" y="32" width="40" height="40" color="#000"/>
+</g>
+
+<g id="w-2" transform="translate(16,184)" dominant-baseline="alphabetic">
+<rect id="w-2-frame" x="1" y="1" width="246" height="102" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-2-name" x="12" y="38" font-size="24" fill="#fff">Night mode</text>
+<use id="w-2-icon" xlink:href="#i-auto" x="12" y="49" width="40" height="40" color="#fff"/>
+<text id="w-2-state" x="58" y="77" font-size="24" fill="#fff">On</text>
+</g>
+
+<g id="w-5" transform="translate(276,184)" dominant-baseline="alphabetic">
+<rect id="w-5-frame" x="1" y="1" width="246" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-5-value" x="124" y="53" font-size="40" fill="#000" text-anchor="middle">8.4<tspan font-size="24" dx="2">°C</tspan></text>
+<text id="w-5-name" x="124" y="84" font-size="18" fill="#444" text-anchor="middle">Outside</text>
+</g>
+
+<g id="w-3" transform="translate(16,300)" dominant-baseline="alphabetic">
+<rect id="w-3-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-3-name" x="12" y="44" font-size="24" fill="#000">Bedroom</text>
+<text id="w-3-temp" x="12" y="77" font-size="24" fill="#000">19.5°</text>
+<use id="w-3-hum-icon" xlink:href="#i-drop" x="92" y="57" width="24" height="24" color="#000"/>
+<text id="w-3-hum-text" x="120" y="77" font-size="24" fill="#000">52%</text>
+<use id="w-3-act-icon" xlink:href="#i-pause" x="186" y="57" width="24" height="24" color="#000"/>
+<rect id="w-3-minus-btn" x="233" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-3-minus-icon" xlink:href="#i-minus" x="244" y="32" width="40" height="40" color="#000"/>
+<text id="w-3-target" x="364" y="66" font-size="40" fill="#000" text-anchor="middle">19.0°</text>
+<rect id="w-3-plus-btn" x="433" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-3-plus-icon" xlink:href="#i-plus" x="444" y="32" width="40" height="40" color="#000"/>
+</g>
+
+<g id="w-4" transform="translate(16,416)" dominant-baseline="alphabetic">
+<rect id="w-4-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-4-name" x="12" y="44" font-size="24" fill="#000">Kitchen</text>
+<text id="w-4-temp" x="12" y="77" font-size="24" fill="#000">20.5°</text>
+<use id="w-4-hum-icon" xlink:href="#i-drop" x="92" y="57" width="24" height="24" color="#000"/>
+<text id="w-4-hum-text" x="120" y="77" font-size="24" fill="#000">48%</text>
+<use id="w-4-act-icon" xlink:href="#i-flame" x="186" y="57" width="24" height="24" color="#000"/>
+<rect id="w-4-minus-btn" x="233" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-4-minus-icon" xlink:href="#i-minus" x="244" y="32" width="40" height="40" color="#000"/>
+<text id="w-4-target" x="364" y="66" font-size="40" fill="#000" text-anchor="middle">21.5°</text>
+<rect id="w-4-plus-btn" x="433" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-4-plus-icon" xlink:href="#i-plus" x="444" y="32" width="40" height="40" color="#000"/>
+</g>
+
+<g id="w-6" transform="translate(16,532)" dominant-baseline="alphabetic">
+<rect id="w-6-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-6-icon" xlink:href="#i-cloud" x="12" y="28" width="48" height="48" color="#000"/>
+<text id="w-6-name" x="68" y="44" font-size="24" fill="#000">Home</text>
+<text id="w-6-cond" x="68" y="77" font-size="24" fill="#444">Cloudy</text>
+<use id="w-6-hum-icon" xlink:href="#i-drop" x="163" y="57" width="24" height="24" color="#000"/>
+<text id="w-6-hum-text" x="191" y="77" font-size="24" fill="#000">76%</text>
+<text id="w-6-temp" x="495" y="66" font-size="40" fill="#000" text-anchor="end">12<tspan font-size="24" dx="2">°C</tspan></text>
+</g>
+
+<g id="w-7" transform="translate(16,648)" dominant-baseline="alphabetic">
+<rect id="w-7-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-7-name" x="12" y="44" font-size="24" fill="#000">Vacuum</text>
+<text id="w-7-state" x="12" y="77" font-size="24" fill="#444">Docked</text>
+<use id="w-7-batt-icon" xlink:href="#i-batt" x="114" y="57" width="24" height="24" color="#000"/>
+<text id="w-7-batt-text" x="142" y="75" font-size="18" fill="#000">85%</text>
+<rect id="w-7-start-btn" x="281" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-7-start-icon" xlink:href="#i-play" x="292" y="32" width="40" height="40" color="#000"/>
+<rect id="w-7-pause-btn" x="357" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-7-pause-icon" xlink:href="#i-pause" x="368" y="32" width="40" height="40" color="#000"/>
+<rect id="w-7-dock-btn" x="432" y="20" width="64" height="64" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<use id="w-7-dock-icon" xlink:href="#i-dock" x="444" y="32" width="40" height="40" color="#fff"/>
+</g>
+
+<rect id="pager-prev-btn" x="17" y="785" width="118" height="62" rx="8" fill="#fff" stroke="#888" stroke-width="2" stroke-dasharray="2 4"/>
+<use id="pager-prev-icon" xlink:href="#i-chev-l" x="56" y="796" width="40" height="40" color="#888"/>
+<text id="pager-label" x="270" y="830" font-size="40" fill="#000" text-anchor="middle">1 / 2</text>
+<rect id="pager-next-btn" x="405" y="785" width="118" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="pager-next-icon" xlink:href="#i-chev-r" x="444" y="796" width="40" height="40" color="#000"/>
+
+<rect x="0" y="880" width="540" height="2" fill="#000"/>
+<rect x="17" y="893" width="116" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text x="75" y="909" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Living</text>
+<text x="75" y="931" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">room</text>
+<rect x="146" y="892" width="118" height="56" rx="8" fill="#000"/>
+<text x="205" y="909" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Whole</text>
+<text x="205" y="931" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">house</text>
+<rect x="277" y="893" width="116" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text x="335" y="920" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Kitchen</text>
+<rect x="407" y="893" width="116" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use xlink:href="#i-dots" x="434" y="908" width="24" height="24" color="#000"/>
+<text x="466" y="920" font-size="18" fill="#000" dominant-baseline="central">1/2</text>
+</g>
+<rect x="0" y="960" width="540" height="80" fill="#ccc"/>
+<text x="270" y="1000" font-size="24" fill="#000" text-anchor="middle" dominant-baseline="central">Idle timeout – asleep</text>
+</svg>

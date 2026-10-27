@@ -15,6 +15,11 @@ per charge** with the default settings.
 
 *Design mockups. The firmware doesn't draw these screens yet; see [Status](#status).*
 
+**UI flow** (wake, tap a light, a shutter and the thermostat, switch tab, Settings, sleep).
+Inverted rectangles mark partial e-ink refreshes; black/white frames are full refreshes:
+
+![UI flow](docs/ui/flow.gif)
+
 ## How it works
 
 - **Asleep almost all the time.** E-ink keeps its image with no power. The device wakes
@@ -123,7 +128,7 @@ For development you can instead put credentials in `include/secrets.h` (copy
 | `test/` | Native unit tests (Unity) |
 | `docs/ARCHITECTURE.md` | Architecture and decision log |
 | `docs/tasks/` | One file per task, with acceptance criteria |
-| `docs/ui/` | Style guide, layout and widget specs, SVG mockups; `png/` has the reference renders |
+| `docs/ui/` | Style guide, layout and widget specs, SVG mockups; `png/` has the reference renders, `flow/` the storyboard behind `flow.gif` |
 | `tools/` | Mockup rendering (`render_mockups.sh`), overflow/overlap check (`check_mockups.py`), flow GIF builder (`make_flow_gif.sh`) |
 
 Mockups are reviewed as PNGs rendered with DejaVu Sans, the font the firmware uses.

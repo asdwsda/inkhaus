@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="1040" viewBox="0 0 540 1040" font-family="DejaVu Sans">
+<!-- Flow frame 34: FULL refresh, step 2 of 2 (all white, 150 ms). Exempt from the widget checker. -->
+<rect x="0" y="960" width="540" height="80" fill="#ccc"/>
+<rect x="0" y="0" width="540" height="960" fill="#fff"/>
+<text x="270" y="1000" font-size="24" fill="#000" text-anchor="middle" dominant-baseline="central">Full refresh</text>
+</svg>
