@@ -29,7 +29,9 @@ void test_name_whitelist() {
   TEST_ASSERT_FALSE(nameAllowed(""));
   TEST_ASSERT_FALSE(nameAllowed("test-.yaml"));
   TEST_ASSERT_FALSE(nameAllowed("config.yml"));
-  TEST_ASSERT_FALSE(nameAllowed("secrets.yaml"));
+  TEST_ASSERT_TRUE(nameAllowed("secrets.yaml"));
+  TEST_ASSERT_FALSE(nameAllowed("secrets.yaml.tmp"));
+  TEST_ASSERT_FALSE(nameAllowed("Secrets.yaml"));
   TEST_ASSERT_FALSE(nameAllowed("/config.yaml"));
   TEST_ASSERT_FALSE(nameAllowed("../config.yaml"));
   TEST_ASSERT_FALSE(nameAllowed("test-../x.yaml"));
@@ -208,6 +210,17 @@ void test_summary_garbage() {
   TEST_ASSERT_EQUAL(0, (int)s.rfind("PUT-CONFIG error", 0));
 }
 
+void test_secrets_summary() {
+  auto ok = config::parseSecrets(std::string(
+      "wifi:\n  ssid: SECRETssid\nhome_assistant:\n  internal_url: http://SECRETh\n  token: SECRETtok\n"));
+  const std::string s = secretsSummary(ok);
+  TEST_ASSERT_EQUAL_STRING("PUT-SECRETS ok wifi=yes ha=yes", s.c_str());
+  auto bad = config::parseSecrets(std::string("wifi:\n  password: SECRETpw\n"));
+  const std::string e = secretsSummary(bad);
+  TEST_ASSERT_EQUAL(0, (int)e.rfind("PUT-SECRETS error count=", 0));
+  TEST_ASSERT_TRUE(e.find("SECRETpw") == std::string::npos);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_crc32_known);
@@ -224,5 +237,6 @@ int main() {
   RUN_TEST(test_summary_ok_has_no_values);
   RUN_TEST(test_summary_error);
   RUN_TEST(test_summary_garbage);
+  RUN_TEST(test_secrets_summary);
   return UNITY_END();
 }

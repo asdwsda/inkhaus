@@ -212,15 +212,19 @@ std::string packCache(const Fingerprint &fp, const Config &cfg) {
   Writer w;
   w.u32(fp.size);
   w.u32(fp.mtime);
+  w.u32(fp.secretsSize);
+  w.u32(fp.secretsMtime);
   return w.s + serializeConfig(cfg);
 }
 
 bool unpackCache(const std::string &file, Fingerprint &fp, Config &out) {
-  if (file.size() < 8) return false;
+  if (file.size() < 16) return false;
   Reader r{reinterpret_cast<const uint8_t *>(file.data()), file.size()};
   Fingerprint f;
   r.u32(f.size);
   r.u32(f.mtime);
+  r.u32(f.secretsSize);
+  r.u32(f.secretsMtime);
   if (!deserializeConfig(r.p, r.n, out)) return false;
   fp = f;
   return true;

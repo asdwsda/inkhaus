@@ -90,10 +90,18 @@ class Validator {
     JsonObjectConst o = root.as<JsonObjectConst>();
     version(o);
     timezone(o);
-    if (!o["connection"].isNull())
-      connection(o["connection"], "connection");
+    if (!o["connection"].isNull()) connection(o["connection"], "connection");
     if (!o["groups"].isNull()) groups(o["groups"]);
     tabs(o["tabs"]);
+  }
+
+  // secrets.yaml: the old `connection:` structure at the top level.
+  void runSecrets(JsonVariantConst root) {
+    if (!root.is<JsonObjectConst>()) {
+      err("", "top level must be a mapping");
+      return;
+    }
+    connectionBody(root.as<JsonObjectConst>(), "");
   }
 
  private:
@@ -238,27 +246,33 @@ class Validator {
       return;
     }
     r_.config.hasConnection = true;
-    JsonObjectConst c = v.as<JsonObjectConst>();
+    connectionBody(v.as<JsonObjectConst>(), path);
+  }
+
+  // `base` is "connection" in config.yaml and "" in secrets.yaml.
+  void connectionBody(JsonObjectConst c, const std::string &base0) {
     ConnectionConfig &cc = r_.config.connection;
+    const std::string wifiPath = join(base0, "wifi");
+    const std::string haPath = join(base0, "home_assistant");
 
     if (c["wifi"].isNull()) {
-      err("connection.wifi", "missing required field");
+      err(wifiPath, "missing required field");
     } else if (!c["wifi"].is<JsonObjectConst>()) {
-      err("connection.wifi", "must be a mapping");
+      err(wifiPath, "must be a mapping");
     } else {
       JsonObjectConst w = c["wifi"];
-      str(w, "ssid", "connection.wifi", true, cc.wifi.ssid);
-      str(w, "password", "connection.wifi", false, cc.wifi.password);
-      if (!w["static_ip"].isNull()) staticIp(w["static_ip"]);
+      str(w, "ssid", wifiPath, true, cc.wifi.ssid);
+      str(w, "password", wifiPath, false, cc.wifi.password);
+      if (!w["static_ip"].isNull()) staticIp(w["static_ip"], wifiPath);
     }
 
     if (c["home_assistant"].isNull()) {
-      err("connection.home_assistant", "missing required field");
+      err(haPath, "missing required field");
     } else if (!c["home_assistant"].is<JsonObjectConst>()) {
-      err("connection.home_assistant", "must be a mapping");
+      err(haPath, "must be a mapping");
     } else {
       JsonObjectConst h = c["home_assistant"];
-      const std::string base = "connection.home_assistant";
+      const std::string base = haPath;
       if (str(h, "internal_url", base, true, cc.ha.internalUrl) &&
           !startsWith(cc.ha.internalUrl, "http://") &&
           !startsWith(cc.ha.internalUrl, "https://"))
@@ -270,8 +284,8 @@ class Validator {
     }
   }
 
-  void staticIp(JsonVariantConst v) {
-    const std::string base = "connection.wifi.static_ip";
+  void staticIp(JsonVariantConst v, const std::string &wifiPath) {
+    const std::string base = join(wifiPath, "static_ip");
     if (!v.is<JsonObjectConst>()) {
       err(base, "must be a mapping with ip, gateway, subnet and dns");
       return;
@@ -525,6 +539,53 @@ ParseResult parseConfig(const char *data, size_t len) {
 
 ParseResult parseConfig(const std::string &text) {
   return parseConfig(text.data(), text.size());
+}
+
+SecretsResult parseSecrets(const char *data, size_t len) {
+  SecretsResult out;
+  if (!data || len == 0) {
+    out.errors.push_back({"", "secrets file is empty", 0});
+    return out;
+  }
+  if (len > kMaxFileBytes) {
+    out.errors.push_back(
+        {"", "secrets file too large (max " + std::to_string(kMaxFileBytes) + " bytes)", 0});
+    return out;
+  }
+  JsonDocument doc;
+  LineMap lines;
+  if (!yamlToJson(data, len, doc, lines, out.errors)) return out;
+  ParseResult tmp;
+  Validator(lines, tmp).runSecrets(doc.as<JsonVariantConst>());
+  out.errors = std::move(tmp.errors);
+  if (out.errors.empty()) out.connection = std::move(tmp.config.connection);
+  return out;
+}
+
+SecretsResult parseSecrets(const std::string &text) {
+  return parseSecrets(text.data(), text.size());
+}
+
+MergeOutcome mergeSecrets(ParseResult cfg, const SecretsResult *secrets) {
+  MergeOutcome m;
+  if (!secrets) {
+    m.warnConnectionInConfig = cfg.ok() && cfg.config.hasConnection;
+    m.parse = std::move(cfg);
+    return m;
+  }
+  for (const ConfigError &e : secrets->errors)
+    m.parse.errors.push_back({"secrets.yaml: " + e.path, e.message, e.line});
+  if (!cfg.ok()) {
+    for (auto &e : cfg.errors) m.parse.errors.push_back(std::move(e));
+  } else if (cfg.config.hasConnection) {
+    m.parse.errors.push_back(
+        {"connection", "not allowed when secrets.yaml exists: move it to secrets.yaml", 0});
+  }
+  if (!m.parse.errors.empty()) return m;
+  m.parse.config = std::move(cfg.config);
+  m.parse.config.connection = secrets->connection;
+  m.parse.config.hasConnection = true;
+  return m;
 }
 
 }  // namespace config

@@ -114,8 +114,8 @@ Loaded fromParse(config::ParseResult &&pr, bool demo, const char *source) {
   return l;
 }
 
-// Parsed-config cache in LittleFS (task 025): fingerprint (size + mtime of the SD file) + binary
-// model. Holds the same secrets as config.yaml; never logged.
+// Parsed-config cache in LittleFS (task 025): fingerprint (size + mtime of config.yaml and
+// secrets.yaml) + binary model. Holds the secrets (merged in); never logged.
 constexpr const char *kCachePath = "/config.cache";
 constexpr const char *kCacheTmp = "/config.cache.tmp";
 
@@ -185,6 +185,8 @@ Loaded load() {
     Loaded l;
     if (readCache(fp, l.cfg)) {
       l.source = "cache";
+      if (l.cfg.hasConnection && fp.secretsSize == 0)
+        Serial.print("CONFIG: warning=connection_in_config\n");
       Serial.printf("CONFIG: source=cache ms=%lu\n", (unsigned long)(millis() - t0));
       return l;
     }
@@ -196,6 +198,7 @@ Loaded load() {
   boot::log("config_sd_ms", (long)(millis() - t0));
   switch (r.status) {
     case config_sd::Status::Ok:
+      if (r.warnConnectionInConfig) Serial.print("CONFIG: warning=connection_in_config\n");
       if (r.parse.ok() && st == config_sd::Status::Ok) writeCache(fp, r.parse.config);
       else invalidateCache();
       Serial.printf("CONFIG: source=sd ms=%lu\n", (unsigned long)(millis() - t0));

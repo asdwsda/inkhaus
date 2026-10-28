@@ -1,25 +1,12 @@
 # M5Paper HA remote: example configuration (schema v1).
 #
 # Copy this file to the ROOT of the SD card and name it `config.yaml`.
-# The real config.yaml holds credentials: it is gitignored, never commit it.
-# All values below are fake.
+# The real config.yaml is gitignored (it is your personal layout). All values below are fake.
 
 version: 1
 
-# Optional. If missing, the firmware falls back to include/secrets.h (dev only).
-connection:
-  wifi:
-    ssid: "MyWifi"
-    password: "secret"
-    static_ip:                 # optional; if present, all four fields are required
-      ip: 192.168.1.50
-      gateway: 192.168.1.1
-      subnet: 255.255.255.0
-      dns: 192.168.1.1
-  home_assistant:
-    internal_url: http://192.168.1.10:8123
-    external_url: https://example.ui.nabu.casa   # optional, must be https
-    token: "long-lived-token"
+# Wi-Fi, Home Assistant URLs and the token do NOT go here: they live in /secrets.yaml on the SD card
+# (copy secrets.example.yaml). config.yaml holds only the dashboard and is not secret.
 
 # Optional. POSIX TZ string for the clock and the wake-up schedule. Default: Central Europe.
 # timezone: "CET-1CEST,M3.5.0,M10.5.0/3"

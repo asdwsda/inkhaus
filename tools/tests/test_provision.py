@@ -85,7 +85,9 @@ class FakeDevice(threading.Thread):
             self.say("PUT-ERR crc-mismatch\n")
             return
         self.received = data
-        self.say("PUT-OK %d %08x\nPUT-CONFIG ok tabs=1 widgets=1 connection=no\n" % (size, got))
+        summary = ("PUT-SECRETS ok wifi=yes ha=yes" if name == "secrets.yaml"
+                   else "PUT-CONFIG ok tabs=1 widgets=1 connection=no")
+        self.say("PUT-OK %d %08x\n%s\n" % (size, got, summary))
 
 
 def run_tool(dev, args, timeout=40):
@@ -120,6 +122,21 @@ class ProvisionTool(unittest.TestCase):
         time.sleep(0.3)
         self.assertTrue(dev.rebooted)
         self.assertIn("config_source=sd", r.stdout)
+
+    def test_secrets_name(self):
+        dev = self.start()
+        secrets = os.path.join(ROOT, "secrets.example.yaml")
+        r = run_tool(dev, ["--name", "secrets.yaml", secrets, "--yes"])
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        with open(secrets, "rb") as fh:
+            want = fh.read()
+        self.assertEqual(dev.received, want)
+        self.assertIn("PUT-SECRETS ok wifi=yes ha=yes", r.stdout)
+        self.assertNotIn("PUT-CONFIG", r.stdout)
+        self.assertNotIn("long-lived-token", r.stdout + r.stderr)  # content is never printed
+        self.assertIn("rebooting", r.stdout)
+        time.sleep(0.3)
+        self.assertTrue(dev.rebooted)
 
     def test_crc_mismatch(self):
         dev = self.start("corrupt")

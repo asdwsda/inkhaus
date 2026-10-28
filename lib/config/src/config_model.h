@@ -124,6 +124,25 @@ struct ParseResult {
 ParseResult parseConfig(const char *data, size_t len);
 ParseResult parseConfig(const std::string &text);
 
+// secrets.yaml: `wifi:` + `home_assistant:` at the top level (the old `connection:` structure).
+// Error paths are relative to that file (e.g. "wifi.ssid"); messages never contain values.
+struct SecretsResult {
+  ConnectionConfig connection;
+  std::vector<ConfigError> errors;
+  bool ok() const { return errors.empty(); }
+};
+SecretsResult parseSecrets(const char *data, size_t len);
+SecretsResult parseSecrets(const std::string &text);
+
+struct MergeOutcome {
+  ParseResult parse;
+  bool warnConnectionInConfig = false;  // no secrets.yaml, connection still in config.yaml
+};
+// `secrets` is null when /secrets.yaml does not exist. With secrets: its connection wins and a
+// `connection:` in config.yaml is an error; secrets errors get the path prefix "secrets.yaml: ".
+// Without: config.yaml's own connection is kept (warning flag set if it has one).
+MergeOutcome mergeSecrets(ParseResult cfg, const SecretsResult *secrets);
+
 // Per entity id: the attribute names its widgets request (attribute + details), de-duplicated.
 // Only entities with at least one request appear.
 std::vector<std::pair<std::string, std::vector<std::string>>> requestedAttributes(

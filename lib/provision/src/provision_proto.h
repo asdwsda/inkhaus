@@ -73,4 +73,7 @@ class Receiver {
 // "PUT-CONFIG error count=<n> first=<path> line=<n>". Counts and the error path/line only.
 std::string configSummary(const config::ParseResult &r);
 
+// "PUT-SECRETS ok wifi=yes ha=yes" or "PUT-SECRETS error count=N first=<path> line=N". Never values.
+std::string secretsSummary(const config::SecretsResult &r);
+
 }  // namespace provision

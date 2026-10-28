@@ -57,7 +57,7 @@ The task list and its progress are in [docs/tasks/README.md](docs/tasks/README.m
 ## Hardware
 
 - M5Stack M5Paper (the original ESP32 version, not the M5Paper S3)
-- microSD card for `config.yaml`
+- microSD card for `config.yaml` and `secrets.yaml`
 
 ## Building
 
@@ -77,7 +77,7 @@ The first build downloads the ESP32 toolchain (a few hundred MB).
 1. Copy [`config.example.yaml`](config.example.yaml) to the **root of the SD card** as
    `config.yaml`, or send it over USB without a card reader:
    `python3 tools/provision.py path/to/config.yaml` (prints only a summary, never the content).
-2. Fill in your Wi-Fi details, your Home Assistant URL(s), and a long-lived access token
+2. Put your Wi-Fi details (in `secrets.yaml`, see below), your Home Assistant URL(s), and a long-lived access token
    (Home Assistant → your profile → Security → Long-lived access tokens).
 3. Define your tabs and widgets. The widget type comes from the entity's domain:
 
@@ -112,12 +112,17 @@ Supported domains: `cover`, `light`, `switch`, `automation`, `climate`, `sensor`
 `binary_sensor`, `weather`, `vacuum`. Config errors are reported with their path and
 line number, e.g. `tabs[0].widgets[2].entity (line 34)`.
 
-**Your `config.yaml` contains credentials.** It is gitignored; never commit it. The token
-is stored as plain text on the SD card, so treat the card like a key.
+**Credentials live in a separate `secrets.yaml`** (Wi-Fi, Home Assistant URLs, token; copy
+[`secrets.example.yaml`](secrets.example.yaml) to the SD card root, or send it with
+`python3 tools/provision.py --name secrets.yaml path/to/secrets.yaml`, which prints only
+`PUT-SECRETS ok wifi=yes ha=yes`). It is gitignored; never commit it. The token is stored as plain
+text on the SD card, so treat the card like a key. `config.yaml` holds only the dashboard and is
+not secret. A `connection:` section in `config.yaml` still works if there is no `secrets.yaml`
+(log warning `connection_in_config`); once `secrets.yaml` exists, it is an error.
 
 For development you can instead put credentials in `include/secrets.h` (copy
-`include/secrets.example.h`; also gitignored). It is only used when `config.yaml` has no
-`connection:` section.
+`include/secrets.example.h`; also gitignored). It is only used when neither file provides a
+connection.
 
 ## Repository layout
 

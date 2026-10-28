@@ -121,9 +121,13 @@ void receive(const Request &req) {
     free(buf);
     return;
   }
-  if (req.name == "config.yaml") app_config::invalidateCache();
+  if (req.name == "config.yaml" || req.name == "secrets.yaml") app_config::invalidateCache();
   Serial.printf("PUT-OK %u %s\n", (unsigned)req.size, hex32(req.crc).c_str());
-  Serial.printf("%s\n", configSummary(config::parseConfig(reinterpret_cast<const char *>(buf), req.size)).c_str());
+  const char *text = reinterpret_cast<const char *>(buf);
+  if (req.name == "secrets.yaml")
+    Serial.printf("%s\n", secretsSummary(config::parseSecrets(text, req.size)).c_str());
+  else
+    Serial.printf("%s\n", configSummary(config::parseConfig(text, req.size)).c_str());
   free(buf);
 }
 

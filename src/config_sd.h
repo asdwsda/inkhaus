@@ -1,5 +1,5 @@
 #pragma once
-// SD card access for config.yaml. Hardware wrapper: all parsing is in lib/config.
+// SD card access for config.yaml and secrets.yaml. Hardware wrapper: all parsing is in lib/config.
 
 #include <string>
 
@@ -14,11 +14,14 @@ enum class Status {
   NoFile,      // /config.yaml not found
   TooLarge,    // file larger than config::kMaxFileBytes (not read)
   ReadError,   // short read or I/O error
+  SecretsTooLarge,   // /secrets.yaml larger than config::kMaxFileBytes
+  SecretsReadError,  // /secrets.yaml short read or I/O error
 };
 
 const char *statusText(Status s);
 
 constexpr const char *kPath = "/config.yaml";
+constexpr const char *kSecretsPath = "/secrets.yaml";
 
 // Mounts / unmounts the card on the shared SPI bus (for other SD users, e.g. provision). Every
 // successful mount() must be paired with unmount(). mount() waits for the display first.
@@ -31,13 +34,17 @@ Status readFile(std::string &out);
 
 struct LoadResult {
   Status status = Status::NoCard;
-  config::ParseResult parse;  // only meaningful when status == Ok
+  // Only meaningful when status == Ok: config.yaml parsed and merged with secrets.yaml (if any).
+  config::ParseResult parse;
+  bool secretsPresent = false;
+  bool warnConnectionInConfig = false;  // no secrets.yaml, connection still in config.yaml
 };
 
-// Size + mtime of /config.yaml without reading it (mounts and unmounts like readFile).
+// Size + mtime of /config.yaml and /secrets.yaml without reading them (mounts and unmounts like
+// readFile). A missing secrets.yaml is not an error: its fingerprint fields stay 0.
 Status stat(config::Fingerprint &fp);
 
-// readFile() + config::parseConfig().
+// Reads both files in one mount, parses and merges them (config::mergeSecrets).
 LoadResult load();
 
 }  // namespace config_sd

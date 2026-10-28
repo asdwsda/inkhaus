@@ -116,6 +116,14 @@ void test_pack_unpack_fingerprint() {
   TEST_ASSERT_TRUE(got == fp);
   expectEqual(c, out);
   TEST_ASSERT_FALSE(got == (Fingerprint{1234, 1}));
+  // The fingerprint covers secrets.yaml too.
+  Fingerprint fp2{1234, 99999, 77, 5}, got2;
+  std::string f2 = packCache(fp2, c);
+  TEST_ASSERT_TRUE(unpackCache(f2, got2, out));
+  TEST_ASSERT_TRUE(got2 == fp2);
+  TEST_ASSERT_FALSE(got2 == fp);
+  TEST_ASSERT_FALSE(got2 == (Fingerprint{1234, 99999, 77, 6}));
+  TEST_ASSERT_FALSE(got2 == (Fingerprint{1234, 99999, 78, 5}));
   f[2] ^= 1;  // fingerprint bytes are not covered by the blob CRC: a mismatch is just a cache miss
   TEST_ASSERT_TRUE(unpackCache(f, got, out));
   TEST_ASSERT_FALSE(got == fp);

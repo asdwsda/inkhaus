@@ -1,6 +1,7 @@
 #include <unity.h>
 
 #include <cctype>
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -61,15 +62,20 @@ void test_example_parses_clean() {
 
   const Config &c = r.config;
   TEST_ASSERT_EQUAL_INT(1, c.version);
-  TEST_ASSERT_TRUE(c.hasConnection);
-  TEST_ASSERT_EQUAL_STRING("MyWifi", c.connection.wifi.ssid.c_str());
-  TEST_ASSERT_EQUAL_STRING("secret", c.connection.wifi.password.c_str());
-  TEST_ASSERT_TRUE(c.connection.wifi.hasStaticIp);
-  TEST_ASSERT_EQUAL_STRING("192.168.1.50", c.connection.wifi.staticIp.ip.c_str());
-  TEST_ASSERT_EQUAL_STRING("255.255.255.0", c.connection.wifi.staticIp.subnet.c_str());
-  TEST_ASSERT_EQUAL_STRING("http://192.168.1.10:8123", c.connection.ha.internalUrl.c_str());
-  TEST_ASSERT_EQUAL_STRING("https://example.ui.nabu.casa", c.connection.ha.externalUrl.c_str());
-  TEST_ASSERT_EQUAL_STRING("long-lived-token", c.connection.ha.token.c_str());
+  TEST_ASSERT_FALSE(c.hasConnection);  // the example config holds only the dashboard
+  SecretsResult sr = parseSecrets(readFile("secrets.example.yaml"));
+  std::string serr;
+  for (const auto &e : sr.errors) serr += e.path + ": " + e.message + "\n";
+  TEST_ASSERT_TRUE_MESSAGE(sr.ok(), serr.c_str());
+  const ConnectionConfig &cn = sr.connection;
+  TEST_ASSERT_EQUAL_STRING("MyWifi", cn.wifi.ssid.c_str());
+  TEST_ASSERT_EQUAL_STRING("secret", cn.wifi.password.c_str());
+  TEST_ASSERT_TRUE(cn.wifi.hasStaticIp);
+  TEST_ASSERT_EQUAL_STRING("192.168.1.50", cn.wifi.staticIp.ip.c_str());
+  TEST_ASSERT_EQUAL_STRING("255.255.255.0", cn.wifi.staticIp.subnet.c_str());
+  TEST_ASSERT_EQUAL_STRING("http://192.168.1.10:8123", cn.ha.internalUrl.c_str());
+  TEST_ASSERT_EQUAL_STRING("https://example.ui.nabu.casa", cn.ha.externalUrl.c_str());
+  TEST_ASSERT_EQUAL_STRING("long-lived-token", cn.ha.token.c_str());
 
   TEST_ASSERT_EQUAL_UINT(2, c.groups.size());
   TEST_ASSERT_EQUAL_STRING("downstairs_shutters", c.groups[0].name.c_str());
@@ -95,6 +101,104 @@ void test_example_parses_clean() {
   for (const auto &t : c.tabs)
     for (const auto &wd : t.widgets) seen[static_cast<int>(wd.type)] = true;
   for (int i = 0; i < 9; ++i) TEST_ASSERT_TRUE_MESSAGE(seen[i], "widget type missing from example");
+}
+
+const char *kSecrets =
+    "wifi:\n  ssid: SECRETssid\n  password: SECRETpw\n"
+    "home_assistant:\n  internal_url: http://10.0.0.2:8123\n  token: SECRETtoken\n";
+const char *kConnCfg =
+    "version: 1\nconnection:\n  wifi:\n    ssid: cfgssid\n  home_assistant:\n"
+    "    internal_url: http://10.0.0.3:8123\n    token: cfgtoken\n"
+    "tabs:\n  - title: P\n    widgets:\n      - entity: light.a\n";
+
+void test_secrets_parse_ok() {
+  SecretsResult r = parseSecrets(kSecrets);
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL_STRING("SECRETssid", r.connection.wifi.ssid.c_str());
+  TEST_ASSERT_EQUAL_STRING("SECRETtoken", r.connection.ha.token.c_str());
+  TEST_ASSERT_FALSE(r.connection.wifi.hasStaticIp);
+}
+
+void test_secrets_errors_path_line_no_values() {
+  SecretsResult r = parseSecrets(
+      "wifi:\n  password: SECRETpw\n    static_ip: x\n"
+      "home_assistant:\n  internal_url: ftp://SECRETurl\n  token: SECRETtoken\n");
+  TEST_ASSERT_FALSE(r.ok());
+  r = parseSecrets(
+      "wifi:\n  password: SECRETpw\n"
+      "home_assistant:\n  internal_url: ftp://SECRETurl\n  token: SECRETtoken\n");
+  TEST_ASSERT_FALSE(r.ok());
+  bool ssid = false, url = false;
+  for (const auto &e : r.errors) {
+    ssid |= e.path == "wifi.ssid" && e.line > 0;
+    url |= e.path == "home_assistant.internal_url" && e.line == 4;
+    TEST_ASSERT_NULL(strstr(e.message.c_str(), "SECRET"));
+    TEST_ASSERT_NULL(strstr(e.path.c_str(), "SECRET"));
+  }
+  TEST_ASSERT_TRUE(ssid);
+  TEST_ASSERT_TRUE(url);
+}
+
+void test_secrets_missing_sections_and_top_level() {
+  SecretsResult r = parseSecrets("wifi:\n  ssid: a\n");
+  TEST_ASSERT_FALSE(r.ok());
+  TEST_ASSERT_EQUAL_STRING("home_assistant", r.errors[0].path.c_str());
+  TEST_ASSERT_FALSE(parseSecrets("- a\n- b\n").ok());
+  TEST_ASSERT_FALSE(parseSecrets("", 0).ok());
+  TEST_ASSERT_FALSE(parseSecrets("wifi: [\n").ok());
+}
+
+void test_secrets_static_ip_paths() {
+  SecretsResult r = parseSecrets(
+      "wifi:\n  ssid: a\n  static_ip:\n    ip: 192.168.1.5\n"
+      "home_assistant:\n  internal_url: http://h\n  token: t\n");
+  TEST_ASSERT_FALSE(r.ok());
+  bool found = false;
+  for (const auto &e : r.errors) found |= e.path == "wifi.static_ip.subnet";
+  TEST_ASSERT_TRUE(found);
+}
+
+void test_merge_secrets_win() {
+  SecretsResult s = parseSecrets(kSecrets);
+  MergeOutcome m = mergeSecrets(parseConfig(kMinimal), &s);
+  TEST_ASSERT_TRUE(m.parse.ok());
+  TEST_ASSERT_FALSE(m.warnConnectionInConfig);
+  TEST_ASSERT_TRUE(m.parse.config.hasConnection);
+  TEST_ASSERT_EQUAL_STRING("SECRETssid", m.parse.config.connection.wifi.ssid.c_str());
+  TEST_ASSERT_EQUAL_UINT(1, m.parse.config.tabs.size());
+}
+
+void test_merge_connection_in_config_rejected_with_secrets() {
+  SecretsResult s = parseSecrets(kSecrets);
+  MergeOutcome m = mergeSecrets(parseConfig(kConnCfg), &s);
+  TEST_ASSERT_FALSE(m.parse.ok());
+  TEST_ASSERT_NOT_NULL(findError(m.parse, "connection"));
+  TEST_ASSERT_NOT_NULL(strstr(m.parse.errors[0].message.c_str(), "secrets.yaml"));
+}
+
+void test_merge_secrets_errors_prefixed() {
+  SecretsResult s = parseSecrets("wifi:\n  password: x\n");
+  MergeOutcome m = mergeSecrets(parseConfig(kMinimal), &s);
+  TEST_ASSERT_FALSE(m.parse.ok());
+  TEST_ASSERT_NOT_NULL(findError(m.parse, "secrets.yaml: wifi.ssid"));
+}
+
+void test_merge_without_secrets_keeps_connection_with_warning() {
+  MergeOutcome m = mergeSecrets(parseConfig(kConnCfg), nullptr);
+  TEST_ASSERT_TRUE(m.parse.ok());
+  TEST_ASSERT_TRUE(m.warnConnectionInConfig);
+  TEST_ASSERT_EQUAL_STRING("cfgssid", m.parse.config.connection.wifi.ssid.c_str());
+  m = mergeSecrets(parseConfig(kMinimal), nullptr);
+  TEST_ASSERT_TRUE(m.parse.ok());
+  TEST_ASSERT_FALSE(m.warnConnectionInConfig);
+  TEST_ASSERT_FALSE(m.parse.config.hasConnection);
+}
+
+void test_merge_config_errors_kept() {
+  SecretsResult s = parseSecrets(kSecrets);
+  MergeOutcome m = mergeSecrets(parseConfig("version: 1\n"), &s);
+  TEST_ASSERT_FALSE(m.parse.ok());
+  TEST_ASSERT_NOT_NULL(findError(m.parse, "tabs"));
 }
 
 void test_connection_absent() {
@@ -520,6 +624,15 @@ int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_example_parses_clean);
   RUN_TEST(test_connection_absent);
+  RUN_TEST(test_secrets_parse_ok);
+  RUN_TEST(test_secrets_errors_path_line_no_values);
+  RUN_TEST(test_secrets_missing_sections_and_top_level);
+  RUN_TEST(test_secrets_static_ip_paths);
+  RUN_TEST(test_merge_secrets_win);
+  RUN_TEST(test_merge_connection_in_config_rejected_with_secrets);
+  RUN_TEST(test_merge_secrets_errors_prefixed);
+  RUN_TEST(test_merge_without_secrets_keeps_connection_with_warning);
+  RUN_TEST(test_merge_config_errors_kept);
   RUN_TEST(test_timezone_default_and_valid);
   RUN_TEST(test_timezone_invalid);
   RUN_TEST(test_error_missing_tabs);

@@ -11,7 +11,7 @@
 namespace config {
 
 // Bump when Config changes, so old caches are rejected.
-constexpr uint8_t kCacheFormat = 2;
+constexpr uint8_t kCacheFormat = 3;
 
 std::string serializeConfig(const Config &cfg);
 // False for any corrupted, truncated, oversized or wrong-format blob; `out` is then unspecified.
@@ -20,14 +20,20 @@ inline bool deserializeConfig(const std::string &s, Config &out) {
   return deserializeConfig(reinterpret_cast<const uint8_t *>(s.data()), s.size(), out);
 }
 
-// Identifies one version of /config.yaml on SD: size + modification time.
+// Identifies one version of /config.yaml and /secrets.yaml on SD: size + modification time of each
+// (secrets fields are 0 when secrets.yaml does not exist).
 struct Fingerprint {
   uint32_t size = 0;
   uint32_t mtime = 0;
-  bool operator==(const Fingerprint &o) const { return size == o.size && mtime == o.mtime; }
+  uint32_t secretsSize = 0;
+  uint32_t secretsMtime = 0;
+  bool operator==(const Fingerprint &o) const {
+    return size == o.size && mtime == o.mtime && secretsSize == o.secretsSize &&
+           secretsMtime == o.secretsMtime;
+  }
 };
 
-// Cache file content = fingerprint (8 bytes) + config blob; wrapped so a fingerprint is bound to it.
+// Cache file content = fingerprint (16 bytes) + config blob; wrapped so a fingerprint is bound to it.
 std::string packCache(const Fingerprint &fp, const Config &cfg);
 // Rejects corruption; on success `fp` is the stored fingerprint.
 bool unpackCache(const std::string &file, Fingerprint &fp, Config &out);

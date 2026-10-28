@@ -21,7 +21,7 @@ static bool nameChar(char c) {
 
 bool nameAllowed(const std::string &name) {
   if (name.empty() || name.size() > kMaxNameLen) return false;
-  if (name == "config.yaml") return true;
+  if (name == "config.yaml" || name == "secrets.yaml") return true;
   static const std::string kPrefix = "test-", kSuffix = ".yaml";
   if (name.size() <= kPrefix.size() + kSuffix.size()) return false;
   if (name.compare(0, kPrefix.size(), kPrefix) != 0) return false;
@@ -136,6 +136,25 @@ std::string configSummary(const config::ParseResult &r) {
   }
   if (path.empty()) path = "-";
   snprintf(buf, sizeof buf, "PUT-CONFIG error count=%u first=%s line=%d", (unsigned)r.errors.size(),
+           path.c_str(), e.line);
+  return buf;
+}
+
+std::string secretsSummary(const config::SecretsResult &r) {
+  char buf[160];
+  if (r.ok()) {
+    snprintf(buf, sizeof buf, "PUT-SECRETS ok wifi=%s ha=%s", r.connection.wifi.ssid.empty() ? "no" : "yes",
+             r.connection.ha.token.empty() || r.connection.ha.internalUrl.empty() ? "no" : "yes");
+    return buf;
+  }
+  const config::ConfigError &e = r.errors.front();
+  std::string path;
+  for (char c : e.path) {
+    if (path.size() >= 60) break;
+    path += (c > ' ' && c < 0x7f) ? c : '_';
+  }
+  if (path.empty()) path = "-";
+  snprintf(buf, sizeof buf, "PUT-SECRETS error count=%u first=%s line=%d", (unsigned)r.errors.size(),
            path.c_str(), e.line);
   return buf;
 }

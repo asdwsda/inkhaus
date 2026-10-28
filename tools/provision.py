@@ -2,6 +2,7 @@
 """Send a YAML file to the M5Paper's SD card over USB serial (task 020).
 
   tools/provision.py FILE                          # as /config.yaml, asks before rebooting
+  tools/provision.py --name secrets.yaml FILE      # Wi-Fi + HA token; only "PUT-SECRETS ok wifi=yes ha=yes" is shown
   tools/provision.py --name test-provision.yaml config.example.yaml
   tools/provision.py --dry-run FILE                # size + CRC32 + limit check, no device access
 
@@ -24,7 +25,7 @@ import zlib
 MAX_BYTES = 64 * 1024
 ACK_EVERY = 1024
 PIECE = 256  # bytes per write; the firmware reads in 256-byte pieces
-NAME_RE = re.compile(r"^(config\.yaml|test-[A-Za-z0-9._-]+\.yaml)$")
+NAME_RE = re.compile(r"^(config\.yaml|secrets\.yaml|test-[A-Za-z0-9._-]+\.yaml)$")
 
 
 def lock_path():
@@ -81,7 +82,7 @@ def main():
     ap.add_argument("file")
     ap.add_argument("--port", default="/dev/ttyUSB0")
     ap.add_argument("--baud", type=int, default=115200)
-    ap.add_argument("--name", default="config.yaml", help="config.yaml or test-*.yaml")
+    ap.add_argument("--name", default="config.yaml", help="config.yaml, secrets.yaml or test-*.yaml")
     ap.add_argument("--dry-run", action="store_true", help="compute size and CRC32 only, no device access")
     ap.add_argument("--yes", action="store_true", help="reboot without asking")
     ap.add_argument("--no-reboot", action="store_true", help="never reboot")
@@ -89,7 +90,7 @@ def main():
     args = ap.parse_args()
 
     if not NAME_RE.match(args.name) or len(args.name) > 40:
-        sys.exit("refused: --name must be config.yaml or test-<name>.yaml")
+        sys.exit("refused: --name must be config.yaml, secrets.yaml or test-<name>.yaml")
     try:
         size = os.path.getsize(args.file)
     except OSError as e:
@@ -175,13 +176,15 @@ def main():
         if not m or int(m.group(1)) != size or int(m.group(2), 16) != crc:
             print("device reports a different size/CRC than the local file", file=sys.stderr)
             return 1
-        summary = wait_for(ser, r"^PUT-CONFIG", 5)
-        print(summary or "no PUT-CONFIG summary")
-        config_bad = bool(summary and "PUT-CONFIG error" in summary)
+        secrets = args.name == "secrets.yaml"
+        tag = "PUT-SECRETS" if secrets else "PUT-CONFIG"
+        summary = wait_for(ser, r"^" + tag, 5)
+        print(summary or "no %s summary" % tag)
+        config_bad = bool(summary and (tag + " error") in summary)
         if config_bad:
             print("warning: the device could not use this config as is")
 
-        if args.no_reboot or args.name != "config.yaml":
+        if args.no_reboot or args.name not in ("config.yaml", "secrets.yaml"):
             return 0
         if not args.yes:
             try:

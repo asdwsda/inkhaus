@@ -1,6 +1,6 @@
 # 032: Separate secrets.yaml from the dashboard config.yaml
 
-Status: in-progress
+Status: done
 Depends on: 003, 020, 025
 UI spec: none
 Needs device: yes for the final check (later)
