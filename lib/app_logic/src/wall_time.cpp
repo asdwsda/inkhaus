@@ -28,6 +28,13 @@ void civilFromDays(int64_t z, int &y, int &m, int &d) {
 }
 }  // namespace
 
+bool shouldSyncNtp(int64_t lastSyncEpoch, int64_t nowEpoch, bool rtcLowVoltage) {
+  if (rtcLowVoltage || !plausibleEpoch(nowEpoch) || !plausibleEpoch(lastSyncEpoch)) return true;
+  // A last sync in the future (clock went backwards) cannot be trusted either.
+  if (lastSyncEpoch > nowEpoch) return true;
+  return nowEpoch - lastSyncEpoch > kNtpMaxAgeS;
+}
+
 Civil epochToCivil(int64_t epoch_s, int32_t utc_offset_s) {
   const int64_t t = epoch_s + utc_offset_s;
   int64_t days = t / 86400;

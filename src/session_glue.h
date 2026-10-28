@@ -23,10 +23,12 @@ class ArduinoWifi : public app_logic::IWifi {
 bool loadClockFromRtc();
 // UTC epoch seconds from the system clock (0 if unset).
 int64_t wallClock();
-// A new session starts: re-arms the single NTP retry allowed per session.
+// A new session starts: decides (app_logic::shouldSyncNtp, last sync from NVS) whether to sync in this session.
 void ntpSessionStart();
-// Call every loop iteration after Wi-Fi is up: starts NTP, writes the RTC only after a completed SNTP sync,
-// retries once per session after a timeout (on the next Wi-Fi connect).
+// Call every loop iteration: if a sync is wanted and Wi-Fi is up, runs SNTP; the RTC and the NVS last-sync time
+// are written only after a completed SNTP sync. One attempt per session (no retry; 15 s timeout).
 void ntpPoll(bool wifiUp);
+// The session wants to sleep: give up any pending sync (never delays sleep), try again next session.
+void ntpAbort();
 
 }  // namespace session_glue

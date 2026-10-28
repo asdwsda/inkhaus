@@ -435,6 +435,7 @@ void loop() {
     }
     app_logic::SleepRequest sl;
     if (g_drv->takeSleep(sl)) {
+      session_glue::ntpAbort();
       // Real sleep comes in a later task: prepare as if, then stay awake until the next input.
       Serial.printf("APP: sleep_planned mode=%d alarm=%d touch_wake=%d\n", int(sl.plan.mode),
                     sl.plan.rtc_alarm_at ? 1 : 0, sl.plan.touch_wake ? 1 : 0);

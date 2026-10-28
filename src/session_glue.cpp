@@ -1,6 +1,7 @@
 #include "session_glue.h"
 
 #include <M5Unified.h>
+#include <Preferences.h>
 #include <esp_sntp.h>
 #include <sys/time.h>
 #include <time.h>
@@ -40,29 +41,45 @@ int64_t wallClock() {
 }
 
 namespace {
-enum class NtpState { Idle, Waiting, Synced, TimedOut };
-NtpState g_ntp = NtpState::Idle;
+enum class NtpState { Off, Idle, Waiting, Done };
+NtpState g_ntp = NtpState::Off;
 uint32_t g_ntpT0 = 0;
 int64_t g_ntpClock0 = 0;   // system clock when SNTP started (0 = unset)
-int g_ntpRetries = 1;      // retries left in this session
-bool g_ntpPrevWifi = false;
+
+int64_t loadLastSync() {
+  Preferences p;
+  if (!p.begin("clock", true)) return 0;
+  const int64_t v = p.getLong64("ntp_ok", 0);
+  p.end();
+  return v;
+}
+void saveLastSync(int64_t t) {
+  Preferences p;
+  if (!p.begin("clock", false)) return;
+  p.putLong64("ntp_ok", t);
+  p.end();
+}
 }  // namespace
 
 void ntpSessionStart() {
-  g_ntpRetries = 1;
-  g_ntpPrevWifi = false;
+  const bool want = app_logic::shouldSyncNtp(loadLastSync(), wallClock(), M5.Rtc.getVoltLow());
+  g_ntp = want ? NtpState::Idle : NtpState::Off;
+  Serial.printf("APP: ntp %s\n", want ? "wanted" : "not_needed");
+}
+
+void ntpAbort() {
+  if (g_ntp == NtpState::Idle || g_ntp == NtpState::Waiting) {
+    Serial.println("APP: ntp abandoned (sleep)");
+    sntp_stop();
+    g_ntp = NtpState::Done;
+  }
 }
 
 void ntpPoll(bool wifiUp) {
-  const bool wifiEdge = wifiUp && !g_ntpPrevWifi;
-  g_ntpPrevWifi = wifiUp;
+  if (g_ntp == NtpState::Off || g_ntp == NtpState::Done) return;
   if (!wifiUp) {
     if (g_ntp == NtpState::Waiting) g_ntp = NtpState::Idle;  // link lost: try again on reconnect
     return;
-  }
-  if (g_ntp == NtpState::TimedOut && wifiEdge && g_ntpRetries > 0) {
-    --g_ntpRetries;
-    g_ntp = NtpState::Idle;
   }
   if (g_ntp == NtpState::Idle) {
     sntp_set_sync_status(SNTP_SYNC_STATUS_RESET);
@@ -86,10 +103,13 @@ void ntpPoll(bool wifiUp) {
                       (long)(t - (g_ntpClock0 + (int64_t)(ms / 1000))));
       else
         Serial.printf("APP: ntp synced ms=%u correction_s=unset\n", (unsigned)ms);
-      g_ntp = NtpState::Synced;
+      saveLastSync(t);
+      sntp_stop();
+      g_ntp = NtpState::Done;
     } else if (millis() - g_ntpT0 > 15000) {
       Serial.println("APP: ntp timeout");
-      g_ntp = NtpState::TimedOut;
+      sntp_stop();
+      g_ntp = NtpState::Done;  // no retry: next session
     }
   }
 }

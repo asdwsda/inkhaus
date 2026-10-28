@@ -12,6 +12,11 @@ struct Civil {
 constexpr int64_t kMinPlausibleEpoch = 1700000000;  // below this the RTC counts as unset
 inline bool plausibleEpoch(int64_t e) { return e >= kMinPlausibleEpoch; }
 
+// NTP policy (ARCHITECTURE.md 2026-10-28): sync when the clock is untrusted (never synced, RTC low-voltage flag,
+// implausible time) or the last confirmed sync is older than 24 h. lastSyncEpoch 0 = never; nowEpoch 0 = unset.
+constexpr int64_t kNtpMaxAgeS = 24 * 3600;
+bool shouldSyncNtp(int64_t lastSyncEpoch, int64_t nowEpoch, bool rtcLowVoltage);
+
 // Local civil time of an epoch (UTC) plus utc_offset_s.
 Civil epochToCivil(int64_t epoch_s, int32_t utc_offset_s = 0);
 // Inverse for UTC civil time (offset 0). Values are not range-checked beyond the calendar maths.

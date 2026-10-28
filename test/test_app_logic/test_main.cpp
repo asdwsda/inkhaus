@@ -489,6 +489,18 @@ void test_mailbox() {
   TEST_ASSERT_FALSE(m.pop(v));
 }
 
+static void test_ntp_policy() {
+  const int64_t now = 1800000000;
+  TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(0, now, false));                 // never synced
+  TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(now - 100, now, true));          // RTC low voltage
+  TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(now - 100, 0, false));           // clock unset
+  TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(now - 100, 1000, false));        // implausible clock
+  TEST_ASSERT_FALSE(app_logic::shouldSyncNtp(now - 100, now, false));        // fresh
+  TEST_ASSERT_FALSE(app_logic::shouldSyncNtp(now - 86400, now, false));      // exactly 24 h
+  TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(now - 86401, now, false));       // just over
+  TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(now + 50, now, false));          // sync in the future
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_connect_fetch_render);
@@ -512,6 +524,7 @@ int main() {
   RUN_TEST(test_intent_climate_custom);
   RUN_TEST(test_last_ok_derived_when_clock_arrives);
   RUN_TEST(test_refresh_reports_issue_and_seq);
+  RUN_TEST(test_ntp_policy);
   RUN_TEST(test_civil_roundtrip);
   RUN_TEST(test_label);
   RUN_TEST(test_mailbox);
