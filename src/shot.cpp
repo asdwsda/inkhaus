@@ -15,6 +15,7 @@ namespace {
 
 std::string g_line;
 
+#ifdef DEBUG_SERIAL
 void dump(const M5Canvas &c, bool rle) {
   const int w = c.width(), h = c.height();
   const uint8_t *px = static_cast<const uint8_t *>(const_cast<M5Canvas &>(c).getBuffer());
@@ -90,8 +91,11 @@ void dumpMem(int x, int y, int w, int h) {
   heap_caps_free(out);
 }
 
+#endif  // DEBUG_SERIAL
+
 bool handle(const std::string &line, const Hooks &hk) {
   if (provision::handleLine(line)) return true;  // putfile / reboot (blocks while receiving)
+#ifdef DEBUG_SERIAL
   if (line == "shot" || line == "shotz") {
     if (hk.frame) dump(*hk.frame, line == "shotz");
     return true;
@@ -136,6 +140,7 @@ bool handle(const std::string &line, const Hooks &hk) {
     Serial.printf("CMD: pend %u\n", ms);
     return true;
   }
+#endif  // DEBUG_SERIAL
   return false;
 }
 

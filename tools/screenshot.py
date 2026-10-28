@@ -5,6 +5,8 @@ Sends `shotz` (run-length coded) or `shot` (raw) to the running app, which repli
 "SHOT-BEGIN <w> <h> [rle <n>]", the pixel data and "SHOT-END". The grey canvas is written as PNG
 (Pillow) or PGM if Pillow is missing, or if the output name ends in .pgm.
 
+Needs firmware flashed with `-e m5paper-debug` (the plain m5paper build has no shot/tap/key/pend).
+
 It attaches without resetting the board. Test commands can be sent first, e.g. a tap and then the
 screenshot while the fake action is still pending:
 

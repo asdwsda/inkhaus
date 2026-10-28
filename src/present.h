@@ -33,6 +33,7 @@ void bootFrame(bool forceFull);
 // Returns true if anything was refreshed.
 enum class Mode { Partial, Full };
 bool show(Mode mode, uint32_t now);
+void setLogTab(int tab);  // tab index shown in the "APP: render" log line
 
 // Call regularly: after 2 s without a frame, runs one GC16 full refresh if the ghost debt is
 // exceeded (30 fastest refreshes or 300 % screen area since the last full refresh) and saves the

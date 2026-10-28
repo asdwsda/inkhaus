@@ -78,6 +78,7 @@ void SessionDriver::onNet(const NetEvent &ev, int64_t now) {
   if (ev.type == NetEvent::Type::FetchDone) {
     std::vector<std::string> changed;
     if (ev.error == HaError::None) changed = store_.update(ev.states);
+    lastChanged_ = changed.size();
     fetching_ = false;
     sessionDone_ = true;
     ++fetchSeq_;

@@ -169,6 +169,23 @@ static void drawSettingsFrame(present::Mode mode, uint32_t now) {
   present::show(mode, now);
 }
 
+// Diagnostics: after each fetch result, how many shown-tab widget members have no state.
+static void logFetchApplied() {
+  static uint32_t seen = 0;
+  if (!g_drv || g_drv->fetchSeq() == seen) return;
+  seen = g_drv->fetchSeq();
+  int missing = 0;
+  const auto &tabs = g_app.config().tabs;
+  const int tab = g_app.shownTab();
+  if (tab >= 0 && size_t(tab) < tabs.size()) {
+    for (size_t i = 0; i < tabs[size_t(tab)].widgets.size(); ++i)
+      for (const auto *m : g_app.widgetData(int(i)).members)
+        if (!m) ++missing;
+  }
+  Serial.printf("APP: fetch_applied store=%u changed=%u missing_members=%d\n",
+                (unsigned)g_app.store().size(), (unsigned)g_drv->lastChanged(), missing);
+}
+
 static void showFrame(uint32_t now) {
   if (settings_flow::active()) {
     drawSettingsFrame(present::Mode::Partial, now);
@@ -176,6 +193,7 @@ static void showFrame(uint32_t now) {
   }
   composeFrame();
   const bool full = g_app.takeFull();
+  present::setLogTab(g_app.shownTab());
   present::show(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 
@@ -487,6 +505,7 @@ void loop() {
     g_drv->tick(now);
     session_glue::ntpPoll(g_drv->wifiUp());
     if (g_drv->takeRender()) changed = true;
+    logFetchApplied();
     changed |= syncMarks();
     if (!g_stackLogged && g_drv->sessionDone()) {
       g_stackLogged = true;

@@ -16,7 +16,9 @@ the architect.
 - **The device is shared between agents.** Wrap every flash, reset, serial capture and
   screenshot in `tools/device_lock.sh` (it waits for the lock, default 300 s, and says who
   holds it): `tools/device_lock.sh pio run -e m5paper -t upload --upload-port /dev/ttyUSB0`.
-- Flash: `pio run -e <env> -t upload --upload-port /dev/ttyUSB0`.
+- Flash: `pio run -e <env> -t upload --upload-port /dev/ttyUSB0`. Use `-e m5paper-debug` when
+  screenshots or serial taps are needed (`shot*`, `tap`, `key`, `pend`, `mem`, `cleanup` exist only
+  there); `putfile` and `reboot` are in every build.
 - Serial: **`pio device monitor` does not work for agents** (it needs a TTY). Use
   `tools/serial_capture.py`:
   - `tools/serial_capture.py --reset --seconds 15` resets the board, then captures.

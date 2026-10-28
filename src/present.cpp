@@ -394,11 +394,15 @@ void bootFrame(bool forceFull) {
   closeRead();
 }
 
+static int g_renderTab = -1;
+void setLogTab(int tab) { g_renderTab = tab; }
+
 bool show(Mode mode, uint32_t now) {
   auto &d = M5.Display;
   g_lastShowMs = now;
   if (mode == Mode::Full || g_forceFull) {
     if (mode != Mode::Full) boot::log("full_after_failure", 1);
+    Serial.printf("APP: render tab=%d rects=1 mode=full\n", g_renderTab);
     fullRefresh(g_forceFull, "full");
     saveRecordOfCurrent();
     return true;
@@ -406,11 +410,13 @@ bool show(Mode mode, uint32_t now) {
   screen_track::DiffOptions opts;
   auto rects = screen_track::diffFrames(buf(g_prev), buf(g_cur), g_w, g_h, g_w, opts);
   if (rects.empty()) return false;
+  Serial.printf("APP: render tab=%d rects=%u mode=partial\n", g_renderTab, (unsigned)rects.size());
   long area = 0;
   for (const Rect &r : rects) area += long(r.w) * long(r.h);
   const long screen = long(g_w) * long(g_h);
   if (area * 100 > screen * kBigChangePct) {
     boot::log("big_change_pct", area * 100 / screen);
+    Serial.printf("APP: render tab=%d rects=%u mode=full\n", g_renderTab, (unsigned)rects.size());
     fullRefresh(false, "full_big_change");
     saveRecordOfCurrent();
     return true;

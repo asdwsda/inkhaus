@@ -54,6 +54,7 @@ class SessionDriver {
   bool sleeping() const { return machine_.sleeping(); }
   bool wifiUp() const { return wifiUp_; }
   int64_t lastOkEpoch() const { return lastOkEpoch_; }  // 0 = never
+  size_t lastChanged() const { return lastChanged_; }  // entities changed by the last fetch
   uint32_t fetchSeq() const { return fetchSeq_; }  // counts arrived fetch results
   bool lastFetchFailed() const { return lastFetchFailed_; }
   bool lastLinkExternal() const { return external_; }
@@ -80,6 +81,7 @@ class SessionDriver {
   int64_t lastOkMs_ = 0;       // monotonic time of the last OK fetch made while the clock was unset
   bool lastOkPending_ = false;  // lastOkEpoch_ to be derived from lastOkMs_ once the clock is known
   uint32_t fetchSeq_ = 0;
+  size_t lastChanged_ = 0;
   bool refreshIssued_ = false;
   SleepRequest sleep_;
   std::map<std::string, session::Mark> marks_;
