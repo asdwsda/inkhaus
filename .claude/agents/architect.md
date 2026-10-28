@@ -34,6 +34,12 @@ include/, lib/ or test/ yourself.
 Run independent tasks in parallel only when they touch different files.
 
 ## Throughput
+- Budget mode (user, 2026-10-28): when running on paid credits (the plan's usage limit is used up),
+  keep token use minimal: no new agents unless needed, no optional reviews, short prompts, do
+  cheap mechanical work (commits, docs) yourself. When on the plan, go full throttle (parallelize).
+  Ask the user if unsure which applies.
+- Commit PC-complete tasks as checkpoints ("task NNN: … (PC part; device check pending)") instead of
+  leaving many tasks uncommitted; the final commit marks the task done after the device check.
 - User direction (2026-10-28): parallelize as much as possible. Whenever work waits on the
   device, the user or a review, start every independent task whose files don't overlap with
   running ones (new files + a later small hook is a valid split). Plan ahead so there's always

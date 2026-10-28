@@ -30,3 +30,15 @@ Apply the 2026-10-28 decision (ARCHITECTURE.md):
 
 ## Notes
 - Starts after 017 (lib/ui_state) and 018 are merged.
+- Session 1 result (2026-10-28, uncommitted, not yet reviewed): Light/Switch TurnOn/TurnOff actions;
+  `uistate::toggleIntent` from the shown state; session sends queued actions before the initial
+  fetch, opposite explicit actions cancel; the initial fetch also confirms matching sent actions.
+  362 native tests pass. Next: tester review, then commit. For the src wiring: map toggle taps via
+  toggleIntent; the driver must handle ServiceDone before the first FetchDone.
+- Review (2026-10-28): criteria PASS except one bug: `lib/session/src/session.cpp:247`
+  `on_service_done` pushes the in-flight item into `confirm_` although the queue holds a newer
+  action for the same id; result: a stale "on" confirmation → `Mark::Failed` for an entity in the
+  right state (test `test_t019_opposite_tap_while_first_call_in_flight` reproduces it, currently failing).
+  Fix: skip/dedupe by id. Also: `toggleIntent` must follow the mixed-group decision (any member on
+  → TurnOff; ARCHITECTURE.md 2026-10-28). Do both after task 023 has finished (it may touch lib/session
+  and lib/ui_state). Climate first-class action: optional, not done.
