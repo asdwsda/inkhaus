@@ -1,0 +1,246 @@
+#include <unity.h>
+
+#include "net_policy.h"
+
+using namespace netpolicy;
+
+static const uint8_t kB[6] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60};
+
+static CacheRecord rec(bool st = false) {
+    return makeRecord("home", kB, 6, st, 1, 2, 3, 4);
+}
+
+void setUp() {}
+void tearDown() {}
+
+void test_default_record_invalid() {
+    TEST_ASSERT_FALSE(cacheValid(CacheRecord{}, "home", false));
+}
+void test_valid_record() {
+    TEST_ASSERT_TRUE(cacheValid(rec(), "home", false));
+    TEST_ASSERT_TRUE(hasLease(rec()));
+}
+void test_wrong_ssid_invalid() {
+    TEST_ASSERT_FALSE(cacheValid(rec(), "other", false));
+}
+void test_static_mode_mismatch_invalid() {
+    TEST_ASSERT_FALSE(cacheValid(rec(false), "home", true));
+    TEST_ASSERT_FALSE(cacheValid(rec(true), "home", false));
+    TEST_ASSERT_TRUE(cacheValid(rec(true), "home", true));
+}
+void test_static_record_has_no_lease() {
+    CacheRecord r = rec(true);
+    TEST_ASSERT_FALSE(hasLease(r));
+    TEST_ASSERT_EQUAL_UINT32(0, r.ip);
+}
+void test_bad_channel_or_bssid() {
+    CacheRecord r = rec();
+    r.channel = 0;
+    TEST_ASSERT_FALSE(cacheValid(r, "home", false));
+    r.channel = 15;
+    TEST_ASSERT_FALSE(cacheValid(r, "home", false));
+    const uint8_t zero[6] = {0};
+    TEST_ASSERT_FALSE(cacheValid(makeRecord("home", zero, 6, false, 0, 0, 0, 0), "home", false));
+}
+void test_invalidated_after_two_failures() {
+    CacheRecord r = rec();
+    TEST_ASSERT_TRUE(cacheUsable(r, "home", false));
+    r = afterCachedFailure(r);
+    TEST_ASSERT_TRUE(cacheUsable(r, "home", false));
+    r = afterCachedFailure(r);
+    TEST_ASSERT_FALSE(cacheUsable(r, "home", false));
+}
+
+void test_cached_success_fast() {
+    Connector c;
+    TEST_ASSERT_EQUAL(Attempt::Cached, c.start(1000, true));
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(1100, LinkStatus::Connecting, n));
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+    TEST_ASSERT_EQUAL(Phase::Connected, c.step(1300, LinkStatus::Connected, n));
+    TEST_ASSERT_FALSE(c.cachedFailed());
+}
+void test_cached_timeout_falls_back_to_scan() {
+    Connector c;
+    c.start(0, true);
+    Attempt n;
+    c.step(kCachedAttemptMs - 1, LinkStatus::Connecting, n);
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(kCachedAttemptMs, LinkStatus::Connecting, n));
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+    TEST_ASSERT_TRUE(c.cachedFailed());
+    TEST_ASSERT_EQUAL(Phase::Connected, c.step(4000, LinkStatus::Connected, n));
+}
+void test_cached_driver_failure_falls_back_early() {
+    Connector c;
+    c.start(0, true);
+    Attempt n;
+    c.step(500, LinkStatus::Failed, n);
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+    // scan then fails at the driver level: no further restarts, wait for overall timeout
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(900, LinkStatus::Failed, n));
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+}
+void test_overall_timeout() {
+    Connector c;
+    c.start(100, false);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(100 + kTotalTimeoutMs - 1, LinkStatus::Connecting, n));
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(100 + kTotalTimeoutMs, LinkStatus::Connecting, n));
+    TEST_ASSERT_FALSE(c.cachedFailed());
+    // stays failed
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(100 + kTotalTimeoutMs + 5, LinkStatus::Connected, n));
+}
+void test_scan_start_never_uses_cached() {
+    Connector c;
+    TEST_ASSERT_EQUAL(Attempt::Scan, c.start(0, false));
+    Attempt n;
+    c.step(kCachedAttemptMs + 10, LinkStatus::Connecting, n);
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+}
+void test_millis_wraparound() {
+    Connector c;
+    c.start(0xFFFFFF00u, true);
+    Attempt n;
+    c.step(0xFFFFFF00u + kCachedAttemptMs, LinkStatus::Connecting, n);
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+}
+void test_timeout_with_cached_active_counts_failure() {
+    Connector c;
+    c.start(0, true);
+    Attempt n;
+    c.step(kTotalTimeoutMs, LinkStatus::Connecting, n);
+    TEST_ASSERT_TRUE(c.cachedFailed());
+}
+
+// ---- tester additions (task 021 review) ----
+void test_cached_fallback_boundary() {
+    Connector c;
+    c.start(1000, true);
+    Attempt n;
+    c.step(1000 + kCachedAttemptMs - 1, LinkStatus::Connecting, n);
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+    TEST_ASSERT_FALSE(c.cachedFailed());
+    c.step(1000 + kCachedAttemptMs, LinkStatus::Connecting, n);
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+}
+void test_scan_driver_failure_waits_for_total_timeout() {
+    Connector c;
+    c.start(0, false);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(100, LinkStatus::Failed, n));
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(kTotalTimeoutMs - 1, LinkStatus::Failed, n));
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(kTotalTimeoutMs, LinkStatus::Failed, n));
+    TEST_ASSERT_FALSE(c.cachedFailed());
+}
+void test_connected_wins_over_timeout_at_boundary() {
+    Connector c;
+    c.start(0, false);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Connected, c.step(kTotalTimeoutMs, LinkStatus::Connected, n));
+}
+void test_failed_is_sticky_and_restart_resets() {
+    Connector c;
+    c.start(0, true);
+    Attempt n;
+    c.step(kTotalTimeoutMs, LinkStatus::Connecting, n);
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(kTotalTimeoutMs + 1, LinkStatus::Connected, n));
+    c.start(50000, false);
+    TEST_ASSERT_FALSE(c.cachedFailed());
+    TEST_ASSERT_EQUAL(Phase::Connected, c.step(50100, LinkStatus::Connected, n));
+}
+void test_fallback_happens_once() {
+    Connector c;
+    c.start(0, true);
+    Attempt n;
+    c.step(kCachedAttemptMs, LinkStatus::Failed, n);
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+    c.step(kCachedAttemptMs + 10, LinkStatus::Failed, n);
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+    TEST_ASSERT_EQUAL(Attempt::Scan, c.current());
+}
+void test_wrap_total_timeout() {
+    Connector c;
+    uint32_t t0 = 0xFFFFFFFFu - 1000;
+    c.start(t0, false);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(t0 + kTotalTimeoutMs - 1, LinkStatus::Connecting, n));
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(t0 + kTotalTimeoutMs, LinkStatus::Connecting, n));
+}
+void test_channel_bounds() {
+    CacheRecord r = rec();
+    r.channel = 14;
+    TEST_ASSERT_TRUE(cacheValid(r, "home", false));
+    r.channel = 15;
+    TEST_ASSERT_FALSE(cacheValid(r, "home", false));
+    r.channel = 0;
+    TEST_ASSERT_FALSE(cacheValid(r, "home", false));
+}
+void test_usable_failure_threshold_and_saturation() {
+    CacheRecord r = rec();
+    TEST_ASSERT_TRUE(cacheUsable(r, "home", false));
+    r = afterCachedFailure(r);
+    TEST_ASSERT_TRUE(cacheUsable(r, "home", false));
+    r = afterCachedFailure(r);
+    TEST_ASSERT_FALSE(cacheUsable(r, "home", false));
+    TEST_ASSERT_TRUE(cacheValid(r, "home", false));
+    r.failures = 255;
+    r = afterCachedFailure(r);
+    TEST_ASSERT_EQUAL_UINT8(255, r.failures);
+}
+void test_lease_requires_ip_gateway_subnet() {
+    CacheRecord r = makeRecord("home", kB, 6, false, 1, 2, 3, 0);
+    TEST_ASSERT_TRUE(hasLease(r));  // dns optional
+    TEST_ASSERT_FALSE(hasLease(makeRecord("home", kB, 6, false, 0, 2, 3, 4)));
+    TEST_ASSERT_FALSE(hasLease(makeRecord("home", kB, 6, false, 1, 0, 3, 4)));
+    TEST_ASSERT_FALSE(hasLease(makeRecord("home", kB, 6, false, 1, 2, 0, 4)));
+}
+void test_static_record_drops_lease_values() {
+    CacheRecord r = makeRecord("home", kB, 6, true, 9, 9, 9, 9);
+    TEST_ASSERT_EQUAL_UINT32(0, r.ip);
+    TEST_ASSERT_EQUAL_UINT32(0, r.dns);
+    TEST_ASSERT_FALSE(hasLease(r));
+}
+void test_ssid_hash_case_and_empty() {
+    TEST_ASSERT_EQUAL_UINT32(2166136261u, ssidHash(""));
+    TEST_ASSERT_NOT_EQUAL(ssidHash("home"), ssidHash("Home"));
+    CacheRecord r = rec();
+    TEST_ASSERT_FALSE(cacheValid(r, "Home", false));
+}
+void test_corrupt_magic_invalid() {
+    CacheRecord r = rec();
+    r.magic ^= 1;
+    TEST_ASSERT_FALSE(cacheValid(r, "home", false));
+}
+
+int main() {
+    UNITY_BEGIN();
+    RUN_TEST(test_default_record_invalid);
+    RUN_TEST(test_valid_record);
+    RUN_TEST(test_wrong_ssid_invalid);
+    RUN_TEST(test_static_mode_mismatch_invalid);
+    RUN_TEST(test_static_record_has_no_lease);
+    RUN_TEST(test_bad_channel_or_bssid);
+    RUN_TEST(test_invalidated_after_two_failures);
+    RUN_TEST(test_cached_success_fast);
+    RUN_TEST(test_cached_timeout_falls_back_to_scan);
+    RUN_TEST(test_cached_driver_failure_falls_back_early);
+    RUN_TEST(test_overall_timeout);
+    RUN_TEST(test_scan_start_never_uses_cached);
+    RUN_TEST(test_millis_wraparound);
+    RUN_TEST(test_timeout_with_cached_active_counts_failure);
+    RUN_TEST(test_cached_fallback_boundary);
+    RUN_TEST(test_scan_driver_failure_waits_for_total_timeout);
+    RUN_TEST(test_connected_wins_over_timeout_at_boundary);
+    RUN_TEST(test_failed_is_sticky_and_restart_resets);
+    RUN_TEST(test_fallback_happens_once);
+    RUN_TEST(test_wrap_total_timeout);
+    RUN_TEST(test_channel_bounds);
+    RUN_TEST(test_usable_failure_threshold_and_saturation);
+    RUN_TEST(test_lease_requires_ip_gateway_subnet);
+    RUN_TEST(test_static_record_drops_lease_values);
+    RUN_TEST(test_ssid_hash_case_and_empty);
+    RUN_TEST(test_corrupt_magic_invalid);
+    return UNITY_END();
+}
