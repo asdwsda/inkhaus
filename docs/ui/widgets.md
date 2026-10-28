@@ -1,6 +1,6 @@
 # Widget specs
 
-Revision 4. Cause of the revision 3 defects (sensor value outside its frame, a
+Revision 6 (revision 5: dynamic text black; revision 6: section 11 "State wording"). Revision 4 cause of the revision 3 defects (sensor value outside its frame, a
 crowded thermostat): the vertical budgets were computed from centre lines without
 the real text box heights. Every widget below now has a **vertical budget table**
 built from text boxes of 1.2 x font size.
@@ -410,7 +410,7 @@ HA: domain `binary_sensor`; state `on`/`off`; attribute `device_class`;
 **Wording by device_class (revision 5):** `window` and `door` show
 `Open` (state on) / `Closed` (state off). Every other or missing device_class
 shows `On` / `Off` (icon fallback `dot_on` / `dot_off`: filled / outline ring).
-Other classes (motion, ...) can get their own wording and icon later. The mockup
+Wording and icons of the other classes: section 11.1. The mockup
 shows a window sensor that is open.
 
 Same toggle layout, budget and boxes as Light (section 3), with a sensor icon
@@ -534,7 +534,7 @@ the `status` text in the status position (truncated, no battery group) and the
 alert badge.
 
 States: Pending (confirmed by the next fetch with a different state); Unavailable
-(dotted, `n/a`, battery `-`, buttons dotted); Loading (`-`); Stale (unchanged). Battery <= 15 %: battery icon with the "!" glyph (as status bar).
+(dotted, `n/a`, battery `-`, buttons dotted); Loading (`-`); Stale (unchanged). Battery <= 20 %: battery icon with the "!" glyph (rule in section 11.2).
 
 Redraw: status line, affected buttons, badge.
 
@@ -578,3 +578,93 @@ revision 4 (so layout.md section 8 is unchanged).
 | sensor 2x1 | 67.2 (value) / 61.8 (two-line name) | 80 |
 | weather 2x1 left block | 61.8 | 80 |
 | weather 1x1 | 73.8 | 80 |
+
+## 11. State wording (revision 6)
+
+All state texts are F24 INK (dynamic text is black). Widths use 0.55 em = 13.2 px per
+character at F24; DejaVu's real widest letters (D, U, O, m, w) run about 10 % wider,
+so **binary_sensor texts are capped at 7 characters** (about 100 px real).
+
+**State box of binary_sensor (changes section 8):** the widget never shows a badge, so
+the state box is widened to `(58, 54.6, W-70, 28.8)` (right limit W-12): landscape
+106 px, portrait 178 px. The 7-character cap fits the landscape box with margin.
+
+### 11.1 binary_sensor by device_class
+
+HA state `on` -> On text, `off` -> Off text. Icon variants come in pairs:
+`<name>_on` = solid / filled parts, `<name>_off` = same outline, parts empty (state by
+shape and fill, like `window_on`/`window_off`). The frame stays PAPER.
+
+| device_class | on text | off text | Icon on / off | New icon |
+|---|---|---|---|---|
+| door | Open | Closed | `door_on` / `door_off` | door: door leaf in a frame, handle dot; on = leaf swung open (filled wedge) |
+| garage_door | Open | Closed | `garage_on` / `garage_off` | garage: house outline with a roller door; on = door raised (filled gap), off = slats drawn |
+| window | Open | Closed | `window_on` / `window_off` | existing |
+| opening | Open | Closed | `window_on` / `window_off` | existing (generic opening) |
+| motion | Motion | Clear | `motion_on` / `motion_off` | motion: walking figure with two arcs; off = outline figure, no arcs |
+| occupancy | Present | Empty | `person_on` / `person_off` | person: head circle + shoulders, solid / outline |
+| presence | Home | Away | `person_on` / `person_off` | (shared with occupancy) |
+| moisture | Wet | Dry | `puddle_on` / `puddle_off` | puddle: drop sitting on a wavy line (NOT the plain `drop`, which is humidity only), solid / outline |
+| smoke | Smoke | Clear | `smoke_on` / `smoke_off` | smoke: cloud with wavy rising lines, solid / outline |
+| gas | Gas | Clear | `gas_on` / `gas_off` | gas: cylinder with valve and cloud puff, solid / outline |
+| problem | Problem | OK | `problem_on` / `problem_off` | problem: triangle with "!", solid / outline (differs from `alert`, a circle, which means failed) |
+| battery | Low | OK | `battery_low` / `battery` | battery_low: existing `battery` shape, M size, nearly empty with the "!" glyph; off = existing `battery` full |
+| connectivity | Online | Offline | `wifi` / `wifi_off` | existing |
+| lock (on = unlocked) | Open | Locked | `lock_open` / `lock_closed` | lock_open: padlock with raised shackle (outline body); lock_closed: padlock, solid body, closed shackle |
+| plug | Plugged | Out | `plug` / `plug_off` | plug_off: the `plug` shape as outline (existing `plug` stays solid) |
+| power | Power | None | `bolt` / `bolt_off` | bolt_off: the `bolt` as outline |
+
+Notes: `lock` "on" is the alarming state (unlocked), so it reads `Open` with the open
+padlock; `Unlocked` (about 111 px real) would not fit the landscape box. Any other or
+missing device_class: `On` / `Off`, `dot_on` / `dot_off`. State `unavailable` or
+`unknown`: `n/a`, `warn` icon OFF, dotted frame (as section 8).
+
+### 11.2 Vacuum
+
+The status line has the wide-widget room (group must end at x <= W-272; widest
+`Returning` is 9 x 13.2 = 119 px), so only these words are used.
+
+| HA state | Status text | Start / pause / dock fill (section 10) | Notes |
+|---|---|---|---|
+| cleaning | Cleaning | start filled | battery group shown |
+| docked | Docked | dock filled | battery group shown |
+| returning | Returning | dock filled | battery group shown |
+| paused | Paused | pause filled | battery group shown |
+| idle | Idle | none | battery group shown |
+| error | the `status` attribute (truncated with `…` to the line limit), else `Error` | none | alert badge, no battery group |
+| unavailable / unknown / other | `n/a` (other known strings: humanised, 11.4) | none | unavailable: dotted frame, battery `-` |
+
+Low battery: the battery icon S gets the "!" glyph (as in the status bar) when
+`battery_level` <= 20 % **and** the state is not `docked` (a docked vacuum at 20 % is
+charging, which is normal). The percent text stays `20%` etc. in INK, no colour change.
+Missing `battery_level`: the whole battery group is omitted.
+
+### 11.3 Cover
+
+Position p = `current_position` (0..100). Text widths: `Opening 100%` 12 chars =
+158 px, fits the 224 px and 268 px state boxes of section 1.
+
+| HA state | Without position | With position p |
+|---|---|---|
+| closed | Closed | Closed (position ignored) |
+| open | Open | p = 100 or p missing: `Open`; otherwise `Open p%` (e.g. `Open 40%`; this is also how a stopped cover is shown, HA has no `stopped` state) |
+| opening | Opening | `Opening p%` |
+| closing | Closing | `Closing p%` |
+| unavailable / unknown | n/a | n/a |
+| loading | - | - |
+
+Button fill follows section 1 (opening -> up filled, closing -> down filled).
+
+### 11.4 Generic fallback for any other text state
+
+Applies to sensor text states, vacuum/cover states not listed above, and anything
+unknown:
+
+1. `unknown` and `unavailable` (any case) -> `n/a`.
+2. Otherwise humanise: underscores to spaces, whole string lower-cased, first letter
+   upper-cased (`partly_cloudy` -> `Partly cloudy`, `HEAT_COOL` -> `Heat cool`).
+3. Truncate with `…` to the width of the text box (F24: 152 px landscape 1x1 box,
+   224 px portrait 1x1 box, about 11 / 16 characters; 1x1 sensor/weather condition
+   at F18: 152 / 224 px).
+4. Empty string -> `-`.
+Weather conditions keep their own short list (section 9) before this rule applies.

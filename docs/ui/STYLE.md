@@ -462,7 +462,7 @@ for the temperature and humidity on one row.
 |-------|-------|
 | Cover | up (solid triangle), stop (solid square), down |
 | Devices | bulb (solid, on), bulb_off (outline), plug (switch), auto (two circular arrows, automation), vacuum (disc with bumper), thermometer, gauge (generic sensor), bolt |
-| Binary sensor | window_on (window outline, panes filled), window_off (outline, panes empty); other device classes later; fallback dot_on / dot_off (ring) |
+| Binary sensor | window_on (window outline, panes filled), window_off (outline, panes empty); per device class pairs _on (solid) / _off (outline): door, garage, motion, person, puddle, smoke, gas, problem, battery_low, lock_open / lock_closed, plug_off, bolt_off (widgets.md 11.1); fallback dot_on / dot_off (ring) |
 | Climate | flame (heating: two tongues and a hollow, never drop-shaped), snow (cooling), dry (drop with a slash, drying), fan, auto, power (off), pause (two bars, hvac action idle) |
 | Humidity | drop (solid drop, used **only** for humidity) |
 | Vacuum | play (start), pause, dock (house with down arrow) |
