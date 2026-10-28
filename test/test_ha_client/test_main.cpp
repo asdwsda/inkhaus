@@ -164,6 +164,10 @@ void test_actions() {
   check_call(Action::CoverStop, "cover", "stop_cover");
   check_call(Action::LightToggle, "light", "toggle");
   check_call(Action::SwitchToggle, "switch", "toggle");
+  check_call(Action::LightTurnOn, "light", "turn_on");
+  check_call(Action::LightTurnOff, "light", "turn_off");
+  check_call(Action::SwitchTurnOn, "switch", "turn_on");
+  check_call(Action::SwitchTurnOff, "switch", "turn_off");
   check_call(Action::AutomationTurnOn, "automation", "turn_on");
   check_call(Action::AutomationTurnOff, "automation", "turn_off");
   check_call(Action::VacuumStart, "vacuum", "start");

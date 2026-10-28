@@ -120,6 +120,18 @@ CoverView coverView(const std::vector<const EntityState *> &members, bool group)
   return v;
 }
 
+const EntityState *toggleSummary(const std::vector<const EntityState *> &members) {
+  // Group is "on" if any available member is on (same rule as toggleIntent).
+  const EntityState *firstAvail = nullptr;
+  for (auto *m : members) {
+    if (!m || !m->available) continue;
+    if (m->state == "on") return m;
+    if (!firstAvail) firstAvail = m;
+  }
+  if (firstAvail) return firstAvail;
+  return members.empty() ? nullptr : members[0];
+}
+
 ToggleView toggleView(config::WidgetType type, const EntityState *st, bool badgeShown) {
   ToggleView v;
   v.look = lookOf(st);

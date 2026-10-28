@@ -5,6 +5,20 @@
 
 namespace uistate {
 
+ToggleIntent toggleIntent(config::WidgetType type, const std::vector<const EntityState *> &members) {
+  if (type != config::WidgetType::Light && type != config::WidgetType::Switch &&
+      type != config::WidgetType::Automation)
+    return ToggleIntent::None;
+  // Mixed group: any available member on -> turn off; otherwise turn on.
+  bool any = false;
+  for (auto *m : members) {
+    if (!m || !m->available) continue;
+    any = true;
+    if (m->state == "on") return ToggleIntent::TurnOff;
+  }
+  return any ? ToggleIntent::TurnOn : ToggleIntent::None;
+}
+
 ActionResult fakeAction(config::WidgetType type, int sub, const std::vector<const EntityState *> &members) {
   ActionResult r;
   using T = config::WidgetType;
@@ -12,11 +26,10 @@ ActionResult fakeAction(config::WidgetType type, int sub, const std::vector<cons
     case T::Light:
     case T::Switch:
     case T::Automation: {
-      // The whole group goes to the opposite of the first available member.
-      const EntityState *first = nullptr;
-      for (auto *m : members) if (m && m->available) { first = m; break; }
-      if (!first) return r;
-      const bool turnOn = first->state != "on";
+      // The whole group goes to the opposite of the group aggregate (any on -> off).
+      const ToggleIntent intent = toggleIntent(type, members);
+      if (intent == ToggleIntent::None) return r;
+      const bool turnOn = intent == ToggleIntent::TurnOn;
       for (auto *m : members) {
         if (!m || !m->available) continue;
         EntityState s = *m;

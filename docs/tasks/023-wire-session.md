@@ -45,3 +45,6 @@ its commands with the real modules:
 
 ## Notes
 - The device is away until the user is back; build and test on the PC first.
+- Follow-up from task 019 (do it in this task): `src/render/widgets.cpp:136` `drawToggle` uses
+  `d.members[0]`; change it to `uistate::toggleSummary(d.members)` so a mixed group shows "On" if any
+  member is on.

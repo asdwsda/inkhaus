@@ -36,6 +36,7 @@ struct Event {
     ServiceDone,   // ticket, error
     UserAction,    // ids, action (or custom_call), expected_state
     Input,         // any touch/rocker activity (UserAction counts as input too)
+    Refresh,       // manual refresh now (status bar tap, Settings "Refresh now"); also retries after an error
     Tick,
   };
   Type type = Type::Tick;
@@ -70,6 +71,7 @@ struct Event {
   static Event user_custom(std::vector<std::string> ids, ServiceCall call,
                            std::string expected = "");
   static Event input();
+  static Event refresh();
   static Event tick();
 };
 
@@ -117,6 +119,7 @@ class SessionMachine {
   };
 
   void on_start(const Event& e, int64_t now, std::vector<Command>& out);
+  void on_refresh(int64_t now, std::vector<Command>& out);
   void on_user_action(const Event& e, int64_t now, std::vector<Command>& out);
   void on_fetch_done(const Event& e, int64_t now, std::vector<Command>& out);
   void on_service_done(const Event& e, int64_t now, std::vector<Command>& out);
@@ -132,6 +135,7 @@ class SessionMachine {
   bool online_ = false;      // Wi-Fi connected
   bool dead_ = false;        // offline/auth error: no more requests
   bool fetched_ = false;     // initial full fetch done
+  bool refresh_ = false;     // a manual full fetch is wanted
   bool render_ = false;      // a render is due at the end of this handle()
   Flight flight_ = Flight::None;
   Status status_ = Status::Connecting;

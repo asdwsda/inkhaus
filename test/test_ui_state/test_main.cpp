@@ -199,15 +199,33 @@ void test_sensor_weather_vacuum() {
 // ---- fake actions ----
 
 void test_fake_toggle_and_group() {
-  EntityState a = E("light.a", "off"), b = E("light.b", "on");
+  EntityState a = E("light.a", "off"), b = E("light.b", "off");
   ActionResult r = fakeAction(WidgetType::Light, 0, {&a, &b});
   TEST_ASSERT_TRUE(r.changed);
   TEST_ASSERT_EQUAL(2, r.states.size());
   TEST_ASSERT_EQUAL_STRING("on", r.states[0].state.c_str());
   TEST_ASSERT_EQUAL_STRING("on", r.states[1].state.c_str());
   TEST_ASSERT_TRUE(r.states[0].brightness.has_value());
+  // mixed group: any on -> everything goes off
+  EntityState c = E("light.c", "off"), d = E("light.d", "on");
+  ActionResult m = fakeAction(WidgetType::Light, 0, {&c, &d});
+  TEST_ASSERT_EQUAL_STRING("off", m.states[0].state.c_str());
+  TEST_ASSERT_EQUAL_STRING("off", m.states[1].state.c_str());
   EntityState un = E("light.c", "unavailable", false);
   TEST_ASSERT_FALSE(fakeAction(WidgetType::Light, 0, {&un}).changed);
+}
+
+void test_toggle_intent_from_shown_state() {
+  EntityState off = E("light.a", "off"), on = E("light.b", "on");
+  EntityState un = E("light.c", "unavailable", false);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Light, {&off}) == ToggleIntent::TurnOn);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Light, {&on}) == ToggleIntent::TurnOff);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Switch, {&off, &on}) == ToggleIntent::TurnOff);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Automation, {&on, &off}) == ToggleIntent::TurnOff);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Light, {&un, &on}) == ToggleIntent::TurnOff);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Light, {&un}) == ToggleIntent::None);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Light, {nullptr}) == ToggleIntent::None);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Cover, {&on}) == ToggleIntent::None);
 }
 
 void test_fake_cover() {
@@ -485,16 +503,40 @@ void test_t_window_sensor_texts() {
   TEST_ASSERT_EQUAL_STRING("Off", toggleView(WidgetType::BinarySensor, &w, false).state.c_str());
 }
 
+static void test_mixed_group_aggregate() {
+  EntityState on, off, un;
+  on.id = "light.a"; on.state = "on"; on.available = true;
+  off.id = "light.b"; off.state = "off"; off.available = true;
+  un.id = "light.c"; un.state = "unavailable"; un.available = false;
+  // off first, on second: shown On, intent TurnOff
+  auto v = toggleView(WidgetType::Light, toggleSummary({&off, &on}), false);
+  TEST_ASSERT_TRUE(v.on);
+  TEST_ASSERT_EQUAL_STRING("On", v.state.c_str());
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Light, {&off, &on}) == ToggleIntent::TurnOff);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Light, {&on, &off}) == ToggleIntent::TurnOff);
+  // all off: Off, TurnOn
+  TEST_ASSERT_FALSE(toggleView(WidgetType::Light, toggleSummary({&off, &off}), false).on);
+  TEST_ASSERT_TRUE(toggleIntent(WidgetType::Light, {&off, &off}) == ToggleIntent::TurnOn);
+  // unavailable first does not hide an on member
+  TEST_ASSERT_TRUE(toggleView(WidgetType::Light, toggleSummary({&un, &off, &on}), false).on);
+  // only unavailable: n/a
+  TEST_ASSERT_EQUAL_STRING("n/a", toggleView(WidgetType::Light, toggleSummary({&un}), false).state.c_str());
+  TEST_ASSERT_NULL(toggleSummary({}));
+  TEST_ASSERT_NULL(toggleSummary({nullptr}));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_fmt_number);
   RUN_TEST(test_cover_single);
   RUN_TEST(test_cover_unavailable_and_loading);
   RUN_TEST(test_cover_group);
+  RUN_TEST(test_mixed_group_aggregate);
   RUN_TEST(test_toggle_text);
   RUN_TEST(test_climate_view);
   RUN_TEST(test_sensor_weather_vacuum);
   RUN_TEST(test_fake_toggle_and_group);
+  RUN_TEST(test_toggle_intent_from_shown_state);
   RUN_TEST(test_fake_cover);
   RUN_TEST(test_fake_climate_step_and_limits);
   RUN_TEST(test_fake_vacuum);

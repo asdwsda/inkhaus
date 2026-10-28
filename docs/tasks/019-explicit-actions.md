@@ -1,6 +1,6 @@
 # 019: Explicit on/off actions, actions before the first fetch
 
-Status: in-progress
+Status: done
 Depends on: 004, 018
 UI spec: none
 Needs device: no
@@ -42,3 +42,7 @@ Apply the 2026-10-28 decision (ARCHITECTURE.md):
   Fix: skip/dedupe by id. Also: `toggleIntent` must follow the mixed-group decision (any member on
   → TurnOff; ARCHITECTURE.md 2026-10-28). Do both after task 023 has finished (it may touch lib/session
   and lib/ui_state). Climate first-class action: optional, not done.
+- Fixed (2026-10-28): `on_service_done` dedupes confirmations by id (newest expectation wins);
+  mixed groups: `toggleIntent` → TurnOff if any available member is on; `uistate::toggleSummary` gives the
+  aggregate for the widget. 395 native tests. Follow-up in task 023: `src/render/widgets.cpp:136`
+  `drawToggle` must use `uistate::toggleSummary(d.members)` instead of `d.members[0]`.

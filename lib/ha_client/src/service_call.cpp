@@ -26,6 +26,10 @@ bool build_service_call(Action action, const std::vector<std::string>& ids, Serv
     case Action::CoverStop: out.domain = "cover"; out.service = "stop_cover"; break;
     case Action::LightToggle: out.domain = "light"; out.service = "toggle"; break;
     case Action::SwitchToggle: out.domain = "switch"; out.service = "toggle"; break;
+    case Action::LightTurnOn: out.domain = "light"; out.service = "turn_on"; break;
+    case Action::LightTurnOff: out.domain = "light"; out.service = "turn_off"; break;
+    case Action::SwitchTurnOn: out.domain = "switch"; out.service = "turn_on"; break;
+    case Action::SwitchTurnOff: out.domain = "switch"; out.service = "turn_off"; break;
     case Action::AutomationTurnOn: out.domain = "automation"; out.service = "turn_on"; break;
     case Action::AutomationTurnOff: out.domain = "automation"; out.service = "turn_off"; break;
     case Action::VacuumStart: out.domain = "vacuum"; out.service = "start"; break;

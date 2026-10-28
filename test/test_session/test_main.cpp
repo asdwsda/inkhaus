@@ -139,19 +139,82 @@ void test_taps_before_wifi_are_queued() {
   auto c = d.send(Event::user_action({"cover.x"}, Action::CoverOpen, "open"));
   TEST_ASSERT_TRUE(has_mark(c, Mark::Pending, "cover.x"));
   TEST_ASSERT_EQUAL(0, count(c, C::CallService));
-  c = d.send(Event::user_action({"light.a"}, Action::LightToggle, "on"));
+  c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
   TEST_ASSERT_EQUAL(2, (int)d.m.queued());
   c = d.send(Event::wifi(true));
-  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));  // initial fetch first
-  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
-  c = d.send(Event::fetch_done(HaError::None));
+  TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));  // actions first, fetch later
   const Command* call = find(c, C::CallService);
   TEST_ASSERT_NOT_NULL(call);
   TEST_ASSERT_EQUAL((int)Action::CoverOpen, (int)call->action);  // order of first tap
   c = d.send(Event::service_done(call->ticket, HaError::None));
   call = find(c, C::CallService);
   TEST_ASSERT_NOT_NULL(call);
-  TEST_ASSERT_EQUAL((int)Action::LightToggle, (int)call->action);
+  TEST_ASSERT_EQUAL((int)Action::LightTurnOn, (int)call->action);
+  c = d.send(Event::service_done(call->ticket, HaError::None));
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));  // initial full fetch after the actions
+  TEST_ASSERT_TRUE(find(c, C::FetchStates)->ids.empty());
+}
+
+void test_fetch_all_after_actions_confirms_matching_states() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  auto c = d.send(Event::wifi(true));
+  c = d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::None));
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "on")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
+  d.advance(1000);
+  for (const Command& x : d.all)
+    if (x.type == C::FetchStates && !x.ids.empty()) TEST_FAIL_MESSAGE("extra confirm fetch");
+}
+
+void test_fetch_all_after_actions_mismatch_still_confirms_later() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  auto c = d.send(Event::wifi(true));
+  c = d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::None));
+  c = d.send(Event::fetch_done(HaError::None, {}, {es("light.a", "off")}));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Confirmed, "light.a"));
+  c = d.advance(600);
+  const Command* f = find(c, C::FetchStates);
+  TEST_ASSERT_NOT_NULL(f);
+  TEST_ASSERT_EQUAL(1, (int)f->ids.size());
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "on")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
+}
+
+void test_explicit_on_then_off_before_wifi_sends_nothing() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOff, "off"));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));  // pending cleared
+  TEST_ASSERT_EQUAL(0, (int)d.m.queued());
+  c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
+  d.send(Event::fetch_done(HaError::None));
+  for (const Command& x : d.all) TEST_ASSERT_NOT_EQUAL(C::CallService, x.type);
+}
+
+void test_explicit_on_off_on_sends_turn_on() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"switch.a"}, Action::SwitchTurnOn, "on"));
+  d.send(Event::user_action({"switch.a"}, Action::SwitchTurnOff, "off"));
+  d.send(Event::user_action({"switch.a"}, Action::SwitchTurnOn, "on"));
+  TEST_ASSERT_EQUAL(1, (int)d.m.queued());
+  auto c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL((int)Action::SwitchTurnOn, (int)find(c, C::CallService)->action);
+}
+
+void test_explicit_repeat_same_action_is_one_call() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  TEST_ASSERT_EQUAL(1, (int)d.m.queued());
 }
 
 void test_toggle_twice_sends_nothing() {
@@ -173,8 +236,7 @@ void test_last_action_wins_keeps_order_and_groups() {
   d.send(Event::user_action({"cover.a"}, Action::CoverOpen, "open"));
   d.send(Event::user_action({"cover.b"}, Action::CoverOpen, "open"));
   d.send(Event::user_action({"cover.a"}, Action::CoverClose, "closed"));  // replaces, keeps slot
-  d.send(Event::wifi(true));
-  auto c = d.send(Event::fetch_done(HaError::None));
+  auto c = d.send(Event::wifi(true));
   const Command* call = find(c, C::CallService);
   TEST_ASSERT_NOT_NULL(call);
   TEST_ASSERT_EQUAL((int)Action::CoverClose, (int)call->action);
@@ -186,8 +248,7 @@ void test_adjacent_same_actions_form_one_call() {
   Driver d;
   d.start();
   d.send(Event::user_action({"cover.a", "cover.b"}, Action::CoverOpen, "open"));
-  d.send(Event::wifi(true));
-  auto c = d.send(Event::fetch_done(HaError::None));
+  auto c = d.send(Event::wifi(true));
   const Command* call = find(c, C::CallService);
   TEST_ASSERT_EQUAL(2, (int)call->ids.size());
 }
@@ -585,8 +646,8 @@ void test_hard_cap_with_continuous_input_is_not_hit() {
 void test_auth_error_on_fetch_no_retry_and_marks_queue_failed() {
   Driver d;
   d.start();
-  d.send(Event::user_action({"light.a"}, Action::LightToggle, "on"));
-  d.send(Event::wifi(true));
+  d.send(Event::wifi(true));  // full fetch in flight
+  d.send(Event::user_action({"light.a"}, Action::LightToggle, "on"));  // queued behind it
   auto c = d.send(Event::fetch_done(HaError::Auth));
   TEST_ASSERT_TRUE(d.m.status() == Status::AuthError);
   TEST_ASSERT_EQUAL(0, outstanding_delta(c));
@@ -620,6 +681,158 @@ void test_action_during_confirm_supersedes_it() {
   c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "off")}));
   TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
   TEST_ASSERT_FALSE(has_mark(d.all, Mark::Failed, "light.a"));
+}
+
+
+// ---- review additions for task 019 ----
+
+// Tap on, the call is in flight, tap off: the stale "on" confirmation must not fail the entity.
+void test_t019_opposite_tap_while_first_call_in_flight() {
+  Driver d;
+  online(d);
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  int t1 = find(c, C::CallService)->ticket;
+  c = d.send(Event::user_action({"light.a"}, Action::LightTurnOff, "off"));
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));  // one request at a time
+  c = d.send(Event::service_done(t1, HaError::None));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
+  int t2 = find(c, C::CallService)->ticket;
+  d.send(Event::service_done(t2, HaError::None));
+  d.advance(500);
+  d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "off")}));
+  for (int i = 0; i < 6; i++) {
+    d.advance(1000);
+    d.send(Event::fetch_done(HaError::None, {}, {es("light.a", "off")}));
+  }
+  TEST_ASSERT_TRUE(has_mark(d.all, Mark::Confirmed, "light.a"));
+  TEST_ASSERT_FALSE(has_mark(d.all, Mark::Failed, "light.a"));
+}
+
+// Mixed toggle and explicit actions on one entity: last wins, nothing crashes, no cancel.
+void test_t019_toggle_then_explicit_last_wins() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightToggle, "on"));
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOff, "off"));
+  auto c = d.send(Event::wifi(true));
+  const Command* call = find(c, C::CallService);
+  TEST_ASSERT_NOT_NULL(call);
+  TEST_ASSERT_EQUAL((int)Action::LightTurnOff, (int)call->action);
+}
+
+// Three taps before Wi-Fi: on, off, on -> a single TurnOn.
+void test_t019_on_off_on_sends_one_turn_on() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOff, "off"));
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  auto c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
+  TEST_ASSERT_EQUAL((int)Action::LightTurnOn, (int)find(c, C::CallService)->action);
+  TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));  // fetch follows after the call
+}
+
+// on then off before Wi-Fi: nothing sent, but the initial fetch still happens.
+void test_t019_on_off_before_wifi_only_fetches() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::SwitchTurnOn, "on"));
+  d.send(Event::user_action({"light.a"}, Action::SwitchTurnOff, "off"));
+  auto c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
+}
+
+// Different action classes on one id (light on vs switch off) do not cancel.
+void test_t019_cross_domain_does_not_cancel() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"x.a"}, Action::LightTurnOn, "on"));
+  d.send(Event::user_action({"x.a"}, Action::SwitchTurnOff, "off"));
+  auto c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
+}
+
+// Automation intent: on/off cancel too.
+void test_t019_automation_cancel() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"automation.a"}, Action::AutomationTurnOff, "off"));
+  d.send(Event::user_action({"automation.a"}, Action::AutomationTurnOn, "on"));
+  auto c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
+}
+
+// Group: members cancel individually; a member added later stays.
+void test_t019_group_partial_cancel() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a", "light.b"}, Action::LightTurnOn, "on"));
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOff, "off"));
+  auto c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
+  const Command* call = find(c, C::CallService);
+  TEST_ASSERT_EQUAL(1, (int)call->ids.size());
+  TEST_ASSERT_EQUAL_STRING("light.b", call->ids[0].c_str());
+}
+
+// ServiceDone before the first FetchDone: confirmation by the initial fetch, no failure.
+void test_t019_service_done_before_first_fetch_confirmed_by_fetch() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  auto c = d.send(Event::wifi(true));
+  int t = find(c, C::CallService)->ticket;
+  c = d.send(Event::service_done(t, HaError::None));
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));  // initial fetch (all)
+  TEST_ASSERT_TRUE(find(c, C::FetchStates)->ids.empty());
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "on")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
+  d.advance(5000);
+  TEST_ASSERT_FALSE(has_mark(d.all, Mark::Failed, "light.a"));
+}
+
+// Initial fetch shows the old state (HA not yet updated): not confirmed, retried by id.
+void test_t019_initial_fetch_stale_state_retries() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  auto c = d.send(Event::wifi(true));
+  d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::None));
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "off")}));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Confirmed, "light.a"));
+  c = d.advance(600);
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
+  TEST_ASSERT_EQUAL(1, (int)find(c, C::FetchStates)->ids.size());
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "on")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
+}
+
+// Tap arrives while the initial fetch is in flight: sent right after it, before any confirm.
+void test_t019_tap_during_initial_fetch() {
+  Driver d;
+  d.start();
+  auto c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
+  c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Pending, "light.a"));
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "on")}));
+  // initial fetch already shows "on", but the call is still sent (idempotent)
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
+}
+
+// Scheduled session never sends actions; unaffected by the reorder.
+void test_t019_service_done_wrong_state_first_fetch_error() {
+  Driver d;
+  d.start();
+  d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  auto c = d.send(Event::wifi(true));
+  d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::None));
+  c = d.send(Event::fetch_done(HaError::Network, {}, {}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.a"));
+  TEST_ASSERT_EQUAL(1, count(c, C::ShowStatus));
 }
 
 // Randomised, well-behaved host: answers only the request that is really outstanding, at
@@ -687,6 +900,11 @@ int main(int, char**) {
   RUN_TEST(test_input_postpones_sleep);
   RUN_TEST(test_taps_before_wifi_are_queued);
   RUN_TEST(test_toggle_twice_sends_nothing);
+  RUN_TEST(test_fetch_all_after_actions_confirms_matching_states);
+  RUN_TEST(test_fetch_all_after_actions_mismatch_still_confirms_later);
+  RUN_TEST(test_explicit_on_then_off_before_wifi_sends_nothing);
+  RUN_TEST(test_explicit_on_off_on_sends_turn_on);
+  RUN_TEST(test_explicit_repeat_same_action_is_one_call);
   RUN_TEST(test_last_action_wins_keeps_order_and_groups);
   RUN_TEST(test_adjacent_same_actions_form_one_call);
   RUN_TEST(test_custom_call_is_sent);
@@ -720,5 +938,16 @@ int main(int, char**) {
   RUN_TEST(test_user_action_after_offline_marks_failed_sends_nothing);
   RUN_TEST(test_action_during_confirm_supersedes_it);
   RUN_TEST(test_fuzz_invariants);
+  RUN_TEST(test_t019_opposite_tap_while_first_call_in_flight);
+  RUN_TEST(test_t019_toggle_then_explicit_last_wins);
+  RUN_TEST(test_t019_on_off_on_sends_one_turn_on);
+  RUN_TEST(test_t019_on_off_before_wifi_only_fetches);
+  RUN_TEST(test_t019_cross_domain_does_not_cancel);
+  RUN_TEST(test_t019_automation_cancel);
+  RUN_TEST(test_t019_group_partial_cancel);
+  RUN_TEST(test_t019_service_done_before_first_fetch_confirmed_by_fetch);
+  RUN_TEST(test_t019_initial_fetch_stale_state_retries);
+  RUN_TEST(test_t019_tap_during_initial_fetch);
+  RUN_TEST(test_t019_service_done_wrong_state_first_fetch_error);
   return UNITY_END();
 }

@@ -6,8 +6,12 @@ enum class Action {
   CoverOpen,
   CoverClose,
   CoverStop,
-  LightToggle,
-  SwitchToggle,
+  LightToggle,   // kept for compatibility; the UI sends TurnOn/TurnOff
+  SwitchToggle,  // kept for compatibility; the UI sends TurnOn/TurnOff
+  LightTurnOn,
+  LightTurnOff,
+  SwitchTurnOn,
+  SwitchTurnOff,
   AutomationTurnOn,
   AutomationTurnOff,
   VacuumStart,

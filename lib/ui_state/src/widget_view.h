@@ -40,6 +40,9 @@ struct ToggleView {
 };
 // type: Light, Switch, Automation or BinarySensor. badgeShown: a badge occupies the line end, so
 // the brightness is left out.
+// Representative member of a toggle group: first available "on" member, else first available,
+// else members[0] (nullptr if empty). Feed it to toggleView so a mixed group reads On.
+const EntityState *toggleSummary(const std::vector<const EntityState *> &members);
 ToggleView toggleView(config::WidgetType type, const EntityState *st, bool badgeShown);
 
 struct ClimateView {

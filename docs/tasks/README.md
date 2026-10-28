@@ -20,7 +20,7 @@
 | 016 | [Software restart hangs in panelSignature()](016-warm-boot-hang.md) | done | 014 |
 | 017 | [Render the real UI on the device (demo data)](017-render-ui-demo.md) | done | 011, 014, 016 |
 | 018 | [Session logic: Wi-Fi, HA fetch, action queue](018-session-logic.md) | done | 004, 005 |
-| 019 | [Explicit on/off actions, actions before the first fetch](019-explicit-actions.md) | in-progress | 004, 018 |
+| 019 | [Explicit on/off actions, actions before the first fetch](019-explicit-actions.md) | done | 004, 018 |
 | 020 | [Write config.yaml to the device over USB](020-provision-config-over-usb.md) | in-progress | 017 |
 | 021 | [Wi-Fi connection module (fast reconnect)](021-wifi-net-module.md) | in-progress | 003 |
 | 022 | [Draw the Settings screen](022-settings-screen-render.md) | in-progress | 007, 017 |

@@ -60,12 +60,27 @@ Event Event::input() {
   e.type = Type::Input;
   return e;
 }
+Event Event::refresh() {
+  Event e;
+  e.type = Type::Refresh;
+  return e;
+}
 Event Event::tick() { return Event(); }
 
 // ---- Helpers --------------------------------------------------------------------------
 
 namespace {
 bool is_toggle(Action a) { return a == Action::LightToggle || a == Action::SwitchToggle; }
+
+// The explicit counterpart (on <-> off) of an action, or the action itself if it has none.
+bool is_opposite(Action a, Action b) {
+  auto pair = [&](Action on, Action off) {
+    return (a == on && b == off) || (a == off && b == on);
+  };
+  return pair(Action::LightTurnOn, Action::LightTurnOff) ||
+         pair(Action::SwitchTurnOn, Action::SwitchTurnOff) ||
+         pair(Action::AutomationTurnOn, Action::AutomationTurnOff);
+}
 
 Command make(Command::Type t) {
   Command c;
@@ -129,6 +144,33 @@ void SessionMachine::on_start(const Event& e, int64_t now, std::vector<Command>&
   flight_ = Flight::Wifi;
 }
 
+void SessionMachine::on_refresh(int64_t now, std::vector<Command>& out) {
+  if (kind_ != power::Session::Interactive) return;
+  idle_.on_input((now - start_ms_) / 1000);
+  if (dead_ && flight_ == Flight::None) {  // retry from scratch: new Wi-Fi connect, then a full fetch
+    dead_ = false;
+    online_ = false;
+    fetched_ = false;
+    status_ = Status::Connecting;
+    Command s = make(Command::Type::ShowStatus);
+    s.status = Status::Connecting;
+    out.push_back(s);
+    out.push_back(make(Command::Type::ConnectWifi));
+    flight_ = Flight::Wifi;
+    render_ = true;
+    return;
+  }
+  if (dead_ || flight_ == Flight::Wifi || flight_ == Flight::FetchAll || !fetched_) return;
+  refresh_ = true;  // pump() sends it once the queue is empty
+  if (status_ != Status::Connecting) {
+    status_ = Status::Connecting;  // the icon shows the dot until the fetch ends
+    Command s = make(Command::Type::ShowStatus);
+    s.status = Status::Connecting;
+    out.push_back(s);
+    render_ = true;
+  }
+}
+
 void SessionMachine::on_user_action(const Event& e, int64_t now, std::vector<Command>& out) {
   if (kind_ != power::Session::Interactive) return;
   idle_.on_input((now - start_ms_) / 1000);
@@ -153,9 +195,12 @@ void SessionMachine::on_user_action(const Event& e, int64_t now, std::vector<Com
     if (it == queue_.end()) {
       queue_.push_back(item);
       pending.push_back(id);
-    } else if (!it->custom && !item.custom && is_toggle(it->action) &&
-               it->action == item.action) {
-      queue_.erase(it);  // two toggles cancel out
+    } else if (!it->custom && !item.custom &&
+               ((is_toggle(it->action) && it->action == item.action) ||
+                is_opposite(it->action, item.action))) {
+      // Two toggles cancel out; so do turn_on then turn_off (or the reverse): the last
+      // explicit action equals the state the user originally saw, so nothing is sent.
+      queue_.erase(it);
       cleared.push_back(id);
     } else {
       *it = item;  // last action wins, position of the first tap is kept
@@ -177,6 +222,19 @@ void SessionMachine::on_fetch_done(const Event& e, int64_t now, std::vector<Comm
   if (!e.changed_ids.empty()) render_ = true;
   if (f == Flight::FetchAll) {
     fetched_ = true;
+    // Actions sent before this fetch may already show their result.
+    std::vector<std::string> done;
+    for (const Item& c : confirm_) {
+      if (c.expected.empty()) continue;
+      for (const EntityState& s : e.states)
+        if (s.id == c.id && s.state == c.expected) done.push_back(c.id);
+    }
+    confirm_.erase(std::remove_if(confirm_.begin(), confirm_.end(),
+                                  [&](const Item& c) {
+                                    return std::find(done.begin(), done.end(), c.id) != done.end();
+                                  }),
+                   confirm_.end());
+    mark(done, Mark::Confirmed, out);
     if (status_ != Status::Online) {
       status_ = Status::Online;
       Command s = make(Command::Type::ShowStatus);
@@ -216,6 +274,14 @@ void SessionMachine::on_service_done(const Event& e, int64_t now, std::vector<Co
   flight_ = Flight::None;
   if (e.error == HaError::None) {
     for (Item& it : calling_) {
+      // A newer action for the same id is already queued: its expectation wins.
+      bool newer = false;
+      for (const Item& q : queue_) newer |= q.id == it.id;
+      // Dedupe by id: the newest expectation replaces any older one.
+      confirm_.erase(std::remove_if(confirm_.begin(), confirm_.end(),
+                                    [&](const Item& c) { return c.id == it.id; }),
+                     confirm_.end());
+      if (newer) continue;
       it.attempts = 0;
       it.due_ms = now + kConfirmDelayMs;
       confirm_.push_back(it);
@@ -235,11 +301,6 @@ void SessionMachine::on_service_done(const Event& e, int64_t now, std::vector<Co
 
 void SessionMachine::pump(int64_t now, std::vector<Command>& out) {
   if (dead_ || !online_ || flight_ != Flight::None) return;
-  if (!fetched_) {
-    out.push_back(make(Command::Type::FetchStates));
-    flight_ = Flight::FetchAll;
-    return;
-  }
   if (!queue_.empty()) {
     // The leading run of identical actions goes out as one call (a group).
     const Item head = queue_.front();
@@ -261,6 +322,12 @@ void SessionMachine::pump(int64_t now, std::vector<Command>& out) {
     queue_.erase(queue_.begin(), queue_.begin() + n);
     out.push_back(c);
     flight_ = Flight::Call;
+    return;
+  }
+  if (!fetched_ || refresh_) {  // queued actions went out first; the full fetch follows
+    refresh_ = false;
+    out.push_back(make(Command::Type::FetchStates));
+    flight_ = Flight::FetchAll;
     return;
   }
   Command c = make(Command::Type::FetchStates);
@@ -311,6 +378,7 @@ std::vector<Command> SessionMachine::handle(const Event& e, int64_t now_ms) {
     case Event::Type::Input:
       if (kind_ == power::Session::Interactive) idle_.on_input((now_ms - start_ms_) / 1000);
       break;
+    case Event::Type::Refresh: on_refresh(now_ms, out); break;
     default: break;
   }
 
