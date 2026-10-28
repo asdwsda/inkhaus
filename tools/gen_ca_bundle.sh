@@ -8,6 +8,8 @@
 # Refresh when Mozilla removes or adds a root the server chains use, and at least yearly.
 # certs/gen_crt_bundle.py is ESP-IDF v4.4.7's generator (Apache-2.0), matching
 # Arduino-ESP32 2.0.17's mbedTLS bundle format. Needs python3 with `cryptography`.
+# certs/extra-roots.pem holds roots that are trusted on purpose although Mozilla dropped them
+# (see the comments in that file); they are appended to the Mozilla list.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -19,4 +21,4 @@ if [[ "${1:-}" == "--refresh" ]]; then
 fi
 
 cd "${certs}"
-python3 gen_crt_bundle.py --input cacert.pem --quiet
+python3 gen_crt_bundle.py --input cacert.pem extra-roots.pem --quiet

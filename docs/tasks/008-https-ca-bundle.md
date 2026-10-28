@@ -58,3 +58,9 @@ Out of scope: TLS session resumption (later, together with power measurements).
   `TLSCHK:` lines. Hook in setup() to be added by task 023.
 - Device check still open: `https://ha.example.org/api/` → status=401 verified; `https://self-signed.badssl.com/`
   → rejected (status=0 + error); report a Cloudflare 403/challenge if it appears.
+- Device check (2026-10-28): the first run failed with `esp_crt_verify_callback(): Failed to verify certificate`
+  (-12288). Cause: Cloudflare serves GTS Root R4 cross-signed by GlobalSign Root CA at the top of the
+  chain; the ESP32 bundle callback only checks the topmost link and GlobalSign Root CA is no longer in
+  the Mozilla list. Fix: certs/extra-roots.pem (GlobalSign Root CA R1, SHA-256 EB:D4:…:1C:99, verified
+  against the server's cross-signed R4), appended by tools/gen_ca_bundle.sh → 119 roots, 55139 bytes.
+  Result: `https://ha.example.org/api/` → status=401, verified=yes (6.1 s with debug logging; measure again).
