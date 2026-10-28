@@ -22,3 +22,5 @@
 | 018 | [Session logic: Wi-Fi, HA fetch, action queue](018-session-logic.md) | done | 004, 005 |
 | 019 | [Explicit on/off actions, actions before the first fetch](019-explicit-actions.md) | in-progress | 004, 018 |
 | 020 | [Write config.yaml to the device over USB](020-provision-config-over-usb.md) | in-progress | 017 |
+| 021 | [Wi-Fi connection module (fast reconnect)](021-wifi-net-module.md) | in-progress | 003 |
+| 022 | [Draw the Settings screen](022-settings-screen-render.md) | in-progress | 007, 017 |

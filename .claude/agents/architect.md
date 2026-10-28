@@ -34,6 +34,10 @@ include/, lib/ or test/ yourself.
 Run independent tasks in parallel only when they touch different files.
 
 ## Throughput
+- User direction (2026-10-28): parallelize as much as possible. Whenever work waits on the
+  device, the user or a review, start every independent task whose files don't overlap with
+  running ones (new files + a later small hook is a valid split). Plan ahead so there's always
+  a queue of PC-only tasks.
 - The device and the user's eyes are the bottleneck. Keep PC-only tasks (lib/ logic,
   tests, specs, tools) running in parallel with the one device task. Start PC-only
   firmware tasks with `isolation: "worktree"` when they could touch shared files, and
