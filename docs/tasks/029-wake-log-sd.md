@@ -25,3 +25,7 @@ Never log secrets. Off in the normal build (no SD access on normal wakes).
 - [ ] On device (later): a few wakes produce lines; `tools/wakelog.py` fetches them.
 
 ## Notes
+- PC part done (2026-10-28): lib/app_logic wakelog_csv (+ test), src/wakelog.* (only with
+  WAKE_LOG_SD), env m5paper-batterytest, `wakelog` serial stream, tools/wakelog.py. Columns: epoch,
+  wake, session, battery_mv, awake_ms, display_ms, wifi_ms, fetch_ms, refresh_ms, fetch_result,
+  refreshes. Normal build: hooks compile to nothing. Device check pending.

@@ -24,6 +24,7 @@
 #include "sleep_logic.h"
 #include "shot.h"
 #include "tap_intent.h"
+#include "wakelog.h"
 #include "wall_time.h"
 
 #ifdef TLS_CHECK
@@ -37,6 +38,14 @@ namespace tls_check { void run(); }
 //   -DBOOT_TEST_HANG=n / -DBOOT_TEST_RESTART  task 016 watchdog and warm-restart tests
 //   -DTEST_SETTINGS       open the Settings screen right after boot (screenshots, task 022/023)
 //   -DTLS_CHECK -DTLS_CHECK_URL=\"https://...\"  task 008 TLS check after boot (src/tls_check.cpp)
+
+// present::show with the wake log's refresh count and time (task 029; no-op without WAKE_LOG_SD).
+static bool timedShow(present::Mode mode, uint32_t now) {
+  const uint32_t t0 = millis();
+  const bool did = present::show(mode, now);
+  if (did) wakelog::refreshed(millis() - t0);
+  return did;
+}
 
 static uistate::AppState g_app;
 static render::StatusInfo g_status;
@@ -166,7 +175,7 @@ static void snapshotInfo() {
 
 static void drawSettingsFrame(present::Mode mode, uint32_t now) {
   render::drawSettings(present::canvas(), settings_flow::screen(), g_info);
-  present::show(mode, now);
+  timedShow(mode, now);
 }
 
 // Diagnostics: after each fetch result, how many shown-tab widget members have no state.
@@ -194,7 +203,7 @@ static void showFrame(uint32_t now) {
   composeFrame();
   const bool full = g_app.takeFull();
   present::setLogTab(g_app.shownTab());
-  present::show(full ? present::Mode::Full : present::Mode::Partial, now);
+  timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 
 // ---- session ----
@@ -207,6 +216,7 @@ static void startSession(uint32_t now) {
   g_drv.reset(new app_logic::SessionDriver(g_cfg.cfg.entityIds, g_app.store(), *g_wifi, g_net,
                                            session_glue::wallClock, appLog));
   g_sessionOver = false;
+  wakelog::sessionStarted(now);
   // The offset is taken now (local time at planning time); the machine plans the wake-up from it.
   g_drv->start(g_firstSession ? g_wake : power::WakeReason::Button, batteryMv(), g_settings,
                utcOffsetAt(session_glue::wallClock()), now);
@@ -266,7 +276,7 @@ static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
     present::bootFrame(true);
   } else {
     composeFrame();
-    present::show(present::Mode::Full, now);
+    timedShow(present::Mode::Full, now);
   }
   g_app.takeFull();
 }
@@ -320,7 +330,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session) {
     g_status.sleepIndicator = toRender(app_logic::indicatorFor(plan, session));
     composeFrame();
     now = millis();
-    present::show(present::Mode::Partial, now);
+    timedShow(present::Mode::Partial, now);
     present::prepareSleep();  // saves the record of the frame with the indicator, closes the read state
   }
   net::powerDown();
@@ -346,6 +356,7 @@ void setup() {
   g_wake = sleepwake::detect();
   const power::Session kind = power::decide_session(g_wake, batteryMv());
   g_scheduled = kind == power::Session::ScheduledRefresh;
+  wakelog::begin(app_logic::wakeName(g_wake), kind);
   if (g_scheduled) g_status.sleepIndicator = toRender(sleepwake::storedIndicator());
 
   settings::Settings &s = g_settings;
@@ -506,6 +517,14 @@ void loop() {
     session_glue::ntpPoll(g_drv->wifiUp());
     if (g_drv->takeRender()) changed = true;
     logFetchApplied();
+    if (g_drv->status() == session::Status::Online) wakelog::wifiUp(now);
+    {
+      static uint32_t seenFetch = 0;
+      if (g_drv->fetchSeq() != seenFetch) {
+        seenFetch = g_drv->fetchSeq();
+        wakelog::fetchDone(now, !g_drv->lastFetchFailed());
+      }
+    }
     changed |= syncMarks();
     if (!g_stackLogged && g_drv->sessionDone()) {
       g_stackLogged = true;

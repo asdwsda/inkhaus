@@ -10,6 +10,7 @@
 #include <string>
 
 #include "boot.h"
+#include "wakelog.h"
 
 namespace sleepwake {
 
@@ -138,6 +139,8 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
                 app_logic::methodName(sp.first), (long long)(sp.arm_rtc_alarm ? *plan.rtc_alarm_at : 0),
                 app_logic::indicatorName(sp.indicator), wake.empty() ? "none" : wake.c_str(), (int)batteryMv,
                 (unsigned)millis(), sp.low_battery ? 1 : 0);
+
+  wakelog::append(session, nowEpoch, batteryMv);  // no-op unless -DWAKE_LOG_SD
 
   Preferences p;
   if (p.begin(kNs, false)) {

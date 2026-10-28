@@ -9,6 +9,7 @@
 #include "session_driver.h"
 #include "tap_intent.h"
 #include "wall_time.h"
+#include "wakelog_csv.h"
 #include "app_state.h"
 #include "config_model.h"
 
@@ -554,6 +555,32 @@ void test_fetch_reaches_widget_data() {
   TEST_ASSERT_EQUAL_STRING("below_horizon", d.members[0]->state.c_str());
 }
 
+static void test_wakelog_csv() {
+  TEST_ASSERT_EQUAL_STRING(
+      "epoch,wake,session,battery_mv,awake_ms,display_ms,wifi_ms,fetch_ms,refresh_ms,fetch_result,refreshes\n",
+      wakeLogHeader().c_str());
+  WakeRecord r;
+  r.epoch = 1760000000;
+  r.wake = "rtc_alarm";
+  r.session = "scheduled";
+  r.battery_mv = 3987;
+  r.awake_ms = 7210;
+  r.display_ms = 1100;
+  r.wifi_ms = 2400;
+  r.fetch_ms = 1900;
+  r.refresh_ms = 950;
+  r.fetch_result = "ok";
+  r.refreshes = 2;
+  TEST_ASSERT_EQUAL_STRING("1760000000,rtc_alarm,scheduled,3987,7210,1100,2400,1900,950,ok,2\n",
+                           wakeLogLine(r).c_str());
+  // Phases that did not happen are empty; text cannot break the columns.
+  WakeRecord q;
+  q.wake = "a,b\nc";
+  q.session = "low_battery";
+  q.fetch_result = "none";
+  TEST_ASSERT_EQUAL_STRING("0,a_b_c,low_battery,0,0,,,,,none,0\n", wakeLogLine(q).c_str());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_connect_fetch_render);
@@ -584,5 +611,6 @@ int main() {
   RUN_TEST(test_remembered_external_tried_first);
   RUN_TEST(test_empty_fetch_is_ok);
   RUN_TEST(test_fetch_reaches_widget_data);
+  RUN_TEST(test_wakelog_csv);
   return UNITY_END();
 }
