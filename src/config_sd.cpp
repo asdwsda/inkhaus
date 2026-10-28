@@ -27,8 +27,7 @@ const char *statusText(Status s) {
   return "?";
 }
 
-Status readFile(std::string &out) {
-  out.clear();
+bool mount() {
   // Never touch the shared SPI bus while an EPD transfer is running.
   M5.Display.waitDisplay();
 
@@ -36,11 +35,22 @@ Status readFile(std::string &out) {
   pinMode(kPinCs, OUTPUT);
   digitalWrite(kPinCs, HIGH);
   SPI.begin(kPinSck, kPinMiso, kPinMosi, kPinCs);
+  return SD.begin(kPinCs, SPI, kSdHz);
+}
 
+void unmount() {
+  SD.end();
+  digitalWrite(kPinCs, HIGH);
+}
+
+Status readFile(std::string &out) {
+  out.clear();
   Status status = Status::Ok;
-  if (!SD.begin(kPinCs, SPI, kSdHz)) {
-    status = Status::NoCard;
-  } else {
+  if (!mount()) {
+    digitalWrite(kPinCs, HIGH);
+    return Status::NoCard;
+  }
+  {
     File f = SD.open(kPath, FILE_READ);
     if (!f || f.isDirectory()) {
       status = Status::NoFile;
@@ -56,9 +66,8 @@ Status readFile(std::string &out) {
       }
     }
     if (f) f.close();
-    SD.end();
   }
-  digitalWrite(kPinCs, HIGH);
+  unmount();
   return status;
 }
 

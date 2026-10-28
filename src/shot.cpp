@@ -7,6 +7,7 @@
 
 #include "boot.h"
 #include "frame_diff.h"
+#include "provision.h"
 
 namespace shot {
 
@@ -90,6 +91,7 @@ void dumpMem(int x, int y, int w, int h) {
 }
 
 bool handle(const std::string &line, const Hooks &hk) {
+  if (provision::handleLine(line)) return true;  // putfile / reboot (blocks while receiving)
   if (line == "shot" || line == "shotz") {
     if (hk.frame) dump(*hk.frame, line == "shotz");
     return true;

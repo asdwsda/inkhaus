@@ -284,7 +284,10 @@ void setupDone() {
 }
 
 void begin() {
+    // 4 KB receive buffer: the putfile transfer (task 020) lets the host send 1 KB between ACKs.
+    const size_t rxSize = Serial.setRxBufferSize(4096);  // must precede begin()
     Serial.begin(115200);
+    Serial.printf("BOOT: serial_rx_buffer=%u\n", (unsigned)rxSize);
     g_t0Us = micros();
     // Crash counter first: decides between the normal and the fallback start-up, and whether to
     // give up. A watchdog reset or a panic counts; anything else (power-on, button, software

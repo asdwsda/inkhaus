@@ -19,6 +19,11 @@ const char *statusText(Status s);
 
 constexpr const char *kPath = "/config.yaml";
 
+// Mounts / unmounts the card on the shared SPI bus (for other SD users, e.g. provision). Every
+// successful mount() must be paired with unmount(). mount() waits for the display first.
+bool mount();
+void unmount();
+
 // Reads /config.yaml from the SD root into `out`. Mounts and unmounts the card
 // around the read so the SPI bus is left to the display afterwards.
 Status readFile(std::string &out);
