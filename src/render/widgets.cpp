@@ -216,7 +216,10 @@ void drawSensor(Ctx &x, const ui::Placement &pl, const uistate::WidgetData &d, c
       drawText(x.c, Font::F24, lines[0], x.X(12), x.Y(60), Align::Left, INK);
     }
     std::string unit = v.unit;
-    drawRun(x.c, Font::F56, v.value, Font::F40, unit, x.X(W - 12), x.Y(71), Align::Right, vc);
+    if (v.textState)
+      drawText(x.c, Font::F24, fitText(x.c, Font::F24, v.value, 220), x.X(W - 12), x.Y(60), Align::Right, vc);
+    else
+      drawRun(x.c, Font::F56, v.value, Font::F40, unit, x.X(W - 12), x.Y(71), Align::Right, vc);
     if (una) drawBadge(x, W - 224, 40, Icon::Warn, OFFGREY);
     return;
   }

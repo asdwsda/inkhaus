@@ -14,7 +14,8 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
   NetEvent e;
   if (cmd.type == NetCommand::Type::Fetch) {
     e.type = NetEvent::Type::FetchDone;
-    FetchResult f = client_.fetch_states(cmd.ids);
+    FetchResult f;  // nothing to fetch is a success with 0 states (no request)
+    if (!cmd.ids.empty()) f = client_.fetch_states(cmd.ids);
     e.error = f.result.error;
     e.http_status = f.result.http_status;
     e.external = isExternal(f.result.base_url);

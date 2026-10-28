@@ -187,6 +187,13 @@ ClimateView climateView(const EntityState *st) {
   return v;
 }
 
+std::string humanise(const std::string &raw) {
+  std::string s = raw;
+  for (char &c : s) if (c == '_') c = ' ';
+  if (!s.empty() && s[0] >= 'a' && s[0] <= 'z') s[0] = char(s[0] - 'a' + 'A');
+  return s;
+}
+
 SensorView sensorView(const EntityState *st) {
   SensorView v;
   v.look = lookOf(st);
@@ -197,7 +204,8 @@ SensorView sensorView(const EntityState *st) {
   }
   double d;
   v.numeric = parseNumber(st->state, d);
-  v.value = st->state;
+  v.value = v.numeric ? st->state : humanise(st->state);
+  v.textState = !v.numeric;
   if (v.numeric && !st->unit_of_measurement.empty()) {
     const std::string &u = st->unit_of_measurement;
     const bool tight = u == "\xC2\xB0" "C" || u == "\xC2\xB0" "F" || u == "%";

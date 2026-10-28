@@ -399,6 +399,30 @@ void test_external_link_flag() {
   TEST_ASSERT_TRUE(e.external);
 }
 
+void test_remembered_external_tried_first() {
+  FakeHa ha;
+  ha.states = {{"light.a", "on"}};
+  HaWorker w(ha, "http://ha.local:8123", "https://x.example.org", "T");
+  w.setRemembered("https://x.example.org");
+  NetCommand c;
+  c.ids = {"light.a"};
+  NetEvent e = w.run(c);
+  TEST_ASSERT_EQUAL((int)HaError::None, (int)e.error);
+  TEST_ASSERT_TRUE(e.external);
+  TEST_ASSERT_EQUAL(1, (int)ha.urls.size());
+  TEST_ASSERT_TRUE(ha.urls[0].find("x.example.org") != std::string::npos);
+}
+
+void test_empty_fetch_is_ok() {
+  FakeHa ha;
+  HaWorker w(ha, "http://ha.local:8123", "", "T");
+  NetCommand c;  // no ids
+  NetEvent e = w.run(c);
+  TEST_ASSERT_EQUAL((int)HaError::None, (int)e.error);
+  TEST_ASSERT_TRUE(e.states.empty());
+  TEST_ASSERT_EQUAL(0, (int)ha.urls.size());
+}
+
 // ---- tap intent ----
 
 void test_intent_toggles_and_actions() {
@@ -557,6 +581,8 @@ int main() {
   RUN_TEST(test_civil_roundtrip);
   RUN_TEST(test_label);
   RUN_TEST(test_mailbox);
+  RUN_TEST(test_remembered_external_tried_first);
+  RUN_TEST(test_empty_fetch_is_ok);
   RUN_TEST(test_fetch_reaches_widget_data);
   return UNITY_END();
 }

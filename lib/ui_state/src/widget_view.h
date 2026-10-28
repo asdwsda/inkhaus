@@ -61,7 +61,10 @@ struct SensorView {
   std::string value = "-";  // raw numeric text or a text state
   std::string unit;         // with a leading space where one is needed
   bool numeric = false;
+  bool textState = false;  // draw in F24 in every size
 };
+// "above_horizon" -> "Above horizon": underscores to spaces, first letter upper-cased.
+std::string humanise(const std::string &raw);
 SensorView sensorView(const EntityState *st);
 
 struct WeatherView {

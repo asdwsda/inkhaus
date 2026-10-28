@@ -160,6 +160,20 @@ void test_fake_climate_step_zero_or_negative() {
   }
 }
 
+void test_humanise_and_text_state() {
+  TEST_ASSERT_EQUAL_STRING("Above horizon", humanise("above_horizon").c_str());
+  TEST_ASSERT_EQUAL_STRING("21.5", humanise("21.5").c_str());
+  TEST_ASSERT_EQUAL_STRING("", humanise("").c_str());
+  EntityState s = E("sun.sun", "above_horizon");
+  SensorView sv = sensorView(&s);
+  TEST_ASSERT_TRUE(sv.textState);
+  TEST_ASSERT_EQUAL_STRING("Above horizon", sv.value.c_str());
+  s.state = "8.4";
+  sv = sensorView(&s);
+  TEST_ASSERT_FALSE(sv.textState);
+  TEST_ASSERT_EQUAL_STRING("8.4", sv.value.c_str());
+}
+
 void test_sensor_weather_vacuum() {
   EntityState s = E("sensor.t", "8.4");
   s.unit_of_measurement = "\xC2\xB0" "C";
@@ -657,6 +671,7 @@ int main() {
   RUN_TEST(test_mixed_group_aggregate);
   RUN_TEST(test_toggle_text);
   RUN_TEST(test_climate_view);
+  RUN_TEST(test_humanise_and_text_state);
   RUN_TEST(test_sensor_weather_vacuum);
   RUN_TEST(test_fake_toggle_and_group);
   RUN_TEST(test_toggle_intent_from_shown_state);

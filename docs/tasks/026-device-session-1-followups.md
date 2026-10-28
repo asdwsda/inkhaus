@@ -31,3 +31,6 @@ Needs device: yes for the visual check (later)
       remote URL first (log `link=remote` and a shorter fetch); a config without entities shows Online.
 
 ## Notes
+- PC part done (2026-10-28): `humanise()` + `textState` (wide sensor text in F24); remembered base URL
+  persisted (RTC + NVS "net"/"base", written on change, never logged) and restored at net-task start;
+  empty id list → no request, OK result. 466 native tests. Device checks pending.

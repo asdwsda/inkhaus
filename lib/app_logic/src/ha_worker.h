@@ -15,6 +15,8 @@ class HaWorker {
       : internal_(internalUrl), client_(transport, std::move(internalUrl), std::move(externalUrl), std::move(token)) {}
 
   NetEvent run(const NetCommand &cmd);
+  const std::string &remembered() const { return client_.remembered_base(); }
+  void setRemembered(const std::string &b) { client_.set_remembered(b); }
 
  private:
   bool isExternal(const std::string &base) const;
