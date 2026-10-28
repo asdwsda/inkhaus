@@ -1,6 +1,6 @@
 # Widget specs
 
-Revision 6 (revision 5: dynamic text black; revision 6: section 11 "State wording"). Revision 4 cause of the revision 3 defects (sensor value outside its frame, a
+Revision 7 (revision 5: dynamic text black; revision 6: section 11 "State wording"; revision 7: section 12 "Sensor details line"). Revision 4 cause of the revision 3 defects (sensor value outside its frame, a
 crowded thermostat): the vertical budgets were computed from centre lines without
 the real text box heights. Every widget below now has a **vertical budget table**
 built from text boxes of 1.2 x font size.
@@ -563,6 +563,7 @@ revision 4 (so layout.md section 8 is unchanged).
 | climate (wide) | 100 % | 77 % (left), 80 % (cluster) | yes |
 | sensor 1x1 | 100 % reserved (62 % typical ink) | 92 % | yes |
 | sensor 2x1 | 100 % | 84 % | yes |
+| sensor 1x1 / 2x1 with details (section 12) | 100 % reserved | 1x1 92 %, 2x1 74 % (left column), 84 % (value) | yes |
 | weather 2x1 | 100 % | 77 % (left), 60 % (icon, temperature) | yes |
 | weather 1x1 | 100 % | 92 % (text), 60 % (icon) | yes |
 | light, switch, automation, binary_sensor 1x1 | 100 % | 92 % (text + icon), 50 % (icon alone) | yes |
@@ -668,3 +669,97 @@ unknown:
    at F18: 152 / 224 px).
 4. Empty string -> `-`.
 Weather conditions keep their own short list (section 9) before this rule applies.
+
+## 12. Sensor with attributes and details line (revision 7)
+
+Task 030. Mockup: `docs/ui/sensor-details.svg` (portrait; `png/sensor-details.png`).
+Data from `sensorView`: `main` {value, unit} (the configured attribute, else the state) and
+`details` 0..2 items {label, value, unit}. A sensor without details looks exactly like
+section 7. The text below only adds the **details line**. Still read-only, not focusable.
+
+**Item text.** `Label value` + unit: one space between label and value; unit appended
+without a space for `°C` / `°F` / `%`, with a space otherwise (section 7). Label = humanised
+attribute name (`dew_point` -> `Dew point`, 11.4). Two items on one line are separated by a
+16 px gap (no dot or bar). Text is **F18 INK**, never DIM (it changes at runtime), centred
+at 1x1 and left-aligned at 2x1. F18 widths (DejaVu): `Humidity 45%` 127 px, `Dew point
+9.3°C` 147 px, `Pressure 1013 hPa` about 165 px.
+
+### 12.1 1x1 (W = 176 or 248)
+
+The 2-text-lines rule leaves no room for value + name + details (48 + 21.6 + 21.6 + gaps >
+80), so **the details line takes the name's slot and the name is not drawn** while details
+exist. Same Stack B budget as section 7 (73.8 of 80); nothing moves:
+
+| Line | Font | cy | Baseline | Box top | Box bottom |
+|------|------|----|----------|---------|------------|
+| 1 Value + unit | F40 / F24 unit | 39 | 53 (shared) | 15.0 | 63.0 |
+| 2 Details | F18 INK | 78 | 84 | 67.2 | 88.8 |
+
+| Element | Box (x, y, w, h) | Font / grey |
+|---------|------------------|-------------|
+| Value `w-N-value` | as section 7 | F40 + F24 unit, INK |
+| Detail `w-N-detail` | (12, 67.2, W-24, 21.6), centred at cx = W/2 | F18 INK, one line |
+
+Width 152 (landscape) / 224 (portrait). **Only detail 1 is shown at 1x1** (detail 2 is
+ignored in both orientations; the portrait room 224 < 127 + 16 + 147 = 290 anyway).
+Shortening ladder, stopping at the first step that fits:
+1. `Label value unit` as is;
+2. the label truncated with `…` (at least 3 characters + `…`, e.g. `Pressu… 1013 hPa`);
+3. value + unit only, without label (the label is lost, values are never cut);
+4. a text value (not a number) is cut with `…` to the width left after step 3.
+The main value follows section 7 (wide value: one decimal fewer, then F24; never wrap).
+Because the name is dropped, the user identifies the sensor by the detail label and
+value; if the name matters, use 2x1.
+
+### 12.2 2x1 (W = 364 or 508)
+
+Value group exactly as section 7 (F56 + F40 unit, right edge x = W-12, baseline 71). Left
+column = **name line + details line** (2 text lines, so the two-line name of section 7 is
+not available: the name is one line, truncated with `…`):
+
+| Line | Font | cy | Baseline | Box top | Box bottom | Gap below |
+|------|------|----|----------|---------|------------|-----------|
+| 1 Name | F24 INK | 36 | 44 | 21.6 | 50.4 | 6.8 |
+| 2 Details | F18 INK | 68 | 74 | 57.2 | 78.8 | |
+| **Sum** | | | | 21.6..78.8 | | **57.2 of 80** |
+
+| Element | Box (x, y, w, h) | Font / grey |
+|---------|------------------|-------------|
+| Name `w-N-name` | (12, 21.6, C, 28.8) | F24 INK, left |
+| Detail 1 `w-N-detail1` | (12, 57.2, w1, 21.6) | F18 INK, left |
+| Detail 2 `w-N-detail2` | (12 + w1 + 16, 57.2, w2, 21.6) | F18 INK, left |
+
+`C` = column width = value group left edge - 12 - 12, with the actual group width g (not
+the fixed 196): `C = W - 36 - g`, at least W-232. `21.5°C` (g = 175): C = 297 (portrait)
+/ 153 (landscape); `-12.5°C` (g = 195): C = 277 / 133. Portrait therefore shows both
+details for `Humidity 45%` + `Dew point 9.3°C` (127 + 16 + 147 = 290 <= 297), see the
+mockup. Landscape (C 133..153) shows one.
+Ladder (stop at the first fit): 1. both items with labels; 2. **detail 2 dropped**, detail
+1 with label; 3. detail 1 label truncated (3 characters + `…` minimum); 4. detail 1 value +
+unit only. Name: truncated with `…` to C; it is never dropped at 2x1. Fill: details 2x1 left column 57.2 / 80 = 72 %; horizontal 100 %.
+The column width depends on the value, so **a value change redraws the whole content box**
+(12, 12, W-24, 80), not only the value box.
+
+### 12.3 Missing, unavailable, stale
+
+| Case | Main value | Details line |
+|------|-----------|--------------|
+| Detail attribute missing or `null` in an available entity | unchanged | label kept, value `-` (no unit): `Dew point -` |
+| Main attribute missing (entity available) | `-` (F40 / F56 INK, no unit) | unchanged |
+| Detail text value | humanised (11.4) | cut with `…` as in 12.1 step 4 |
+| Loading (no data yet) | `-` | labels with `-` values (`Humidity -`), so the layout does not jump |
+| Unavailable / unknown entity | `n/a`, warn badge, dotted OFF frame | **not drawn**; 1x1: the name returns in its F18 slot (OFF grey); 2x1: single name line F24 OFF at cy 52, baseline 60, badge as section 7 |
+| Stale | unchanged: values stay INK, the status-bar chip carries it | unchanged |
+
+An unavailable entity has no attributes, so showing `Humidity -` would be misleading.
+Only an unavailable entity hides the details; a missing main attribute still shows them.
+
+Redraw: 1x1 value box + detail box (12, 67.2, W-24, 21.6) only; 2x1 as 12.2. Partial
+refresh; the full-refresh rules of STYLE.md section 10 apply unchanged.
+
+### 12.4 Budget and fill
+
+| Widget | Content stack height | Limit |
+|--------|----------------------|-------|
+| sensor 1x1 with details | 73.8 | 80 |
+| sensor 2x1 with details, left column | 57.2 (value 67.2) | 80 |

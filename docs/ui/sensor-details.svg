@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans">
+  <!-- Sensor with details line (widgets.md section 12, revision 7). Portrait 540x960 mockup sheet, not a real tab.
+       Greys: #000 INK, #444 DIM (static captions), #888 OFF, #fff PAPER. Widget text uses dominant-baseline="alphabetic" at by = cy + k (F18 6, F24 8, F40 14, F56 19).
+       1x1 (W 248): value F40 baseline 53; details line F18 baseline 84 replaces the name (name returns when the details line is empty).
+       2x1 (W 508): value F56 right at x 496 baseline 71; left column: name F24 baseline 44, details F18 baseline 74 (cy 68).
+       Sheet captions (ids cap-*) are outside the widgets and are not part of the spec. -->
+  <defs>
+    <symbol id="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="5" y1="19" x2="19" y2="5" stroke="currentColor" stroke-width="2"/></symbol>
+  </defs>
+  <rect width="540" height="960" fill="#fff"/>
+  <text id="cap-title" x="16" y="34" font-size="24" fill="#000">Sensor details line (portrait)</text>
+
+  <!-- w-1: 1x1, attribute main value + one detail with label (second detail dropped) -->
+  <g id="w-1" transform="translate(16,56)">
+    <rect id="w-1-frame" x="1" y="1" width="246" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-1-value" x="124" y="53" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">21.5<tspan font-size="24" dx="2">°C</tspan></text>
+    <text id="w-1-detail" x="124" y="84" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">Humidity 45%</text>
+  </g>
+  <!-- w-2: 1x1, negative value, detail attribute missing -->
+  <g id="w-2" transform="translate(276,56)">
+    <rect id="w-2-frame" x="1" y="1" width="246" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-2-value" x="124" y="53" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">-3.2<tspan font-size="24" dx="2">°C</tspan></text>
+    <text id="w-2-detail" x="124" y="84" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">Dew point -</text>
+  </g>
+  <text id="cap-1" x="16" y="186" font-size="18" fill="#444">1x1: detail 1 with label | missing value "-"</text>
+
+  <!-- w-3: 2x1, both details fit (value 21.5C = 175 px, column 12..309) -->
+  <g id="w-3" transform="translate(16,212)">
+    <rect id="w-3-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-3-name" x="12" y="44" font-size="24" fill="#000" dominant-baseline="alphabetic">Living room</text>
+    <text id="w-3-detail1" x="12" y="74" font-size="18" fill="#000" dominant-baseline="alphabetic">Humidity 45%</text>
+    <text id="w-3-detail2" x="155" y="74" font-size="18" fill="#000" dominant-baseline="alphabetic">Dew point 9.3°C</text>
+    <text id="w-3-value" x="496" y="71" font-size="56" fill="#000" text-anchor="end" dominant-baseline="alphabetic">21.5<tspan font-size="40" dx="2">°C</tspan></text>
+  </g>
+  <text id="cap-3" x="16" y="342" font-size="18" fill="#444">2x1: name + two details (short value, wide column)</text>
+
+  <!-- w-4: 2x1, long value -12.5C = 195 px, column 12..289: detail 2 dropped -->
+  <g id="w-4" transform="translate(16,368)">
+    <rect id="w-4-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-4-name" x="12" y="44" font-size="24" fill="#000" dominant-baseline="alphabetic">Greenhouse</text>
+    <text id="w-4-detail1" x="12" y="74" font-size="18" fill="#000" dominant-baseline="alphabetic">Humidity 45%</text>
+    <text id="w-4-value" x="496" y="71" font-size="56" fill="#000" text-anchor="end" dominant-baseline="alphabetic">-12.5<tspan font-size="40" dx="2">°C</tspan></text>
+  </g>
+  <text id="cap-4" x="16" y="498" font-size="18" fill="#444">2x1: wide value, second detail dropped</text>
+
+  <!-- w-5: 1x1 unavailable: name returns, no details -->
+  <g id="w-5" transform="translate(16,524)">
+    <rect id="w-5-frame" x="1" y="1" width="246" height="102" rx="8" fill="#fff" stroke="#888" stroke-width="2" stroke-dasharray="2 4"/>
+    <text id="w-5-value" x="124" y="53" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">n/a</text>
+    <text id="w-5-name" x="124" y="84" font-size="18" fill="#888" text-anchor="middle" dominant-baseline="alphabetic">Living room</text>
+    <use id="w-5-badge" xlink:href="#i-warn" href="#i-warn" x="212" y="12" width="24" height="24" color="#888"/>
+  </g>
+  <!-- w-6: 1x1 loading: value "-", details keep their labels with "-" -->
+  <g id="w-6" transform="translate(276,524)">
+    <rect id="w-6-frame" x="1" y="1" width="246" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-6-value" x="124" y="53" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">-</text>
+    <text id="w-6-detail" x="124" y="84" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">Humidity -</text>
+  </g>
+  <text id="cap-5" x="16" y="650" font-size="18" fill="#444">1x1: unavailable (name back) | loading</text>
+
+  <!-- w-7: 2x1 unavailable: one name line, no details -->
+  <g id="w-7" transform="translate(16,680)">
+    <rect id="w-7-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#888" stroke-width="2" stroke-dasharray="2 4"/>
+    <text id="w-7-name" x="12" y="60" font-size="24" fill="#888" dominant-baseline="alphabetic">Living room</text>
+    <use id="w-7-badge" xlink:href="#i-warn" href="#i-warn" x="372" y="40" width="24" height="24" color="#888"/>
+    <text id="w-7-value" x="496" y="71" font-size="56" fill="#000" text-anchor="end" dominant-baseline="alphabetic">n/a</text>
+  </g>
+  <text id="cap-7" x="16" y="806" font-size="18" fill="#444">2x1: unavailable</text>
+</svg>
