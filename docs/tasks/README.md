@@ -20,3 +20,4 @@
 | 016 | [Software restart hangs in panelSignature()](016-warm-boot-hang.md) | done | 014 |
 | 017 | [Render the real UI on the device (demo data)](017-render-ui-demo.md) | in-progress | 011, 014, 016 |
 | 018 | [Session logic: Wi-Fi, HA fetch, action queue](018-session-logic.md) | in-progress | 004, 005 |
+| 019 | [Explicit on/off actions, actions before the first fetch](019-explicit-actions.md) | todo | 004, 018 |
