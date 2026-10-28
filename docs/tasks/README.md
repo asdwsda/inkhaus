@@ -29,3 +29,5 @@
 | 025 | [Config cache in internal flash](025-config-cache.md) | in-progress | 003, 020 |
 | 026 | [Follow-ups from device session 1](026-device-session-1-followups.md) | in-progress | 023 |
 | 027 | [TLS session resumption (researched, deferred)](027-tls-resumption.md) | todo | 008 |
+| 028 | [State wording and icons](028-state-wording.md) | in-progress | 026 |
+| 029 | [Wake log on the SD card](029-wake-log-sd.md) | in-progress | 024 |
