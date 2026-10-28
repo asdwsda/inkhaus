@@ -127,3 +127,11 @@ the architect.
 
 - Only M5GFX's built-in DejaVu at 18/24/40/56 (72 for diagnostics). Never the default bitmap
   font scaled up: it looks bad on the panel.
+
+## Secrets on the device
+- `/secrets.yaml` on the SD card holds Wi-Fi + HA URLs + token; `/config.yaml` is the dashboard only.
+  Send them with `tools/provision.py [--name secrets.yaml] FILE`; the device answers with summaries
+  (`PUT-CONFIG …`, `PUT-SECRETS ok wifi=yes ha=yes`) and never echoes content. Never read or print a
+  real secrets.yaml; a real config.yaml may be read only if the user shares it and it has no
+  `connection:` section.
+

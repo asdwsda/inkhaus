@@ -31,8 +31,11 @@ device and the user's visual checks are the bottleneck.
 - Device how-to and pitfalls: `.claude/skills/m5paper-device/SKILL.md`
 
 ## Rules
-- Secrets live in `include/secrets.h` (dev fallback) and in the `connection:`
-  section of the SD card's `config.yaml`. Both are gitignored and never read by
-  agents. `include/secrets.example.h` and `config.example.yaml` show the format.
+- Secrets live in `secrets.yaml` on the SD card (Wi-Fi, HA URLs, token) and in
+  `include/secrets.h` (dev fallback). Both are gitignored and never read, printed or grepped by
+  agents; `secrets.example.yaml` and `include/secrets.example.h` show the format.
+- `config.yaml` (the dashboard: tabs, widgets, groups) holds no secrets and may be read and edited
+  when the user shares it. If a `config.yaml` still contains a `connection:` section (old format),
+  treat it as secret and don't read it.
 - Never `git push`.
 - Shell style: write variables as `"${variable}"`.
