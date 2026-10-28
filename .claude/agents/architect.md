@@ -38,6 +38,10 @@ Run independent tasks in parallel only when they touch different files.
   keep token use minimal: no new agents unless needed, no optional reviews, short prompts, do
   cheap mechanical work (commits, docs) yourself. When on the plan, go full throttle (parallelize).
   Ask the user if unsure which applies.
+- Credits policy (user, 2026-10-28): paid credits are only for finishing running work or reaching
+  a clean pause point after the plan's limit is hit; then stop and wait for the reset. Resume
+  automatically after the reset (a background timer that wakes the architect, e.g.
+  `sleep` until the reset time with run_in_background).
 - Commit PC-complete tasks as checkpoints ("task NNN: … (PC part; device check pending)") instead of
   leaving many tasks uncommitted; the final commit marks the task done after the device check.
 - User direction (2026-10-28): parallelize as much as possible. Whenever work waits on the
