@@ -1,6 +1,6 @@
 # 007: Settings screen logic and layout (PC-only part)
 
-Status: in-progress
+Status: done
 Depends on: 010, 011
 UI spec: docs/ui/settings.md (with docs/ui/STYLE.md, docs/ui/layout.md)
 Needs device: no (drawing and the on-device check are a later task)
@@ -40,3 +40,9 @@ draws it only renders.
 
 ## Notes
 - Runs in a git worktree in parallel with task 017 (device). Don't touch src/ or other lib modules.
+- Result: `lib/settings_ui` (layout for both orientations, the edit buffer, the unsaved chip, write-free
+  leave, the orientation flag, refresh-now flow, info formatting, touch and rocker focus); 33 tests.
+  Built in a worktree, merged as one commit.
+- For the drawing task: hairlines use grey #888 (as the SVGs, not "OFF" as settings.md 3.3);
+  borders are drawn inside the rects; the date format has no zero padding ("5.3. 09:05").
+  Check that against the mockups when drawing.

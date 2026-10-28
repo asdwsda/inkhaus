@@ -8,7 +8,7 @@
 | 004 | [Home Assistant client core](004-ha-client-core.md) | done | 001 |
 | 005 | [Power policy (logic only)](005-power-policy.md) | done | 002 |
 | 006 | [UI layout engine](006-layout-engine.md) | done | 009, 010 |
-| 007 | [Settings screen logic and layout](007-settings-screen.md) | in-progress | 010, 011 |
+| 007 | [Settings screen logic and layout](007-settings-screen.md) | done | 010, 011 |
 | 008 | [HTTPS certificate bundle](008-https-ca-bundle.md) | todo | 004 |
 | 009 | [Config schema: tabs, widget size, group names](009-config-tabs.md) | done | 003 |
 | 010 | [Orientation setting](010-orientation-setting.md) | done | 002 |
