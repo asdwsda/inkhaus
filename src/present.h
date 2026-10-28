@@ -14,6 +14,10 @@ bool begin();
 bool framesOk();
 // Minimal error on the panel without a canvas (GC16 refresh, DejaVu24, centred).
 void showError(const char *msg);
+// Full-screen notice (task 024, low battery): a big title and a hint line, GC16, centred, ASCII only.
+// Forgets the stored screen record (the panel no longer shows the app) and forces the next frame to
+// be a full redraw. Works without frames.
+void showNotice(const char *title, const char *hint);
 // The frame to draw into.
 M5Canvas &canvas();
 const M5Canvas &previous();

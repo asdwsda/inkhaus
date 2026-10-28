@@ -322,6 +322,29 @@ void showError(const char *msg) {
   closeRead();
 }
 
+void showNotice(const char *title, const char *hint) {
+  auto &d = M5.Display;
+  boot::log("notice_screen", title);
+  const bool inv = invalidateRecord();
+  boot::log("record_invalidated", inv ? 1L : 0L);
+  g_recordValid = false;
+  g_havePending = false;
+  g_forceFull = true;
+  d.startWrite();
+  d.setEpdMode(epd_mode_t::epd_quality);
+  d.fillScreen(TFT_WHITE);
+  d.setTextColor(TFT_BLACK, TFT_WHITE);
+  d.setTextDatum(textdatum_t::middle_center);
+  d.setFont(&fonts::DejaVu40);
+  d.drawString(title, d.width() / 2, d.height() / 2 - 30);
+  d.setFont(&fonts::DejaVu24);
+  d.drawString(hint, d.width() / 2, d.height() / 2 + 30);
+  d.endWrite();
+  d.display();
+  waitAndCheck("notice");
+  closeRead();
+}
+
 bool framesOk() { return g_framesOk; }
 
 M5Canvas &canvas() { return g_cur; }

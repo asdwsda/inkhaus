@@ -10,6 +10,7 @@
 #include "app_state.h"
 #include "boot.h"
 #include "input.h"
+#include "net.h"
 #include "net_task.h"
 #include "present.h"
 #include "render/screen.h"
@@ -19,6 +20,8 @@
 #include "settings.h"
 #include "settings_flow.h"
 #include "settings_nvs.h"
+#include "sleep.h"
+#include "sleep_logic.h"
 #include "shot.h"
 #include "tap_intent.h"
 #include "wall_time.h"
@@ -53,6 +56,9 @@ static bool g_settingsRefreshing = false;
 static uint32_t g_refreshSeq = 0;  // fetchSeq() when the Settings refresh was issued
 static bool g_stackLogged = false;
 static bool g_firstSession = true;
+static power::WakeReason g_wake = power::WakeReason::ColdBoot;  // why this run started (sleepwake::detect)
+static bool g_scheduled = false;                                // scheduled refresh: no touch/rocker input
+static app_logic::WakeInputGuard g_wakeGuard;                   // swallows the press that woke the device
 
 // Time zone: POSIX TZ string (config `timezone:`, default CET/CEST). The UTC offset is always
 // derived from localtime at the given instant, so DST changes are handled.
@@ -107,6 +113,12 @@ static void updateStatus() {
   g_status.label1 = l.line1;
   g_status.label2 = l.line2;
   g_status.stale = l.stale;
+}
+
+static render::SleepIndicator toRender(app_logic::Indicator i) {
+  return i == app_logic::Indicator::Button  ? render::SleepIndicator::Button
+         : i == app_logic::Indicator::Touch ? render::SleepIndicator::Touch
+                                            : render::SleepIndicator::None;
 }
 
 static void composeFrame() {
@@ -178,7 +190,7 @@ static void startSession(uint32_t now) {
                                            session_glue::wallClock, appLog));
   g_sessionOver = false;
   // The offset is taken now (local time at planning time); the machine plans the wake-up from it.
-  g_drv->start(g_firstSession ? power::WakeReason::ColdBoot : power::WakeReason::Button, batteryMv(), g_settings,
+  g_drv->start(g_firstSession ? g_wake : power::WakeReason::Button, batteryMv(), g_settings,
                utcOffsetAt(session_glue::wallClock()), now);
   g_firstSession = false;
 }
@@ -270,8 +282,53 @@ static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
   if (r.redraw) drawSettingsFrame(present::Mode::Partial, now);
 }
 
+// ---- sleep (task 024) ----
+
+// Shared tail of every sleep: indicator frame (not for the low-battery notice), Wi-Fi off, controller
+// idle, then the real sleep. Returns only if sleeping failed.
+static void goToSleep(power::SleepPlan plan, power::Session session) {
+  uint32_t now = millis();
+  const bool low = session == power::Session::LowBattery;
+  session_glue::ntpAbort();
+  if (!low && settings_flow::active()) {
+    // Settings auto-leave before sleeping (settings.md rule 5); the leave may change wake mode or
+    // refresh interval, so the plan is made again from the settings now in effect.
+    handleSettingsResult(settings_flow::tick(now + 3600u * 1000u), now);
+    const int64_t epoch = session_glue::wallClock();
+    plan = power::plan_sleep(g_settings, session, epoch, utcOffsetAt(epoch));
+  }
+  if (!low && present::framesOk()) {
+    present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
+    g_status.sleepIndicator = toRender(app_logic::indicatorFor(plan, session));
+    composeFrame();
+    now = millis();
+    present::show(present::Mode::Partial, now);
+    present::prepareSleep();  // saves the record of the frame with the indicator, closes the read state
+  }
+  net::powerDown();
+  boot::endBurstRead();
+  boot::setupDone();
+  sleepwake::enter(plan, session, session_glue::wallClock(), batteryMv());
+  // Not asleep (should not happen): carry on as an awake device without the indicator.
+  boot::log("sleep_failed", 1);
+  g_status.sleepIndicator = render::SleepIndicator::None;
+}
+
+// Battery below the limit at wake: no session, no network. A plain notice, no alarm, power off.
+static void lowBatterySleep() {
+  boot::log("low_battery_mv", (long)batteryMv());
+  session_glue::loadClockFromRtc();
+  const int64_t epoch = session_glue::wallClock();
+  present::showNotice("Battery low", "Please charge the device");
+  goToSleep(power::plan_sleep(g_settings, power::Session::LowBattery, epoch, 0), power::Session::LowBattery);
+}
+
 void setup() {
   boot::begin();
+  g_wake = sleepwake::detect();
+  const power::Session kind = power::decide_session(g_wake, batteryMv());
+  g_scheduled = kind == power::Session::ScheduledRefresh;
+  if (g_scheduled) g_status.sleepIndicator = toRender(sleepwake::storedIndicator());
 
   settings::Settings &s = g_settings;
   {
@@ -292,7 +349,9 @@ void setup() {
   // range at once. All refreshes here are explicit (present.cpp).
   d.getPanel()->setAutoDisplay(false);
   d.setRotation(rotation);
-  input::begin();
+  if (kind == power::Session::LowBattery) lowBatterySleep();  // returns only if sleeping failed
+  if (!g_scheduled) input::begin();  // a scheduled refresh never initialises touch input
+  g_wakeGuard.arm(g_wake, millis());
 
   g_cfg = app_config::load();
   const app_config::Loaded &cfg = g_cfg;
@@ -385,7 +444,13 @@ void loop() {
 #endif
   const uint32_t now = millis();
   bool changed = false;
-  const input::Event e = input::poll();
+  input::Event e = g_scheduled ? input::Event() : input::poll();
+  if (!g_scheduled) {
+    g_wakeGuard.observe(now, M5.BtnB.isPressed(), M5.Touch.getCount() > 0);
+    if ((e.kind == input::Event::Key && g_wakeGuard.blocksKey()) ||
+        (e.kind == input::Event::Touch && g_wakeGuard.blocksTouch()))
+      e = input::Event();  // the press that woke the device
+  }
   if (e.kind != input::Event::None && g_real && g_drv) {
     if (g_sessionOver) startSession(now);  // a new interactive session (real sleep comes later)
     else g_drv->input(now);
@@ -436,11 +501,9 @@ void loop() {
     app_logic::SleepRequest sl;
     if (g_drv->takeSleep(sl)) {
       session_glue::ntpAbort();
-      // Real sleep comes in a later task: prepare as if, then stay awake until the next input.
-      Serial.printf("APP: sleep_planned mode=%d alarm=%d touch_wake=%d\n", int(sl.plan.mode),
-                    sl.plan.rtc_alarm_at ? 1 : 0, sl.plan.touch_wake ? 1 : 0);
-      if (!settings_flow::active()) present::prepareSleep();
+      goToSleep(sl.plan, sl.session);  // does not return when it sleeps
       g_sessionOver = true;
+      changed = true;
     }
   }
 

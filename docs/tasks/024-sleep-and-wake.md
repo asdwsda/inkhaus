@@ -40,3 +40,10 @@ of the boot/refresh rules):
 
 ## Notes
 - PC-only until the device is back; the battery-only checks need the user to unplug USB.
+- Progress (PC side done, device unverified): lib/app_logic/src/sleep_logic.* (wake mapping, indicator, sleep path,
+  BM8563 alarm fields, WakeInputGuard) + test/test_sleep_logic; src/sleep.* (detect/enter); src/main.cpp (goToSleep,
+  low-battery early path, scheduled = no input); src/present.* (showNotice); src/render/screen.* (indicator).
+  Findings: M5Unified has NO GPIO2 power-off for the original M5Paper (Power_Class.inl:642-651 sets only wakeup pin 36,
+  no rtcIntPin, no power_hold pin; _powerOff then just deep-sleeps, :1716-1783). GPIO2 = M5EPD_MAIN_PWR_PIN comes from
+  M5GFX.cpp:1644. The BM8563 INT is not a GPIO in M5Unified, so the ESP32 timer stands in for it on USB.
+- Next (device): see the check list in the architect report.

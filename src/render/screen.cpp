@@ -174,12 +174,34 @@ void drawErrorScreen(M5Canvas &c, const uistate::AppState &app) {
   }
 }
 
+// STYLE.md 5.5. Portrait: icons only in (292,3,112,48). Landscape: banner (172,4,648,56) with text.
+void drawSleepIndicator(M5Canvas &c, Orientation o, SleepIndicator v) {
+  if (v == SleepIndicator::None) return;
+  const bool btn = v == SleepIndicator::Button;
+  const ui::Rect r = ui::sleepIndicatorRect(o);
+  c.fillRoundRect(r.x, r.y, r.w, r.h, 8, INK);
+  const Icon glyph = btn ? Icon::Sidebtn : Icon::Finger;
+  if (o == Orientation::Landscape) {
+    const std::string text = btn ? "Press the side button to wake" : "Tap the screen to wake";
+    const int group = 40 + 12 + 40 + 20 + textWidth(c, Font::F24, text);
+    const int x = r.x + std::max(0, (r.w - group) / 2);
+    const int cy = r.y + r.h / 2;
+    drawIcon(c, Icon::Moon, 40, x, cy - 20, PAPER);
+    drawIcon(c, glyph, 40, x + 52, cy - 20, PAPER);
+    drawTextCy(c, Font::F24, text, x + 112, cy, Align::Left, PAPER);
+  } else {
+    drawIcon(c, Icon::Moon, 40, r.x + 8, r.y + 4, PAPER);
+    drawIcon(c, glyph, 40, r.x + 64, r.y + 4, PAPER);
+  }
+}
+
 }  // namespace
 
 void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &status) {
   c.fillScreen(PAPER);
   if (app.screen() == uistate::Screen::ConfigError) {
     drawErrorScreen(c, app);
+    drawSleepIndicator(c, app.orientation(), status.sleepIndicator);
     return;
   }
   const int ringIdx = app.focusedWidgetIndex();
@@ -198,6 +220,7 @@ void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &s
   }
   drawPager(c, app);
   drawTabBar(c, app);
+  drawSleepIndicator(c, app.orientation(), status.sleepIndicator);
 }
 
 }  // namespace render
