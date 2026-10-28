@@ -1,6 +1,6 @@
 # 019: Explicit on/off actions, actions before the first fetch
 
-Status: todo
+Status: in-progress
 Depends on: 004, 018
 UI spec: none
 Needs device: no

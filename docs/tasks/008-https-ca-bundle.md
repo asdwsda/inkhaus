@@ -1,6 +1,6 @@
 # 008: HTTPS certificate bundle for external_url
 
-Status: todo
+Status: in-progress
 Depends on: 004
 UI spec: none
 Needs device: yes (final check only)
@@ -31,4 +31,12 @@ Out of scope: TLS session resumption (later, together with power measurements).
       an invalid certificate (e.g. self-signed.badssl.com) is rejected.
 
 ## Notes
+- Target server for the device check: the user's own domain (public URL, not a secret),
+  `https://ha.example.org`, behind Cloudflare. Its certificate chain is Google Trust Services WE1
+  (ECDSA), so GTS Root R4/R1 must be in the bundle. A request to `/api/` without a token must
+  return HTTP 401 with a verified certificate. Cloudflare's bot protection may block non-browser
+  clients; if the device gets 403 or an HTML challenge page, report it.
+- The device check runs over the user's phone hotspot from `config.yaml` on the SD card (written
+  by task 020). Until then, test the TLS handshake with a test-only build flag that sets a public
+  test URL; no credentials are needed for a 401 check.
 - Found during task 004: Arduino-ESP32 2.0.17 has `setCACertBundle()` but ships no bundle.

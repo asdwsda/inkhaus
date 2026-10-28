@@ -9,7 +9,7 @@
 | 005 | [Power policy (logic only)](005-power-policy.md) | done | 002 |
 | 006 | [UI layout engine](006-layout-engine.md) | done | 009, 010 |
 | 007 | [Settings screen logic and layout](007-settings-screen.md) | done | 010, 011 |
-| 008 | [HTTPS certificate bundle](008-https-ca-bundle.md) | todo | 004 |
+| 008 | [HTTPS certificate bundle](008-https-ca-bundle.md) | in-progress | 004 |
 | 009 | [Config schema: tabs, widget size, group names](009-config-tabs.md) | done | 003 |
 | 010 | [Orientation setting](010-orientation-setting.md) | done | 002 |
 | 011 | [Layout engine update to the approved compact UI](011-compact-tabs-layout.md) | done | 006 |
@@ -20,5 +20,5 @@
 | 016 | [Software restart hangs in panelSignature()](016-warm-boot-hang.md) | done | 014 |
 | 017 | [Render the real UI on the device (demo data)](017-render-ui-demo.md) | done | 011, 014, 016 |
 | 018 | [Session logic: Wi-Fi, HA fetch, action queue](018-session-logic.md) | done | 004, 005 |
-| 019 | [Explicit on/off actions, actions before the first fetch](019-explicit-actions.md) | todo | 004, 018 |
+| 019 | [Explicit on/off actions, actions before the first fetch](019-explicit-actions.md) | in-progress | 004, 018 |
 | 020 | [Write config.yaml to the device over USB](020-provision-config-over-usb.md) | in-progress | 017 |
