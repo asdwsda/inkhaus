@@ -25,3 +25,8 @@ orientation; screenshot comparison with docs/ui/png/settings-*.png.
       open/leave/save work by serial `tap`/`key`; the user confirms on the device.
 
 ## Notes
+- Phase 1 result (2026-10-28, uncommitted): src/render/settings_screen.{h,cpp},
+  `render::drawSettings(canvas, screen, info)`; compiles warning-free. Local copies of the fit/ring
+  helpers to clean up later. Phase 2 hook list is in the agent report summary: SettingsScreen +
+  SettingsInfo in main, enter/leave GC16, dirty rects, the TEST_SETTINGS flag, input routing,
+  the AppState hook for long-push/battery tap.
