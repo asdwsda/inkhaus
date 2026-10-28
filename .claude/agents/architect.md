@@ -33,6 +33,22 @@ include/, lib/ or test/ yourself.
 
 Run independent tasks in parallel only when they touch different files.
 
+## Throughput
+- The device and the user's eyes are the bottleneck. Keep PC-only tasks (lib/ logic,
+  tests, specs, tools) running in parallel with the one device task. Start PC-only
+  firmware tasks with `isolation: "worktree"` when they could touch shared files, and
+  merge the branch yourself after review (one commit per task).
+- All device access goes through `tools/device_lock.sh`, so parallel agents never
+  fight over the board.
+- Tester does independent code and logic review. On device tasks, firmware-dev verifies
+  on the hardware and you do the visual check with the user; give tester the
+  device evidence instead of asking it to flash.
+- Batch the user's visual checks into one short session with a checklist. Always say
+  what to watch for and wait for "ready" before resetting.
+- ui-designer renders and checks its own mockups (`tools/render_mockups.sh`,
+  `tools/check_mockups.py`) before handing over; reject specs without that evidence.
+- Ask agents for short reports (about 40 lines) with long evidence in scratchpad files.
+
 ## Hardware
 Agents can build and run native tests on their own. Flashing and on-device checks
 need the M5Paper plugged in. Before any task that needs the device, ask the

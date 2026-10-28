@@ -13,6 +13,9 @@ the architect.
 ## Flashing and serial
 
 - Port: `/dev/ttyUSB0` (CP2104). Access comes from PlatformIO's udev rules; no `dialout` needed.
+- **The device is shared between agents.** Wrap every flash, reset, serial capture and
+  screenshot in `tools/device_lock.sh` (it waits for the lock, default 300 s, and says who
+  holds it): `tools/device_lock.sh pio run -e m5paper -t upload --upload-port /dev/ttyUSB0`.
 - Flash: `pio run -e <env> -t upload --upload-port /dev/ttyUSB0`.
 - Serial: **`pio device monitor` does not work for agents** (it needs a TTY). Use
   `tools/serial_capture.py`:

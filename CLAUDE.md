@@ -12,6 +12,8 @@ An e-ink remote for Home Assistant, running on an M5Stack M5Paper (ESP32,
 
 Flow per task: docs/tasks/NNN-*.md, then UI spec (if needed), then implement,
 then test, then architect review, then commit.
+PC-only tasks run in parallel (git worktrees) next to the one device task; the
+device and the user's visual checks are the bottleneck.
 
 ## Layout
 - `docs/ARCHITECTURE.md`: decisions and module boundaries (architect)
@@ -25,6 +27,7 @@ then test, then architect review, then commit.
 - Native tests: `pio test -e native`
 - Flash (device connected): `pio run -e m5paper -t upload --upload-port /dev/ttyUSB0`
 - Serial: `tools/serial_capture.py --reset --seconds 15` (`pio device monitor` needs a TTY)
+- Device lock (wrap every flash/reset/serial command): `tools/device_lock.sh <command...>`
 - Device how-to and pitfalls: `.claude/skills/m5paper-device/SKILL.md`
 
 ## Rules

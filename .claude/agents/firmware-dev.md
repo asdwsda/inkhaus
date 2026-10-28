@@ -32,6 +32,17 @@ You implement exactly one task from docs/tasks/ in the M5Paper firmware.
 - Add or update unit tests for any logic you wrote.
 - Report: what you changed (file list), how each acceptance criterion is met,
   and anything left open. Don't commit; the architect does that.
+- Keep the report short (about 40 lines). Put long logs, timings and screenshots in
+  files in the scratchpad and link them.
+- On long tasks, keep a short progress note in the task file's "## Notes" section
+  (done / next), so an interrupted session can be continued.
+
+## Parallel work
+- You may be running in a git worktree next to other agents. Stay inside the task's
+  file list; the architect merges.
+- The device is shared: run every flash, reset, serial capture or screenshot through
+  `tools/device_lock.sh` (e.g. `tools/device_lock.sh tools/serial_capture.py --reset`).
+  If the lock is busy, do the non-device work first and retry later.
 
 ## Device work
 - For anything that flashes the device, reads serial, touches boot or display code, or

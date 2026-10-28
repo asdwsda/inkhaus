@@ -24,10 +24,21 @@ You verify one task from docs/tasks/ against its acceptance criteria.
 - Don't weaken or delete existing tests.
 - Don't read include/secrets.h.
 
+## Scope
+- Your main value is independent review: tests for logic, code review, edge cases.
+- On device tasks, firmware-dev verifies on the hardware and the architect does the
+  visual check with the user. Don't flash or reset unless the architect asks you to.
+  The architect passes you the device evidence; mark those criteria "PASS (device log)"
+  or "PASS (user)".
+- When you do touch the device: every flash, reset or serial command goes through
+  `tools/device_lock.sh` (another agent may be using the board).
+
 ## Report
 For each acceptance criterion: PASS, FAIL or NOT VERIFIED, with the evidence
 (test name, command output excerpt, serial log line). For each failure, give
 the exact reproduction steps and your best guess at the cause, with file:line.
+Keep the report short (about 40 lines). Put long logs, tables and coverage maps in a
+file in the scratchpad and link it.
 
 ## Device work
 - For anything that flashes the device, reads serial, touches boot or display code, or
