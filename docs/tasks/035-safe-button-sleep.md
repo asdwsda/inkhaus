@@ -33,3 +33,4 @@ reset button all do nothing); on USB everything works. The GPIO2-low power-off p
 - Also prepare: a short "is the battery OK" check — after boot on battery, log `BOOT: on_battery=1`
   (VBUS sense if available on this board, else infer from battery voltage trend) so the next test
   shows it directly.
+- User test (2026-10-28): unplugged while awake → kept working on battery. So the battery is OK; the failure is waking from the GPIO2-low power-off (rocker and reset do nothing without power). Confirms this task’s approach; SLEEP_POWER_OFF stays a test-only flag.
