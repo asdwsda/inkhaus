@@ -86,3 +86,7 @@ its commands with the real modules:
     Draw text states in F24 and humanise raw HA states (`above_horizon` → "Above horizon").
   - A config with no entities makes the fetch fail with Parse; treat "nothing to fetch" as success.
   - TLS handshake ~6 s with debug logs; measure in the normal build; TLS session resumption later.
+- "-" after the first fetch: not reproducible on the device (same firmware 98d89b9): render taken,
+  member non-null, canvas and IT8951 memory both show the state. Open/watch: if it recurs, log right
+  after FetchDone (store size, member pointer) and the panel record decision on that boot. Regression
+  test `test_fetch_reaches_widget_data` added.

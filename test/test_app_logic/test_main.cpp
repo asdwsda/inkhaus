@@ -9,6 +9,8 @@
 #include "session_driver.h"
 #include "tap_intent.h"
 #include "wall_time.h"
+#include "app_state.h"
+#include "config_model.h"
 
 using namespace app_logic;
 
@@ -501,6 +503,33 @@ static void test_ntp_policy() {
   TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(now + 50, now, false));          // sync in the future
 }
 
+// A fetch with a changed entity must reach the widget data and request a render.
+void test_fetch_reaches_widget_data() {
+  auto parsed = config::parseConfig(
+      "version: 1\n"
+      "tabs:\n  - title: T\n    widgets:\n      - entity: sun.sun\n        type: sensor\n        size: 2x1\n");
+  TEST_ASSERT_TRUE(parsed.ok());
+  uistate::AppState app;
+  app.init(parsed.config, settings::Orientation::Landscape, false);
+  Rig r({"sun.sun"});
+  r.ha.states = {{"sun.sun", "below_horizon"}};
+  SessionDriver drv({"sun.sun"}, app.store(), r.wifi, r.port, [&r] { return r.epoch; }, nullptr);
+  drv.start(power::WakeReason::ColdBoot, 4000, settings::Settings{}, 0, r.now);
+  bool rendered = false;
+  for (int i = 0; i < 200 && !drv.sessionDone(); ++i) {
+    r.now += 100;
+    drv.tick(r.now);
+    rendered |= drv.takeRender();
+  }
+  rendered |= drv.takeRender();
+  TEST_ASSERT_TRUE(drv.sessionDone());
+  TEST_ASSERT_TRUE(rendered);
+  auto d = app.widgetData(0);
+  TEST_ASSERT_EQUAL(1, (int)d.members.size());
+  TEST_ASSERT_NOT_NULL(d.members[0]);
+  TEST_ASSERT_EQUAL_STRING("below_horizon", d.members[0]->state.c_str());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_connect_fetch_render);
@@ -528,5 +557,6 @@ int main() {
   RUN_TEST(test_civil_roundtrip);
   RUN_TEST(test_label);
   RUN_TEST(test_mailbox);
+  RUN_TEST(test_fetch_reaches_widget_data);
   return UNITY_END();
 }
