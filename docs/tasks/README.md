@@ -35,3 +35,4 @@
 | 032 | [Separate secrets.yaml from config.yaml](032-separate-secrets.md) | done | 003, 020, 025 |
 | 033 | [Built-in demo showcase](033-demo-showcase.md) | done | 017, 028, 030 |
 | 034 | ["Demo mode" setting](034-demo-mode-setting.md) | in-progress | 002, 007, 022, 033 |
+| 035 | [Button mode: deep sleep with power hold](035-safe-button-sleep.md) | in-progress | 024 |
