@@ -1,6 +1,6 @@
 # 030: Configurable sensor attributes (config + data)
 
-Status: in-progress
+Status: done
 Depends on: 003, 004, 017
 UI spec: none for this part (rendering is task 031)
 Needs device: no
@@ -37,3 +37,9 @@ attributes temperature, humidity, dew_point.
 - [ ] `pio test -e native` and the builds pass.
 
 ## Notes
+- Done (2026-10-28): Widget attribute/details/unit/decimals (validated, no value echo), config cache
+  format 2, `requestedAttributes(cfg)`, template fetches extra attributes (`ExtraAttrs`), generic
+  `EntityState::attrs`, `sensorView(st, &widget)` with details. Unit order: override → `<attr>_unit`
+  attribute (only if fetched) → entity unit when showing the state. 483 native tests.
+- For task 031: call `HaClient::set_extra_attributes(...)` from `requestedAttributes(cfg)` at session
+  start (driver/net task), and pass `&widget` to `sensorView` in the renderer.

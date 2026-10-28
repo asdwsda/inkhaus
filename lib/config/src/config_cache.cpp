@@ -118,6 +118,12 @@ std::string serializeConfig(const Config &cfg) {
       w.u8(wd.size ? uint32_t(wd.size->w) : 0);
       w.u8(wd.size ? uint32_t(wd.size->h) : 0);
       w.strs(wd.entities);
+      w.str(wd.attribute);
+      w.strs(wd.details);
+      w.u8(wd.unit.has_value());
+      w.str(wd.unit ? *wd.unit : std::string());
+      w.u8(wd.decimals.has_value());
+      w.u8(wd.decimals ? uint32_t(*wd.decimals) : 0);
     }
   }
   w.strs(cfg.entityIds);
@@ -175,6 +181,17 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       r.u8(sw);
       r.u8(sh);
       r.strs(wd.entities, kMaxCount);
+      uint32_t hasUnit = 0, hasDec = 0, dec = 0;
+      std::string unit;
+      r.str(wd.attribute);
+      r.strs(wd.details, kMaxDetails);
+      r.u8(hasUnit);
+      r.str(unit);
+      r.u8(hasDec);
+      r.u8(dec);
+      if (!r.ok || hasUnit > 1 || hasDec > 1 || dec > uint32_t(kMaxDecimals)) return false;
+      if (hasUnit) wd.unit = unit;
+      if (hasDec) wd.decimals = int(dec);
       if (!r.ok || type > uint32_t(WidgetType::Vacuum) || hasSize > 1) return false;
       wd.type = WidgetType(type);
       if (hasSize) {

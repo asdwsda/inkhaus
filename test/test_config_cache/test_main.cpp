@@ -123,6 +123,28 @@ void test_pack_unpack_fingerprint() {
   TEST_ASSERT_FALSE(unpackCache("short", got, out));
 }
 
+
+void test_roundtrip_attribute_options() {
+  Config c = fullConfig(), out;
+  Widget &w = c.tabs[0].widgets[1];
+  w.attribute = "humidity";
+  w.details = {"dew_point", "temperature"};
+  w.unit = "%";
+  w.decimals = 2;
+  c.tabs[0].widgets[0].unit = "";  // present but empty stays present
+  TEST_ASSERT_TRUE(deserializeConfig(serializeConfig(c), out));
+  const Widget &o = out.tabs[0].widgets[1];
+  TEST_ASSERT_EQUAL_STRING("humidity", o.attribute.c_str());
+  TEST_ASSERT_EQUAL(2, o.details.size());
+  TEST_ASSERT_EQUAL_STRING("temperature", o.details[1].c_str());
+  TEST_ASSERT_TRUE(o.unit.has_value());
+  TEST_ASSERT_EQUAL_STRING("%", o.unit->c_str());
+  TEST_ASSERT_EQUAL(2, *o.decimals);
+  TEST_ASSERT_TRUE(out.tabs[0].widgets[0].unit.has_value());
+  TEST_ASSERT_FALSE(out.tabs[0].widgets[0].decimals.has_value());
+  expectEqual(c, out);
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_roundtrip_all_fields);
@@ -132,5 +154,6 @@ int main(int, char **) {
   RUN_TEST(test_bitflip_rejected);
   RUN_TEST(test_wrong_format_and_garbage_rejected);
   RUN_TEST(test_pack_unpack_fingerprint);
+  RUN_TEST(test_roundtrip_attribute_options);
   return UNITY_END();
 }

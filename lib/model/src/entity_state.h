@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 struct EntityState {
   std::string id;
@@ -34,6 +36,15 @@ struct EntityState {
   std::optional<int> battery_level;
   std::string status;
 
+  // Generic scalar attributes (task 030): name -> value as text. Strings are stored unquoted,
+  // numbers as JSON number text, booleans as "true"/"false". Nested values are not stored.
+  std::vector<std::pair<std::string, std::string>> attrs;
+  const std::string* attr(const std::string& name) const {
+    for (const auto& kv : attrs)
+      if (kv.first == name) return &kv.second;
+    return nullptr;
+  }
+
   bool operator==(const EntityState& o) const {
     return id == o.id && state == o.state && available == o.available &&
            last_changed == o.last_changed && friendly_name == o.friendly_name &&
@@ -45,7 +56,7 @@ struct EntityState {
            target_temp_step == o.target_temp_step &&
            unit_of_measurement == o.unit_of_measurement && device_class == o.device_class &&
            temperature_unit == o.temperature_unit && battery_level == o.battery_level &&
-           status == o.status;
+           status == o.status && attrs == o.attrs;
   }
   bool operator!=(const EntityState& o) const { return !(*this == o); }
 };

@@ -69,7 +69,7 @@ HaResult HaClient::post(const std::string& path, const std::string& body, std::s
 FetchResult HaClient::fetch_states(const std::vector<std::string>& ids) {
   FetchResult f;
   std::string body, err;
-  if (!build_template_request_body(ids, body, err)) {
+  if (!build_template_request_body(ids, body, err, extra_)) {
     f.result.error = HaError::Parse;
     f.result.message = err;
     return f;

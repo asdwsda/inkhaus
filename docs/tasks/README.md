@@ -31,4 +31,4 @@
 | 027 | [TLS session resumption (researched, deferred)](027-tls-resumption.md) | todo | 008 |
 | 028 | [State wording and icons](028-state-wording.md) | in-progress | 026 |
 | 029 | [Wake log on the SD card](029-wake-log-sd.md) | in-progress | 024 |
-| 030 | [Configurable sensor attributes (config + data)](030-sensor-attributes.md) | in-progress | 003, 004, 017 |
+| 030 | [Configurable sensor attributes (config + data)](030-sensor-attributes.md) | done | 003, 004, 017 |

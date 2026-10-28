@@ -794,6 +794,81 @@ void test_sink_also_in_demo_mode() {
   TEST_ASSERT_TRUE(a.pendingList().empty());
 }
 
+
+static config::Widget sensorOpts(const char* attr) {
+  config::Widget w;
+  w.attribute = attr;
+  return w;
+}
+
+void test_sensor_attribute_main_value() {
+  EntityState s = E("sensor.c", "21.5");
+  s.unit_of_measurement = "kWh";
+  s.attrs = {{"humidity", "45.678"}, {"mode", "auto_dry"}, {"humidity_unit", "%"}};
+  config::Widget w = sensorOpts("humidity");
+  SensorView v = sensorView(&s, &w);
+  TEST_ASSERT_TRUE(v.numeric);
+  TEST_ASSERT_EQUAL_STRING("45.678", v.value.c_str());
+  TEST_ASSERT_EQUAL_STRING("%", v.unit.c_str());  // attribute's own unit, not the state's kWh
+  w.decimals = 1;
+  TEST_ASSERT_EQUAL_STRING("45.7", sensorView(&s, &w).value.c_str());
+  w.decimals = 0;
+  TEST_ASSERT_EQUAL_STRING("46", sensorView(&s, &w).value.c_str());
+  w.unit = "pct";
+  TEST_ASSERT_EQUAL_STRING(" pct", sensorView(&s, &w).unit.c_str());
+  // no unit known: none (state's unit is not used for attributes)
+  s.attrs = {{"humidity", "45"}};
+  config::Widget w2 = sensorOpts("humidity");
+  TEST_ASSERT_TRUE(sensorView(&s, &w2).unit.empty());
+  // text attribute
+  s.attrs = {{"mode", "auto_dry"}};
+  config::Widget w3 = sensorOpts("mode");
+  v = sensorView(&s, &w3);
+  TEST_ASSERT_FALSE(v.numeric);
+  TEST_ASSERT_TRUE(v.textState);
+  TEST_ASSERT_EQUAL_STRING("Auto dry", v.value.c_str());
+  // missing attribute
+  config::Widget w4 = sensorOpts("nope");
+  v = sensorView(&s, &w4);
+  TEST_ASSERT_EQUAL_STRING("-", v.value.c_str());
+  TEST_ASSERT_TRUE(v.unit.empty());
+}
+
+void test_sensor_state_with_decimals_and_unit_override() {
+  EntityState s = E("sensor.t", "21.456");
+  s.unit_of_measurement = "kWh";
+  config::Widget w;
+  w.decimals = 2;
+  w.unit = "\xC2\xB0" "C";
+  SensorView v = sensorView(&s, &w);
+  TEST_ASSERT_EQUAL_STRING("21.46", v.value.c_str());
+  TEST_ASSERT_EQUAL_STRING("\xC2\xB0" "C", v.unit.c_str());
+  w.unit.reset();
+  TEST_ASSERT_EQUAL_STRING(" kWh", sensorView(&s, &w).unit.c_str());
+  TEST_ASSERT_TRUE(sensorView(&s, &w).details.empty());
+}
+
+void test_sensor_details() {
+  EntityState s = E("sensor.c", "21.5");
+  s.attrs = {{"humidity", "45.55"}, {"dew_point", "9.123"}, {"dew_point_unit", "\xC2\xB0" "C"},
+             {"trend", "rising"}};
+  config::Widget w;
+  w.details = {"dew_point", "humidity"};
+  w.decimals = 1;
+  SensorView v = sensorView(&s, &w);
+  TEST_ASSERT_EQUAL(2, v.details.size());
+  TEST_ASSERT_EQUAL_STRING("Dew point", v.details[0].label.c_str());
+  TEST_ASSERT_EQUAL_STRING("9.1", v.details[0].value.c_str());
+  TEST_ASSERT_EQUAL_STRING("\xC2\xB0" "C", v.details[0].unit.c_str());
+  TEST_ASSERT_EQUAL_STRING("Humidity", v.details[1].label.c_str());
+  TEST_ASSERT_EQUAL_STRING("45.5", v.details[1].value.c_str());  // 45.55 -> %.1f
+  w.details = {"trend", "absent"};
+  v = sensorView(&s, &w);
+  TEST_ASSERT_EQUAL_STRING("Rising", v.details[0].value.c_str());
+  TEST_ASSERT_EQUAL_STRING("-", v.details[1].value.c_str());
+  TEST_ASSERT_EQUAL_STRING("Absent", v.details[1].label.c_str());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_fmt_number);
@@ -840,5 +915,8 @@ int main() {
   RUN_TEST(test_marks_unmarked_pending_times_out);
   RUN_TEST(test_sink_fast_double_taps);
   RUN_TEST(test_sink_also_in_demo_mode);
+  RUN_TEST(test_sensor_attribute_main_value);
+  RUN_TEST(test_sensor_state_with_decimals_and_unit_override);
+  RUN_TEST(test_sensor_details);
   return UNITY_END();
 }

@@ -239,7 +239,29 @@ std::string humanise(const std::string &raw) {
   return capitalize(s);
 }
 
-SensorView sensorView(const EntityState *st) {
+namespace {
+
+std::string unitText(const std::string &u) {
+  if (u.empty()) return u;
+  const bool tight = u == "\xC2\xB0" "C" || u == "\xC2\xB0" "F" || u == "%";
+  return (tight ? "" : " ") + u;
+}
+
+// Value text of one attribute: numbers rounded when decimals is set, text humanised, missing "-".
+std::string attrValue(const std::string *raw, const std::optional<int> &decimals, bool &numeric) {
+  numeric = false;
+  if (!raw) return "-";
+  double d;
+  if (parseNumber(*raw, d)) {
+    numeric = true;
+    return decimals ? fmtNumber(d, *decimals) : *raw;
+  }
+  return humanise(*raw);
+}
+
+}  // namespace
+
+SensorView sensorView(const EntityState *st, const config::Widget *opts) {
   SensorView v;
   v.look = lookOf(st);
   if (v.look == Look::Loading) return v;
@@ -247,15 +269,35 @@ SensorView sensorView(const EntityState *st) {
     v.value = "n/a";
     return v;
   }
-  double d;
-  v.numeric = parseNumber(st->state, d);
-  v.value = v.numeric ? st->state : humanise(st->state);
-  v.textState = !v.numeric;
-  if (v.numeric && !st->unit_of_measurement.empty()) {
-    const std::string &u = st->unit_of_measurement;
-    const bool tight = u == "\xC2\xB0" "C" || u == "\xC2\xB0" "F" || u == "%";
-    v.unit = (tight ? "" : " ") + u;
+  const bool useAttr = opts && !opts->attribute.empty();
+  const std::optional<int> decimals = opts ? opts->decimals : std::nullopt;
+  if (useAttr) {
+    v.value = attrValue(st->attr(opts->attribute), decimals, v.numeric);
+  } else {
+    double d;
+    v.numeric = parseNumber(st->state, d);
+    v.value = v.numeric ? (decimals ? fmtNumber(d, *decimals) : st->state) : humanise(st->state);
   }
+  v.textState = !v.numeric;
+  if (v.numeric) {
+    if (opts && opts->unit) {
+      v.unit = unitText(*opts->unit);
+    } else if (useAttr) {
+      if (const std::string *u = st->attr(opts->attribute + "_unit")) v.unit = unitText(*u);
+    } else {
+      v.unit = unitText(st->unit_of_measurement);
+    }
+  }
+  if (opts)
+    for (const std::string &name : opts->details) {
+      DetailItem item;
+      item.label = humanise(name);
+      bool numeric = false;
+      item.value = attrValue(st->attr(name), decimals, numeric);
+      if (numeric)
+        if (const std::string *u = st->attr(name + "_unit")) item.unit = unitText(*u);
+      v.details.push_back(item);
+    }
   return v;
 }
 

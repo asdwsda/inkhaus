@@ -459,6 +459,63 @@ void test_group_name_edge_cases() {
   TEST_ASSERT_NOT_NULL(findError(r, "groups." + longName + "B"));
 }
 
+
+static std::string withWidget(const std::string &extra) {
+  return std::string("version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: sensor.a\n") +
+         extra;
+}
+
+void test_attr_options_parse() {
+  ParseResult r = parseConfig(withWidget("        attribute: humidity\n"
+                                         "        details: [dew_point, temperature]\n"
+                                         "        unit: \"%\"\n"
+                                         "        decimals: 1\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  const Widget &w = r.config.tabs[0].widgets[0];
+  TEST_ASSERT_EQUAL_STRING("humidity", w.attribute.c_str());
+  TEST_ASSERT_EQUAL(2, w.details.size());
+  TEST_ASSERT_EQUAL_STRING("dew_point", w.details[0].c_str());
+  TEST_ASSERT_TRUE(w.unit.has_value());
+  TEST_ASSERT_EQUAL_STRING("%", w.unit->c_str());
+  TEST_ASSERT_EQUAL(1, *w.decimals);
+  auto req = requestedAttributes(r.config);
+  TEST_ASSERT_EQUAL(1, req.size());
+  TEST_ASSERT_EQUAL_STRING("sensor.a", req[0].first.c_str());
+  TEST_ASSERT_EQUAL(3, req[0].second.size());
+}
+
+void test_attr_options_absent_by_default() {
+  ParseResult r = parseConfig(kMinimal);
+  const Widget &w = r.config.tabs[0].widgets[0];
+  TEST_ASSERT_TRUE(w.attribute.empty() && w.details.empty() && !w.unit && !w.decimals);
+  TEST_ASSERT_TRUE(requestedAttributes(r.config).empty());
+}
+
+void test_attr_options_errors() {
+  const char *base = "tabs[0].widgets[0].";
+  assertErrorAt(withWidget("        attribute: Humidity\n"), std::string(base) + "attribute");
+  assertErrorAt(withWidget("        attribute: a-b\n"), std::string(base) + "attribute");
+  assertErrorAt(withWidget("        attribute: " + std::string(41, 'a') + "\n"),
+                std::string(base) + "attribute");
+  assertErrorAt(withWidget("        details: x\n"), std::string(base) + "details");
+  assertErrorAt(withWidget("        details: [a, b, c]\n"), std::string(base) + "details");
+  assertErrorAt(withWidget("        details: [a, \"B C\"]\n"), std::string(base) + "details[1]");
+  assertErrorAt(withWidget("        unit: abcdefghi\n"), std::string(base) + "unit");
+  assertErrorAt(withWidget("        decimals: 4\n"), std::string(base) + "decimals");
+  assertErrorAt(withWidget("        decimals: x\n"), std::string(base) + "decimals");
+  assertErrorAt(withWidget("        decimals: -1\n"), std::string(base) + "decimals");
+  // 8 code points with multibyte chars are fine
+  TEST_ASSERT_TRUE(parseConfig(withWidget("        unit: \"\xC2\xB0\xC2\xB0\xC2\xB0\xC2\xB0\xC2\xB0\xC2\xB0\xC2\xB0\xC2\xB0\"\n")).ok());
+}
+
+void test_attr_errors_do_not_echo_values() {
+  ParseResult r = parseConfig(withWidget("        attribute: SecretVal\n        unit: SECRETUNITXX\n"
+                                         "        decimals: SECRETDEC\n        details: [SECRETDET]\n"));
+  TEST_ASSERT_FALSE(r.ok());
+  for (const auto &e : r.errors) TEST_ASSERT_TRUE(e.message.find("SECRET") == std::string::npos &&
+                                                  e.message.find("Secret") == std::string::npos);
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_example_parses_clean);
@@ -499,5 +556,9 @@ int main(int, char **) {
   RUN_TEST(test_hostile_huge_scalar);
   RUN_TEST(test_hostile_misc_types);
   RUN_TEST(test_error_messages_do_not_echo_values);
+  RUN_TEST(test_attr_options_parse);
+  RUN_TEST(test_attr_options_absent_by_default);
+  RUN_TEST(test_attr_options_errors);
+  RUN_TEST(test_attr_errors_do_not_echo_values);
   return UNITY_END();
 }

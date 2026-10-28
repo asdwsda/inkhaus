@@ -486,6 +486,62 @@ void test_client_fallback_edge_cases() {
   }
 }
 
+
+void test_template_extra_attrs_golden() {
+  std::string t, err;
+  ExtraAttrs extra = {{"sensor.climate", {"humidity", "dew_point", "device_class", "friendly_name"}}};
+  TEST_ASSERT_TRUE(build_state_template({"sensor.climate"}, t, err, extra));
+  const char* expected =
+      "{\"sensor.climate\": {% set s = states.sensor['climate'] %}{% if s %}{{ {'s': s.state, "
+      "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
+      "s.attributes.get('friendly_name'), 'unit_of_measurement': "
+      "s.attributes.get('unit_of_measurement'), 'device_class': s.attributes.get('device_class'), "
+      "'humidity': s.attributes.get('humidity'), 'dew_point': s.attributes.get('dew_point')}}"
+      "|tojson }}{% else %}{\"s\": null}{% endif %}}";
+  TEST_ASSERT_EQUAL_STRING(expected, t.c_str());
+}
+
+void test_template_extra_attrs_rejects_bad_names() {
+  std::string t, err;
+  for (const char* bad : {"a'b", "A", "x y", "", "a}}{{evil"}) {
+    ExtraAttrs extra = {{"sensor.a", {bad}}};
+    TEST_ASSERT_FALSE_MESSAGE(build_state_template({"sensor.a"}, t, err, extra), bad);
+  }
+  ExtraAttrs longName = {{"sensor.a", {std::string(41, 'a')}}};
+  TEST_ASSERT_FALSE(build_state_template({"sensor.a"}, t, err, longName));
+  // extra attrs for an entity that is not requested are ignored
+  ExtraAttrs other = {{"sensor.zzz", {"bad name"}}};
+  TEST_ASSERT_TRUE(build_state_template({"sensor.a"}, t, err, other));
+}
+
+void test_parser_generic_attributes() {
+  const char* json =
+      "{\"sensor.c\": {\"s\": \"21.5\", \"lc\": 1, \"a\": {\"friendly_name\": \"C\", "
+      "\"humidity\": 45.5, \"mode\": \"auto\", \"flag\": true, \"nested\": {\"x\": 1}, "
+      "\"list\": [1,2], \"nothing\": null, \"big\": 1e999}}}";
+  ParseResult r = parse_state_response(json, {"sensor.c"});
+  TEST_ASSERT_TRUE(r.ok);
+  const EntityState& e = r.states[0];
+  TEST_ASSERT_NOT_NULL(e.attr("humidity"));
+  TEST_ASSERT_EQUAL_STRING("45.5", e.attr("humidity")->c_str());
+  TEST_ASSERT_EQUAL_STRING("auto", e.attr("mode")->c_str());
+  TEST_ASSERT_EQUAL_STRING("true", e.attr("flag")->c_str());
+  TEST_ASSERT_NULL(e.attr("nested"));
+  TEST_ASSERT_NULL(e.attr("list"));
+  TEST_ASSERT_NULL(e.attr("nothing"));
+  TEST_ASSERT_NULL(e.attr("big"));
+  TEST_ASSERT_NULL(e.attr("missing"));
+}
+
+void test_client_sends_extra_attrs() {
+  FakeTransport t;
+  t.queue = {ok("{\"sensor.a\": {\"s\": null}}")};
+  HaClient c(t, "http://ha.local:8123", "", "tok");
+  c.set_extra_attributes({{"sensor.a", {"dew_point"}}});
+  c.fetch_states({"sensor.a"});
+  TEST_ASSERT_TRUE(t.calls[0].body.find("dew_point") != std::string::npos);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_template_golden);
@@ -515,5 +571,9 @@ int main() {
   RUN_TEST(test_body_limit_helpers);
   RUN_TEST(test_client_too_large_no_fallback);
   RUN_TEST(test_body_sink);
+  RUN_TEST(test_template_extra_attrs_golden);
+  RUN_TEST(test_template_extra_attrs_rejects_bad_names);
+  RUN_TEST(test_parser_generic_attributes);
+  RUN_TEST(test_client_sends_extra_attrs);
   return UNITY_END();
 }

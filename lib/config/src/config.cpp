@@ -141,6 +141,67 @@ class Validator {
     return true;
   }
 
+  static bool validAttrName(const std::string &s) {
+    if (s.empty() || s.size() > kMaxAttrName) return false;
+    for (char c : s)
+      if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) return false;
+    return true;
+  }
+
+  static size_t utf8Length(const std::string &s) {
+    size_t n = 0;
+    for (unsigned char c : s)
+      if ((c & 0xC0) != 0x80) ++n;
+    return n;
+  }
+
+  // attribute / details / unit / decimals. Messages never echo the values.
+  void attributeOptions(JsonObjectConst o, const std::string &path, Widget &w) {
+    std::string a;
+    if (str(o, "attribute", path, false, a)) {
+      if (validAttrName(a))
+        w.attribute = a;
+      else
+        err(path + ".attribute", "invalid attribute name (use a-z, 0-9, _; max " +
+                                     std::to_string(kMaxAttrName) + " chars)");
+    }
+    JsonVariantConst d = o["details"];
+    if (!d.isNull()) {
+      const std::string dp = path + ".details";
+      if (!d.is<JsonArrayConst>()) {
+        err(dp, "must be a list");
+      } else {
+        JsonArrayConst arr = d.as<JsonArrayConst>();
+        if (arr.size() > kMaxDetails)
+          err(dp, "too many details (max " + std::to_string(kMaxDetails) + ")");
+        size_t i = 0;
+        for (JsonVariantConst e : arr) {
+          std::string ep = dp + "[" + std::to_string(i++) + "]";
+          if (i > kMaxDetails) break;
+          if (!e.is<const char *>() || !validAttrName(e.as<const char *>()))
+            err(ep, "invalid attribute name (use a-z, 0-9, _; max " +
+                        std::to_string(kMaxAttrName) + " chars)");
+          else
+            w.details.push_back(e.as<const char *>());
+        }
+      }
+    }
+    std::string u;
+    if (str(o, "unit", path, false, u)) {
+      if (utf8Length(u) > kMaxUnitChars)
+        err(path + ".unit", "too long (max " + std::to_string(kMaxUnitChars) + " characters)");
+      else
+        w.unit = u;
+    }
+    std::string dec;
+    if (str(o, "decimals", path, false, dec)) {
+      if (dec.size() == 1 && dec[0] >= '0' && dec[0] <= '0' + kMaxDecimals)
+        w.decimals = dec[0] - '0';
+      else
+        err(path + ".decimals", "must be a number from 0 to " + std::to_string(kMaxDecimals));
+    }
+  }
+
   void version(JsonObjectConst o) {
     std::string v;
     if (!str(o, "version", "", true, v)) return;
@@ -357,6 +418,8 @@ class Validator {
                                 std::to_string(kMaxWidgetSize));
     }
 
+    attributeOptions(o, path, w);
+
     std::string typeName;
     bool hasType = str(o, "type", path, false, typeName);
     WidgetType override = WidgetType::Sensor;
@@ -417,6 +480,29 @@ bool widgetTypeFromName(const std::string &name, WidgetType &out) {
       return true;
     }
   return false;
+}
+
+std::vector<std::pair<std::string, std::vector<std::string>>> requestedAttributes(
+    const Config &cfg) {
+  std::vector<std::pair<std::string, std::vector<std::string>>> out;
+  for (const Tab &t : cfg.tabs)
+    for (const Widget &w : t.widgets) {
+      std::vector<std::string> names;
+      if (!w.attribute.empty()) names.push_back(w.attribute);
+      for (const auto &d : w.details) names.push_back(d);
+      if (names.empty()) continue;
+      for (const auto &e : w.entities) {
+        auto it = std::find_if(out.begin(), out.end(), [&](const auto &p) { return p.first == e; });
+        if (it == out.end()) {
+          out.push_back({e, {}});
+          it = out.end() - 1;
+        }
+        for (const auto &n : names)
+          if (std::find(it->second.begin(), it->second.end(), n) == it->second.end())
+            it->second.push_back(n);
+      }
+    }
+  return out;
 }
 
 ParseResult parseConfig(const char *data, size_t len) {

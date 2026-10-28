@@ -16,6 +16,10 @@ constexpr int kMaxWidgetSize = 4;
 constexpr size_t kMaxEntitiesPerGroup = 16;
 constexpr size_t kMaxFileBytes = 64 * 1024;
 constexpr int kMaxYamlDepth = 12;
+constexpr size_t kMaxAttrName = 40;
+constexpr size_t kMaxDetails = 2;
+constexpr size_t kMaxUnitChars = 8;
+constexpr int kMaxDecimals = 3;
 
 enum class WidgetType {
   Cover,
@@ -73,6 +77,11 @@ struct Widget {
   std::string group;   // group widget, empty for single entities
   std::string name;    // empty: use HA friendly_name
   std::optional<WidgetSize> size;  // absent: type default (layout engine decides)
+  // Optional attribute display (task 030). Names are [a-z0-9_]+, <= kMaxAttrName chars.
+  std::string attribute;                // show this attribute as the main value instead of the state
+  std::vector<std::string> details;     // up to kMaxDetails extra attributes for a details line
+  std::optional<std::string> unit;      // unit override for the main value (<= kMaxUnitChars chars)
+  std::optional<int> decimals;          // 0..3, rounds numeric main/detail values
   // Entities this widget acts on: {entity} or the group members.
   std::vector<std::string> entities;
 };
@@ -114,5 +123,10 @@ struct ParseResult {
 // meaningful when errors is empty.
 ParseResult parseConfig(const char *data, size_t len);
 ParseResult parseConfig(const std::string &text);
+
+// Per entity id: the attribute names its widgets request (attribute + details), de-duplicated.
+// Only entities with at least one request appear.
+std::vector<std::pair<std::string, std::vector<std::string>>> requestedAttributes(
+    const Config &cfg);
 
 }  // namespace config

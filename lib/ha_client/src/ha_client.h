@@ -5,6 +5,7 @@
 #include "entity_state.h"
 #include "http_transport.h"
 #include "service_call.h"
+#include "template_builder.h"
 
 enum class HaError {
   None,
@@ -38,6 +39,9 @@ class HaClient {
   const std::string& remembered_base() const { return remembered_; }
   void set_remembered(const std::string& base_url);
 
+  // Widget-requested attributes per entity, fetched on top of the fixed ones (task 030).
+  void set_extra_attributes(ExtraAttrs extra) { extra_ = std::move(extra); }
+
   FetchResult fetch_states(const std::vector<std::string>& ids);
   HaResult call_service(const ServiceCall& call);
 
@@ -49,4 +53,5 @@ class HaClient {
   std::string external_;
   std::string token_;
   std::string remembered_;
+  ExtraAttrs extra_;
 };

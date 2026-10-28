@@ -2,6 +2,8 @@
 
 #include <ArduinoJson.h>
 
+#include <algorithm>
+
 namespace {
 
 const char* domain_attrs(const std::string& domain) {
@@ -35,8 +37,15 @@ std::string entity_domain(const std::string& id) {
   return dot == std::string::npos ? std::string() : id.substr(0, dot);
 }
 
+bool is_valid_attr_name(const std::string& n) {
+  if (n.empty() || n.size() > 40) return false;
+  for (char c : n)
+    if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) return false;
+  return true;
+}
+
 bool build_state_template(const std::vector<std::string>& ids, std::string& out,
-                          std::string& error) {
+                          std::string& error, const ExtraAttrs& extra) {
   if (ids.empty()) {
     error = "no entity ids";
     return false;
@@ -58,15 +67,27 @@ bool build_state_template(const std::vector<std::string>& ids, std::string& out,
            "'] %}{% if s %}{{ {'s': s.state, ";
     out += "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
            "s.attributes.get('friendly_name')";
+    std::vector<std::string> names;
     std::string attrs = domain_attrs(entity_domain(id));
     size_t pos = 0;
     while (!attrs.empty() && pos <= attrs.size()) {
       size_t comma = attrs.find(',', pos);
-      std::string name = attrs.substr(pos, comma == std::string::npos ? comma : comma - pos);
-      out += ", '" + name + "': s.attributes.get('" + name + "')";
+      names.push_back(attrs.substr(pos, comma == std::string::npos ? comma : comma - pos));
       if (comma == std::string::npos) break;
       pos = comma + 1;
     }
+    auto it = extra.find(id);
+    if (it != extra.end())
+      for (const std::string& n : it->second) {
+        if (!is_valid_attr_name(n)) {
+          error = "invalid attribute name for " + id;
+          return false;
+        }
+        if (n != "friendly_name" && std::find(names.begin(), names.end(), n) == names.end())
+          names.push_back(n);
+      }
+    for (const std::string& name : names)
+      out += ", '" + name + "': s.attributes.get('" + name + "')";
     out += "}}|tojson }}{% else %}{\"s\": null}{% endif %}";
   }
   out += "}";
@@ -74,9 +95,9 @@ bool build_state_template(const std::vector<std::string>& ids, std::string& out,
 }
 
 bool build_template_request_body(const std::vector<std::string>& ids, std::string& body,
-                                 std::string& error) {
+                                 std::string& error, const ExtraAttrs& extra) {
   std::string tpl;
-  if (!build_state_template(ids, tpl, error)) return false;
+  if (!build_state_template(ids, tpl, error, extra)) return false;
   JsonDocument doc;
   doc["template"] = tpl;
   body.clear();

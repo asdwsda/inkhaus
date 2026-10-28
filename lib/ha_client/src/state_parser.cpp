@@ -31,6 +31,8 @@ int64_t lc_of(JsonVariantConst v) {
   return d ? (int64_t)*d : 0;
 }
 
+constexpr size_t kMaxAttrs = 16;  // scalar attributes kept per entity
+
 }  // namespace
 
 ParseResult parse_state_response(const std::string& json,
@@ -74,6 +76,24 @@ ParseResult parse_state_response(const std::string& json,
       e.temperature_unit = str_of(a["temperature_unit"]);
       e.battery_level = int_of(a["battery_level"], 0, 100);
       e.status = str_of(a["status"]);
+      if (a.is<JsonObjectConst>()) {
+        for (JsonPairConst kv : a.as<JsonObjectConst>()) {
+          if (e.attrs.size() >= kMaxAttrs) break;
+          JsonVariantConst val = kv.value();
+          std::string text;
+          if (val.is<const char*>()) {
+            text = val.as<const char*>();
+          } else if (val.is<bool>()) {
+            text = val.as<bool>() ? "true" : "false";
+          } else if (val.is<double>() && !val.isNull()) {
+            if (!dbl_of(val)) continue;  // not finite
+            serializeJson(val, text);
+          } else {
+            continue;  // null, nested object/array
+          }
+          e.attrs.emplace_back(kv.key().c_str(), text);
+        }
+      }
     }
     r.states.push_back(e);
   }

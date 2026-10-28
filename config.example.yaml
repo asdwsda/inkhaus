@@ -39,6 +39,16 @@ groups:
 # automation, climate, sensor, binary_sensor, weather, vacuum.
 # Optional `size: WxH` (1..4 cells) picks a size within what the widget type allows
 # (docs/ui/layout.md section 3); most types have a fixed size, so it is rarely needed.
+# Optional per widget (sensors): show an attribute instead of the state, plus up to 2 more:
+#   attribute: temperature          # main value (a-z, 0-9, _; max 40 chars)
+#   details: [humidity, dew_point]  # details line, max 2
+#   unit: "°C"                      # unit override for the main value, max 8 characters
+#   decimals: 1                     # round numbers to 0..3 decimals
+# Example, a climate sensor with temperature, humidity and dew_point attributes:
+#   - entity: sensor.living_room_climate
+#     attribute: temperature
+#     details: [humidity, dew_point]
+#     decimals: 1
 tabs:
   - title: Living room
     widgets:

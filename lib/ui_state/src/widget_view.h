@@ -63,17 +63,29 @@ struct ClimateView {
 };
 ClimateView climateView(const EntityState *st);
 
+// Extra attribute shown on the details line (task 030).
+struct DetailItem {
+  std::string label;  // humanised attribute name ("dew_point" -> "Dew point")
+  std::string value = "-";
+  std::string unit;   // with a leading space where one is needed
+};
+
 struct SensorView {
   Look look = Look::Loading;
   std::string value = "-";  // raw numeric text or a text state
   std::string unit;         // with a leading space where one is needed
   bool numeric = false;
   bool textState = false;  // draw in F24 in every size
+  std::vector<DetailItem> details;  // up to config::kMaxDetails, empty unless configured
 };
 // Generic fallback (widgets.md 11.4): unknown/unavailable (any case) -> "n/a"; empty -> "-"; else
 // underscores to spaces, lower-cased, first letter upper-cased ("HEAT_COOL" -> "Heat cool").
 std::string humanise(const std::string &raw);
-SensorView sensorView(const EntityState *st);
+// opts: the widget's attribute/details/unit/decimals options (nullptr: plain state).
+// Main value: the attribute if set, else the state. Numbers are rounded to `decimals`; unit is
+// the override, else the attribute's own "<name>_unit" attribute, else (state only) the entity's
+// unit_of_measurement. Missing attributes show "-".
+SensorView sensorView(const EntityState *st, const config::Widget *opts = nullptr);
 
 struct WeatherView {
   Look look = Look::Loading;
