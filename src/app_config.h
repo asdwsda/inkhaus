@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "config_model.h"
+#include "demo_mode.h"
 
 namespace app_config {
 
@@ -17,7 +18,8 @@ struct Loaded {
   const char *source = "";  // for the log
 };
 
-Loaded load();
+// source Embedded (Demo mode setting): the compiled-in demo.yaml, SD card and cache untouched.
+Loaded load(app_logic::ConfigSource source = app_logic::ConfigSource::Card);
 
 // Drops the parsed-config cache in internal flash (call after /config.yaml was replaced).
 void invalidateCache();

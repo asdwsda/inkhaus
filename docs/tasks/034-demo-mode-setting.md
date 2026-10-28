@@ -28,3 +28,4 @@ User request: switch to the built-in demo showcase at any time, even with secret
       no Wi-Fi activity in demo mode (log).
 
 ## Notes
+- Paused (2026-10-28, credits): logic part done (settings field, demo_mode.* decision logic, config source, reload on leave, row model; 498 tests). Open: 5th row layout/drawing after the settings.md revision; no unit test for demoChanged yet; plan_sleep still schedules refreshes in demo mode.

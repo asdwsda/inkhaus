@@ -159,6 +159,13 @@ void writeCache(const config::Fingerprint &fp, const config::Config &cfg) {
   }
 }
 
+// The demo from demo.yaml (fake values only).
+Loaded loadEmbeddedDemo(const char *source) {
+  size_t n = size_t(kDemoYamlEnd - kDemoYamlStart);
+  while (n > 0 && kDemoYamlStart[n - 1] == '\0') --n;  // embed_txtfiles appends a NUL
+  return fromParse(config::parseConfig(kDemoYamlStart, n), true, source);
+}
+
 }  // namespace
 
 void invalidateCache() {
@@ -168,7 +175,7 @@ void invalidateCache() {
   }
 }
 
-Loaded load() {
+Loaded load(app_logic::ConfigSource source) {
 #if defined(TEST_CONFIG_BROKEN) || defined(TEST_CONFIG_MOCKUP)
 #if defined(TEST_CONFIG_BROKEN)
   boot::log("config", "test_broken");
@@ -178,6 +185,10 @@ Loaded load() {
   return fromParse(config::parseConfig(kInjected, sizeof(kInjected) - 1), true, "test_mockup");
 #endif
 #else
+  if (source == app_logic::ConfigSource::Embedded) {
+    Serial.print("CONFIG: source=demo_setting\n");
+    return loadEmbeddedDemo("demo_setting");
+  }
   const uint32_t t0 = millis();
   config::Fingerprint fp;
   const config_sd::Status st = config_sd::stat(fp);
@@ -206,10 +217,8 @@ Loaded load() {
     case config_sd::Status::NoCard:
     case config_sd::Status::NoFile: {
       // No config on the card: the demo from demo.yaml (fake values only).
-      size_t n = size_t(kDemoYamlEnd - kDemoYamlStart);
-      while (n > 0 && kDemoYamlStart[n - 1] == '\0') --n;  // embed_txtfiles appends a NUL
       Serial.printf("CONFIG: source=demo ms=%lu\n", (unsigned long)(millis() - t0));
-      return fromParse(config::parseConfig(kDemoYamlStart, n), true, "demo");
+      return loadEmbeddedDemo("demo");
     }
     default: {
       Loaded l;

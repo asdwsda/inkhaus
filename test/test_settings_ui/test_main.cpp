@@ -668,8 +668,24 @@ void test_fit_text_exact_boundaries() {
   TEST_ASSERT_TRUE(fakeMeasure(f.text, 18) <= 100 + 9);  // ellipsis is 3 bytes but 1 char in measure
 }
 
+static void test_demo_row_model() {
+  settings::Settings s;
+  TEST_ASSERT_EQUAL_STRING("Demo mode", rowLabel(kDemoRow));
+  TEST_ASSERT_EQUAL_STRING("Off", rowValueText(kDemoRow, s).c_str());
+  TEST_ASSERT_EQUAL_INT(0, rowValueIndex(kDemoRow, s));
+  TEST_ASSERT_EQUAL_INT(2, pipCount(kDemoRow));
+  s = cycleRow(kDemoRow, s);
+  TEST_ASSERT_TRUE(s.demo_mode);
+  TEST_ASSERT_EQUAL_STRING("On", rowValueText(kDemoRow, s).c_str());
+  TEST_ASSERT_EQUAL_INT(1, rowValueIndex(kDemoRow, s));
+  s = cycleRow(kDemoRow, s);
+  TEST_ASSERT_FALSE(s.demo_mode);
+  TEST_ASSERT_FALSE(showsWakeWarning(kDemoRow, s));
+}
+
 int main() {
   UNITY_BEGIN();
+  RUN_TEST(test_demo_row_model);
   RUN_TEST(test_portrait_layout);
   RUN_TEST(test_landscape_layout);
   RUN_TEST(test_targets_size_gaps_and_bounds);

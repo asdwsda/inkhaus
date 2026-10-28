@@ -14,10 +14,12 @@ struct Settings {
     int32_t refresh_interval_min = 60;  // 0 = off
     int32_t idle_timeout_s = 20;
     Orientation orientation = Orientation::Portrait;
+    bool demo_mode = false;  // built-in demo showcase instead of config.yaml + Home Assistant
 
     bool operator==(const Settings& o) const {
         return wake_mode == o.wake_mode && refresh_interval_min == o.refresh_interval_min &&
-               idle_timeout_s == o.idle_timeout_s && orientation == o.orientation;
+               idle_timeout_s == o.idle_timeout_s && orientation == o.orientation &&
+               demo_mode == o.demo_mode;
     }
     bool operator!=(const Settings& o) const { return !(*this == o); }
 };
@@ -37,6 +39,7 @@ constexpr const char* kKeyWakeMode = "wake_mode";
 constexpr const char* kKeyRefreshMin = "refresh_min";
 constexpr const char* kKeyIdleTimeoutS = "idle_s";
 constexpr const char* kKeyOrientation = "orientation";
+constexpr const char* kKeyDemoMode = "demo";  // 0 / 1; absent in old stores = off
 
 // Abstract key-value store of ints.
 class KeyValueStore {
@@ -51,6 +54,7 @@ bool isValidWakeMode(int32_t v);
 bool isValidRefreshIntervalMin(int32_t v);
 bool isValidIdleTimeoutS(int32_t v);
 bool isValidOrientation(int32_t v);
+bool isValidDemoMode(int32_t v);
 
 // Missing/invalid values fall back to the default per field. An unknown
 // schema_version yields all defaults.

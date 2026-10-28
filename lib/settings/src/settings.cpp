@@ -28,6 +28,8 @@ bool isValidOrientation(int32_t v) {
            v == static_cast<int32_t>(Orientation::Landscape);
 }
 
+bool isValidDemoMode(int32_t v) { return v == 0 || v == 1; }
+
 Settings load(const KeyValueStore& store) {
     Settings s;
     int32_t v;
@@ -37,6 +39,7 @@ Settings load(const KeyValueStore& store) {
     if (store.getInt(kKeyIdleTimeoutS, v) && isValidIdleTimeoutS(v)) s.idle_timeout_s = v;
     if (store.getInt(kKeyOrientation, v) && isValidOrientation(v))
         s.orientation = static_cast<Orientation>(v);
+    if (store.getInt(kKeyDemoMode, v) && isValidDemoMode(v)) s.demo_mode = v == 1;
     return s;
 }
 
@@ -46,6 +49,7 @@ void save(KeyValueStore& store, const Settings& s) {
     writeIfChanged(store, kKeyRefreshMin, s.refresh_interval_min);
     writeIfChanged(store, kKeyIdleTimeoutS, s.idle_timeout_s);
     writeIfChanged(store, kKeyOrientation, static_cast<int32_t>(s.orientation));
+    writeIfChanged(store, kKeyDemoMode, s.demo_mode ? 1 : 0);
 }
 
 }  // namespace settings

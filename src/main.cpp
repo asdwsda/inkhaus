@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "app_config.h"
+#include "demo_mode.h"
 #include "app_state.h"
 #include "boot.h"
 #include "input.h"
@@ -259,6 +260,40 @@ static void applyOrientation(settings::Orientation o) {
   boot::log("orientation", (long)(o == settings::Orientation::Landscape ? 1 : 0));
 }
 
+// Demo mode switched in Settings: drop the sessions, load the other config source, rebuild the app
+// state for orientation `o` and, when the dashboard is real, start a session.
+static void reloadConfigSource(settings::Orientation o) {
+  session_glue::ntpAbort();
+  g_drv.reset();  // before the Wi-Fi adapter it points to
+  g_wifi.reset();
+  g_net.reset();
+  net::powerDown();
+  g_sessionOver = false;
+  g_real = false;
+  g_demoMode = true;
+  g_cfg = app_config::load(app_logic::chooseConfigSource(g_settings));
+  boot::log("config_source", g_cfg.source);
+  applyTimezone(g_cfg.cfg.timezone);
+  M5.Display.setRotation(o == settings::Orientation::Landscape ? 1 : 0);
+  present::begin();
+  if (g_cfg.error) {
+    g_app.initError(g_cfg.errors, o);
+    return;
+  }
+  g_demoMode = app_logic::isDemoRun(g_settings, g_cfg.demo, g_cfg.cfg.hasConnection);
+  g_real = !g_demoMode;
+  g_app.init(g_cfg.cfg, o, g_demoMode);
+  g_app.setActionSink(onAppAction);
+  g_app.setMarksDriven(g_real);
+  boot::log("mode", g_real ? "real" : "demo");
+  if (g_real) {
+    session_glue::loadClockFromRtc();
+    g_net.begin(g_cfg.cfg.connection.ha.internalUrl, g_cfg.cfg.connection.ha.externalUrl,
+                g_cfg.cfg.connection.ha.token);
+    startSession(millis());
+  }
+}
+
 static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
   g_settingsRefreshing = false;
   if (r.save) {
@@ -270,7 +305,11 @@ static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
     Serial.println("APP: settings saved");
   }
   g_settings = r.settings;
-  if (r.orientationChanged) {
+  if (r.demoChanged) {
+    reloadConfigSource(r.settings.orientation);
+    composeFrame();
+    present::bootFrame(true);  // everything changed: full redraw
+  } else if (r.orientationChanged) {
     applyOrientation(r.settings.orientation);
     composeFrame();
     present::bootFrame(true);
@@ -381,7 +420,7 @@ void setup() {
   if (kind == power::Session::LowBattery) lowBatterySleep();  // returns only if sleeping failed
   if (!g_scheduled) input::begin();  // a scheduled refresh never initialises touch input
 
-  g_cfg = app_config::load();
+  g_cfg = app_config::load(app_logic::chooseConfigSource(s));
   const app_config::Loaded &cfg = g_cfg;
   applyTimezone(cfg.cfg.timezone);
   boot::log("config_source", cfg.source);
@@ -391,7 +430,7 @@ void setup() {
     Serial.printf("BOOT: config_error path=%s line=%d msg=%s\n", e.path.c_str(), e.line, e.message.c_str());
   } else {
     // Demo (fake states, local fake actions) unless the config has a connection section.
-    g_demoMode = cfg.demo || !cfg.cfg.hasConnection;
+    g_demoMode = app_logic::isDemoRun(s, cfg.demo, cfg.cfg.hasConnection);
     g_real = !g_demoMode;
     g_app.init(cfg.cfg, s.orientation, g_demoMode);
     g_app.setActionSink(onAppAction);

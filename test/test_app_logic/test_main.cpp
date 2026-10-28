@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "demo_mode.h"
 #include "ha_worker.h"
 #include "mailbox.h"
 #include "session_driver.h"
@@ -14,6 +15,23 @@
 #include "config_model.h"
 
 using namespace app_logic;
+
+void test_demo_mode_decisions() {
+  settings::Settings off, on;
+  on.demo_mode = true;
+  TEST_ASSERT_TRUE(chooseConfigSource(off) == ConfigSource::Card);
+  TEST_ASSERT_TRUE(chooseConfigSource(on) == ConfigSource::Embedded);
+  TEST_ASSERT_FALSE(isDemoRun(off, false, true));   // real dashboard
+  TEST_ASSERT_TRUE(isDemoRun(off, true, true));     // fallback demo (no card config)
+  TEST_ASSERT_TRUE(isDemoRun(off, false, false));   // config without connection
+  TEST_ASSERT_TRUE(isDemoRun(on, false, true));     // setting wins over a real config
+  TEST_ASSERT_TRUE(needsConfigReload(off, on));
+  TEST_ASSERT_TRUE(needsConfigReload(on, off));
+  TEST_ASSERT_FALSE(needsConfigReload(on, on));
+  settings::Settings other = off;
+  other.orientation = settings::Orientation::Landscape;
+  TEST_ASSERT_FALSE(needsConfigReload(off, other));
+}
 
 void setUp() {}
 void tearDown() {}
@@ -583,6 +601,7 @@ static void test_wakelog_csv() {
 
 int main() {
   UNITY_BEGIN();
+  RUN_TEST(test_demo_mode_decisions);
   RUN_TEST(test_connect_fetch_render);
   RUN_TEST(test_tap_call_confirm);
   RUN_TEST(test_tap_before_wifi_is_sent_before_initial_fetch);

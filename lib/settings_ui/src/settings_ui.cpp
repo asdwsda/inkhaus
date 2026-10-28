@@ -76,6 +76,7 @@ int pipCount(int i) {
     case 1: return static_cast<int>(settings::kWakeModeValues.size());
     case 2: return static_cast<int>(settings::kRefreshIntervalMinValues.size());
     case 3: return static_cast<int>(settings::kIdleTimeoutSValues.size());
+    case kDemoRow: return 2;
   }
   return 0;
 }
@@ -96,6 +97,7 @@ const char* rowLabel(int i) {
     case 1: return "Wake mode";
     case 2: return "Refresh every";
     case 3: return "Idle timeout";
+    case kDemoRow: return "Demo mode";
   }
   return "";
 }
@@ -119,6 +121,7 @@ int rowValueIndex(int i, const Settings& s) {
     case 1: return indexOf(settings::kWakeModeValues, s.wake_mode);
     case 2: return indexOf(settings::kRefreshIntervalMinValues, s.refresh_interval_min);
     case 3: return indexOf(settings::kIdleTimeoutSValues, s.idle_timeout_s);
+    case kDemoRow: return s.demo_mode ? 1 : 0;
   }
   return -1;
 }
@@ -135,6 +138,7 @@ std::string rowValueText(int i, const Settings& s) {
     case 3:
       std::snprintf(buf, sizeof buf, "%d s", static_cast<int>(s.idle_timeout_s));
       return buf;
+    case kDemoRow: return s.demo_mode ? "On" : "Off";
   }
   return "";
 }
@@ -152,6 +156,7 @@ Settings cycleRow(int i, const Settings& s) {
     case 3:
       r.idle_timeout_s = settings::kIdleTimeoutSValues[nextIndex(settings::kIdleTimeoutSValues, cur)];
       break;
+    case kDemoRow: r.demo_mode = !s.demo_mode; break;
   }
   return r;
 }
@@ -322,6 +327,7 @@ LeaveResult SettingsScreen::leave() const {
   LeaveResult r;
   r.save = edit_ != saved_;
   r.orientationChanged = edit_.orientation != saved_.orientation;
+  r.demoChanged = edit_.demo_mode != saved_.demo_mode;
   r.settings = edit_;
   return r;
 }

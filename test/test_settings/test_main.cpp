@@ -26,6 +26,29 @@ struct FakeStore : KeyValueStore {
 };
 }  // namespace
 
+void test_demo_mode_default_old_store_invalid_roundtrip() {
+    FakeStore st;
+    TEST_ASSERT_FALSE(load(st).demo_mode);
+    st.data[kKeySchemaVersion] = kSchemaVersion;
+    st.data[kKeyWakeMode] = 1;  // an old store without "demo"
+    TEST_ASSERT_FALSE(load(st).demo_mode);
+    TEST_ASSERT_EQUAL_INT(1, (int)load(st).wake_mode);
+    st.data[kKeyDemoMode] = 2;
+    TEST_ASSERT_FALSE(load(st).demo_mode);
+    st.data[kKeyDemoMode] = -1;
+    TEST_ASSERT_FALSE(load(st).demo_mode);
+    Settings s;
+    s.demo_mode = true;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT(1, st.data[kKeyDemoMode]);
+    TEST_ASSERT_TRUE(load(st).demo_mode);
+    TEST_ASSERT_TRUE(s != Settings());
+    TEST_ASSERT_TRUE(std::strlen(kKeyDemoMode) <= 15);
+    int w = st.writes;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT(w, st.writes);
+}
+
 void setUp() {}
 void tearDown() {}
 
@@ -250,6 +273,7 @@ void test_keys_fit_nvs_limit_and_lists_are_valid() {
 
 int main(int, char**) {
     UNITY_BEGIN();
+    RUN_TEST(test_demo_mode_default_old_store_invalid_roundtrip);
     RUN_TEST(test_defaults_with_empty_store);
     RUN_TEST(test_orientation_default_on_pre_orientation_store);
     RUN_TEST(test_orientation_invalid_defaults_only_that_field);

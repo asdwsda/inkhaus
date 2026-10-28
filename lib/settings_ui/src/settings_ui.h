@@ -21,6 +21,8 @@ constexpr int kFocusStops = 6;    // 4 rows, Refresh now, Back
 constexpr int kStopRefresh = 4;   // 0-based focus stop indices
 constexpr int kStopBack = 5;
 constexpr int kRingInflate = 6;
+// The 5th setting row (Demo mode, task 034). Model only; layout rects follow the revised spec.
+constexpr int kDemoRow = 4;
 
 enum class InfoId { Firmware, Battery, HomeAssistant, WiFi, Config, Errors };
 
@@ -158,6 +160,7 @@ struct Update {
 struct LeaveResult {
   bool save = false;                // buffer != saved: call settings::save(settings) once
   bool orientationChanged = false;  // rotate, recompute layout, one full refresh
+  bool demoChanged = false;         // config source changes: reload the config, full redraw
   settings::Settings settings;      // the edit buffer
   bool fullRefresh = true;          // leaving is always a full refresh
 };
