@@ -74,3 +74,15 @@ its commands with the real modules:
 - Note: the offset reaches `plan_sleep` via the Start event, so it is taken at session start.
 - Follow-up after round 3: apply the NTP policy from ARCHITECTURE.md (2026-10-28): store the last sync
   epoch (NVS); sync only if the RTC is untrusted or the last sync is > 24 h old; never delay sleep.
+- Device session 1 (2026-10-28, user's config on SD, phone hotspot):
+  - Provisioning OK; Wi-Fi 828–948 ms scan, 438 ms cache hit; NTP synced, daily rule OK; HTTPS to the
+    user's domain OK after the GlobalSign root fix (task 008); first HA fetch `200`, link=remote.
+  - Bug (fix agent running at the end of the session, may have been cut off by unplugging): after the
+    first fetch (changed=1) the widget showed "-" and no `cmd render` followed; after a rocker wake the
+    state appeared. Likely the first render after a fetch is missing.
+  - Fetch took 7.4 s: the local URL times out first over the hotspot. Follow-up: persist the remembered
+    base URL across sleep (RTC memory) so the remote one is tried first.
+  - Follow-up (user: "looks really ugly"): non-numeric sensor values are drawn in F56 in the wide layout.
+    Draw text states in F24 and humanise raw HA states (`above_horizon` → "Above horizon").
+  - A config with no entities makes the fetch fail with Parse; treat "nothing to fetch" as success.
+  - TLS handshake ~6 s with debug logs; measure in the normal build; TLS session resumption later.
