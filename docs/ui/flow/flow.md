@@ -119,3 +119,8 @@ Tab change, Settings enter and Settings exit are the three full refreshes.
 15. **Widget checker**: frames 28..32 have no `w-N` widgets, so `check_mockups.py` reports
     "no widget frames" for them (same as settings-portrait.svg). Frames 23, 24, 26, 27, 33,
     34 are exempt.
+
+Revision 5 (2026-10-28): all dynamic text in the frames (state, condition) is pure
+black and the window sensor reads `Open`. Partial frames are feedback refreshes in
+fastest mode over black/white content, with no clean-up pass; the full refreshes
+are GC16 (STYLE.md section 10).

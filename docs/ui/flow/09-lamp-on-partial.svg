@@ -32,7 +32,7 @@
 <g id="w-1" transform="translate(16,68)" dominant-baseline="alphabetic">
 <rect id="w-1-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
 <text id="w-1-name" x="12" y="44" font-size="24" fill="#000">Shutter</text>
-<text id="w-1-state" x="12" y="77" font-size="24" fill="#444">Closed</text>
+<text id="w-1-state" x="12" y="77" font-size="24" fill="#000">Closed</text>
 <rect id="w-1-up-btn" x="281" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
 <use id="w-1-up-icon" xlink:href="#i-up" x="292" y="32" width="40" height="40" color="#000"/>
 <rect id="w-1-stop-btn" x="357" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
@@ -44,7 +44,7 @@
 <g id="w-2" transform="translate(16,184)" dominant-baseline="alphabetic">
 <rect id="w-2-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
 <text id="w-2-name" x="12" y="44" font-size="24" fill="#000">Downstairs shutters</text>
-<text id="w-2-state" x="12" y="77" font-size="24" fill="#444">Closed</text>
+<text id="w-2-state" x="12" y="77" font-size="24" fill="#000">Closed</text>
 <rect id="w-2-up-btn" x="281" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
 <use id="w-2-up-icon" xlink:href="#i-up" x="292" y="32" width="40" height="40" color="#000"/>
 <rect id="w-2-stop-btn" x="357" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
@@ -71,14 +71,14 @@
 <rect id="w-5-frame" x="1" y="1" width="246" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
 <text id="w-5-name" x="12" y="38" font-size="24" fill="#000">Fan</text>
 <use id="w-5-icon" xlink:href="#i-plug" x="12" y="49" width="40" height="40" color="#000"/>
-<text id="w-5-state" x="58" y="77" font-size="24" fill="#444">Off</text>
+<text id="w-5-state" x="58" y="77" font-size="24" fill="#000">Off</text>
 </g>
 
 <g id="w-7" transform="translate(276,416)" dominant-baseline="alphabetic">
 <rect id="w-7-frame" x="1" y="1" width="246" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
 <text id="w-7-name" x="12" y="38" font-size="24" fill="#000">Window</text>
 <use id="w-7-icon" xlink:href="#i-window-on" x="12" y="49" width="40" height="40" color="#000"/>
-<text id="w-7-state" x="58" y="77" font-size="24" fill="#444">On</text>
+<text id="w-7-state" x="58" y="77" font-size="24" fill="#000">Open</text>
 </g>
 
 <g id="w-6" transform="translate(16,532)" dominant-baseline="alphabetic">
@@ -112,7 +112,7 @@
 <rect id="w-10-frame" x="1" y="1" width="506" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
 <use id="w-10-icon" xlink:href="#i-cloud" x="12" y="28" width="48" height="48" color="#000"/>
 <text id="w-10-name" x="68" y="44" font-size="24" fill="#000">Home</text>
-<text id="w-10-cond" x="68" y="77" font-size="24" fill="#444">Cloudy</text>
+<text id="w-10-cond" x="68" y="77" font-size="24" fill="#000">Cloudy</text>
 <use id="w-10-hum-icon" xlink:href="#i-drop" x="163" y="57" width="24" height="24" color="#000"/>
 <text id="w-10-hum-text" x="191" y="77" font-size="24" fill="#000">76%</text>
 <text id="w-10-temp" x="495" y="66" font-size="40" fill="#000" text-anchor="end">12<tspan font-size="24" dx="2">°C</tspan></text>

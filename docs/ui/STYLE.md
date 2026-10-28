@@ -4,6 +4,13 @@ Owner: ui-designer. All screens and `docs/ui/layout.md` / `docs/ui/widgets.md` /
 `docs/ui/settings.md` reuse the values below. Coordinates are px, origin top-left
 of the screen as the user sees it (after rotation). Rect = (x, y, w, h).
 
+Revision 5 (2026-10-28, approved on the real device; ARCHITECTURE.md 2026-10-28):
+text that can change at runtime is pure INK (section 1), the refresh rules are
+rewritten (section 10: fastest over black/white, one quality refresh over greys,
+no per-tap clean-up, GC16 full refresh on tab/page change and ghost debt),
+the rocker yes/no rule is in section 10b, binary sensors with device_class
+window/door say Open/Closed (widgets.md section 8).
+
 Revision 4 (type budgets): user feedback said a sensor value left its container and
 the thermostat looked odd. Cause: vertical budgets were computed from centre lines
 without real text box heights. Changes: text box = 1.2 x font size (section 2), 4 px
@@ -26,11 +33,22 @@ Level n is hex `n*0x11` (0 = black, 15 = white). Only these five are used.
 
 | Name | Level | Hex | Use |
 |------|-------|-----|-----|
-| INK | 0 | #000000 | text, borders, "on" fills, icons |
-| DIM | 4 | #444444 | secondary text (captions, state lines, sensor names, weather condition) |
-| OFF | 8 | #888888 | unavailable / stale / loading text, dotted borders, hairlines |
+| INK | 0 | #000000 | all dynamic text (see rule below), borders, "on" fills, icons |
+| DIM | 4 | #444444 | static decoration only: never-changing captions and names (sensor name, Settings info labels) |
+| OFF | 8 | #888888 | unavailable titles and icons, dotted borders, hairlines, dividers |
 | TRACK | 12 | #CCCCCC | empty part of progress bars only (small areas) |
 | PAPER | 15 | #FFFFFF | background, "off" fills, text on INK |
+
+**Dynamic text is pure black.** Any text that can change at runtime is INK (0),
+never DIM or OFF: state texts (`Closed`, `Opening 40%`, `On`, `Open`), values and
+temperatures, the weather condition, vacuum status, humidity, Settings values,
+the refresh label. On INK fills (toggle "on") it is PAPER. Stale, loading and
+unavailable values are therefore also INK/PAPER (`-`, `n/a`); the stale state is
+carried by the status-bar chip, the unavailable state by the dotted frame and
+warn badge. Greys stay only for static decoration: dividers and hairlines,
+never-changing captions (sensor/weather names, info labels), unavailable widget
+titles and icons, badges. Reason: black text keeps nearly every update on the
+fast path (black/white only); grey text needs the slower quality mode.
 
 Rules: never use a grey as the only carrier of state (always shape or fill as
 well); no large areas of grey 1..14 (uneven refresh, ghosting). Text on INK
@@ -291,7 +309,7 @@ fetch failed. The label is then drawn as a filled INK chip with PAPER text:
 - Landscape: chip (48, 8, 112, 48), no clock icon (no room); text unchanged at
   x = 56.
 
-Widget values go to OFF grey (section 9).
+Widget values stay INK (section 1: dynamic text is black); the chip is the stale marker.
 
 ### 5.4 Battery icon
 
@@ -473,9 +491,9 @@ Applies to every widget; widget-specific details are in widgets.md.
 | On / active | **INK fill**, PAPER content (toggles); for button rows: the button of the current mode is INK-filled | active |
 | Pending (command queued or sent, not yet confirmed) | the **requested** result is drawn (e.g. toggle flips to its new fill), border becomes **3 px dashed** (8 on / 6 off), an hourglass (S) replaces the widget badge (toggles, climate); for button rows (cover, vacuum) the tapped button gets the dashed border and **one** hourglass (M) instead of its glyph, and there is no badge | active (a further tap on the same control while pending is ignored; on other controls it is queued) |
 | Failed (send failed or state not confirmed after the next fetch) | pending is dropped, the real state is drawn, alert (S) badge stays until the next successful fetch | active |
-| Unavailable (`unavailable`, `unknown`, missing entity) | PAPER fill, **2 px dotted** (2 on / 4 off) OFF border, content in OFF grey, warn (S) badge, value shows `n/a` or `-`, buttons dotted | none (taps ignored, no redraw) |
-| Loading (no cached value yet) | normal frame, values `-`, in OFF grey, no badge | controls active |
-| Stale (global: status-bar chip is shown) | value text in OFF grey instead of INK; frame and state fills unchanged | active |
+| Unavailable (`unavailable`, `unknown`, missing entity) | PAPER fill, **2 px dotted** (2 on / 4 off) OFF border, static title and icons in OFF grey, dynamic text (`n/a` or `-`) INK, warn (S) badge, buttons dotted | none (taps ignored, no redraw) |
+| Loading (no cached value yet) | normal frame, values `-` in INK, no badge | controls active |
+| Stale (global: status-bar chip is shown) | no change to the widget (values stay INK); only the status-bar chip marks staleness | active |
 | Focused (rocker) | 3 px INK ring 3..6 px outside the rect; inside a multi-button widget the active button also gets a 4 px solid border. **Tab slots:** inner frame instead (section 6) | n/a |
 | Read-only widgets (sensor, binary_sensor, weather) | no pending state, never focusable | no feedback |
 
@@ -490,42 +508,56 @@ frame minus 12 px, and no two elements of a widget may overlap.
 
 ## 10. Refresh rules
 
-The firmware owns the mechanics; the UI requires the following.
+The firmware owns the mechanics; the UI requires the following (ARCHITECTURE.md
+2026-10-28, user-approved on the device).
 
-**Partial refresh (fast mode, only the listed rect):**
-- Tap feedback: pending state of the touched control: the control rect (toggle:
-  the whole widget; button row: that button; climate +/-: the tapped button plus
-  the target value rect and the badge).
-- A state value changed by a fetch: the smallest element rect that changed
-  (value text, button fill, badge), merged into the widget rect if the changed
-  rects cover more than 60 % of the widget area.
-- Focus ring moves: old and new element rects, each inflated by 6 px.
-- Status elements: the changed element only (label, battery, connection). A tap
-  on the refresh label redraws the connection icon (and, when the fetch ends,
-  the label chip).
-- Tab bar: highlight change when tabs are selected with the rocker; overflow
-  group switch; the whole bar rect (section 6 table).
-- **Sleep indicator: draw and clear touch only its region (section 5.5).**
+**Feedback refresh (a tap, a changed value, a focus move; only the listed rect):**
+- Mode: `epd_fastest` (about 130 ms) **only where the region's current content is
+  pure black/white**. Almost everything qualifies because dynamic text is INK.
+- A region that currently holds greys (for example right after a GC16 full
+  refresh drew DIM captions, OFF hairlines or dotted frames inside it) gets
+  **one `epd_quality` refresh** instead. Never fastest over greys: old text stays
+  visible for 1 to 2 taps.
+- **No per-tap clean-up pass.** A tap produces exactly one partial refresh of its
+  region(s), no follow-up pass 1 to 5 s later.
+- Regions: tap feedback = the control rect (toggle: the whole widget; button row:
+  that button; climate +/-: the tapped button plus the target value rect and the
+  badge); a value changed by a fetch = the smallest element rect that changed
+  (merged into the widget rect if the changed rects cover more than 60 % of it);
+  focus ring moves = old and new element rects, each inflated by 6 px; status
+  elements = the changed element only (a tap on the refresh label redraws the
+  connection icon and, when the fetch ends, the label chip); rocker tab
+  highlight = the bar rect; **sleep indicator: draw and clear touch only its
+  region (section 5.5).**
 - Regions are rounded out to 4 px by the driver; the 12 px gaps absorb that
   (landscape: the tab strip rect ends at y = 64 and the first widget row starts
-  at y = 72, so a 4 px rounding of the strip does not reach the widgets; portrait:
-  status bar ends y = 56, grid starts 68; tab bar starts y = 880, grid ends 868).
+  at y = 72; portrait: status bar ends y = 56, grid starts 68; tab bar starts
+  y = 880, grid ends 868).
 
-**Full-quality refresh (whole screen, clears ghosting, flashes):**
-- Changing tab, sub-page, or orientation (the content is new).
+**GC16 full refresh (whole screen, 16 greys, clears ghosting, flashes):**
+- On every tab change, sub-page change or orientation change (the content is new).
 - Settings screen enter/exit (including the orientation change applied on exit).
-- Scheduled (RTC) refresh that changed at least one widget (as in
-  ARCHITECTURE.md).
-- A fetch that changes more than 6 widgets at once.
-- Ghost debt: after 12 partial updates since the last full refresh, or when
-  the summed partial area exceeds 150 % of the screen, the next quiet moment
-  (no input for 2 s) triggers one; if none occurred, one runs just before
-  sleeping, **before** the sleep indicator is drawn. OPEN: tune 12 / 150 % on the
-  device.
-- Never refresh when nothing changed. Never redraw on wake before first input
-  or data (the screen is already showing the last frame), **except** the one
-  partial draw that clears the sleep indicator.
+- A scheduled (RTC) refresh that changed at least one widget, and a fetch that
+  changes more than 6 widgets at once.
+- **Ghost debt:** after 12 feedback refreshes since the last full refresh, or when
+  the summed partial area exceeds 150 % of the screen, one runs at the next quiet
+  moment (no input for 2 s); at the latest just before sleeping, **before** the
+  sleep indicator is drawn. OPEN: tune 12 / 150 % on the device.
+- Never refresh when nothing changed. Never redraw on wake before first input or
+  data (the screen already shows the last frame), **except** the one partial draw
+  that clears the sleep indicator.
+
+Consequence for the mockups: right after a full refresh the screen holds greys
+(captions, hairlines), so the first tap in a region that contains them is one
+quality refresh; later taps in the same region are fastest.
 
 **Rocker tab switching** debounce: the tab bar highlight moves immediately
-(partial); the content full refresh runs after 400 ms without further
+(partial); the content GC16 full refresh runs after 400 ms without further
 presses.
+
+## 10b. Rocker yes/no rule (every dialog)
+
+Any yes/no dialog or confirmation uses the rocker as follows: **UP = yes, DOWN =
+no, PUSH = skip** (dismiss without a decision). PUSH is never "yes". The dialog
+shows the three answers as labelled targets (yes / no / skip), each at least
+64 x 64 for touch.

@@ -42,11 +42,13 @@ clamping: layout.md section 3.
 - **Names / strings** come from config `name`, else HA `friendly_name`. Truncation
   to a width: drop characters from the end and append `…` (U+2026, one glyph, 1 em
   wide) until it fits.
-- Text colour: INK on PAPER, PAPER on INK; OFF grey when stale, loading or
-  unavailable; secondary lines (state, condition, sensor name) DIM (PAPER on INK
-  fills).
-- "Stale" is global (status-bar chip). A stale widget differs only by OFF-grey
-  value text.
+- Text colour (revision 5): **every text that can change at runtime is INK on
+  PAPER, PAPER on INK fills** (state lines, values, units, temperatures, humidity,
+  weather condition, vacuum status, battery text, `n/a`, `-`), in every state
+  including stale, loading and unavailable. DIM is only for never-changing
+  captions (sensor/weather 1x1 names); OFF only for the static title and icons of
+  an unavailable widget, and dotted frames.
+- "Stale" is global (status-bar chip). A stale widget looks unchanged.
 - **Badge slot** (24 x 24): hourglass (pending), alert (failed), warn
   (unavailable), else empty. Position per widget below. **Cover and vacuum show
   pending only in the tapped button**, never as a badge.
@@ -99,7 +101,7 @@ Vertical budget (left block = Stack A; buttons beside it):
 | Element | Box (x, y, w, h) | cy / baseline | Font / grey | Content |
 |---------|------------------|---------------|-------------|---------|
 | Name `w-N-name` | (12, 21.6, W-252, 28.8) | 36 / 44 | F24 INK, left | name; right edge W-240 |
-| State `w-N-state` | (12, 54.6, W-284, 28.8) | 69 / 77 | F24 DIM, left | see below; right edge W-272 |
+| State `w-N-state` | (12, 54.6, W-284, 28.8) | 69 / 77 | F24 INK, left | see below; right edge W-272 |
 | Badge | (W-264, 57, 24, 24) | 69 | S icon | **failed / unavailable only** (not pending) |
 | Button 1 "up" | (W-228, 20, 64, 64) | 52 | glyph M at (W-216, 32) | sub-region 1 |
 | Button 2 "stop" | (W-152, 20, 64, 64) | 52 | glyph M at (W-140, 32) | sub-region 2 |
@@ -138,9 +140,9 @@ Fill: horizontal 12..W-12 = 100 % (text left, buttons right); vertical buttons 6
 | Normal | outline buttons; `opening` -> button 1 INK-filled (PAPER glyph); `closing` -> button 3 filled; otherwise none filled |
 | Pending | tapped button: dashed 3 px border, **one hourglass M in that button instead of its glyph**; no badge, state text unchanged; other buttons unchanged. Confirmed when the next fetch shows the matching state or position change (or after 2 fetches without change -> Failed) |
 | Failed | alert badge; buttons normal |
-| Unavailable | dotted OFF frame and buttons, OFF glyphs, warn badge, state `n/a` |
-| Loading | state `-`, buttons normal |
-| Stale | state text OFF grey |
+| Unavailable | dotted OFF frame and buttons, OFF glyphs, warn badge, state `n/a` (INK) |
+| Loading | state `-` (INK), buttons normal |
+| Stale | unchanged (status-bar chip only) |
 
 Redraw: state box; the two affected buttons when the fill moves (old and new);
 badge; the tapped button on pending. Rocker INNER focus: tapped button border.
@@ -189,7 +191,7 @@ Vertical budget:
 |---------|------------------|-------------|
 | Name `w-N-name` | (12, 15.6, W-24, 28.8) | F24 INK / PAPER on INK, left; truncated with `…` |
 | Icon `w-N-icon` | (12, 49, 40, 40) | bulb (plug, auto, window); INK, or PAPER on INK |
-| State `w-N-state` | (58, 54.6, W-98, 28.8) | F24 DIM / PAPER on INK, left; right limit W-40 |
+| State `w-N-state` | (58, 54.6, W-98, 28.8) | F24 INK / PAPER on INK, left; right limit W-40 |
 | Badge | (W-36, 57, 24, 24) | S; right end of line 2 |
 
 Landscape (W = 176): name box (12,15.6,152,28.8), state box (58,54.6,78,28.8), badge
@@ -216,9 +218,9 @@ Sub-regions: none. The whole widget rect is the toggle (id 0). Action: toggle.
 | On | **INK fill**, PAPER content |
 | Pending | flips to the requested fill at once; dashed 3 px border; hourglass badge |
 | Failed | real state; alert badge |
-| Unavailable | dotted OFF frame, OFF content, state `n/a`, warn badge, taps ignored |
+| Unavailable | dotted OFF frame, OFF title and icon, state `n/a` (INK), warn badge, taps ignored |
 | Loading | state `-`, PAPER fill |
-| Stale | name stays; state text OFF grey (on INK fill: no change, the status-bar chip carries it) |
+| Stale | unchanged (the status-bar chip carries it) |
 
 Redraw: the whole widget rect on any change (small, one region). Brightness-only
 change: state box.
@@ -319,9 +321,9 @@ States:
 | Normal | as above; `hvac_mode off` shows target `Off` (F40) and the `power` icon as action icon; buttons still active |
 | Pending | the tapped button gets the 3 px dashed border, the badge shows the hourglass, the target value is the requested one |
 | Failed | real target; alert badge |
-| Unavailable | dotted OFF frame, buttons dotted, line 2 shows `n/a` (F24 OFF, no icons), target `n/a` (F40 OFF), warn badge |
+| Unavailable | dotted OFF frame, buttons dotted, line 2 shows `n/a` (F24 INK, no icons), target `n/a` (F40 INK), warn badge |
 | Loading | temperatures `-`; buttons active (a tap needs a known target, so it is ignored until the first value) |
-| Stale | current temperature, humidity and target OFF grey |
+| Stale | unchanged (status-bar chip only) |
 
 Redraw: line 2 (box (12, 54.6, Lx-12, 28.8)); target value box; badge. A target tap
 redraws the tapped button, the target value box and the badge only.
@@ -345,7 +347,7 @@ Vertical budget:
 | Element | Box (x, y, w, h) | Font / grey |
 |---------|------------------|-------------|
 | Value + unit `w-N-value` | centred at cx = W/2, box (12, 15, W-24, 48) | value F40 INK, unit F24 INK, same baseline 53 (`baseline_left` for both) |
-| Name `w-N-name` | (12, 67.2, W-24, 21.6), centred | F18 DIM, one line, truncated with `…` |
+| Name `w-N-name` | (12, 67.2, W-24, 21.6), centred | F18 DIM (static caption), one line, truncated with `…` |
 | Badge | (W-36, 12, 24, 24) | S; used only with the short `n/a` / `-` value, which does not reach it |
 
 Value and unit are one centred group: group width = value width + 2 + unit width.
@@ -394,21 +396,22 @@ is W-232 (landscape 132, portrait 276). Fill: horizontal 100 %, vertical 67.2 / 
 | State | Look |
 |-------|------|
 | Normal | INK |
-| Unavailable | value `n/a` in OFF, warn badge, dotted OFF frame |
-| Loading | value `-` OFF |
-| Stale | value OFF grey |
+| Unavailable | value `n/a` in INK, warn badge, dotted OFF frame |
+| Loading | value `-` INK |
+| Stale | unchanged (status-bar chip only) |
 
 Redraw: value group box only. Pending: n/a.
 
 ## 8. Binary sensor, 1x1
 
-HA: domain `binary_sensor`; state `on`/`off`; `friendly_name`. Read-only, 1x1,
-not focusable.
-OPEN (needs architect): the 004 attribute list has no `device_class` for
-binary_sensor, so wording is generic (`On`/`Off`) and the icon cannot be chosen.
-With `device_class` the icon and wording follow it (window: `window` icon,
-`Open`/`Closed`; door, motion, ...). Until decided, the mockup shows a window
-sensor and the generic fallback icon is `dot_on` / `dot_off` (filled / outline ring).
+HA: domain `binary_sensor`; state `on`/`off`; attribute `device_class`;
+`friendly_name`. Read-only, 1x1, not focusable.
+
+**Wording by device_class (revision 5):** `window` and `door` show
+`Open` (state on) / `Closed` (state off). Every other or missing device_class
+shows `On` / `Off` (icon fallback `dot_on` / `dot_off`: filled / outline ring).
+Other classes (motion, ...) can get their own wording and icon later. The mockup
+shows a window sensor that is open.
 
 Same toggle layout, budget and boxes as Light (section 3), with a sensor icon
 instead of the bulb: **`window_on`** (window outline, 18 x 18 of the 24 grid,
@@ -419,13 +422,13 @@ panes empty) when off. State is carried by fill, not by grey.
 |---------|------------------|---------|
 | Name `w-N-name` | (12, 15.6, W-24, 28.8) | F24 INK, truncated with `…` |
 | Icon `w-N-icon` | (12, 49, 40, 40) | window_on / window_off |
-| State `w-N-state` | (58, 54.6, W-98, 28.8) | F24 DIM: `On` / `Off` |
+| State `w-N-state` | (58, 54.6, W-98, 28.8) | F24 INK: `Open`/`Closed` (window, door; on = open) or `On`/`Off` |
 | Badge | (W-36, 57, 24, 24) | S (not used: the icon shows unavailable) |
 
 The frame stays PAPER in both states (the icon carries the state; the widget
 is read-only so the INK fill is reserved for things you can toggle).
 Unavailable: dotted OFF frame, icon replaced by the `warn` M icon in OFF, state
-`n/a`. Vertical budget 73.4 of 80 as Light. Redraw: icon + state box.
+`n/a` (INK). Vertical budget 73.4 of 80 as Light. Redraw: icon + state box.
 
 ## 9. Weather, 2x1 (default) or 1x1
 
@@ -451,7 +454,7 @@ Vertical budget:
 |---------|------------------|-------------|
 | Condition icon `w-N-icon` | (12, 28, 48, 48) | L, INK |
 | Name `w-N-name` | (68, 21.6, W-174, 28.8) | F24 INK, left, truncated with `…` |
-| Condition `w-N-cond` | starts x = 68, baseline 77 | F24 DIM, left |
+| Condition `w-N-cond` | starts x = 68, baseline 77 | F24 INK, left |
 | Humidity icon `w-N-hum-icon` | (x_c + 12, 57, 24, 24) | S `drop` INK; x_c = end of the condition text |
 | Humidity text `w-N-hum-text` | starts at drop x + 28, baseline 77 | F24 INK: `76%` |
 | Temperature `w-N-temp` | right-aligned at x = W-13, baseline 66 | value F40 + unit F24 (`baseline_left`), INK; `12°C` (integer) |
@@ -486,16 +489,15 @@ Vertical budget:
 |---------|------------------|-------------|
 | Condition icon `w-N-icon` | (12, 28, 48, 48) | L, INK |
 | Temperature `w-N-temp` | starts x = 64, baseline 53 | value F40 + unit F24 (`baseline_left`) INK; `12°C` |
-| Condition `w-N-cond` | (64, 67.2, W-76, 21.6), baseline 84 | F18 DIM, left, truncated with `…` |
+| Condition `w-N-cond` | (64, 67.2, W-76, 21.6), baseline 84 | F18 INK, left, truncated with `…` (dynamic) |
 | Badge | (64, 66, 24, 24) | S, unavailable only (condition empty) |
 
 Widths: column x = 64..164 = 100 px; `-12°C` = 96 px fits; `Pouring` at F18 = 68 px.
 No name and no humidity at 1x1. Fill: horizontal 12..W-12 = 100 %; vertical text
 73.8 / 80 = 92 %, icon 48 / 80 = 60 %.
 
-States (both): Unavailable: icon `unknown` OFF, temperature `n/a` (F40 OFF), dotted
-frame, warn badge, no humidity and no condition. Loading: `-`. Stale: temperature
-OFF grey. Redraw: icon + temperature + humidity + condition boxes individually.
+States (both): Unavailable: icon `unknown` OFF, temperature `n/a` (F40 INK), dotted
+frame, warn badge, no humidity and no condition. Loading: `-`. Stale: unchanged. Redraw: icon + temperature + humidity + condition boxes individually.
 
 ## 10. Vacuum, wide
 
@@ -511,7 +513,7 @@ text block 61.8 of 80; buttons at the right):
 | Element | Box (x, y, w, h) | cy | Font / grey |
 |---------|------------------|----|-------------|
 | Name | (12, 21.6, W-252, 28.8) | 36 | F24 INK, left |
-| Status text | starts x = 12, box h 28.8 | 69 | F24 DIM: `Cleaning`, `Docked`, `Idle`, `Paused`, `Returning`, `Error` |
+| Status text | starts x = 12, box h 28.8 | 69 | F24 INK: `Cleaning`, `Docked`, `Idle`, `Paused`, `Returning`, `Error` |
 | Battery icon S | 12 px right of the status text | 69 | S battery (fill = pct) |
 | Battery text | 4 px right of the icon | 69 | F18 INK: `85%` (box h 21.6) |
 | Badge | (W-264, 57, 24, 24) | 69 | S, failed / unavailable only |
@@ -532,8 +534,7 @@ the `status` text in the status position (truncated, no battery group) and the
 alert badge.
 
 States: Pending (confirmed by the next fetch with a different state); Unavailable
-(dotted, `n/a`, battery `-`, buttons dotted); Loading (`-`); Stale (status/battery
-text OFF grey). Battery <= 15 %: battery icon with the "!" glyph (as status bar).
+(dotted, `n/a`, battery `-`, buttons dotted); Loading (`-`); Stale (unchanged). Battery <= 15 %: battery icon with the "!" glyph (as status bar).
 
 Redraw: status line, affected buttons, badge.
 

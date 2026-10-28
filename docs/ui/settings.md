@@ -63,7 +63,7 @@ No Home Assistant entity or service is used except the shared state fetch.
 
 ## 3. Layout, portrait (540 x 960)
 
-Margins 16, gaps between targets 12. White background, all text INK unless noted.
+Margins 16, gaps between targets 12. White background. **All text that can change (setting values, hints, info values, chip, button labels) is INK** (STYLE.md section 1, revision 5); the only grey text is the static info labels (F18 DIM) and the OFF hairlines.
 
 | Element | Rect | cy | Font / grey | Content |
 |---------|------|----|-------------|---------|
@@ -118,7 +118,7 @@ radius 8; alert icon (M) at slot-relative (12, 12, 40, 40), cy = 32; text lines
 ### 3.3 Info rows
 
 Each row has a 1 px OFF hairline on its top edge (16, y, 508, 1). Label at
-x = 0 (row-relative), F18 DIM, left, row cy = h/2; value at x = 158, F24 INK, left,
+x = 0 (row-relative), F18 DIM (static caption), left, row cy = h/2; value at x = 158, F24 INK, left,
 same cy (config row: two lines at h/2 -14 and h/2 +14). When a status icon (S,
 24x24) is needed it sits at (158, cy-12) and the value text moves to x = 190. Text
 fitting rule: F24, then F18, then `…`.
@@ -218,7 +218,7 @@ hold it; ring dirty region = rect inflated by 6).
 |-----|--------|
 | PREV (up) | previous stop, wraps 1 -> 6 |
 | NEXT (down) | next stop, wraps 6 -> 1 |
-| PUSH | on a row: cycle value; on Refresh now: start fetch; on Back: leave |
+| PUSH | on a row: cycle value; on Refresh now: start fetch; on Back: leave (this is not a dialog; for any yes/no dialog: UP = yes, DOWN = no, PUSH = skip, STYLE.md section 10b) |
 | LONG_PUSH | leave (same as Back), from any stop |
 
 Ring move redraws old and new rects (inflated by 6), partial. Key mapping follows
@@ -226,9 +226,13 @@ layout.md 7.1 (`PREV`/`NEXT`, invert flag).
 
 ### Refreshes
 
-- Enter and leave Settings: full-quality refresh (STYLE.md section 10).
-- Everything else above: partial only. Each cycle step counts towards ghost debt
-  (12 partial updates trigger a full refresh at the next quiet moment).
+- Enter and leave Settings: GC16 full refresh (STYLE.md section 10).
+- Everything else above: one partial refresh of the listed region, no clean-up
+  pass. Value texts are INK, so a row value cycles with `epd_fastest`; a region
+  that still holds greys (the hint line is black/white, but info rows hold DIM
+  labels and OFF hairlines) gets one `epd_quality` refresh instead. Each step
+  counts towards ghost debt (12 feedback refreshes trigger a GC16 full refresh at
+  the next quiet moment, at the latest before sleep).
 
 ## 6. States
 
