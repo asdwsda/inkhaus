@@ -27,3 +27,4 @@
 | 023 | [Wire Wi-Fi, Home Assistant and Settings into the app](023-wire-session.md) | in-progress | 017–022, 008 |
 | 024 | [Sleep, wake and scheduled refresh](024-sleep-and-wake.md) | in-progress | 005, 016, 023 |
 | 025 | [Config cache in internal flash](025-config-cache.md) | in-progress | 003, 020 |
+| 026 | [Follow-ups from device session 1](026-device-session-1-followups.md) | in-progress | 023 |
