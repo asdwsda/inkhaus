@@ -72,3 +72,5 @@ its commands with the real modules:
   main.cpp, offset from localtime (`UTC_OFFSET_S` removed); `present::begin()` deletes old sprites and logs
   `psram_free_before` / `psram_free`. native 417 pass; m5paper/probe/epdtest build. Device check pending.
 - Note: the offset reaches `plan_sleep` via the Start event, so it is taken at session start.
+- Follow-up after round 3: apply the NTP policy from ARCHITECTURE.md (2026-10-28): store the last sync
+  epoch (NVS); sync only if the RTC is untrusted or the last sync is > 24 h old; never delay sleep.
