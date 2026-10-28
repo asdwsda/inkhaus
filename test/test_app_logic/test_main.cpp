@@ -25,6 +25,7 @@ struct FakeHa : HttpTransport {
   std::vector<std::string> urls;
   std::vector<std::string> bodies;
   bool callsChangeState = true;
+  std::string errorBody;  // body of non-200 answers
 
   HttpResponse request(const std::string &, const std::string &url, const HttpHeaders &,
                        const std::string &body) override {
@@ -33,7 +34,7 @@ struct FakeHa : HttpTransport {
     HttpResponse r;
     r.status = status;
     if (status == 0) { r.error = "timeout"; return r; }
-    if (status != 200) return r;
+    if (status != 200) { r.body = errorBody; return r; }
     if (url.find("/api/template") != std::string::npos) {
       ++templateCalls;
       std::string j = "{";
@@ -218,6 +219,135 @@ void test_log_has_no_secrets() {
   }
 }
 
+// Every path (online, failed call, 500 with a body, 401, offline, sleep) logs "APP: " lines only,
+// without the token, the URL, response bodies or entity attributes.
+void test_log_has_no_secrets_all_paths() {
+  Rig r;
+  r.ha.errorBody = "BODYSENTINEL token SECRET-TOKEN";
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  EntityState req;
+  req.id = "light.a";
+  req.state = "on";
+  r.drv.userAction(*intentFromRequest(config::WidgetType::Light, 0, {req}), r.now);
+  TEST_ASSERT_TRUE(r.until([&] { return r.ha.serviceCalls == 1; }));
+  r.ha.status = 500;
+  req.state = "off";
+  r.drv.userAction(*intentFromRequest(config::WidgetType::Light, 0, {req}), r.now);
+  r.until([&] { return r.drv.status() != session::Status::Online; }, 5000);
+  r.ha.status = 401;
+  r.drv.refresh(r.now);
+  r.until([&] { return r.drv.status() == session::Status::AuthError; }, 20000);
+  r.ha.status = 0;
+  r.drv.refresh(r.now);
+  r.until([&] { return r.drv.sleeping(); }, 200000);
+  TEST_ASSERT_TRUE(r.log.size() > 10);
+  for (auto &l : r.log) {
+    TEST_ASSERT_TRUE(l.rfind("APP: ", 0) == 0);
+    TEST_ASSERT_TRUE(l.find("SECRET") == std::string::npos);
+    TEST_ASSERT_TRUE(l.find("BODYSENTINEL") == std::string::npos);
+    TEST_ASSERT_TRUE(l.find("ha.local") == std::string::npos);
+    TEST_ASSERT_TRUE(l.find("8123") == std::string::npos);
+    TEST_ASSERT_TRUE(l.find("Bearer") == std::string::npos);
+    TEST_ASSERT_TRUE(l.find("\"") == std::string::npos);  // no JSON
+  }
+}
+
+// The same explicit action twice (AppState normally drops the repeat while pending): at most two
+// requests, both idempotent, and the entity ends in the requested state.
+void test_double_tap_same_target_is_idempotent() {
+  Rig r;
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  EntityState req;
+  req.id = "light.a";
+  req.state = "on";
+  auto ev = *intentFromRequest(config::WidgetType::Light, 0, {req});
+  r.drv.userAction(ev, r.now);
+  r.drv.userAction(ev, r.now);
+  r.until([&] { return r.drv.marks().empty() && r.ha.serviceCalls >= 1; });
+  r.until([&] { return false; }, 3000);
+  TEST_ASSERT_TRUE(r.ha.serviceCalls >= 1 && r.ha.serviceCalls <= 2);
+  TEST_ASSERT_EQUAL_STRING("on", r.store.get("light.a")->state.c_str());
+}
+
+// Tap on, then tap off before the first request went out: the end state is off, never left on.
+void test_on_then_off_ends_off() {
+  Rig r;
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  EntityState req;
+  req.id = "light.a";
+  req.state = "on";
+  r.drv.userAction(*intentFromRequest(config::WidgetType::Light, 0, {req}), r.now);
+  req.state = "off";
+  r.drv.userAction(*intentFromRequest(config::WidgetType::Light, 0, {req}), r.now);
+  r.until([&] { return false; }, 5000);
+  TEST_ASSERT_EQUAL_STRING("off", r.store.get("light.a")->state.c_str());
+  TEST_ASSERT_EQUAL_STRING("off", r.ha.states["light.a"].c_str());
+  TEST_ASSERT_TRUE(r.drv.marks().empty());
+}
+
+// A successful fetch while the wall clock is unset records no time (the label says "never"),
+// and the next fetch with a valid clock records it.
+void test_fetch_without_clock_then_with_clock() {
+  Rig r;
+  r.epoch = 0;
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  TEST_ASSERT_FALSE(r.drv.lastFetchFailed());
+  TEST_ASSERT_EQUAL(0, (int)r.drv.lastOkEpoch());
+  r.epoch = 1767225600 + 3600 * 12;
+  r.drv.refresh(r.now);
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.lastOkEpoch() == r.epoch; }));
+}
+
+// Recovery: a failed session followed by a manual refresh reconnects and fetches again.
+void test_offline_then_refresh_recovers() {
+  Rig r;
+  r.ha.status = 0;
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.status() == session::Status::Offline; }));
+  r.ha.status = 200;
+  r.drv.refresh(r.now);
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.status() == session::Status::Online; }));
+  TEST_ASSERT_FALSE(r.drv.lastFetchFailed());
+  TEST_ASSERT_EQUAL(2, r.wifi.begins);
+}
+
+// Climate: the requested target is clamped to min/max and snapped to the step.
+void test_intent_climate_clamps_and_snaps() {
+  EntityState c;
+  c.id = "climate.l";
+  c.min_temp = 10; c.max_temp = 25; c.target_temp_step = 0.5;
+  c.temperature = 35.0;
+  auto e = intentFromRequest(config::WidgetType::Climate, 2, {c});
+  TEST_ASSERT_TRUE(e.has_value());
+  TEST_ASSERT_TRUE(e->custom_call.body.find("25") != std::string::npos);
+  TEST_ASSERT_TRUE(e->custom_call.body.find("35") == std::string::npos);
+  c.temperature = 21.3;
+  e = intentFromRequest(config::WidgetType::Climate, 1, {c});
+  TEST_ASSERT_TRUE(e->custom_call.body.find("21.5") != std::string::npos);
+  c.temperature = 2.0;
+  e = intentFromRequest(config::WidgetType::Climate, 1, {c});
+  TEST_ASSERT_TRUE(e->custom_call.body.find("\"temperature\":10") != std::string::npos ||
+                   e->custom_call.body.find("\"temperature\": 10") != std::string::npos);
+}
+
+// Stale-label rules without a usable clock.
+void test_label_without_clock() {
+  const int64_t ok = 1767225600 + 3600;
+  Label l = refreshLabel(ok, 0, 0, 60, false, false);  // clock unknown: no age, no day change
+  TEST_ASSERT_FALSE(l.stale);
+  TEST_ASSERT_EQUAL_STRING("updated 01:00", l.line1.c_str());
+  l = refreshLabel(ok, 0, 0, 60, true, false);  // failed fetch is stale regardless
+  TEST_ASSERT_TRUE(l.stale);
+  l = refreshLabel(0, 0, 0, 60, true, false);
+  TEST_ASSERT_TRUE(l.stale);
+  l = refreshLabel(0, ok, 0, 60, false, false);  // never fetched, no failure: not stale, not a time
+  TEST_ASSERT_FALSE(l.stale);
+}
+
 void test_external_link_flag() {
   FakeHa ha;
   struct Both : HttpTransport {
@@ -340,6 +470,13 @@ int main() {
   RUN_TEST(test_failed_call_marks_failed);
   RUN_TEST(test_manual_refresh_and_idle_sleep);
   RUN_TEST(test_log_has_no_secrets);
+  RUN_TEST(test_log_has_no_secrets_all_paths);
+  RUN_TEST(test_double_tap_same_target_is_idempotent);
+  RUN_TEST(test_on_then_off_ends_off);
+  RUN_TEST(test_fetch_without_clock_then_with_clock);
+  RUN_TEST(test_offline_then_refresh_recovers);
+  RUN_TEST(test_intent_climate_clamps_and_snaps);
+  RUN_TEST(test_label_without_clock);
   RUN_TEST(test_external_link_flag);
   RUN_TEST(test_intent_toggles_and_actions);
   RUN_TEST(test_intent_climate_custom);
