@@ -1,5 +1,6 @@
 #include <unity.h>
 
+#include <cctype>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -203,6 +204,30 @@ void test_error_unsupported_domain() {
   ParseResult r = parseConfig(std::string("version: 1\ntabs:\n  - title: P\n    widgets:\n"
                                           "      - entity: person.bob\n        type: sensor\n"));
   TEST_ASSERT_TRUE(r.ok());
+}
+
+// Error messages must never echo a value from the file (URLs, SSIDs, tokens, names).
+void test_error_messages_do_not_echo_values() {
+  const char *yamls[] = {
+      "version: SECRETv\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n",
+      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n        size: SECRETs\n",
+      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n        type: SECRETt\n",
+      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: secretd.x\n",
+      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - group: secretg\n        name: n\n",
+      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: SECRETe\n",
+      "version: 1\nconnection:\n  wifi:\n    ssid: SECRETssid\n  home_assistant:\n"
+      "    internal_url: SECRETurl\n    external_url: http://SECREText\n    token: SECRETtok\n"
+      "tabs:\n  - title: P\n    widgets:\n      - entity: light.a\n",
+  };
+  for (const char *y : yamls) {
+    ParseResult r = parseConfig(std::string(y));
+    TEST_ASSERT_FALSE(r.ok());
+    for (const auto &e : r.errors) {
+      std::string m = e.message;
+      for (auto &c : m) c = (char)tolower((unsigned char)c);
+      TEST_ASSERT_TRUE_MESSAGE(m.find("secret") == std::string::npos, e.message.c_str());
+    }
+  }
 }
 
 void test_error_external_url_not_https() {
@@ -473,5 +498,6 @@ int main(int, char **) {
   RUN_TEST(test_hostile_deep_nesting_block_and_flow);
   RUN_TEST(test_hostile_huge_scalar);
   RUN_TEST(test_hostile_misc_types);
+  RUN_TEST(test_error_messages_do_not_echo_values);
   return UNITY_END();
 }

@@ -18,6 +18,8 @@ class NetTask : public app_logic::INetPort {
   // Starts a new session: queued commands are dropped and late results of the old one ignored.
   void reset();
   bool running() const { return started_; }
+  // Smallest free stack of the task so far, in bytes (0 if not running).
+  uint32_t stackFreeBytes() const;
 
  private:
   struct Cmd { uint32_t epoch = 0; app_logic::NetCommand cmd; };
@@ -30,4 +32,5 @@ class NetTask : public app_logic::INetPort {
   std::atomic<uint32_t> epoch_{0};
   std::string internal_, external_, token_;
   bool started_ = false;
+  void *handle_ = nullptr;
 };

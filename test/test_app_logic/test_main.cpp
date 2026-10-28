@@ -302,6 +302,36 @@ void test_fetch_without_clock_then_with_clock() {
   TEST_ASSERT_TRUE(r.until([&] { return r.drv.lastOkEpoch() == r.epoch; }));
 }
 
+// The clock becomes known after the OK fetch: the fetch time is derived from the monotonic age.
+void test_last_ok_derived_when_clock_arrives() {
+  Rig r;
+  r.epoch = 0;
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  TEST_ASSERT_EQUAL(0, (int)r.drv.lastOkEpoch());
+  r.until([&] { return false; }, 30000);
+  r.epoch = 1767225600 + 3600 * 12;
+  r.drv.tick(r.now);
+  const int64_t d = r.epoch - r.drv.lastOkEpoch();
+  TEST_ASSERT_TRUE(d >= 29 && d <= 40);
+}
+
+// refresh() reports whether the machine started a fetch; ignored requests do not complete.
+void test_refresh_reports_issue_and_seq() {
+  Rig r;
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  const uint32_t seq0 = r.drv.fetchSeq();
+  TEST_ASSERT_TRUE(seq0 >= 1);
+  TEST_ASSERT_TRUE(r.drv.refresh(r.now));
+  TEST_ASSERT_EQUAL_UINT32(seq0, r.drv.fetchSeq());
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.fetchSeq() != seq0; }));
+  // A second request while the first is in flight (or while connecting) must not claim a fetch.
+  Rig q;
+  q.start();
+  TEST_ASSERT_FALSE(q.drv.refresh(q.now) && q.drv.refresh(q.now));
+}
+
 // Recovery: a failed session followed by a manual refresh reconnects and fetches again.
 void test_offline_then_refresh_recovers() {
   Rig r;
@@ -480,6 +510,8 @@ int main() {
   RUN_TEST(test_external_link_flag);
   RUN_TEST(test_intent_toggles_and_actions);
   RUN_TEST(test_intent_climate_custom);
+  RUN_TEST(test_last_ok_derived_when_clock_arrives);
+  RUN_TEST(test_refresh_reports_issue_and_seq);
   RUN_TEST(test_civil_roundtrip);
   RUN_TEST(test_label);
   RUN_TEST(test_mailbox);

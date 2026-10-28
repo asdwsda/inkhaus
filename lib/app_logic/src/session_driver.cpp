@@ -36,9 +36,12 @@ void SessionDriver::userAction(const Event &e, int64_t nowMs) {
   send(e, nowMs);
 }
 void SessionDriver::input(int64_t nowMs) { send(Event::input(), nowMs); }
-void SessionDriver::refresh(int64_t nowMs) {
+bool SessionDriver::refresh(int64_t nowMs) {
   if (log_) log_("APP: refresh_requested");
+  refreshIssued_ = false;
   send(Event::refresh(), nowMs);
+  if (!refreshIssued_ && log_) log_("APP: refresh_ignored");
+  return refreshIssued_;
 }
 
 void SessionDriver::send(const Event &e, int64_t now) {
@@ -59,6 +62,13 @@ void SessionDriver::tick(int64_t now) {
       send(Event::wifi(false), now);
     }
   }
+  if (lastOkPending_) {
+    const int64_t t = wallClock_ ? wallClock_() : 0;
+    if (plausibleEpoch(t)) {
+      lastOkEpoch_ = t - (now - lastOkMs_) / 1000;
+      lastOkPending_ = false;
+    }
+  }
   NetEvent ev;
   while (net_.poll(ev)) onNet(ev, now);
   send(Event::tick(), now);
@@ -70,11 +80,18 @@ void SessionDriver::onNet(const NetEvent &ev, int64_t now) {
     if (ev.error == HaError::None) changed = store_.update(ev.states);
     fetching_ = false;
     sessionDone_ = true;
+    ++fetchSeq_;
     lastFetchFailed_ = ev.error != HaError::None;
     if (!lastFetchFailed_) {
       external_ = ev.external;
       const int64_t t = wallClock_ ? wallClock_() : 0;
-      if (plausibleEpoch(t)) lastOkEpoch_ = t;
+      if (plausibleEpoch(t)) {
+        lastOkEpoch_ = t;
+        lastOkPending_ = false;
+      } else {
+        lastOkMs_ = now;  // clock unknown: remember when, derive the epoch once it is set
+        lastOkPending_ = true;
+      }
     }
     if (log_) log_("APP: fetch_done err=" + std::to_string(int(ev.error)) + " http=" +
                    std::to_string(ev.http_status) + " states=" + std::to_string(ev.states.size()) +
@@ -101,6 +118,7 @@ void SessionDriver::execute(const std::vector<Command> &cmds, int64_t now) {
         n.type = NetCommand::Type::Fetch;
         n.ids = c.ids.empty() ? entityIds_ : c.ids;
         fetching_ = c.ids.empty();
+        if (c.ids.empty()) refreshIssued_ = true;
         if (log_) log_("APP: cmd fetch ids=" + std::to_string(n.ids.size()));
         net_.post(n);
         break;

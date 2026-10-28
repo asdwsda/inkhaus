@@ -23,7 +23,10 @@ class ArduinoWifi : public app_logic::IWifi {
 bool loadClockFromRtc();
 // UTC epoch seconds from the system clock (0 if unset).
 int64_t wallClock();
-// Call every loop iteration after Wi-Fi is up: starts NTP once, then writes the result to the RTC.
+// A new session starts: re-arms the single NTP retry allowed per session.
+void ntpSessionStart();
+// Call every loop iteration after Wi-Fi is up: starts NTP, writes the RTC only after a completed SNTP sync,
+// retries once per session after a timeout (on the next Wi-Fi connect).
 void ntpPoll(bool wifiUp);
 
 }  // namespace session_glue

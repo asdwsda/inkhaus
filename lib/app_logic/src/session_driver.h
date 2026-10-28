@@ -40,7 +40,9 @@ class SessionDriver {
              int64_t nowMs);
   void userAction(const session::Event &e, int64_t nowMs);  // UserAction event (also counts as input)
   void input(int64_t nowMs);
-  void refresh(int64_t nowMs);
+  // Returns true if the machine started a full fetch for this request (false: ignored). Then
+  // fetchSeq() grows when that fetch's result arrives.
+  bool refresh(int64_t nowMs);
   void tick(int64_t nowMs);
 
   // One-shot flags, cleared by the call.
@@ -52,6 +54,7 @@ class SessionDriver {
   bool sleeping() const { return machine_.sleeping(); }
   bool wifiUp() const { return wifiUp_; }
   int64_t lastOkEpoch() const { return lastOkEpoch_; }  // 0 = never
+  uint32_t fetchSeq() const { return fetchSeq_; }  // counts arrived fetch results
   bool lastFetchFailed() const { return lastFetchFailed_; }
   bool lastLinkExternal() const { return external_; }
   bool sessionDone() const { return sessionDone_; }  // at least one fetch result arrived
@@ -74,6 +77,10 @@ class SessionDriver {
   bool wifiPending_ = false, wifiUp_ = false, fetching_ = false, render_ = false, sleepDue_ = false;
   bool lastFetchFailed_ = false, external_ = false, sessionDone_ = false;
   int64_t lastOkEpoch_ = 0;
+  int64_t lastOkMs_ = 0;       // monotonic time of the last OK fetch made while the clock was unset
+  bool lastOkPending_ = false;  // lastOkEpoch_ to be derived from lastOkMs_ once the clock is known
+  uint32_t fetchSeq_ = 0;
+  bool refreshIssued_ = false;
   SleepRequest sleep_;
   std::map<std::string, session::Mark> marks_;
   std::vector<session::Event> self_;  // events produced while executing commands

@@ -10,8 +10,14 @@ void NetTask::begin(std::string internalUrl, std::string externalUrl, std::strin
   external_ = std::move(externalUrl);
   token_ = std::move(token);
   // TLS handshakes need a big stack. Core 0 shares with the Wi-Fi stack; the UI loop runs on core 1.
-  started_ = xTaskCreatePinnedToCore(&NetTask::entry, "net", 20480, this, 1, nullptr, 0) == pdPASS;
+  TaskHandle_t h = nullptr;
+  started_ = xTaskCreatePinnedToCore(&NetTask::entry, "net", 20480, this, 1, &h, 0) == pdPASS;
+  handle_ = h;
   Serial.printf("APP: net_task started=%d\n", started_ ? 1 : 0);
+}
+
+uint32_t NetTask::stackFreeBytes() const {
+  return handle_ ? (uint32_t)uxTaskGetStackHighWaterMark((TaskHandle_t)handle_) * sizeof(StackType_t) : 0;
 }
 
 void NetTask::entry(void *self) { static_cast<NetTask *>(self)->loop(); }

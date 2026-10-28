@@ -50,6 +50,8 @@ static std::unique_ptr<session_glue::ArduinoWifi> g_wifi;
 static std::unique_ptr<app_logic::SessionDriver> g_drv;
 static bool g_sessionOver = false;  // the machine asked to sleep; any input starts a new session
 static bool g_settingsRefreshing = false;
+static uint32_t g_refreshSeq = 0;  // fetchSeq() when the Settings refresh was issued
+static bool g_stackLogged = false;
 static bool g_firstSession = true;
 
 // Time zone: POSIX TZ string (config `timezone:`, default CET/CEST). The UTC offset is always
@@ -169,6 +171,7 @@ static void showFrame(uint32_t now) {
 
 static void startSession(uint32_t now) {
   g_net.reset();
+  session_glue::ntpSessionStart();
   g_drv.reset();  // before the Wi-Fi adapter it points to
   g_wifi.reset(new session_glue::ArduinoWifi(g_cfg.cfg.connection.wifi));
   g_drv.reset(new app_logic::SessionDriver(g_cfg.cfg.entityIds, g_app.store(), *g_wifi, g_net,
@@ -248,8 +251,13 @@ static void openSettings(bool ring, uint32_t now) {
 static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
   if (r.refresh) {
     if (g_real && g_drv && !g_sessionOver) {
-      g_settingsRefreshing = true;
-      g_drv->refresh(now);
+      g_refreshSeq = g_drv->fetchSeq();
+      if (g_drv->refresh(now)) {
+        g_settingsRefreshing = true;
+      } else {  // the machine ignored it: report failure, never the previous result
+        handleSettingsResult(settings_flow::refreshDone(false), now);
+        return;
+      }
     } else {
       handleSettingsResult(settings_flow::refreshDone(true), now);
       return;
@@ -415,7 +423,11 @@ void loop() {
     session_glue::ntpPoll(g_drv->wifiUp());
     if (g_drv->takeRender()) changed = true;
     changed |= syncMarks();
-    if (g_settingsRefreshing && !g_drv->fetching() && g_drv->status() != session::Status::Connecting) {
+    if (!g_stackLogged && g_drv->sessionDone()) {
+      g_stackLogged = true;
+      Serial.printf("APP: net_stack_free=%u\n", (unsigned)g_net.stackFreeBytes());
+    }
+    if (g_settingsRefreshing && g_drv->fetchSeq() != g_refreshSeq) {
       g_settingsRefreshing = false;
       const bool ok = !g_drv->lastFetchFailed();
       if (ok) snapshotInfo();

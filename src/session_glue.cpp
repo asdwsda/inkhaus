@@ -1,6 +1,7 @@
 #include "session_glue.h"
 
 #include <M5Unified.h>
+#include <esp_sntp.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -38,31 +39,57 @@ int64_t wallClock() {
   return app_logic::plausibleEpoch(t) ? t : 0;
 }
 
+namespace {
+enum class NtpState { Idle, Waiting, Synced, TimedOut };
+NtpState g_ntp = NtpState::Idle;
+uint32_t g_ntpT0 = 0;
+int64_t g_ntpClock0 = 0;   // system clock when SNTP started (0 = unset)
+int g_ntpRetries = 1;      // retries left in this session
+bool g_ntpPrevWifi = false;
+}  // namespace
+
+void ntpSessionStart() {
+  g_ntpRetries = 1;
+  g_ntpPrevWifi = false;
+}
+
 void ntpPoll(bool wifiUp) {
-  static enum { Idle, Waiting, Done } st = Idle;
-  static uint32_t t0 = 0;
+  const bool wifiEdge = wifiUp && !g_ntpPrevWifi;
+  g_ntpPrevWifi = wifiUp;
   if (!wifiUp) {
-    if (st == Waiting) st = Idle;  // link lost: try again next session
+    if (g_ntp == NtpState::Waiting) g_ntp = NtpState::Idle;  // link lost: try again on reconnect
     return;
   }
-  if (st == Idle) {
+  if (g_ntp == NtpState::TimedOut && wifiEdge && g_ntpRetries > 0) {
+    --g_ntpRetries;
+    g_ntp = NtpState::Idle;
+  }
+  if (g_ntp == NtpState::Idle) {
+    sntp_set_sync_status(SNTP_SYNC_STATUS_RESET);
+    g_ntpClock0 = wallClock();
     configTime(0, 0, "pool.ntp.org", "time.google.com");
-    t0 = millis();
-    st = Waiting;
+    g_ntpT0 = millis();
+    g_ntp = NtpState::Waiting;
     Serial.println("APP: ntp started");
-  } else if (st == Waiting) {
-    const int64_t t = (int64_t)time(nullptr);
-    if (app_logic::plausibleEpoch(t)) {
+  } else if (g_ntp == NtpState::Waiting) {
+    // The RTC-restored clock is plausible too: only a completed SNTP exchange counts.
+    if (sntp_get_sync_status() == SNTP_SYNC_STATUS_COMPLETED) {
+      const uint32_t ms = millis() - g_ntpT0;
+      const int64_t t = (int64_t)time(nullptr);
       const app_logic::Civil c = app_logic::epochToCivil(t, 0);
       m5::rtc_datetime_t dt;
       dt.date.year = c.year; dt.date.month = c.month; dt.date.date = c.day;
       dt.time.hours = c.hour; dt.time.minutes = c.minute; dt.time.seconds = c.second;
       M5.Rtc.setDateTime(dt);
-      Serial.printf("APP: ntp synced ms=%u\n", (unsigned)(millis() - t0));
-      st = Done;
-    } else if (millis() - t0 > 15000) {
+      if (g_ntpClock0 > 0)
+        Serial.printf("APP: ntp synced ms=%u correction_s=%ld\n", (unsigned)ms,
+                      (long)(t - (g_ntpClock0 + (int64_t)(ms / 1000))));
+      else
+        Serial.printf("APP: ntp synced ms=%u correction_s=unset\n", (unsigned)ms);
+      g_ntp = NtpState::Synced;
+    } else if (millis() - g_ntpT0 > 15000) {
       Serial.println("APP: ntp timeout");
-      st = Done;
+      g_ntp = NtpState::TimedOut;
     }
   }
 }

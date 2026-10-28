@@ -147,8 +147,7 @@ class Validator {
     char *end = nullptr;
     long n = std::strtol(v.c_str(), &end, 10);
     if (*end != '\0' || n != kSchemaVersion) {
-      err("version", "unsupported version '" + v + "', expected " +
-                         std::to_string(kSchemaVersion));
+      err("version", "unsupported version, expected " + std::to_string(kSchemaVersion));
       return;
     }
     r_.config.version = static_cast<int>(n);
@@ -354,7 +353,7 @@ class Validator {
       if (parseSize(sizeText, sz))
         w.size = sz;
       else
-        err(path + ".size", "invalid size '" + sizeText + "', expected WxH with W and H in 1.." +
+        err(path + ".size", "invalid size, expected WxH with W and H in 1.." +
                                 std::to_string(kMaxWidgetSize));
     }
 
@@ -362,7 +361,7 @@ class Validator {
     bool hasType = str(o, "type", path, false, typeName);
     WidgetType override = WidgetType::Sensor;
     if (hasType && !widgetTypeFromName(typeName, override)) {
-      err(path + ".type", "unsupported type '" + typeName + "'");
+      err(path + ".type", "unsupported type");
       hasType = false;
     }
 
@@ -379,7 +378,7 @@ class Validator {
       if (!str(o, "group", path, true, w.group)) return;
       const Group *g = findGroup(w.group);
       if (!g) {
-        err(path + ".group", "unknown group '" + w.group + "'");
+        err(path + ".group", "unknown group");
         return;
       }
       if (w.name.empty()) {
@@ -395,7 +394,7 @@ class Validator {
       w.type = override;
     } else if (!widgetTypeFromName(domain, w.type)) {
       err(path + (hasEntity ? ".entity" : ".group"),
-          "unsupported domain '" + domain + "', set 'type' explicitly");
+          "unsupported entity domain, set 'type' explicitly");
       return;
     }
     for (const auto &e : w.entities) addEntity(e);
