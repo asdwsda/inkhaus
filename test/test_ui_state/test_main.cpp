@@ -7,6 +7,7 @@
 #include "config_model.h"
 #include "demo_states.h"
 #include "fake_actions.h"
+#include "ui_layout.h"
 #include "widget_view.h"
 
 using namespace uistate;
@@ -294,6 +295,55 @@ void test_demo_unavailable_suffix() {
   TEST_ASSERT_FALSE(st[0].available);
   TEST_ASSERT_TRUE(st[1].available);
   TEST_ASSERT_EQUAL_STRING("Ok", prettyName("light.ok").c_str());
+}
+
+static config::Config demoConfig() {
+  std::ifstream f("demo.yaml");
+  std::stringstream ss;
+  ss << f.rdbuf();
+  auto r = config::parseConfig(ss.str());
+  TEST_ASSERT_TRUE(r.errors.empty());
+  TEST_ASSERT_FALSE(r.config.hasConnection);
+  return r.config;
+}
+
+void test_demo_yaml_showcase() {
+  config::Config cfg = demoConfig();
+  TEST_ASSERT_TRUE(cfg.tabs.size() > 5);  // tab overflow
+  auto st = demoStates(cfg);
+  TEST_ASSERT_EQUAL(cfg.entityIds.size(), st.size());
+  int unavailable = 0;
+  for (const auto &s : st) {
+    if (!s.available) { ++unavailable; continue; }
+    TEST_ASSERT_TRUE(s.state != "home" || s.id == "person.alice");  // no generic fallback state
+  }
+  TEST_ASSERT_EQUAL_INT(1, unavailable);
+  for (auto o : {settings::Orientation::Portrait, settings::Orientation::Landscape}) {
+    bool pager = false;
+    for (size_t t = 0; t < cfg.tabs.size(); ++t) {
+      ui::Flow f = ui::computeFlow(o, cfg.tabs[t].widgets);
+      TEST_ASSERT_EQUAL_INT(0, (int)f.clampReports.size());
+      pager |= f.pagerVisible;
+    }
+    TEST_ASSERT_TRUE(pager);
+  }
+}
+
+void test_demo_fails_entity_ends_failed() {
+  config::Config cfg = demoConfig();
+  AppState a;
+  a.init(cfg, settings::Orientation::Portrait, true);
+  int idx = -1;
+  for (size_t i = 0; i < cfg.tabs[0].widgets.size(); ++i)
+    if (cfg.tabs[0].widgets[i].entity == "switch.coffee_machine_fails") idx = int(i);
+  TEST_ASSERT_TRUE(idx >= 0);
+  ui::Rect r;
+  for (auto &pl : a.layout().widgets) if (pl.index == idx) r = pl.rect;
+  TEST_ASSERT_TRUE(a.touch({r.x + r.w / 2, r.y + r.h / 2}, 0));
+  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.tick(kPendingMs * 10));
+  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.widgetData(idx).failed);
 }
 
 // ---- app state ----
@@ -918,5 +968,7 @@ int main() {
   RUN_TEST(test_sensor_attribute_main_value);
   RUN_TEST(test_sensor_state_with_decimals_and_unit_override);
   RUN_TEST(test_sensor_details);
+  RUN_TEST(test_demo_yaml_showcase);
+  RUN_TEST(test_demo_fails_entity_ends_failed);
   return UNITY_END();
 }

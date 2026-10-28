@@ -33,4 +33,4 @@
 | 029 | [Wake log on the SD card](029-wake-log-sd.md) | in-progress | 024 |
 | 030 | [Configurable sensor attributes (config + data)](030-sensor-attributes.md) | done | 003, 004, 017 |
 | 032 | [Separate secrets.yaml from config.yaml](032-separate-secrets.md) | done | 003, 020, 025 |
-| 033 | [Built-in demo showcase](033-demo-showcase.md) | in-progress | 017, 028, 030 |
+| 033 | [Built-in demo showcase](033-demo-showcase.md) | done | 017, 028, 030 |

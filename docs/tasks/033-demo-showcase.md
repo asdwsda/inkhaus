@@ -1,6 +1,6 @@
 # 033: Built-in demo showcase (demo.yaml)
 
-Status: in-progress
+Status: done
 Depends on: 017, 028, 030
 UI spec: docs/ui/widgets.md (incl. §11 wording, §12 details), STYLE.md, layout.md
 Needs device: yes for screenshots (later)

@@ -20,6 +20,91 @@ EntityState make(const std::string &id, const char *state, const char *name = nu
   return e;
 }
 
+const char kDeg[] = "\xC2\xB0";
+
+void attr(EntityState &e, const char *k, const char *v) { e.attrs.emplace_back(k, v); }
+
+EntityState binary(const std::string &id, const char *cls, const char *state, const char *name = nullptr) {
+  EntityState e = make(id, state, name);
+  e.device_class = cls;
+  return e;
+}
+
+EntityState cover(const std::string &id, const char *state, int pos) {
+  EntityState e = make(id, state);
+  e.current_position = pos;
+  return e;
+}
+
+EntityState vacuum(const std::string &id, const char *state, int battery, const char *status = nullptr) {
+  EntityState e = make(id, state);
+  e.battery_level = battery;
+  if (status) e.status = status;
+  return e;
+}
+
+// Showcase states for the ids of demo.yaml; false for any other id.
+bool showcase(const std::string &id, EntityState &out) {
+  if (id == "sensor.living_room_climate") {
+    out = make(id, "21.5");
+    attr(out, "temperature", "21.54");
+    attr(out, "temperature_unit", (std::string(kDeg) + "C").c_str());
+    attr(out, "humidity", "45");
+    attr(out, "humidity_unit", "%");
+    attr(out, "dew_point", "9.3");
+    attr(out, "dew_point_unit", (std::string(kDeg) + "C").c_str());
+  } else if (id == "sensor.attic_climate") {
+    out = make(id, "28.1");
+    attr(out, "temperature", "28.1");
+    attr(out, "temperature_unit", (std::string(kDeg) + "C").c_str());
+    attr(out, "humidity", "31");
+    attr(out, "humidity_unit", "%");
+  } else if (id == "sensor.power_meter") {
+    out = make(id, "1240");
+    out.unit_of_measurement = "W";
+    out.device_class = "power";
+    attr(out, "today", "7.4");
+    attr(out, "today_unit", "kWh");
+  } else if (id == "sensor.pressure") {
+    out = make(id, "1013");
+    out.unit_of_measurement = "hPa";
+    attr(out, "trend", "rising");
+  } else if (id == "weather.garden") {
+    out = make(id, "partlycloudy", "Garden");
+    out.temperature = 17;
+    out.humidity = 58;
+    out.temperature_unit = std::string(kDeg) + "C";
+  } else if (id == "binary_sensor.front_door") out = binary(id, "door", "on");
+  else if (id == "binary_sensor.garage_door") out = binary(id, "garage_door", "off");
+  else if (id == "binary_sensor.terrace_opening") out = binary(id, "opening", "on");
+  else if (id == "binary_sensor.hall_motion") out = binary(id, "motion", "on");
+  else if (id == "binary_sensor.office_occupancy") out = binary(id, "occupancy", "off");
+  else if (id == "binary_sensor.phone_presence") out = binary(id, "presence", "on");
+  else if (id == "binary_sensor.basement_moisture") out = binary(id, "moisture", "off");
+  else if (id == "binary_sensor.kitchen_smoke") out = binary(id, "smoke", "off");
+  else if (id == "binary_sensor.boiler_gas") out = binary(id, "gas", "on");
+  else if (id == "binary_sensor.server_problem") out = binary(id, "problem", "on");
+  else if (id == "binary_sensor.remote_battery") out = binary(id, "battery", "on");
+  else if (id == "binary_sensor.router_connectivity") out = binary(id, "connectivity", "on");
+  else if (id == "binary_sensor.front_lock") out = binary(id, "lock", "off");
+  else if (id == "binary_sensor.charger_plug") out = binary(id, "plug", "on");
+  else if (id == "binary_sensor.mains_power") out = binary(id, "power", "off");
+  else if (id == "binary_sensor.plain_contact") out = make(id, "on");
+  else if (id == "cover.terrace_shutter") out = cover(id, "open", 100);
+  else if (id == "cover.hall_shutter") out = cover(id, "closing", 70);
+  else if (id == "cover.bedroom_shutter") out = cover(id, "open", 25);
+  else if (id == "cover.kitchen_shutter") out = cover(id, "closed", 0);
+  else if (id == "vacuum.upstairs") out = vacuum(id, "cleaning", 64);
+  else if (id == "vacuum.basement") out = vacuum(id, "returning", 15);
+  else if (id == "vacuum.attic") out = vacuum(id, "error", 40, "Brush stuck");
+  else if (id == "light.kitchen_ceiling" || id == "light.hall" || id == "light.office_desk") {
+    out = make(id, "on");
+    out.brightness = 128;
+  } else if (id == "switch.dryer" || id == "switch.tv" || id == "switch.garden_pump") out = make(id, "on");
+  else return false;
+  return true;
+}
+
 EntityState demoForBase(const std::string &id) {
   const std::string domain = id.substr(0, id.find('.'));
   if (domain == "cover") {
@@ -88,7 +173,8 @@ EntityState demoForBase(const std::string &id) {
 
 // Ids ending in "_unavailable" exist to show the unavailable look (test configs).
 EntityState demoFor(const std::string &id) {
-  EntityState e = demoForBase(id);
+  EntityState e;
+  if (!showcase(id, e)) e = demoForBase(id);
   const std::string suffix = "_unavailable";
   if (id.size() > suffix.size() && id.compare(id.size() - suffix.size(), suffix.size(), suffix) == 0) {
     e.state = "unavailable";

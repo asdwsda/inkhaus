@@ -8,8 +8,8 @@
 #include "boot.h"
 #include "config_sd.h"
 
-extern const char kDemoYamlStart[] asm("_binary_config_example_yaml_start");
-extern const char kDemoYamlEnd[] asm("_binary_config_example_yaml_end");
+extern const char kDemoYamlStart[] asm("_binary_demo_yaml_start");
+extern const char kDemoYamlEnd[] asm("_binary_demo_yaml_end");
 
 namespace app_config {
 
@@ -205,7 +205,7 @@ Loaded load() {
       return fromParse(std::move(r.parse), false, "sd");
     case config_sd::Status::NoCard:
     case config_sd::Status::NoFile: {
-      // No config on the card: the demo from config.example.yaml (fake values only).
+      // No config on the card: the demo from demo.yaml (fake values only).
       size_t n = size_t(kDemoYamlEnd - kDemoYamlStart);
       while (n > 0 && kDemoYamlStart[n - 1] == '\0') --n;  // embed_txtfiles appends a NUL
       Serial.printf("CONFIG: source=demo ms=%lu\n", (unsigned long)(millis() - t0));

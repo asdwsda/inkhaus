@@ -87,6 +87,11 @@ std::string AppState::widgetTitle(int idx) const {
   return widgetName(*w, first);
 }
 
+static bool endsWithFails(const std::string &id) {
+  static const std::string kSuffix = "_fails";
+  return id.size() > kSuffix.size() && id.compare(id.size() - kSuffix.size(), kSuffix.size(), kSuffix) == 0;
+}
+
 WidgetData AppState::widgetData(int idx) const {
   WidgetData d;
   const config::Widget *w = widgetAt(shownTab_, idx);
@@ -154,6 +159,9 @@ bool AppState::runAction(int idx, int sub, uint32_t now) {
   }
   ActionResult r = fakeAction(w->type, sub, base);
   if (!r.changed) return false;
+  if (!marksDriven_)
+    for (const std::string &id : w->entities)
+      if (endsWithFails(id)) marks_.erase(id);  // a new tap clears the demo Failed badge
   if (existing) {
     existing->sub = sub;
     existing->commitAt = now + pendingMs_;
@@ -207,7 +215,13 @@ bool AppState::tick(uint32_t now) {
   if (switchDue_ && int32_t(now - switchAt_) >= 0) changed |= applyTabSwitch();
   for (size_t i = 0; i < pending_.size();) {
     if (int32_t(now - pending_[i].commitAt) >= 0) {
-      if (!marksDriven_) store_.update(pending_[i].states);
+      if (!marksDriven_) {
+        // Demo: an entity id ending in "_fails" ends its action in the Failed state.
+        bool fails = false;
+        for (const EntityState &st : pending_[i].states)
+          if (endsWithFails(st.id)) { marks_[st.id] = Mark::Failed; fails = true; }
+        if (!fails) store_.update(pending_[i].states);
+      }
       pending_.erase(pending_.begin() + long(i));
       changed = true;
     } else {
