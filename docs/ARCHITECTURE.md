@@ -186,6 +186,20 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
   anything relies on it.
 - SD: the 32 GB card mounts fine over the shared SPI bus, and the display keeps working after.
 
+## Future ideas (not planned yet)
+- **BLE instead of Wi-Fi for talking to HA** (user idea, 2026-10-28; the home has many Bluetooth-capable
+  Shelly devices, which HA can use as Bluetooth proxies). First assessment, to revisit after a working
+  Wi-Fi version:
+  - Commands: the M5Paper could broadcast short BLE advertisements (e.g. the BTHome format, which HA
+    decodes natively) that the Shelly proxies forward to HA; HA automations turn them into actions.
+    An advertisement burst takes tens of ms versus ~1–3 s of Wi-Fi + TLS per session, so the battery
+    gain for taps could be large.
+  - States back to the device are the hard part: Shelly proxies are passive receivers, so HA can't
+    easily push states to the M5Paper over BLE. A likely shape is hybrid: BLE for actions, Wi-Fi for
+    the less frequent state refreshes.
+  - Costs: the BLE stack (~100–200 KB flash, tens of KB RAM), one HA automation per action (or a
+    blueprint), no delivery confirmation for broadcast commands.
+
 ## Decisions log
 - 2026-10-27: Target original M5Paper (ESP32), not M5Paper S3. Reason: the user's hardware.
 - 2026-10-27: Arduino + M5Unified/M5GFX on PlatformIO. Reason: maintained M5Paper support with fast partial EPD modes; mature ecosystem.
