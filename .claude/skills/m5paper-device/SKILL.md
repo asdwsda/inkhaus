@@ -27,6 +27,10 @@ the architect.
 - **Every flash and every `--reset` is a hardware reset**: it re-runs `setup()` and power-cycles
   the e-ink controller (see below). The user may be watching; keep them to what you need,
   and batch experiments into one build.
+- **Opening `/dev/ttyUSB0` can reset the board** (the CP210x driver toggles DTR/RTS on open,
+  whatever pyserial asks for). Commands sent while it boots are lost: keep one session open,
+  wait for the boot to finish (`settle_bst_end`), then send. To send several commands, use
+  one session, not one process per command.
 - Separate diagnostic firmwares exist as their own envs, so the app stays untouched:
   `probe` (board facts, rocker, touch, EPD timings, SD) and `epdtest` (persistence and refresh
   modes). Flash the app back afterwards: `pio run -e m5paper -t upload ...`.
@@ -76,6 +80,13 @@ the architect.
   push wakes) after 4. Feed it during long work in setup; `boot::setupDone()` ends watchdog
   coverage.
 
+## Colours
+
+- **Pass 24-bit colours to `pushGrayscaleImage` and friends (`0xFFFFFFu`, `0x000000u`).**
+  `TFT_WHITE` is an RGB565 int (0xFFFF); cast to `uint32_t` it's read as RGB888 cyan, which
+  the IT8951 fast mode dithers into 25 % black dots. That one constant caused "old text on top
+  of new" and the grey fastest backgrounds for days.
+
 ## Refresh modes (measured)
 
 | Mode | Small box | Result |
@@ -85,11 +96,14 @@ the architect.
 | `epd_text` | ~910 ms | heavy ghosting |
 | `epd_quality` (GC16) | ~450 ms box, ~900 ms larger | clean |
 
-- **Feedback:** draw with `epd_fastest` and black/white (thresholded) text; track the box in
-  `DirtyTracker`.
-- **Clean-up** (before sleep, on page changes): for each tracked box, a white fill refreshed with
-  `epd_quality`, then the content with `epd_fastest`. That is the only combination the user
-  judged clean.
+- **Feedback:** `epd_fastest` with black/white (thresholded) content, but only where the rect's
+  current content is pure black/white. Fastest can't drive GC16 greys to white (old text stays
+  visible for 1–2 updates), so a rect that currently holds greys gets one `epd_quality` refresh.
+- Dynamic text (states, values) is pure black, so almost every update stays on the fast path.
+- No per-tap clean-up pass (user-judged unnecessary once the colour bug was fixed); a GC16 full
+  refresh on tab/page changes and when ghost debt passes its threshold (at the latest before sleep).
+- (Task 015's "white fill with quality, then fastest" recipe was measured before the colour
+  bug was found; treat its grey-background results as suspect.)
 - **Full redraw over an unknown screen:** a GC16 white fill, then the content in GC16. It removes
   the residue of earlier screens.
 - Never refresh when nothing changed. Batch drawing before one `display()`.
