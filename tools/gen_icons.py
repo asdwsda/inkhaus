@@ -66,6 +66,55 @@ EXTRA = {
                  '<circle cx="12" cy="17.4" r="1.3" fill="currentColor"/>',
 }
 
+# Binary sensor icon pairs (widgets.md 11.1): <name>_on solid / filled parts, <name>_off outline.
+_S = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'
+_F = 'fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"'
+_BANG_INK = ('<path d="M12 9.5 V14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+             '<circle cx="12" cy="17" r="1.2" fill="currentColor"/>')
+_BANG_PAPER = ('<path d="M12 9.5 V14" stroke="#fff" stroke-width="2" stroke-linecap="round"/>'
+               '<circle cx="12" cy="17" r="1.2" fill="#fff"/>')
+_FIG = "M13 8 L11 14 L14 17 L13 22 M11 14 L8 21 M13 8 L17 11 M13 8 L9 10"
+_CLOUD = "M7 13 A3.5 3.5 0 0 1 7.5 6.1 A5 5 0 0 1 17 7 A3.2 3.2 0 0 1 17 13 Z"
+_BOLT = "M13 2 L5 13.5 H11 L10 22 L19 10 H13 Z"
+EXTRA.update({
+    "i-door-on": f'<path d="M4 3 H20 V21 H4 Z" {_S}/><path d="M4 3 L12 5.5 V21 H4 Z" fill="currentColor"/>',
+    "i-door-off": f'<path d="M4 3 H20 V21 H4 Z" {_S}/><path d="M8 6.5 H16 V21 H8 Z" {_S}/>'
+                  '<circle cx="14" cy="14" r="1.1" fill="currentColor"/>',
+    "i-garage-on": f'<path d="M2 10 L12 3 L22 10 V21 H2 Z" {_S}/><rect x="6" y="13" width="12" height="8" fill="currentColor"/>',
+    "i-garage-off": f'<path d="M2 10 L12 3 L22 10 V21 H2 Z" {_S}/><path d="M6 12 H18 V21 H6 Z M6 15 H18 M6 18 H18" '
+                    'fill="none" stroke="currentColor" stroke-width="1.6"/>',
+    "i-motion-on": f'<circle cx="14" cy="4.5" r="2.4" fill="currentColor"/><path d="{_FIG}" {_S}/>'
+                   '<path d="M6 8 Q4 12 6 16 M3 6 Q0.8 12 3 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    "i-motion-off": f'<circle cx="14" cy="4.5" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="{_FIG}" {_S}/>',
+    "i-person-on": '<circle cx="12" cy="7" r="4" fill="currentColor"/><path d="M4 21 A8 7 0 0 1 20 21 Z" fill="currentColor"/>',
+    "i-person-off": f'<circle cx="12" cy="7" r="3.6" {_S}/><path d="M4.5 21 A7.5 6.5 0 0 1 19.5 21 Z" {_S}/>',
+    "i-puddle-on": f'<path d="M12 2 C12 2 6.5 8 6.5 12 a5.5 5.5 0 0 0 11 0 C17.5 8 12 2 12 2z" {_F}/>'
+                   f'<path d="M2 21 q2.5 -2.5 5 0 t5 0 t5 0 t5 0" {_S}/>',
+    "i-puddle-off": f'<path d="M12 2 C12 2 6.5 8 6.5 12 a5.5 5.5 0 0 0 11 0 C17.5 8 12 2 12 2z" {_S}/>'
+                    f'<path d="M2 21 q2.5 -2.5 5 0 t5 0 t5 0 t5 0" {_S}/>',
+    "i-smoke-on": f'<path d="{_CLOUD}" {_F}/><path d="M8 16 q-1.5 2 0 4 M12 16 q-1.5 2 0 4 M16 16 q-1.5 2 0 4" {_S}/>',
+    "i-smoke-off": f'<path d="{_CLOUD}" {_S}/><path d="M8 16 q-1.5 2 0 4 M12 16 q-1.5 2 0 4 M16 16 q-1.5 2 0 4" {_S}/>',
+    "i-gas-on": f'<rect x="5" y="9" width="9" height="13" rx="3" fill="currentColor"/><path d="M9.5 9 V4.5 M7.5 4.5 H11.5" {_S}/>'
+                '<circle cx="17.5" cy="8" r="2.2" fill="currentColor"/><circle cx="20" cy="12" r="1.6" fill="currentColor"/>',
+    "i-gas-off": f'<rect x="5" y="9" width="9" height="13" rx="3" {_S}/><path d="M9.5 9 V4.5 M7.5 4.5 H11.5" {_S}/>'
+                 '<circle cx="17.5" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/>'
+                 '<circle cx="20" cy="12.5" r="1.4" fill="none" stroke="currentColor" stroke-width="1.4"/>',
+    "i-problem-on": f'<path d="M12 3 L22 20 H2 Z" {_F}/>{_BANG_PAPER}',
+    "i-problem-off": f'<path d="M12 3 L22 20 H2 Z" {_S}/>{_BANG_INK}',
+    "i-battery-low": '<rect x="1" y="6" width="19" height="12" fill="none" stroke="currentColor" stroke-width="2"/>'
+                     '<rect x="21" y="9.5" width="2" height="5" fill="currentColor"/>'
+                     '<path d="M10.5 8.8 V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+                     '<circle cx="10.5" cy="15.4" r="1" fill="currentColor"/>',
+    "i-lock-open": f'<rect x="5" y="11" width="14" height="10" rx="1.5" {_S}/><path d="M8 11 V7 A4 4 0 0 1 16 7" {_S}/>',
+    "i-lock-closed": f'<rect x="5" y="11" width="14" height="10" rx="1.5" fill="currentColor"/>'
+                     f'<path d="M8 11 V7 A4 4 0 0 1 16 7 V11" {_S}/>',
+    "i-plug-off": '<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">'
+                  '<rect x="8" y="2" width="2.5" height="6"/><rect x="13.5" y="2" width="2.5" height="6"/>'
+                  '<path d="M6 8 H18 V12 A6 6 0 0 1 6 12 Z"/><rect x="10.75" y="17.5" width="2.5" height="4.5"/></g>',
+    "i-bolt": f'<path d="{_BOLT}" {_F}/>',
+    "i-bolt-off": f'<path d="{_BOLT}" {_S}/>',
+})
+
 
 def collect_symbols():
     syms = {}

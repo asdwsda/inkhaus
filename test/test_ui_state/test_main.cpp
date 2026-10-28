@@ -1,3 +1,4 @@
+#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <unity.h>
@@ -163,7 +164,10 @@ void test_fake_climate_step_zero_or_negative() {
 void test_humanise_and_text_state() {
   TEST_ASSERT_EQUAL_STRING("Above horizon", humanise("above_horizon").c_str());
   TEST_ASSERT_EQUAL_STRING("21.5", humanise("21.5").c_str());
-  TEST_ASSERT_EQUAL_STRING("", humanise("").c_str());
+  TEST_ASSERT_EQUAL_STRING("-", humanise("").c_str());
+  TEST_ASSERT_EQUAL_STRING("Heat cool", humanise("HEAT_COOL").c_str());
+  TEST_ASSERT_EQUAL_STRING("n/a", humanise("Unknown").c_str());
+  TEST_ASSERT_EQUAL_STRING("n/a", humanise("UNAVAILABLE").c_str());
   EntityState s = E("sun.sun", "above_horizon");
   SensorView sv = sensorView(&s);
   TEST_ASSERT_TRUE(sv.textState);
@@ -517,6 +521,134 @@ void test_t_window_sensor_texts() {
   TEST_ASSERT_EQUAL_STRING("Off", toggleView(WidgetType::BinarySensor, &w, false).state.c_str());
 }
 
+// ---- task 028: state wording (widgets.md section 11) ----
+
+static void test_binary_sensor_table() {
+  struct Row { const char *dc, *onT, *offT; StateIcon on, off; };
+  using I = StateIcon;
+  const Row rows[] = {
+      {"door", "Open", "Closed", I::DoorOn, I::DoorOff},
+      {"garage_door", "Open", "Closed", I::GarageOn, I::GarageOff},
+      {"window", "Open", "Closed", I::WindowOn, I::WindowOff},
+      {"opening", "Open", "Closed", I::WindowOn, I::WindowOff},
+      {"motion", "Motion", "Clear", I::MotionOn, I::MotionOff},
+      {"occupancy", "Present", "Empty", I::PersonOn, I::PersonOff},
+      {"presence", "Home", "Away", I::PersonOn, I::PersonOff},
+      {"moisture", "Wet", "Dry", I::PuddleOn, I::PuddleOff},
+      {"smoke", "Smoke", "Clear", I::SmokeOn, I::SmokeOff},
+      {"gas", "Gas", "Clear", I::GasOn, I::GasOff},
+      {"problem", "Problem", "OK", I::ProblemOn, I::ProblemOff},
+      {"battery", "Low", "OK", I::BatteryLow, I::Battery},
+      {"connectivity", "Online", "Offline", I::Wifi, I::WifiOff},
+      {"lock", "Open", "Locked", I::LockOpen, I::LockClosed},
+      {"plug", "Plugged", "Out", I::Plug, I::PlugOff},
+      {"power", "Power", "None", I::Bolt, I::BoltOff},
+      {"", "On", "Off", I::DotOn, I::DotOff},
+      {"vibration", "On", "Off", I::DotOn, I::DotOff},
+  };
+  for (const Row &r : rows) {
+    EntityState e = E("binary_sensor.x", "on");
+    e.device_class = r.dc;
+    ToggleView on = toggleView(WidgetType::BinarySensor, &e, false);
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(r.onT, on.state.c_str(), r.dc);
+    TEST_ASSERT_TRUE_MESSAGE(on.icon == r.on, r.dc);
+    TEST_ASSERT_TRUE(on.on);
+    e.state = "off";
+    ToggleView off = toggleView(WidgetType::BinarySensor, &e, false);
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(r.offT, off.state.c_str(), r.dc);
+    TEST_ASSERT_TRUE_MESSAGE(off.icon == r.off, r.dc);
+    TEST_ASSERT_TRUE(off.look == Look::Normal);
+    TEST_ASSERT_TRUE(strlen(r.onT) <= 7 && strlen(r.offT) <= 7);
+  }
+  EntityState u = E("binary_sensor.x", "unavailable", false);
+  u.device_class = "door";
+  ToggleView uv = toggleView(WidgetType::BinarySensor, &u, false);
+  TEST_ASSERT_EQUAL_STRING("n/a", uv.state.c_str());
+  TEST_ASSERT_TRUE(uv.look == Look::Unavailable);
+  EntityState k = E("binary_sensor.x", "unknown");
+  uv = toggleView(WidgetType::BinarySensor, &k, false);
+  TEST_ASSERT_EQUAL_STRING("n/a", uv.state.c_str());
+  TEST_ASSERT_TRUE(uv.look == Look::Unavailable);
+}
+
+static void test_vacuum_wording() {
+  struct Row { const char *st, *text; bool start, pause, dock; };
+  const Row rows[] = {{"cleaning", "Cleaning", true, false, false}, {"docked", "Docked", false, false, true},
+                      {"returning", "Returning", false, false, true}, {"paused", "Paused", false, true, false},
+                      {"idle", "Idle", false, false, false}};
+  for (const Row &r : rows) {
+    EntityState e = E("vacuum.r", r.st);
+    e.battery_level = 80;
+    VacuumView v = vacuumView(&e);
+    TEST_ASSERT_EQUAL_STRING(r.text, v.status.c_str());
+    TEST_ASSERT_EQUAL(r.start, v.startFilled);
+    TEST_ASSERT_EQUAL(r.pause, v.pauseFilled);
+    TEST_ASSERT_EQUAL(r.dock, v.dockFilled);
+    TEST_ASSERT_TRUE(v.showBattery);
+    TEST_ASSERT_FALSE(v.lowBattery);
+  }
+  EntityState e = E("vacuum.r", "error");
+  VacuumView v = vacuumView(&e);
+  TEST_ASSERT_EQUAL_STRING("Error", v.status.c_str());
+  TEST_ASSERT_TRUE(v.error);
+  TEST_ASSERT_FALSE(v.showBattery);
+  e.status = "Brush stuck";
+  TEST_ASSERT_EQUAL_STRING("Brush stuck", vacuumView(&e).status.c_str());
+  EntityState u = E("vacuum.r", "unavailable", false);
+  TEST_ASSERT_EQUAL_STRING("n/a", vacuumView(&u).status.c_str());
+  EntityState k = E("vacuum.r", "unknown");
+  TEST_ASSERT_EQUAL_STRING("n/a", vacuumView(&k).status.c_str());
+  TEST_ASSERT_TRUE(vacuumView(&k).look == Look::Unavailable);
+  EntityState o = E("vacuum.r", "spot_cleaning");
+  TEST_ASSERT_EQUAL_STRING("Spot cleaning", vacuumView(&o).status.c_str());
+  // Low battery: <= 20 % and not docked; the percent stays.
+  EntityState l = E("vacuum.r", "cleaning");
+  l.battery_level = 20;
+  TEST_ASSERT_TRUE(vacuumView(&l).lowBattery);
+  l.battery_level = 21;
+  TEST_ASSERT_FALSE(vacuumView(&l).lowBattery);
+  l.battery_level = 20;
+  l.state = "docked";
+  TEST_ASSERT_FALSE(vacuumView(&l).lowBattery);
+  l.state = "returning";
+  TEST_ASSERT_TRUE(vacuumView(&l).lowBattery);
+  l.battery_level.reset();
+  TEST_ASSERT_FALSE(vacuumView(&l).showBattery);
+}
+
+static void test_cover_wording() {
+  struct Row { const char *st; std::optional<int> pos; const char *text; };
+  const Row rows[] = {
+      {"closed", std::nullopt, "Closed"}, {"closed", 0, "Closed"}, {"closed", 30, "Closed"},
+      {"open", std::nullopt, "Open"}, {"open", 100, "Open"}, {"open", 40, "Open 40%"},
+      {"opening", std::nullopt, "Opening"}, {"opening", 55, "Opening 55%"},
+      {"closing", std::nullopt, "Closing"}, {"closing", 100, "Closing 100%"},
+      {"unavailable", std::nullopt, "n/a"}, {"unknown", std::nullopt, "n/a"},
+      {"weird_state", std::nullopt, "Weird state"},
+  };
+  for (const Row &r : rows) {
+    EntityState e = E("cover.c", r.st, std::string(r.st) != "unavailable");
+    e.current_position = r.pos;
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(r.text, coverView({&e}, false).state.c_str(), r.st);
+  }
+  EntityState o = E("cover.c", "opening");
+  TEST_ASSERT_TRUE(coverView({&o}, false).upFilled);
+  EntityState c = E("cover.c", "closing");
+  TEST_ASSERT_TRUE(coverView({&c}, false).downFilled);
+  TEST_ASSERT_EQUAL_STRING("-", coverView({nullptr}, false).state.c_str());
+}
+
+static void test_generic_fallback() {
+  EntityState s = E("sensor.x", "partly_cloudy");
+  TEST_ASSERT_EQUAL_STRING("Partly cloudy", sensorView(&s).value.c_str());
+  s.state = "HEAT_COOL";
+  TEST_ASSERT_EQUAL_STRING("Heat cool", sensorView(&s).value.c_str());
+  s.state = "unknown";
+  TEST_ASSERT_EQUAL_STRING("n/a", sensorView(&s).value.c_str());
+  s.state = "";
+  TEST_ASSERT_EQUAL_STRING("-", sensorView(&s).value.c_str());
+}
+
 static void test_mixed_group_aggregate() {
   EntityState on, off, un;
   on.id = "light.a"; on.state = "on"; on.available = true;
@@ -672,6 +804,10 @@ int main() {
   RUN_TEST(test_toggle_text);
   RUN_TEST(test_climate_view);
   RUN_TEST(test_humanise_and_text_state);
+  RUN_TEST(test_binary_sensor_table);
+  RUN_TEST(test_vacuum_wording);
+  RUN_TEST(test_cover_wording);
+  RUN_TEST(test_generic_fallback);
   RUN_TEST(test_sensor_weather_vacuum);
   RUN_TEST(test_fake_toggle_and_group);
   RUN_TEST(test_toggle_intent_from_shown_state);

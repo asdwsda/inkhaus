@@ -53,6 +53,43 @@ Icon actionIcon(uistate::ActionIcon a) {
   }
 }
 
+Icon stateIcon(uistate::StateIcon i) {
+  using S = uistate::StateIcon;
+  switch (i) {
+    case S::WindowOn: return Icon::WindowOn;
+    case S::WindowOff: return Icon::WindowOff;
+    case S::DoorOn: return Icon::DoorOn;
+    case S::DoorOff: return Icon::DoorOff;
+    case S::GarageOn: return Icon::GarageOn;
+    case S::GarageOff: return Icon::GarageOff;
+    case S::MotionOn: return Icon::MotionOn;
+    case S::MotionOff: return Icon::MotionOff;
+    case S::PersonOn: return Icon::PersonOn;
+    case S::PersonOff: return Icon::PersonOff;
+    case S::PuddleOn: return Icon::PuddleOn;
+    case S::PuddleOff: return Icon::PuddleOff;
+    case S::SmokeOn: return Icon::SmokeOn;
+    case S::SmokeOff: return Icon::SmokeOff;
+    case S::GasOn: return Icon::GasOn;
+    case S::GasOff: return Icon::GasOff;
+    case S::ProblemOn: return Icon::ProblemOn;
+    case S::ProblemOff: return Icon::ProblemOff;
+    case S::BatteryLow: return Icon::BatteryLow;
+    case S::Battery: return Icon::Batt;
+    case S::Wifi: return Icon::Wifi;
+    case S::WifiOff: return Icon::WifiOff;
+    case S::LockOpen: return Icon::LockOpen;
+    case S::LockClosed: return Icon::LockClosed;
+    case S::Plug: return Icon::Plug;
+    case S::PlugOff: return Icon::PlugOff;
+    case S::Bolt: return Icon::Bolt;
+    case S::BoltOff: return Icon::BoltOff;
+    case S::DotOn: return Icon::DotOn;
+    case S::DotOff: return Icon::DotOff;
+    default: return Icon::Count;
+  }
+}
+
 Icon weatherIcon(uistate::WeatherIcon w) {
   using W = uistate::WeatherIcon;
   switch (w) {
@@ -149,7 +186,7 @@ void drawToggle(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
     case WidgetType::Light: icon = v.on ? Icon::Bulb : Icon::BulbOff; break;
     case WidgetType::Switch: icon = Icon::Plug; break;
     case WidgetType::Automation: icon = Icon::Auto; break;
-    case WidgetType::BinarySensor: icon = v.on ? Icon::WindowOn : Icon::WindowOff; break;
+    case WidgetType::BinarySensor: icon = stateIcon(v.icon) == Icon::Count ? Icon::DotOff : stateIcon(v.icon); break;
     default: break;
   }
   if (binary && una) drawIcon(x.c, Icon::Warn, 40, x.X(12), x.Y(49), OFFGREY);
@@ -294,7 +331,7 @@ void drawVacuum(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
   drawText(x.c, Font::F24, status, x.X(12), x.Y(77), Align::Left, sc);
   if (v.showBattery) {
     const int ix = 12 + textWidth(x.c, Font::F24, status) + 12;
-    drawIcon(x.c, Icon::Batt, 24, x.X(ix), x.Y(57), INK);
+    drawIcon(x.c, v.lowBattery ? Icon::BatteryLow : Icon::Batt, 24, x.X(ix), x.Y(57), INK);
     drawText(x.c, Font::F18, std::to_string(v.battery) + "%", x.X(ix + 28), x.Y(75), Align::Left, INK);
   }
   if (una) drawBadge(x, W - 264, 57, Icon::Warn, OFFGREY);

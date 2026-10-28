@@ -33,10 +33,17 @@ struct CoverView {
 // members: one entry per entity (nullptr = no cached value). group = aggregation of section 2.
 CoverView coverView(const std::vector<const EntityState *> &members, bool group);
 
+// Icon of a toggle widget's leading glyph (widgets.md 11.1 pairs). The renderer maps it to Icon.
+enum class StateIcon { Default, WindowOn, WindowOff, DoorOn, DoorOff, GarageOn, GarageOff, MotionOn, MotionOff,
+                       PersonOn, PersonOff, PuddleOn, PuddleOff, SmokeOn, SmokeOff, GasOn, GasOff, ProblemOn,
+                       ProblemOff, BatteryLow, Battery, Wifi, WifiOff, LockOpen, LockClosed, Plug, PlugOff, Bolt,
+                       BoltOff, DotOn, DotOff };
+
 struct ToggleView {
   Look look = Look::Loading;
   bool on = false;
   std::string state = "-";
+  StateIcon icon = StateIcon::Default;  // Default: the renderer's per-type icon (light, switch, automation)
 };
 // type: Light, Switch, Automation or BinarySensor. badgeShown: a badge occupies the line end, so
 // the brightness is left out.
@@ -63,7 +70,8 @@ struct SensorView {
   bool numeric = false;
   bool textState = false;  // draw in F24 in every size
 };
-// "above_horizon" -> "Above horizon": underscores to spaces, first letter upper-cased.
+// Generic fallback (widgets.md 11.4): unknown/unavailable (any case) -> "n/a"; empty -> "-"; else
+// underscores to spaces, lower-cased, first letter upper-cased ("HEAT_COOL" -> "Heat cool").
 std::string humanise(const std::string &raw);
 SensorView sensorView(const EntityState *st);
 
@@ -83,7 +91,7 @@ struct VacuumView {
   bool error = false;
   bool showBattery = false;
   int battery = 0;
-  bool lowBattery = false;  // <= 15 %
+  bool lowBattery = false;  // <= 20 % and not docked (widgets.md 11.2): battery icon gets the "!"
   bool startFilled = false, pauseFilled = false, dockFilled = false;
 };
 VacuumView vacuumView(const EntityState *st);

@@ -23,3 +23,6 @@ don't contain them yet), regenerate src/render/icon_data.*, keep existing icons 
 - [ ] On device (later): screenshots of a test config with one widget per class (m5paper-debug).
 
 ## Notes
+- PC part done (2026-10-28): §11 wording tables in `toggleView`/`StateIcon`, humanise per 11.4,
+  vacuum low battery ≤ 20 % when not docked, 22 tool-drawn icons (existing icons byte-identical).
+  Icon designs are unreviewed: check them in the on-device screenshots.

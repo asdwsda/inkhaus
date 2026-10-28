@@ -46,6 +46,38 @@ Look lookOf(const EntityState *st) {
   return st->available ? Look::Normal : Look::Unavailable;
 }
 
+// widgets.md 11.1: texts and icon pair by device_class (on text / off text, icon on / off).
+void binaryTexts(const std::string &dc, ToggleView &v) {
+  struct Row { const char *dc, *onText, *offText; StateIcon on, off; };
+  using I = StateIcon;
+  static const Row rows[] = {
+      {"door", "Open", "Closed", I::DoorOn, I::DoorOff},
+      {"garage_door", "Open", "Closed", I::GarageOn, I::GarageOff},
+      {"window", "Open", "Closed", I::WindowOn, I::WindowOff},
+      {"opening", "Open", "Closed", I::WindowOn, I::WindowOff},
+      {"motion", "Motion", "Clear", I::MotionOn, I::MotionOff},
+      {"occupancy", "Present", "Empty", I::PersonOn, I::PersonOff},
+      {"presence", "Home", "Away", I::PersonOn, I::PersonOff},
+      {"moisture", "Wet", "Dry", I::PuddleOn, I::PuddleOff},
+      {"smoke", "Smoke", "Clear", I::SmokeOn, I::SmokeOff},
+      {"gas", "Gas", "Clear", I::GasOn, I::GasOff},
+      {"problem", "Problem", "OK", I::ProblemOn, I::ProblemOff},
+      {"battery", "Low", "OK", I::BatteryLow, I::Battery},
+      {"connectivity", "Online", "Offline", I::Wifi, I::WifiOff},
+      {"lock", "Open", "Locked", I::LockOpen, I::LockClosed},
+      {"plug", "Plugged", "Out", I::Plug, I::PlugOff},
+      {"power", "Power", "None", I::Bolt, I::BoltOff},
+  };
+  for (const Row &r : rows) {
+    if (dc == r.dc) {
+      v.state = v.on ? r.onText : r.offText;
+      v.icon = v.on ? r.on : r.off;
+      return;
+    }
+  }
+  v.icon = v.on ? I::DotOn : I::DotOff;
+}
+
 }  // namespace
 
 std::string fmtNumber(double v, int decimals) {
@@ -105,11 +137,14 @@ CoverView coverView(const std::vector<const EntityState *> &members, bool group)
   if (!group) {
     const EntityState *m = nullptr;
     for (auto *x : members) if (x) { m = x; break; }
-    if (m->state == "closed") v.state = "Closed";
+    if (m->state == "unknown" || m->state == "unavailable") {
+      v.look = Look::Unavailable;
+      v.state = "n/a";
+    } else if (m->state == "closed") v.state = "Closed";
     else if (m->state == "open") v.state = (m->current_position && *m->current_position < 100) ? withPos("Open", m->current_position) : "Open";
     else if (m->state == "opening") v.state = withPos("Opening", m->current_position);
     else if (m->state == "closing") v.state = withPos("Closing", m->current_position);
-    else v.state = capitalize(m->state);
+    else v.state = humanise(m->state);
     return v;
   }
   if (anyOpening) v.state = "Opening";
@@ -142,8 +177,14 @@ ToggleView toggleView(config::WidgetType type, const EntityState *st, bool badge
   }
   v.on = st->state == "on";
   v.state = v.on ? "On" : "Off";
-  // widgets.md 8: a window sensor reads Open/Closed (on = open).
-  if (type == config::WidgetType::BinarySensor && st->device_class == "window") v.state = v.on ? "Open" : "Closed";
+  if (type == config::WidgetType::BinarySensor) {
+    if (st->state == "unknown") {
+      v.look = Look::Unavailable;
+      v.state = "n/a";
+      return v;
+    }
+    binaryTexts(st->device_class, v);
+  }
   if (v.on && type == config::WidgetType::Light && st->brightness && !badgeShown) {
     v.state += " " + pct(int(std::lround(*st->brightness * 100.0 / 255.0)));
   }
@@ -189,9 +230,13 @@ ClimateView climateView(const EntityState *st) {
 
 std::string humanise(const std::string &raw) {
   std::string s = raw;
-  for (char &c : s) if (c == '_') c = ' ';
-  if (!s.empty() && s[0] >= 'a' && s[0] <= 'z') s[0] = char(s[0] - 'a' + 'A');
-  return s;
+  for (char &c : s) {
+    if (c == '_') c = ' ';
+    else if (c >= 'A' && c <= 'Z') c = char(c - 'A' + 'a');
+  }
+  if (s == "unknown" || s == "unavailable") return "n/a";
+  if (s.empty()) return "-";
+  return capitalize(s);
 }
 
 SensorView sensorView(const EntityState *st) {
@@ -242,7 +287,7 @@ WeatherView weatherView(const EntityState *st) {
       {"lightning-rainy", "Storm", WeatherIcon::Lightning},
   };
   v.icon = WeatherIcon::Unknown;
-  v.cond = capitalize(s);
+  v.cond = humanise(s);
   for (const Row &r : rows) {
     if (s == r.state) {
       v.cond = r.text;
@@ -263,6 +308,11 @@ VacuumView vacuumView(const EntityState *st) {
     return v;
   }
   const std::string &s = st->state;
+  if (s == "unknown") {
+    v.look = Look::Unavailable;
+    v.status = "n/a";
+    return v;
+  }
   if (s == "cleaning") { v.status = "Cleaning"; v.startFilled = true; }
   else if (s == "docked") { v.status = "Docked"; v.dockFilled = true; }
   else if (s == "idle") v.status = "Idle";
@@ -271,11 +321,11 @@ VacuumView vacuumView(const EntityState *st) {
   else if (s == "error") {
     v.status = st->status.empty() ? "Error" : st->status;
     v.error = true;
-  } else v.status = capitalize(s);
+  } else v.status = humanise(s);
   if (!v.error && st->battery_level) {
     v.showBattery = true;
     v.battery = *st->battery_level;
-    v.lowBattery = v.battery <= 15;
+    v.lowBattery = v.battery <= 20 && s != "docked";
   }
   return v;
 }
