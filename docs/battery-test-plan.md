@@ -18,8 +18,11 @@ Every sleep logs `SLEEP: … battery_mv=… awake_ms=…`, and every boot logs t
 1. Fully charge, unplug USB, and use the device normally with the default settings (Button mode,
    60 min refresh) for 3–7 days.
 2. Plug in briefly once a day only to read the serial log (`tools/serial_capture.py`, no reset needed
-   right after a wake), or add a small on-device log ring in NVS to read out at the end (cheap
-   follow-up if needed).
+   right after a wake), or better: a test build (`-DWAKE_LOG_SD`) appends one CSV line per wake to
+   `/wakelog.csv` on the SD card (epoch, wake reason, battery mV, awake ms per phase, refresh
+   count). The card has plenty of space and its own wear levelling; read it out at the end with
+   `tools/provision.py`-style serial fetch or by taking the card out. Only in the test build: an SD
+   mount costs ~20–100 ms and card power on every wake (user suggestion to use the SD card).
 3. Battery voltage over time → % via `power::battery_percent` → mAh/day. Combine with the wake
    counts and `awake_ms` per phase.
 Limit: the voltage curve is coarse; good for days, not for single wakes.
