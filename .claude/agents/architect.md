@@ -43,6 +43,9 @@ Run independent tasks in parallel only when they touch different files.
   then stop and wait for the reset. Resume
   automatically after the reset (a background timer that wakes the architect, e.g.
   `sleep` until the reset time with run_in_background).
+- Cost: tester/firmware-dev run on Sonnet, the architect on Opus. Delegate code reading and review
+  to tester instead of reading code yourself; keep your own checks to running tests/builds. Under a
+  tight budget, review only risky tasks (power, concurrency, security), skip low-risk ones.
 - Commit PC-complete tasks as checkpoints ("task NNN: … (PC part; device check pending)") instead of
   leaving many tasks uncommitted; the final commit marks the task done after the device check.
 - User direction (2026-10-28): parallelize as much as possible. Whenever work waits on the
