@@ -21,6 +21,36 @@ void drawStatusBar(M5Canvas &c, const uistate::AppState &app, const StatusInfo &
     } else {
       drawTextCy(c, Font::F18, "updated 14:05", 48, cy, Align::Left, INK);
     }
+  } else if (st.link != Link::None) {
+    const Icon icon = st.link == Link::Online       ? Icon::Wifi
+                      : st.link == Link::Connecting ? Icon::WifiDot
+                      : st.link == Link::AuthError  ? Icon::Alert
+                                                    : Icon::WifiOff;
+    drawIcon(c, icon, 24, 16, land ? 20 : 15, INK);
+    const bool auth = st.link == Link::AuthError;
+    // Stale chip: filled INK with PAPER text; portrait also shows a clock icon (STYLE.md 5.3).
+    const uint32_t fg = st.stale ? PAPER : INK;
+    const std::string l1 = auth ? "token rejected" : st.label1;
+    const std::string l2 = auth ? "" : st.label2;
+    if (st.stale) {
+      if (land) {
+        c.fillRoundRect(48, 8, 112, 48, 6, INK);
+      } else {
+        const int w = std::min(240, 42 + textWidth(c, Font::F18, l1));
+        c.fillRoundRect(44, 11, w, 32, 6, INK);
+        drawIcon(c, Icon::Clock, 24, 48, 15, PAPER);
+      }
+    }
+    if (land) {
+      if (l2.empty()) {
+        drawTextCy(c, Font::F18, l1, 56, 32, Align::Left, fg);
+      } else {
+        drawTextCy(c, Font::F18, l1, 56, 21, Align::Left, fg);
+        drawTextCy(c, Font::F18, l2, 56, 43, Align::Left, fg);
+      }
+    } else {
+      drawTextCy(c, Font::F18, l1, st.stale ? 78 : 48, cy, Align::Left, fg);
+    }
   } else if (app.demo()) {
     drawTextCy(c, Font::F18, "Demo", 16, cy, Align::Left, INK);
   }

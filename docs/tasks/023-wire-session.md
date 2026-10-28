@@ -48,3 +48,19 @@ its commands with the real modules:
 - Follow-up from task 019 (do it in this task): `src/render/widgets.cpp:136` `drawToggle` uses
   `d.members[0]`; change it to `uistate::toggleSummary(d.members)` so a mixed group shows "On" if any
   member is on.
+
+### Progress (firmware-dev, PC side, 2026-10-28)
+- Done: lib/app_logic (wall_time, mailbox, net_msgs, ha_worker + SyncNetPort, session_driver, tap_intent) with
+  test/test_app_logic (15 tests, fake HA transport/Wi-Fi/clock); src/net_task, session_glue, settings_flow,
+  main.cpp wiring, StatusInfo/status bar in src/render/screen.*, TEST_SETTINGS and TLS_CHECK hooks.
+  Builds: m5paper (also with -DTEST_SETTINGS and -DTLS_CHECK), probe, epdtest; native 410 tests pass.
+- Not done / needs other modules (lib/ui_state, lib/session): see report. Device check pending.
+- Taps use the AppState optimistic pending result (fakeAction) as the request source; new pending entries
+  are turned into session UserActions (lib/app_logic/tap_intent). No AppState edits were needed.
+- PC part done (2026-10-28): lib/app_logic (wall time, mailbox, net messages, HA worker, session
+  driver, tap intent; 15 tests), src/net_task (FreeRTOS, core 0), src/session_glue (Wi-Fi adapter, NTP →
+  RTC), src/settings_flow, main.cpp wiring, status bar states. TLS_CHECK and TEST_SETTINGS hooks in.
+- Round 2 (open): widget marks from the driver (`AppState::setMarks`) so pending lasts until confirmation
+  and failed taps show the failed state; an action sink instead of pending-list diffing; the
+  `toggleSummary` follow-up in widgets.cpp (still `members[0]`); the time zone per ARCHITECTURE.md
+  (POSIX TZ, CET default); check that `present::begin()` frees the old canvases on re-begin.
