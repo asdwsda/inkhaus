@@ -24,3 +24,4 @@
 | 020 | [Write config.yaml to the device over USB](020-provision-config-over-usb.md) | in-progress | 017 |
 | 021 | [Wi-Fi connection module (fast reconnect)](021-wifi-net-module.md) | in-progress | 003 |
 | 022 | [Draw the Settings screen](022-settings-screen-render.md) | in-progress | 007, 017 |
+| 023 | [Wire Wi-Fi, Home Assistant and Settings into the app](023-wire-session.md) | in-progress | 017–022, 008 |
