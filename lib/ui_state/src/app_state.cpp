@@ -22,6 +22,7 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   shownTab_ = 0;
   shownSubPage_ = 0;
   pending_.clear();
+  marks_.clear();
   switchDue_ = false;
   full_ = false;
   relayout();
@@ -93,6 +94,10 @@ WidgetData AppState::widgetData(int idx) const {
   d.type = w->type;
   d.group = !w->group.empty();
   d.members = membersOf(*w);
+  for (const std::string &id : w->entities) {
+    auto it = marks_.find(id);
+    if (it != marks_.end() && it->second == Mark::Failed) d.failed = true;
+  }
   for (const Pending &p : pending_) {
     if (p.tab != shownTab_ || p.widget != idx) continue;
     d.pending = true;
@@ -153,6 +158,7 @@ bool AppState::runAction(int idx, int sub, uint32_t now) {
     existing->sub = sub;
     existing->commitAt = now + pendingMs_;
     existing->states = std::move(r.states);
+    existing->seenMark = false;
   } else {
     Pending p;
     p.tab = shownTab_;
@@ -162,7 +168,38 @@ bool AppState::runAction(int idx, int sub, uint32_t now) {
     p.states = std::move(r.states);
     pending_.push_back(std::move(p));
   }
+  if (marksDriven_) {
+    for (Pending &p : pending_)
+      if (p.tab == shownTab_ && p.widget == idx) p.commitAt = now + safetyMs_;
+  }
+  if (sink_) {
+    for (const Pending &p : pending_)
+      if (p.tab == shownTab_ && p.widget == idx) { sink_(p.tab, p.widget, p.sub, p.states); break; }
+  }
   return true;
+}
+
+bool AppState::setMarks(const std::map<std::string, Mark> &marks) {
+  bool changed = marks != marks_;
+  marks_ = marks;
+  for (size_t i = 0; i < pending_.size();) {
+    Pending &p = pending_[i];
+    bool anyPending = false, anyFailed = false;
+    for (const EntityState &s : p.states) {
+      auto it = marks_.find(s.id);
+      if (it == marks_.end()) continue;
+      anyPending |= it->second == Mark::Pending;
+      anyFailed |= it->second == Mark::Failed;
+    }
+    if (anyPending && !anyFailed) p.seenMark = true;
+    if (anyFailed || (!anyPending && p.seenMark)) {
+      pending_.erase(pending_.begin() + long(i));
+      changed = true;
+    } else {
+      ++i;
+    }
+  }
+  return changed;
 }
 
 bool AppState::tick(uint32_t now) {
@@ -170,7 +207,7 @@ bool AppState::tick(uint32_t now) {
   if (switchDue_ && int32_t(now - switchAt_) >= 0) changed |= applyTabSwitch();
   for (size_t i = 0; i < pending_.size();) {
     if (int32_t(now - pending_[i].commitAt) >= 0) {
-      store_.update(pending_[i].states);
+      if (!marksDriven_) store_.update(pending_[i].states);
       pending_.erase(pending_.begin() + long(i));
       changed = true;
     } else {

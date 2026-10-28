@@ -64,3 +64,11 @@ its commands with the real modules:
   and failed taps show the failed state; an action sink instead of pending-list diffing; the
   `toggleSummary` follow-up in widgets.cpp (still `members[0]`); the time zone per ARCHITECTURE.md
   (POSIX TZ, CET default); check that `present::begin()` frees the old canvases on re-begin.
+
+### Round 2 progress (firmware-dev, 2026-10-28, PC only)
+- Done: `AppState::setMarks/setMarksDriven/setActionSink` (lib/ui_state; `uistate::Mark`, `WidgetData::failed`),
+  main.cpp uses the sink + `syncMarks()` (pending-list diff removed); widgets.cpp uses `toggleSummary` and
+  shows the alert badge for failed; `timezone:` in lib/config (+tests, example yaml), TZ via setenv/tzset in
+  main.cpp, offset from localtime (`UTC_OFFSET_S` removed); `present::begin()` deletes old sprites and logs
+  `psram_free_before` / `psram_free`. native 417 pass; m5paper/probe/epdtest build. Device check pending.
+- Note: the offset reaches `plan_sleep` via the Start event, so it is taken at session start.

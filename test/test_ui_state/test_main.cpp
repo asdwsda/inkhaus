@@ -525,6 +525,129 @@ static void test_mixed_group_aggregate() {
   TEST_ASSERT_NULL(toggleSummary({nullptr}));
 }
 
+// ---- marks and action sink (task 023 round 2) ----
+
+struct Sunk { int tab, widget, sub; std::vector<EntityState> st; };
+
+static ui::Rect widgetRect(const AppState &a, int idx) {
+  ui::Rect r;
+  for (auto &pl : a.layout().widgets) if (pl.index == idx) r = pl.rect;
+  return r;
+}
+
+void test_marks_pending_until_confirmed() {
+  AppState a;
+  a.init(exampleConfig(), P, false);
+  a.setMarksDriven(true);
+  int idx = findWidget(a, WidgetType::Light);
+  const std::string id = a.config().tabs[0].widgets[size_t(idx)].entity;
+  a.store().update({EntityState{id, "on", true}});
+  const ui::Rect r = widgetRect(a, idx);
+  TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, 0));
+  TEST_ASSERT_FALSE(a.tick(kPendingMs * 10));  // the demo timer does not apply
+  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());  // never committed locally
+  // before the driver reports anything the entry stays; Pending keeps it
+  a.setMarks({});
+  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  a.setMarks({{id, Mark::Pending}});
+  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.setMarks({}));  // confirmed
+  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_FALSE(a.widgetData(idx).failed);
+}
+
+void test_marks_failed_reverts_and_shows_failed() {
+  AppState a;
+  a.init(exampleConfig(), P, false);
+  a.setMarksDriven(true);
+  int idx = findWidget(a, WidgetType::Light);
+  const std::string id = a.config().tabs[0].widgets[size_t(idx)].entity;
+  a.store().update({EntityState{id, "on", true}});
+  const ui::Rect r = widgetRect(a, idx);
+  a.touch({r.x + 10, r.y + 10}, 0);
+  a.setMarks({{id, Mark::Pending}});
+  TEST_ASSERT_TRUE(a.setMarks({{id, Mark::Failed}}));
+  WidgetData d = a.widgetData(idx);
+  TEST_ASSERT_FALSE(d.pending);
+  TEST_ASSERT_TRUE(d.failed);
+  TEST_ASSERT_EQUAL_STRING("on", d.members[0]->state.c_str());  // last real state
+  TEST_ASSERT_TRUE(a.setMarks({}));
+  TEST_ASSERT_FALSE(a.widgetData(idx).failed);
+}
+
+void test_marks_unmarked_pending_times_out() {
+  AppState a;
+  a.init(exampleConfig(), P, false);
+  a.setMarksDriven(true, 5000);
+  int idx = findWidget(a, WidgetType::Light);
+  const std::string id = a.config().tabs[0].widgets[size_t(idx)].entity;
+  a.store().update({EntityState{id, "on", true}});
+  const ui::Rect r = widgetRect(a, idx);
+  a.touch({r.x + 10, r.y + 10}, 0);
+  TEST_ASSERT_FALSE(a.tick(4999));
+  TEST_ASSERT_TRUE(a.tick(5000));
+  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());
+}
+
+void test_sink_fast_double_taps() {
+  AppState a;
+  a.init(exampleConfig(), P, false);
+  a.setMarksDriven(true);
+  std::vector<Sunk> got;
+  a.setActionSink([&](int t, int w, int s, const std::vector<EntityState> &st) { got.push_back({t, w, s, st}); });
+  // light: the second tap while pending is ignored
+  int li = findWidget(a, WidgetType::Light);
+  const std::string lid = a.config().tabs[0].widgets[size_t(li)].entity;
+  a.store().update({EntityState{lid, "on", true}});
+  const ui::Rect lr = widgetRect(a, li);
+  a.touch({lr.x + 10, lr.y + 10}, 0);
+  a.touch({lr.x + 10, lr.y + 10}, 30);
+  TEST_ASSERT_EQUAL(1, (int)got.size());
+  TEST_ASSERT_EQUAL(li, got[0].widget);
+  TEST_ASSERT_EQUAL_STRING("off", got[0].st[0].state.c_str());
+  // cover: different buttons are two actions, the same button twice only one
+  int ci = findWidget(a, WidgetType::Cover);
+  const std::string cid = a.config().tabs[0].widgets[size_t(ci)].entity;
+  a.store().update({EntityState{cid, "open", true}});
+  auto subs = ui::subRegions(WidgetType::Cover, config::WidgetSize{2, 1}, widgetRect(a, ci));
+  a.touch({subs[1].rect.x + 5, subs[1].rect.y + 5}, 100);
+  a.touch({subs[1].rect.x + 5, subs[1].rect.y + 5}, 110);
+  a.touch({subs[2].rect.x + 5, subs[2].rect.y + 5}, 120);
+  TEST_ASSERT_EQUAL(3, (int)got.size());
+  TEST_ASSERT_EQUAL(2, got[1].sub);
+  TEST_ASSERT_EQUAL(3, got[2].sub);
+  // climate: taps accumulate, each action carries the accumulated target
+  int ti = findWidget(a, WidgetType::Climate);
+  const std::string tid = a.config().tabs[0].widgets[size_t(ti)].entity;
+  EntityState cs{tid, "heat", true};
+  cs.temperature = 22.0;
+  a.store().update({cs});
+  auto csub = ui::subRegions(WidgetType::Climate, config::WidgetSize{2, 1}, widgetRect(a, ti));
+  a.touch({csub[1].rect.x + 5, csub[1].rect.y + 5}, 200);
+  a.touch({csub[1].rect.x + 5, csub[1].rect.y + 5}, 210);
+  TEST_ASSERT_EQUAL(5, (int)got.size());
+  TEST_ASSERT_FLOAT_WITHIN(0.001, 22.5, *got[3].st[0].temperature);
+  TEST_ASSERT_FLOAT_WITHIN(0.001, 23.0, *got[4].st[0].temperature);
+  // a tap that changes nothing sends nothing
+  a.touch({-5, -5}, 300);
+  TEST_ASSERT_EQUAL(5, (int)got.size());
+}
+
+void test_sink_also_in_demo_mode() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  int n = 0;
+  a.setActionSink([&](int, int, int, const std::vector<EntityState> &) { ++n; });
+  int idx = findWidget(a, WidgetType::Light);
+  const ui::Rect r = widgetRect(a, idx);
+  a.touch({r.x + 10, r.y + 10}, 0);
+  TEST_ASSERT_EQUAL(1, n);
+  a.tick(kPendingMs);  // demo timer still commits
+  TEST_ASSERT_TRUE(a.pendingList().empty());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_fmt_number);
@@ -561,5 +684,10 @@ int main() {
   RUN_TEST(test_t_window_sensor_texts);
   RUN_TEST(test_sensor_numeric_parsing);
   RUN_TEST(test_fake_climate_step_zero_or_negative);
+  RUN_TEST(test_marks_pending_until_confirmed);
+  RUN_TEST(test_marks_failed_reverts_and_shows_failed);
+  RUN_TEST(test_marks_unmarked_pending_times_out);
+  RUN_TEST(test_sink_fast_double_taps);
+  RUN_TEST(test_sink_also_in_demo_mode);
   return UNITY_END();
 }

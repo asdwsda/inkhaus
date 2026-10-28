@@ -84,6 +84,8 @@ struct Tab {
 
 struct Config {
   int version = 0;
+  // POSIX TZ string (e.g. "CET-1CEST,M3.5.0,M10.5.0/3"); optional `timezone:` key.
+  std::string timezone = "CET-1CEST,M3.5.0,M10.5.0/3";
   bool hasConnection = false;
   ConnectionConfig connection;
   std::vector<Group> groups;

@@ -118,7 +118,7 @@ void drawCover(Ctx &x, const uistate::WidgetData &d, const std::string &title) {
   drawText(x.c, Font::F24, fitText(x.c, Font::F24, v.state, W - 284), x.X(12), x.Y(77), Align::Left,
            INK);
   if (una) drawBadge(x, W - 264, 57, Icon::Warn, OFFGREY);
-  else if (v.alertBadge) drawBadge(x, W - 264, 57, Icon::Alert, INK);
+  else if (v.alertBadge || d.failed) drawBadge(x, W - 264, 57, Icon::Alert, INK);
   auto subs = ui::subRegions(WidgetType::Cover, config::WidgetSize{}, x.r);
   const Icon glyphs[3] = {Icon::Up, Icon::Stop, Icon::Down};
   const bool filled[3] = {v.upFilled, false, v.downFilled};
@@ -133,8 +133,9 @@ void drawToggle(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
   const WidgetType type = d.type;
   const bool binary = type == WidgetType::BinarySensor;
   const bool pend = d.pending && !binary;
-  const EntityState *st = d.members.empty() ? nullptr : d.members[0];
-  const bool badge = pend || (st && !st->available);
+  const EntityState *st = binary ? (d.members.empty() ? nullptr : d.members[0]) : uistate::toggleSummary(d.members);
+  const bool failed = d.failed && !binary;
+  const bool badge = pend || failed || (st && !st->available);
   const auto v = uistate::toggleView(type, st, badge);
   const bool una = v.look == Look::Unavailable;
   const bool inkFill = v.on && !binary && !una;
@@ -155,6 +156,7 @@ void drawToggle(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
   else drawIcon(x.c, icon, 40, x.X(12), x.Y(49), fg);
   drawText(x.c, Font::F24, fitText(x.c, Font::F24, v.state, W - 70), x.X(58), x.Y(77), Align::Left, sub);
   if (una && !binary) drawBadge(x, W - 36, 57, Icon::Warn, OFFGREY);
+  else if (failed) drawBadge(x, W - 36, 57, Icon::Alert, inkFill ? PAPER : INK);
   else if (pend) {
     drawBadge(x, W - 36, 57, Icon::Hourglass, inkFill ? PAPER : INK);
     drawPendingRing(x, inkFill ? PAPER : INK);
@@ -184,6 +186,7 @@ void drawClimate(Ctx &x, const uistate::WidgetData &d, const std::string &title)
     if (ai != Icon::Count) drawIcon(x.c, ai, 24, x.X(186), x.Y(57), INK);
   }
   if (una) drawBadge(x, W - 312, 24, Icon::Warn, OFFGREY);
+  else if (d.failed) drawBadge(x, W - 312, 24, Icon::Alert, INK);
   else if (d.pending) drawBadge(x, W - 312, 24, Icon::Hourglass, INK);
   auto subs = ui::subRegions(WidgetType::Climate, config::WidgetSize{}, x.r);
   drawButton(x, subs[0].rect, Icon::Minus, false, d.pending && d.pendingSub == 1, una, x.innerSub == 1,
@@ -292,7 +295,7 @@ void drawVacuum(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
     drawText(x.c, Font::F18, std::to_string(v.battery) + "%", x.X(ix + 28), x.Y(75), Align::Left, INK);
   }
   if (una) drawBadge(x, W - 264, 57, Icon::Warn, OFFGREY);
-  else if (v.error) drawBadge(x, W - 264, 57, Icon::Alert, INK);
+  else if (v.error || d.failed) drawBadge(x, W - 264, 57, Icon::Alert, INK);
   auto subs = ui::subRegions(WidgetType::Vacuum, config::WidgetSize{}, x.r);
   const Icon glyphs[3] = {Icon::Play, Icon::Pause, Icon::Dock};
   const bool filled[3] = {v.startFilled, v.pauseFilled, v.dockFilled};

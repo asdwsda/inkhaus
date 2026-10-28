@@ -273,6 +273,11 @@ void closeRead() {
 
 bool begin() {
   auto &d = M5.Display;
+  // Re-begin (orientation change): free the old canvases first, or the new ones need 3 more frames.
+  boot::log("psram_free_before", (long)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+  g_cur.deleteSprite();
+  g_prev.deleteSprite();
+  g_panel.deleteSprite();
   g_w = d.width();
   g_h = d.height();
   g_cur.setColorDepth(lgfx::grayscale_8bit);
@@ -297,7 +302,7 @@ bool begin() {
     g_prev.fillScreen(TFT_WHITE);
     g_panel.fillScreen(TFT_WHITE);
   }
-  boot::log("psram_free", (long)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+  boot::log("psram_free", (long)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));  // after
   return ok;
 }
 

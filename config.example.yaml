@@ -21,6 +21,9 @@ connection:
     external_url: https://example.ui.nabu.casa   # optional, must be https
     token: "long-lived-token"
 
+# Optional. POSIX TZ string for the clock and the wake-up schedule. Default: Central Europe.
+# timezone: "CET-1CEST,M3.5.0,M10.5.0/3"
+
 # Optional device-side entity lists. All members must share one domain.
 # Group names: lowercase letters, digits and underscore only.
 groups:

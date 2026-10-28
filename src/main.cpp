@@ -1,5 +1,8 @@
 #include <M5Unified.h>
 
+#include <time.h>
+
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -24,10 +27,6 @@
 namespace tls_check { void run(); }
 #endif
 
-#ifndef UTC_OFFSET_S
-#define UTC_OFFSET_S 0  // local time = UTC + this; configurable in a later task
-#endif
-
 // Test-only build flags (never in the normal firmware):
 //   -DDEMO_LANDSCAPE       start in landscape instead of the stored orientation
 //   -DTEST_CONFIG_BROKEN   inject a broken config (error screen)
@@ -35,7 +34,6 @@ namespace tls_check { void run(); }
 //   -DBOOT_TEST_HANG=n / -DBOOT_TEST_RESTART  task 016 watchdog and warm-restart tests
 //   -DTEST_SETTINGS       open the Settings screen right after boot (screenshots, task 022/023)
 //   -DTLS_CHECK -DTLS_CHECK_URL=\"https://...\"  task 008 TLS check after boot (src/tls_check.cpp)
-//   -DUTC_OFFSET_S=n      local time offset in seconds (default 0)
 
 static uistate::AppState g_app;
 static render::StatusInfo g_status;
@@ -53,6 +51,24 @@ static std::unique_ptr<app_logic::SessionDriver> g_drv;
 static bool g_sessionOver = false;  // the machine asked to sleep; any input starts a new session
 static bool g_settingsRefreshing = false;
 static bool g_firstSession = true;
+
+// Time zone: POSIX TZ string (config `timezone:`, default CET/CEST). The UTC offset is always
+// derived from localtime at the given instant, so DST changes are handled.
+static void applyTimezone(const std::string &tz) {
+  setenv("TZ", tz.c_str(), 1);
+  tzset();
+}
+
+static int32_t utcOffsetAt(int64_t epoch) {
+  if (!app_logic::plausibleEpoch(epoch)) return 0;
+  const time_t t = time_t(epoch);
+  struct tm lt;
+  localtime_r(&t, &lt);
+  app_logic::Civil c;
+  c.year = lt.tm_year + 1900; c.month = lt.tm_mon + 1; c.day = lt.tm_mday;
+  c.hour = lt.tm_hour; c.minute = lt.tm_min; c.second = lt.tm_sec;
+  return int32_t(app_logic::civilToEpoch(c) - epoch);
+}
 
 static void appLog(const std::string &line) { Serial.println(line.c_str()); }
 
@@ -82,7 +98,8 @@ static void updateStatus() {
     case session::Status::Offline: g_status.link = L::Offline; break;
     case session::Status::AuthError: g_status.link = L::AuthError; break;
   }
-  const app_logic::Label l = app_logic::refreshLabel(g_drv->lastOkEpoch(), session_glue::wallClock(), UTC_OFFSET_S,
+  const int64_t nowEpoch = session_glue::wallClock();
+  const app_logic::Label l = app_logic::refreshLabel(g_drv->lastOkEpoch(), nowEpoch, utcOffsetAt(nowEpoch),
                                                      g_settings.refresh_interval_min, g_drv->lastFetchFailed(),
                                                      landscape());
   g_status.label1 = l.line1;
@@ -98,7 +115,7 @@ static void composeFrame() {
 static settings_ui::WallTime wallTime(int64_t epoch) {
   settings_ui::WallTime w;
   if (!app_logic::plausibleEpoch(epoch)) return w;
-  const app_logic::Civil c = app_logic::epochToCivil(epoch, UTC_OFFSET_S);
+  const app_logic::Civil c = app_logic::epochToCivil(epoch, utcOffsetAt(epoch));
   w.month = c.month; w.day = c.day; w.hour = c.hour; w.minute = c.minute;
   return w;
 }
@@ -157,31 +174,31 @@ static void startSession(uint32_t now) {
   g_drv.reset(new app_logic::SessionDriver(g_cfg.cfg.entityIds, g_app.store(), *g_wifi, g_net,
                                            session_glue::wallClock, appLog));
   g_sessionOver = false;
+  // The offset is taken now (local time at planning time); the machine plans the wake-up from it.
   g_drv->start(g_firstSession ? power::WakeReason::ColdBoot : power::WakeReason::Button, batteryMv(), g_settings,
-               UTC_OFFSET_S, now);
+               utcOffsetAt(session_glue::wallClock()), now);
   g_firstSession = false;
 }
 
-// Sends the actions that the UI state just started (optimistic result) to Home Assistant.
-struct PendKey { int tab, widget; uint32_t at; };
-static std::vector<PendKey> pendSnapshot() {
-  std::vector<PendKey> v;
-  for (const auto &p : g_app.pendingList()) v.push_back({p.tab, p.widget, p.commitAt});
-  return v;
-}
-static void forwardNewActions(const std::vector<PendKey> &before, uint32_t now) {
+// Action sink: a tap started an action in the UI state; real mode turns it into a session action.
+static uint32_t g_tapNow = 0;
+static void onAppAction(int tab, int widget, int sub, const std::vector<EntityState> &requested) {
   if (!g_real || !g_drv) return;
-  for (const auto &p : g_app.pendingList()) {
-    bool known = false;
-    for (const auto &b : before) known |= (b.tab == p.tab && b.widget == p.widget && b.at == p.commitAt);
-    if (known) continue;
-    const auto &tabs = g_app.config().tabs;
-    if (p.tab < 0 || size_t(p.tab) >= tabs.size() || p.widget < 0 || size_t(p.widget) >= tabs[size_t(p.tab)].widgets.size())
-      continue;
-    const config::Widget &w = tabs[size_t(p.tab)].widgets[size_t(p.widget)];
-    auto ev = app_logic::intentFromRequest(w.type, p.sub, p.states);
-    if (ev) g_drv->userAction(*ev, now);
-  }
+  const auto &tabs = g_app.config().tabs;
+  if (tab < 0 || size_t(tab) >= tabs.size() || widget < 0 || size_t(widget) >= tabs[size_t(tab)].widgets.size())
+    return;
+  const config::Widget &w = tabs[size_t(tab)].widgets[size_t(widget)];
+  auto ev = app_logic::intentFromRequest(w.type, sub, requested);
+  if (ev) g_drv->userAction(*ev, g_tapNow);
+}
+
+// Driver marks (pending/failed by entity id) -> widget visuals. True if something visible changed.
+static bool syncMarks() {
+  if (!g_real || !g_drv) return false;
+  std::map<std::string, uistate::Mark> m;
+  for (const auto &kv : g_drv->marks())
+    m[kv.first] = kv.second == session::Mark::Failed ? uistate::Mark::Failed : uistate::Mark::Pending;
+  return g_app.setMarks(m);
 }
 
 // ---- settings screen ----
@@ -193,6 +210,8 @@ static void applyOrientation(settings::Orientation o) {
   M5.Display.setRotation(o == settings::Orientation::Landscape ? 1 : 0);
   present::begin();
   g_app.init(g_cfg.cfg, o, g_demoMode);
+  g_app.setActionSink(onAppAction);
+  g_app.setMarksDriven(g_real);
   if (!g_demoMode) g_app.store().update(keep);
   boot::log("orientation", (long)(o == settings::Orientation::Landscape ? 1 : 0));
 }
@@ -269,6 +288,7 @@ void setup() {
 
   g_cfg = app_config::load();
   const app_config::Loaded &cfg = g_cfg;
+  applyTimezone(cfg.cfg.timezone);
   boot::log("config_source", cfg.source);
   if (cfg.error) {
     g_app.initError(cfg.errors, s.orientation);
@@ -279,6 +299,8 @@ void setup() {
     g_demoMode = cfg.demo || !cfg.cfg.hasConnection;
     g_real = !g_demoMode;
     g_app.init(cfg.cfg, s.orientation, g_demoMode);
+    g_app.setActionSink(onAppAction);
+    g_app.setMarksDriven(g_real);
     boot::log("mode", g_real ? "real" : "demo");
   }
 #ifdef TEST_CONFIG_MOCKUP
@@ -375,18 +397,16 @@ void loop() {
         changed = true;  // the icon switches to the dot
       }
     } else {
-      const auto before = pendSnapshot();
+      g_tapNow = now;
       changed |= g_app.touch(e.point, now);
-      forwardNewActions(before, now);
     }
   } else if (e.kind == input::Event::Key) {
     if (e.key == ui::PhysicalKey::LongPush && g_app.screen() == uistate::Screen::Tabs &&
         g_app.focus().mode == ui::FocusMode::Tab) {
       openSettings(true, now);
     } else {
-      const auto before = pendSnapshot();
+      g_tapNow = now;
       changed |= g_app.rocker(e.key, now);
-      forwardNewActions(before, now);
     }
   }
 
@@ -394,6 +414,7 @@ void loop() {
     g_drv->tick(now);
     session_glue::ntpPoll(g_drv->wifiUp());
     if (g_drv->takeRender()) changed = true;
+    changed |= syncMarks();
     if (g_settingsRefreshing && !g_drv->fetching() && g_drv->status() != session::Status::Connecting) {
       g_settingsRefreshing = false;
       const bool ok = !g_drv->lastFetchFailed();

@@ -6,3 +6,4 @@ config.yaml
 .claude/worktrees/
 .claude/agent-memory/
 __pycache__/
+a.out

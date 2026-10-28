@@ -3,6 +3,8 @@
 // pending (fake) actions. Pure logic driven by events with a millisecond clock; the firmware only
 // renders it (docs/ui/layout.md section 7, widgets.md).
 #include <cstdint>
+#include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -18,13 +20,21 @@ namespace uistate {
 constexpr uint32_t kPendingMs = 600;        // demo: how long a fake action stays pending
 constexpr uint32_t kTabDebounceMs = 400;    // rocker tab switch: content follows after this
 
+// Result of a driver action for an entity (real mode). None = no mark.
+enum class Mark { None, Pending, Failed };
+
 struct Pending {
   int tab = 0;
   int widget = 0;
   int sub = 0;
   uint32_t commitAt = 0;
   std::vector<EntityState> states;  // requested result, committed to the store when due
+  bool seenMark = false;            // marks-driven mode: the driver reported Pending for it
 };
+
+// Called when a tap starts an action: the widget's tab/index, the sub-region and the requested
+// result (what the entities should look like). Real mode sends it to Home Assistant.
+using ActionSink = std::function<void(int tab, int widget, int sub, const std::vector<EntityState> &requested)>;
 
 // What a widget is drawn from.
 struct WidgetData {
@@ -33,6 +43,7 @@ struct WidgetData {
   std::vector<const EntityState *> members;
   bool pending = false;
   int pendingSub = 0;
+  bool failed = false;  // the last action on this widget failed: real state plus alert badge
 };
 
 enum class Screen { Tabs, ConfigError };
@@ -52,6 +63,15 @@ class AppState {
   // The content (not only chrome) changed in a way that needs a full-quality refresh (tab or
   // sub-page change). Cleared by takeFull().
   bool takeFull();
+
+  void setActionSink(ActionSink s) { sink_ = std::move(s); }
+  // Real mode: pending lasts until the driver's marks say otherwise (no local commit; a safety
+  // timeout drops an entry the driver never marked). Off (default) = demo timer.
+  void setMarksDriven(bool on, uint32_t safetyMs = 30000) { marksDriven_ = on; safetyMs_ = safetyMs; }
+  // The driver's marks by entity id (absent = confirmed/none). Pending entries whose entities
+  // were marked Pending and no longer are get dropped (confirmed); Failed ones are dropped and the
+  // widget shows the failed state until the mark clears. Returns true if something visible changed.
+  bool setMarks(const std::map<std::string, Mark> &marks);
 
   // For tests and the demo: change pending duration (default kPendingMs).
   void setPendingMs(uint32_t ms) { pendingMs_ = ms; }
@@ -98,6 +118,10 @@ class AppState {
   bool full_ = false;
   uint32_t pendingMs_ = kPendingMs;
   std::vector<Pending> pending_;
+  ActionSink sink_;
+  bool marksDriven_ = false;
+  uint32_t safetyMs_ = 30000;
+  std::map<std::string, Mark> marks_;
 };
 
 }  // namespace uistate

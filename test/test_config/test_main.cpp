@@ -103,6 +103,23 @@ void test_connection_absent() {
   TEST_ASSERT_EQUAL_UINT(1, r.config.tabs.size());
 }
 
+void test_timezone_default_and_valid() {
+  ParseResult r = parseConfig(kMinimal);
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL_STRING("CET-1CEST,M3.5.0,M10.5.0/3", r.config.timezone.c_str());
+  r = parseConfig(std::string("timezone: \"EST5EDT,M3.2.0,M11.1.0\"\n") + kMinimal);
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL_STRING("EST5EDT,M3.2.0,M11.1.0", r.config.timezone.c_str());
+}
+
+void test_timezone_invalid() {
+  for (const char *bad : {"Europe/Budapest", "\"CET -1\"", "\"CET\"", "\"1CET-1\"", "5", "[a]"}) {
+    ParseResult r = parseConfig(std::string("timezone: ") + bad + "\n" + kMinimal);
+    TEST_ASSERT_FALSE_MESSAGE(r.ok(), bad);
+    TEST_ASSERT_NOT_NULL_MESSAGE(findError(r, "timezone"), bad);
+  }
+}
+
 void test_error_missing_tabs() { assertErrorAt("version: 1\n", "tabs"); }
 
 void test_pages_key_is_unknown() {
@@ -421,6 +438,8 @@ int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_example_parses_clean);
   RUN_TEST(test_connection_absent);
+  RUN_TEST(test_timezone_default_and_valid);
+  RUN_TEST(test_timezone_invalid);
   RUN_TEST(test_error_missing_tabs);
   RUN_TEST(test_pages_key_is_unknown);
   RUN_TEST(test_size_valid);

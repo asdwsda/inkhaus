@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 
 #include "yaml_json.h"
@@ -88,6 +89,7 @@ class Validator {
     }
     JsonObjectConst o = root.as<JsonObjectConst>();
     version(o);
+    timezone(o);
     if (!o["connection"].isNull())
       connection(o["connection"], "connection");
     if (!o["groups"].isNull()) groups(o["groups"]);
@@ -150,6 +152,24 @@ class Validator {
       return;
     }
     r_.config.version = static_cast<int>(n);
+  }
+
+  // Shape check of a POSIX TZ string: 3..63 printable ASCII chars without spaces, starts with a
+  // letter or '<', has an offset digit. Full grammar checking is left to tzset().
+  void timezone(JsonObjectConst o) {
+    std::string tz;
+    if (!str(o, "timezone", "", false, tz)) return;
+    bool ok = tz.size() >= 3 && tz.size() <= 63 && (std::isalpha((unsigned char)tz[0]) || tz[0] == '<');
+    bool digit = false;
+    for (char ch : tz) {
+      if (ch <= ' ' || ch > '~') ok = false;
+      digit |= ch >= '0' && ch <= '9';
+    }
+    if (!ok || !digit) {
+      err("timezone", "must be a POSIX TZ string such as CET-1CEST,M3.5.0,M10.5.0/3");
+      return;
+    }
+    r_.config.timezone = tz;
   }
 
   void connection(JsonVariantConst v, const std::string &path) {
