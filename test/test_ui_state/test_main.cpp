@@ -1,0 +1,523 @@
+#include <fstream>
+#include <sstream>
+#include <unity.h>
+
+#include "app_state.h"
+#include "config_model.h"
+#include "demo_states.h"
+#include "fake_actions.h"
+#include "widget_view.h"
+
+using namespace uistate;
+using config::WidgetType;
+
+void setUp() {}
+void tearDown() {}
+
+static EntityState E(const char *id, const char *state, bool avail = true) {
+  EntityState e;
+  e.id = id;
+  e.state = state;
+  e.available = avail;
+  return e;
+}
+
+static config::Config exampleConfig() {
+  std::ifstream f("config.example.yaml");
+  std::stringstream ss;
+  ss << f.rdbuf();
+  auto r = config::parseConfig(ss.str());
+  TEST_ASSERT_TRUE(r.ok());
+  return r.config;
+}
+
+// ---- views ----
+
+void test_fmt_number() {
+  TEST_ASSERT_EQUAL_STRING("21.5", fmtNumber(21.5, 1).c_str());
+  TEST_ASSERT_EQUAL_STRING("22", fmtNumber(22.0, 0).c_str());
+  TEST_ASSERT_EQUAL_STRING("0.0", fmtNumber(-0.04, 1).c_str());
+  TEST_ASSERT_EQUAL_STRING("-12.5", fmtNumber(-12.5, 1).c_str());
+}
+
+void test_cover_single() {
+  EntityState c = E("cover.a", "opening");
+  c.current_position = 40;
+  CoverView v = coverView({&c}, false);
+  TEST_ASSERT_EQUAL_STRING("Opening 40%", v.state.c_str());
+  TEST_ASSERT_TRUE(v.upFilled);
+  TEST_ASSERT_FALSE(v.downFilled);
+  c.state = "open";
+  c.current_position = 100;
+  TEST_ASSERT_EQUAL_STRING("Open", coverView({&c}, false).state.c_str());
+  c.current_position = 60;
+  TEST_ASSERT_EQUAL_STRING("Open 60%", coverView({&c}, false).state.c_str());
+  c.state = "closing";
+  v = coverView({&c}, false);
+  TEST_ASSERT_TRUE(v.downFilled);
+  TEST_ASSERT_EQUAL_STRING("Closing 60%", v.state.c_str());
+  c.state = "closed";
+  TEST_ASSERT_EQUAL_STRING("Closed", coverView({&c}, false).state.c_str());
+}
+
+void test_cover_unavailable_and_loading() {
+  EntityState c = E("cover.a", "unavailable", false);
+  TEST_ASSERT_EQUAL(Look::Unavailable, coverView({&c}, false).look);
+  TEST_ASSERT_EQUAL_STRING("n/a", coverView({&c}, false).state.c_str());
+  CoverView l = coverView({nullptr}, false);
+  TEST_ASSERT_EQUAL(Look::Loading, l.look);
+  TEST_ASSERT_EQUAL_STRING("-", l.state.c_str());
+}
+
+void test_cover_group() {
+  EntityState a = E("cover.a", "closed"), b = E("cover.b", "closed");
+  a.current_position = 0;
+  b.current_position = 0;
+  TEST_ASSERT_EQUAL_STRING("Closed", coverView({&a, &b}, true).state.c_str());
+  b.state = "opening";
+  CoverView v = coverView({&a, &b}, true);
+  TEST_ASSERT_EQUAL_STRING("Opening", v.state.c_str());
+  TEST_ASSERT_TRUE(v.upFilled);
+  a.state = b.state = "open";
+  a.current_position = b.current_position = 30;
+  TEST_ASSERT_EQUAL_STRING("Open 30%", coverView({&a, &b}, true).state.c_str());
+  b.current_position = 50;
+  TEST_ASSERT_EQUAL_STRING("Mixed", coverView({&a, &b}, true).state.c_str());
+  b.available = false;
+  CoverView p = coverView({&a, &b}, true);
+  TEST_ASSERT_TRUE(p.alertBadge);
+  TEST_ASSERT_EQUAL(Look::Normal, p.look);
+}
+
+void test_toggle_text() {
+  EntityState l = E("light.a", "on");
+  l.brightness = 204;
+  TEST_ASSERT_EQUAL_STRING("On 80%", toggleView(WidgetType::Light, &l, false).state.c_str());
+  TEST_ASSERT_EQUAL_STRING("On", toggleView(WidgetType::Light, &l, true).state.c_str());
+  TEST_ASSERT_TRUE(toggleView(WidgetType::Light, &l, false).on);
+  l.state = "off";
+  ToggleView off = toggleView(WidgetType::Light, &l, false);
+  TEST_ASSERT_FALSE(off.on);
+  TEST_ASSERT_EQUAL_STRING("Off", off.state.c_str());
+  EntityState sw = E("switch.a", "on");
+  TEST_ASSERT_EQUAL_STRING("On", toggleView(WidgetType::Switch, &sw, false).state.c_str());
+  EntityState un = E("light.b", "unavailable", false);
+  TEST_ASSERT_EQUAL_STRING("n/a", toggleView(WidgetType::Light, &un, false).state.c_str());
+  TEST_ASSERT_EQUAL_STRING("-", toggleView(WidgetType::Light, nullptr, false).state.c_str());
+  // Window sensor: Open/Closed (on = open); other binary sensors stay On/Off.
+  EntityState win = E("binary_sensor.w", "on");
+  TEST_ASSERT_EQUAL_STRING("On", toggleView(WidgetType::BinarySensor, &win, false).state.c_str());
+  win.device_class = "window";
+  TEST_ASSERT_EQUAL_STRING("Open", toggleView(WidgetType::BinarySensor, &win, false).state.c_str());
+  TEST_ASSERT_TRUE(toggleView(WidgetType::BinarySensor, &win, false).on);
+  win.state = "off";
+  TEST_ASSERT_EQUAL_STRING("Closed", toggleView(WidgetType::BinarySensor, &win, false).state.c_str());
+}
+
+void test_climate_view() {
+  EntityState c = E("climate.a", "heat");
+  c.hvac_mode = "heat";
+  c.hvac_action = "heating";
+  c.current_temperature = 21.5;
+  c.temperature = 22.0;
+  c.current_humidity = 45;
+  c.target_temp_step = 0.5;
+  ClimateView v = climateView(&c);
+  TEST_ASSERT_EQUAL_STRING("21.5\xC2\xB0", v.temp.c_str());
+  TEST_ASSERT_EQUAL_STRING("22.0\xC2\xB0", v.target.c_str());
+  TEST_ASSERT_EQUAL_STRING("45%", v.hum.c_str());
+  TEST_ASSERT_EQUAL(ActionIcon::Flame, v.act);
+  c.target_temp_step = 1;
+  TEST_ASSERT_EQUAL_STRING("22\xC2\xB0", climateView(&c).target.c_str());
+  c.hvac_action = "off";  // unknown action: falls back to the mode icon
+  c.hvac_mode = "cool";
+  TEST_ASSERT_EQUAL(ActionIcon::Snow, climateView(&c).act);
+  c.hvac_mode = "off";
+  c.state = "off";
+  v = climateView(&c);
+  TEST_ASSERT_EQUAL_STRING("Off", v.target.c_str());
+  TEST_ASSERT_EQUAL(ActionIcon::Power, v.act);
+  c.current_humidity.reset();
+  TEST_ASSERT_TRUE(climateView(&c).hum.empty());
+}
+
+void test_sensor_numeric_parsing() {
+  EntityState s = E("sensor.t", "8.4");
+  const char *good[] = {"8.4", "-3", "+2.5", ".5", "5.", "1e3", "-1.5E-2", "0"};
+  const char *bad[] = {"nan", "inf", "-inf", "NaN", "0x1A", "", " 5", "5 ", "1e", "e5", ".", "-", "1e999", "5,5", "1.2.3", "infinity"};
+  for (auto g : good) { s.state = g; TEST_ASSERT_TRUE_MESSAGE(sensorView(&s).numeric, g); }
+  for (auto b : bad) { s.state = b; TEST_ASSERT_FALSE_MESSAGE(sensorView(&s).numeric, b); }
+}
+
+void test_fake_climate_step_zero_or_negative() {
+  EntityState c = E("climate.a", "heat");
+  c.temperature = 21.0;
+  for (double st : {0.0, -1.0}) {
+    c.target_temp_step = st;
+    ActionResult r = fakeAction(WidgetType::Climate, 2, {&c});
+    TEST_ASSERT_TRUE(r.changed);
+    TEST_ASSERT_FLOAT_WITHIN(0.001, 21.5, *r.states[0].temperature);
+  }
+}
+
+void test_sensor_weather_vacuum() {
+  EntityState s = E("sensor.t", "8.4");
+  s.unit_of_measurement = "\xC2\xB0" "C";
+  SensorView sv = sensorView(&s);
+  TEST_ASSERT_TRUE(sv.numeric);
+  TEST_ASSERT_EQUAL_STRING("\xC2\xB0" "C", sv.unit.c_str());
+  s.unit_of_measurement = "kWh";
+  TEST_ASSERT_EQUAL_STRING(" kWh", sensorView(&s).unit.c_str());
+  s.state = "home";
+  TEST_ASSERT_FALSE(sensorView(&s).numeric);
+  TEST_ASSERT_TRUE(sensorView(&s).unit.empty());
+
+  EntityState w = E("weather.h", "cloudy");
+  w.temperature = 12.4;
+  w.humidity = 76;
+  WeatherView wv = weatherView(&w);
+  TEST_ASSERT_EQUAL_STRING("12", wv.temp.c_str());
+  TEST_ASSERT_EQUAL_STRING("Cloudy", wv.cond.c_str());
+  TEST_ASSERT_EQUAL(WeatherIcon::Cloudy, wv.icon);
+  TEST_ASSERT_EQUAL_STRING("76%", wv.hum.c_str());
+  w.state = "exceptional";
+  TEST_ASSERT_EQUAL(WeatherIcon::Unknown, weatherView(&w).icon);
+
+  EntityState v = E("vacuum.r", "cleaning");
+  v.battery_level = 12;
+  VacuumView vv = vacuumView(&v);
+  TEST_ASSERT_TRUE(vv.startFilled);
+  TEST_ASSERT_TRUE(vv.lowBattery);
+  v.state = "error";
+  v.status = "Stuck";
+  vv = vacuumView(&v);
+  TEST_ASSERT_TRUE(vv.error);
+  TEST_ASSERT_FALSE(vv.showBattery);
+  TEST_ASSERT_EQUAL_STRING("Stuck", vv.status.c_str());
+}
+
+// ---- fake actions ----
+
+void test_fake_toggle_and_group() {
+  EntityState a = E("light.a", "off"), b = E("light.b", "on");
+  ActionResult r = fakeAction(WidgetType::Light, 0, {&a, &b});
+  TEST_ASSERT_TRUE(r.changed);
+  TEST_ASSERT_EQUAL(2, r.states.size());
+  TEST_ASSERT_EQUAL_STRING("on", r.states[0].state.c_str());
+  TEST_ASSERT_EQUAL_STRING("on", r.states[1].state.c_str());
+  TEST_ASSERT_TRUE(r.states[0].brightness.has_value());
+  EntityState un = E("light.c", "unavailable", false);
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Light, 0, {&un}).changed);
+}
+
+void test_fake_cover() {
+  EntityState c = E("cover.a", "closed");
+  c.current_position = 0;
+  TEST_ASSERT_EQUAL_STRING("opening", fakeAction(WidgetType::Cover, 1, {&c}).states[0].state.c_str());
+  TEST_ASSERT_EQUAL_STRING("closing", fakeAction(WidgetType::Cover, 3, {&c}).states[0].state.c_str());
+  TEST_ASSERT_EQUAL_STRING("closed", fakeAction(WidgetType::Cover, 2, {&c}).states[0].state.c_str());
+  c.state = "opening";
+  c.current_position = 40;
+  TEST_ASSERT_EQUAL_STRING("open", fakeAction(WidgetType::Cover, 2, {&c}).states[0].state.c_str());
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Cover, 0, {&c}).changed);
+}
+
+void test_fake_climate_step_and_limits() {
+  EntityState c = E("climate.a", "heat");
+  c.temperature = 22.0;
+  c.target_temp_step = 0.5;
+  c.min_temp = 20;
+  c.max_temp = 22.5;
+  ActionResult r = fakeAction(WidgetType::Climate, 2, {&c});
+  TEST_ASSERT_TRUE(r.changed);
+  TEST_ASSERT_FLOAT_WITHIN(0.001, 22.5, *r.states[0].temperature);
+  c.temperature = 22.5;
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Climate, 2, {&c}).changed);
+  c.temperature = 20.0;
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Climate, 1, {&c}).changed);
+}
+
+void test_fake_vacuum() {
+  EntityState v = E("vacuum.r", "docked");
+  TEST_ASSERT_EQUAL_STRING("cleaning", fakeAction(WidgetType::Vacuum, 1, {&v}).states[0].state.c_str());
+  TEST_ASSERT_EQUAL_STRING("paused", fakeAction(WidgetType::Vacuum, 2, {&v}).states[0].state.c_str());
+  TEST_ASSERT_EQUAL_STRING("returning", fakeAction(WidgetType::Vacuum, 3, {&v}).states[0].state.c_str());
+}
+
+void test_demo_states_cover_every_entity() {
+  config::Config cfg = exampleConfig();
+  auto st = demoStates(cfg);
+  TEST_ASSERT_EQUAL(cfg.entityIds.size(), st.size());
+  for (const auto &s : st) TEST_ASSERT_TRUE(s.available);
+}
+
+void test_demo_unavailable_suffix() {
+  config::Config cfg;
+  cfg.entityIds = {"light.garage_unavailable", "light.ok"};
+  auto st = demoStates(cfg);
+  TEST_ASSERT_FALSE(st[0].available);
+  TEST_ASSERT_TRUE(st[1].available);
+  TEST_ASSERT_EQUAL_STRING("Ok", prettyName("light.ok").c_str());
+}
+
+// ---- app state ----
+
+static settings::Orientation P = settings::Orientation::Portrait;
+
+static int findWidget(const AppState &a, WidgetType t) {
+  for (const auto &pl : a.layout().widgets) if (pl.type == t) return pl.index;
+  return -1;
+}
+
+void test_app_toggle_pending_then_confirmed() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  // Ceiling light: the first light widget; it is on in the demo.
+  int idx = findWidget(a, WidgetType::Light);
+  TEST_ASSERT_TRUE(idx >= 0);
+  ui::Rect r;
+  for (auto &pl : a.layout().widgets) if (pl.index == idx) r = pl.rect;
+  const std::string id = a.config().tabs[0].widgets[size_t(idx)].entity;
+  TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());
+  TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, 1000));
+  WidgetData d = a.widgetData(idx);
+  TEST_ASSERT_TRUE(d.pending);
+  TEST_ASSERT_EQUAL_STRING("off", d.members[0]->state.c_str());  // requested state shown at once
+  TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());
+  TEST_ASSERT_FALSE(a.tick(1000 + kPendingMs - 1));
+  TEST_ASSERT_TRUE(a.tick(1000 + kPendingMs));
+  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_EQUAL_STRING("off", a.store().get(id)->state.c_str());
+}
+
+void test_app_cover_button_pending_keeps_state() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  int idx = findWidget(a, WidgetType::Cover);
+  ui::Rect r;
+  for (auto &pl : a.layout().widgets) if (pl.index == idx) r = pl.rect;
+  auto subs = ui::subRegions(WidgetType::Cover, config::WidgetSize{2, 1}, r);
+  const ui::Rect stop = subs[1].rect;
+  TEST_ASSERT_TRUE(a.touch({stop.x + 5, stop.y + 5}, 0));
+  WidgetData d = a.widgetData(idx);
+  TEST_ASSERT_TRUE(d.pending);
+  TEST_ASSERT_EQUAL(2, d.pendingSub);
+  TEST_ASSERT_EQUAL_STRING("opening", d.members[0]->state.c_str());  // unchanged while pending
+  // the body of a multi-button widget does nothing
+  TEST_ASSERT_FALSE(a.touch({r.x + 5, r.y + 5}, 10));
+  TEST_ASSERT_TRUE(a.tick(kPendingMs));
+  TEST_ASSERT_EQUAL_STRING("open", a.store().get(a.config().tabs[0].widgets[size_t(idx)].entity)->state.c_str());
+}
+
+void test_app_climate_taps_accumulate() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  int idx = findWidget(a, WidgetType::Climate);
+  ui::Rect r;
+  for (auto &pl : a.layout().widgets) if (pl.index == idx) r = pl.rect;
+  auto subs = ui::subRegions(WidgetType::Climate, config::WidgetSize{2, 1}, r);
+  const ui::Rect plus = subs[1].rect;
+  TEST_ASSERT_TRUE(a.touch({plus.x + 5, plus.y + 5}, 0));
+  TEST_ASSERT_TRUE(a.touch({plus.x + 5, plus.y + 5}, 100));
+  WidgetData d = a.widgetData(idx);
+  TEST_ASSERT_FLOAT_WITHIN(0.001, 23.0, *d.members[0]->temperature);  // 22.0 + 2 x 0.5
+  TEST_ASSERT_FALSE(a.tick(100 + kPendingMs - 1));
+  TEST_ASSERT_TRUE(a.tick(100 + kPendingMs));
+  TEST_ASSERT_FLOAT_WITHIN(0.001, 23.0, *a.store().get(a.config().tabs[0].widgets[size_t(idx)].entity)->temperature);
+}
+
+void test_app_tab_touch_is_full() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  const ui::Rect s1 = a.layout().tabSlots[1].rect;
+  TEST_ASSERT_TRUE(a.touch({s1.x + 5, s1.y + 5}, 0));
+  TEST_ASSERT_EQUAL(1, a.shownTab());
+  TEST_ASSERT_TRUE(a.takeFull());
+  TEST_ASSERT_FALSE(a.takeFull());
+}
+
+void test_app_rocker_tab_debounce() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  TEST_ASSERT_TRUE(a.rocker(ui::PhysicalKey::Down, 1000));  // NEXT: tab 1, content follows later
+  TEST_ASSERT_EQUAL(1, a.focus().tab);
+  TEST_ASSERT_EQUAL(0, a.shownTab());
+  TEST_ASSERT_TRUE(a.focus().ringVisible);
+  TEST_ASSERT_FALSE(a.tick(1399));
+  TEST_ASSERT_EQUAL(0, a.shownTab());
+  TEST_ASSERT_TRUE(a.tick(1400));
+  TEST_ASSERT_EQUAL(1, a.shownTab());
+  TEST_ASSERT_TRUE(a.takeFull());
+}
+
+void test_app_rocker_toggle_action() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  // PUSH in TAB mode enters WIDGET mode on the first focusable widget (the cover), NEXT moves on.
+  TEST_ASSERT_TRUE(a.rocker(ui::PhysicalKey::Push, 0));
+  TEST_ASSERT_EQUAL(ui::FocusMode::Widget, a.focus().mode);
+  const int cover = a.focusedWidgetIndex();
+  TEST_ASSERT_EQUAL(0, cover);
+  TEST_ASSERT_TRUE(a.rocker(ui::PhysicalKey::Push, 10));  // multi-button: enter INNER
+  TEST_ASSERT_EQUAL(ui::FocusMode::Inner, a.focus().mode);
+  TEST_ASSERT_TRUE(a.rocker(ui::PhysicalKey::Push, 20));  // entry = stop
+  TEST_ASSERT_TRUE(a.widgetData(0).pending);
+  TEST_ASSERT_EQUAL(2, a.widgetData(0).pendingSub);
+}
+
+void test_app_error_screen() {
+  AppState a;
+  config::ConfigError e("tabs[0].widgets[1].entity", "unknown entity", 7);
+  a.initError({e}, P);
+  TEST_ASSERT_EQUAL(Screen::ConfigError, a.screen());
+  TEST_ASSERT_FALSE(a.touch({10, 10}, 0));
+  TEST_ASSERT_EQUAL(7, a.errors()[0].line);
+}
+
+
+// ---- tester additions (task 017) ----
+
+void test_t_tick_survives_millis_wraparound() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  int idx = findWidget(a, WidgetType::Light);
+  ui::Rect r;
+  for (auto &pl : a.layout().widgets) if (pl.index == idx) r = pl.rect;
+  const uint32_t t0 = 0xFFFFFF00u;  // commit time wraps past 2^32
+  TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, t0));
+  TEST_ASSERT_FALSE(a.tick(t0 + 100));
+  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.tick(t0 + kPendingMs));  // wrapped value
+  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+}
+
+void test_t_tab_touch_cancels_rocker_debounce() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  TEST_ASSERT_TRUE(a.rocker(ui::PhysicalKey::Down, 1000));  // focus tab 1, content not yet
+  const ui::Rect s0 = a.layout().tabSlots[0].rect;
+  a.touch({s0.x + 5, s0.y + 5}, 1100);  // tap tab 0 meanwhile
+  TEST_ASSERT_EQUAL(0, a.shownTab());
+  TEST_ASSERT_EQUAL(0, a.focus().tab);
+  a.takeFull();
+  a.tick(5000);  // the stale debounce must not switch to tab 1
+  TEST_ASSERT_EQUAL(0, a.shownTab());
+  TEST_ASSERT_FALSE(a.takeFull());
+}
+
+void test_t_retap_same_tab_is_not_full() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  const ui::Rect s0 = a.layout().tabSlots[0].rect;
+  a.touch({s0.x + 5, s0.y + 5}, 0);
+  TEST_ASSERT_FALSE(a.takeFull());
+}
+
+void test_t_toggle_repeat_during_pending_ignored() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  int idx = findWidget(a, WidgetType::Light);
+  ui::Rect r;
+  for (auto &pl : a.layout().widgets) if (pl.index == idx) r = pl.rect;
+  TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, 0));
+  TEST_ASSERT_FALSE(a.touch({r.x + 10, r.y + 10}, 50));
+  TEST_ASSERT_EQUAL(1, (int)a.pendingList().size());
+  a.tick(kPendingMs);
+  TEST_ASSERT_TRUE(a.pendingList().empty());
+  // after the commit a new tap toggles back
+  TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, 1000));
+}
+
+void test_t_touch_outside_everything_changes_nothing() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  TEST_ASSERT_FALSE(a.touch({-5, -5}, 0));
+  TEST_ASSERT_FALSE(a.touch({100000, 100000}, 0));
+  TEST_ASSERT_TRUE(a.pendingList().empty());
+  TEST_ASSERT_FALSE(a.takeFull());
+}
+
+void test_t_error_screen_ignores_rocker_and_tick() {
+  AppState a;
+  a.initError({config::ConfigError("a.b", "bad", 3)}, P);
+  TEST_ASSERT_FALSE(a.rocker(ui::PhysicalKey::Push, 0));
+  TEST_ASSERT_FALSE(a.rocker(ui::PhysicalKey::LongPush, 0));
+  TEST_ASSERT_FALSE(a.tick(100000));
+  TEST_ASSERT_EQUAL(Screen::ConfigError, a.screen());
+}
+
+void test_t_cover_group_partly_unavailable_shows_badge() {
+  EntityState a1 = E("cover.a", "open"), b = E("cover.b", "open", false);
+  a1.current_position = 100;
+  CoverView v = coverView({&a1, &b}, true);
+  TEST_ASSERT_TRUE(v.alertBadge);
+  TEST_ASSERT_EQUAL_STRING("Open", v.state.c_str());
+  // a group with a member not loaded yet counts as incomplete too
+  v = coverView({&a1, nullptr}, true);
+  TEST_ASSERT_TRUE(v.alertBadge);
+}
+
+void test_t_fake_action_on_unavailable_or_missing_does_nothing() {
+  EntityState u = E("light.a", "on", false);
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Light, 0, {&u}).changed);
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Light, 0, {nullptr}).changed);
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Climate, 1, {}).changed);
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Vacuum, 1, {nullptr}).changed);
+  EntityState c = E("climate.a", "heat");  // no target temperature known
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Climate, 2, {&c}).changed);
+}
+
+void test_t_light_group_turns_all_to_opposite_of_first() {
+  EntityState a1 = E("light.a", "on"), b = E("light.b", "off");
+  ActionResult r = fakeAction(WidgetType::Light, 0, {&a1, &b});
+  TEST_ASSERT_EQUAL(2, (int)r.states.size());
+  TEST_ASSERT_EQUAL_STRING("off", r.states[0].state.c_str());
+  TEST_ASSERT_EQUAL_STRING("off", r.states[1].state.c_str());
+}
+
+void test_t_window_sensor_texts() {
+  EntityState w = E("binary_sensor.w", "on");
+  w.device_class = "window";
+  TEST_ASSERT_EQUAL_STRING("Open", toggleView(WidgetType::BinarySensor, &w, false).state.c_str());
+  w.state = "off";
+  TEST_ASSERT_EQUAL_STRING("Closed", toggleView(WidgetType::BinarySensor, &w, false).state.c_str());
+  w.device_class = "";
+  TEST_ASSERT_EQUAL_STRING("Off", toggleView(WidgetType::BinarySensor, &w, false).state.c_str());
+}
+
+int main() {
+  UNITY_BEGIN();
+  RUN_TEST(test_fmt_number);
+  RUN_TEST(test_cover_single);
+  RUN_TEST(test_cover_unavailable_and_loading);
+  RUN_TEST(test_cover_group);
+  RUN_TEST(test_toggle_text);
+  RUN_TEST(test_climate_view);
+  RUN_TEST(test_sensor_weather_vacuum);
+  RUN_TEST(test_fake_toggle_and_group);
+  RUN_TEST(test_fake_cover);
+  RUN_TEST(test_fake_climate_step_and_limits);
+  RUN_TEST(test_fake_vacuum);
+  RUN_TEST(test_demo_states_cover_every_entity);
+  RUN_TEST(test_demo_unavailable_suffix);
+  RUN_TEST(test_app_toggle_pending_then_confirmed);
+  RUN_TEST(test_app_cover_button_pending_keeps_state);
+  RUN_TEST(test_app_climate_taps_accumulate);
+  RUN_TEST(test_app_tab_touch_is_full);
+  RUN_TEST(test_app_rocker_tab_debounce);
+  RUN_TEST(test_app_rocker_toggle_action);
+  RUN_TEST(test_app_error_screen);
+  RUN_TEST(test_t_tick_survives_millis_wraparound);
+  RUN_TEST(test_t_tab_touch_cancels_rocker_debounce);
+  RUN_TEST(test_t_retap_same_tab_is_not_full);
+  RUN_TEST(test_t_toggle_repeat_during_pending_ignored);
+  RUN_TEST(test_t_touch_outside_everything_changes_nothing);
+  RUN_TEST(test_t_error_screen_ignores_rocker_and_tick);
+  RUN_TEST(test_t_cover_group_partly_unavailable_shows_badge);
+  RUN_TEST(test_t_fake_action_on_unavailable_or_missing_does_nothing);
+  RUN_TEST(test_t_light_group_turns_all_to_opposite_of_first);
+  RUN_TEST(test_t_window_sensor_texts);
+  RUN_TEST(test_sensor_numeric_parsing);
+  RUN_TEST(test_fake_climate_step_zero_or_negative);
+  return UNITY_END();
+}

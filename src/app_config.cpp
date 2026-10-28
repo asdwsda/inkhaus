@@ -1,0 +1,151 @@
+#include "app_config.h"
+
+#include <Arduino.h>
+
+#include "boot.h"
+#include "config_sd.h"
+
+extern const char kDemoYamlStart[] asm("_binary_config_example_yaml_start");
+extern const char kDemoYamlEnd[] asm("_binary_config_example_yaml_end");
+
+namespace app_config {
+
+namespace {
+
+#if defined(TEST_CONFIG_BROKEN)
+// Line 7: the entity id has no domain separator; line 9: a widget without entity.
+const char kInjected[] =
+    "version: 1\n"
+    "tabs:\n"
+    "  - title: Living room\n"
+    "    widgets:\n"
+    "      - entity: light.ceiling\n"
+    "      - entity: cover.shutter\n"
+    "      - entity: notanentity\n"
+    "      - name: Nothing\n";
+#elif defined(TEST_CONFIG_MOCKUP)
+const char kInjected[] =
+    "version: 1\n"
+    "groups:\n"
+    "  downstairs_shutters: [cover.kitchen_shutter, cover.hall_shutter]\n"
+    "tabs:\n"
+    "  - title: Living room\n"
+    "    widgets:\n"
+    "      - entity: cover.living_room_shutter\n"
+    "        name: Shutter\n"
+    "      - group: downstairs_shutters\n"
+    "        name: Downstairs shutters\n"
+    "      - entity: light.living_room_ceiling\n"
+    "      - entity: light.living_room_floor_lamp\n"
+    "        name: Floor lamp\n"
+    "      - entity: switch.living_room_fan\n"
+    "      - entity: climate.living_room\n"
+    "      - entity: binary_sensor.living_room_window\n"
+    "      - entity: sensor.outside_temperature\n"
+    "        name: Outside\n"
+    "      - entity: automation.night_mode\n"
+    "        name: Night mode\n"
+    "      - entity: weather.home\n"
+    "  - title: Whole house\n"
+    "    widgets:\n"
+    "      - entity: vacuum.robot\n"
+    "        name: Vacuum\n"
+    "      - entity: climate.bedroom\n"
+    "      - entity: sensor.outside_temperature\n"
+    "        name: Outside temperature today\n"
+    "        size: 2x1\n"
+    "      - entity: sensor.outside_temperature\n"
+    "        name: Outside\n"
+    "      - entity: weather.home\n"
+    "        size: 1x1\n"
+    "      - entity: person.alice\n"
+    "        type: sensor\n"
+    "  - title: Kitchen\n"
+    "    widgets:\n"
+    "      - entity: cover.garage_unavailable\n"
+    "      - entity: light.garage_unavailable\n"
+    "      - entity: switch.garage_unavailable\n"
+    "      - entity: climate.garage_unavailable\n"
+    "      - entity: sensor.garage_unavailable\n"
+    "      - entity: weather.garage_unavailable\n"
+    "      - entity: vacuum.garage_unavailable\n"
+    "      - entity: binary_sensor.garage_unavailable\n"
+    "  - title: Bedroom\n"
+    "    widgets:\n"
+    "      - entity: switch.pager_0\n"
+    "      - entity: switch.pager_1\n"
+    "      - entity: switch.pager_2\n"
+    "      - entity: switch.pager_3\n"
+    "      - entity: switch.pager_4\n"
+    "      - entity: switch.pager_5\n"
+    "      - entity: switch.pager_6\n"
+    "      - entity: switch.pager_7\n"
+    "      - entity: switch.pager_8\n"
+    "      - entity: switch.pager_9\n"
+    "      - entity: switch.pager_10\n"
+    "      - entity: switch.pager_11\n"
+    "      - entity: switch.pager_12\n"
+    "      - entity: switch.pager_13\n"
+    "      - entity: switch.pager_14\n"
+    "      - entity: switch.pager_15\n"
+    "      - entity: switch.pager_16\n"
+    "      - entity: switch.pager_17\n"
+    "      - entity: switch.pager_18\n"
+    "      - entity: switch.pager_19\n"
+    "      - entity: switch.pager_20\n"
+    "  - title: Garage\n"
+    "    widgets:\n"
+    "      - entity: switch.garage_door\n";
+#endif
+
+Loaded fromParse(config::ParseResult &&pr, bool demo, const char *source) {
+  Loaded l;
+  l.source = source;
+  if (pr.ok()) {
+    l.cfg = std::move(pr.config);
+    l.demo = demo;
+  } else {
+    l.error = true;
+    l.errors = std::move(pr.errors);
+  }
+  return l;
+}
+
+}  // namespace
+
+Loaded load() {
+#if defined(TEST_CONFIG_BROKEN) || defined(TEST_CONFIG_MOCKUP)
+#if defined(TEST_CONFIG_BROKEN)
+  boot::log("config", "test_broken");
+  return fromParse(config::parseConfig(kInjected, sizeof(kInjected) - 1), false, "test_broken");
+#else
+  boot::log("config", "test_mockup");
+  return fromParse(config::parseConfig(kInjected, sizeof(kInjected) - 1), true, "test_mockup");
+#endif
+#else
+  const uint32_t t0 = millis();
+  config_sd::LoadResult r = config_sd::load();
+  boot::log("config_sd", config_sd::statusText(r.status));
+  boot::log("config_sd_ms", (long)(millis() - t0));
+  switch (r.status) {
+    case config_sd::Status::Ok:
+      return fromParse(std::move(r.parse), false, "sd");
+    case config_sd::Status::NoCard:
+    case config_sd::Status::NoFile: {
+      // No config on the card: the demo from config.example.yaml (fake values only).
+      size_t n = size_t(kDemoYamlEnd - kDemoYamlStart);
+      while (n > 0 && kDemoYamlStart[n - 1] == '\0') --n;  // embed_txtfiles appends a NUL
+      return fromParse(config::parseConfig(kDemoYamlStart, n), true, "demo");
+    }
+    default: {
+      Loaded l;
+      l.source = "sd_error";
+      l.error = true;
+      l.errors.push_back(config::ConfigError("", config_sd::statusText(r.status), 0));
+      return l;
+    }
+  }
+#endif
+}
+
+}  // namespace app_config

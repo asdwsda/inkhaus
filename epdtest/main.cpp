@@ -570,6 +570,7 @@ void stepDone() {
 
 void setup() {
   Serial.begin(115200);
+  { Preferences p; if (p.begin("diag", false)) { p.remove("scr"); p.remove("chash"); p.remove("psig"); p.remove("tiles"); p.end(); } }  // forget the app's screen record (task 017)
   const uint32_t t0 = micros();
   const uint8_t step = loadStep();
   g_noResetStart = (step == S_B_DRAW || step == S_B_CHECK);

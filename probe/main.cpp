@@ -8,6 +8,7 @@
 //    the push button mapping is not known before step 4.
 //  - After every accepted input there is a 300 ms lockout to swallow bounce.
 #include <M5Unified.h>
+#include <Preferences.h>
 #include <SD.h>
 #include <SPI.h>
 #include <esp_system.h>
@@ -463,6 +464,7 @@ void stepDone() {
 
 void setup() {
   Serial.begin(115200);
+  { Preferences p; if (p.begin("diag", false)) { p.remove("scr"); p.remove("chash"); p.remove("psig"); p.remove("tiles"); p.end(); } }  // forget the app's screen record (task 017)
   Serial.println("PROBE: stage=pre_begin");
   Serial.flush();
 

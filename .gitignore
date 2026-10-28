@@ -5,3 +5,4 @@ include/secrets.h
 config.yaml
 .claude/worktrees/
 .claude/agent-memory/
+__pycache__/

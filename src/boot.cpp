@@ -2,6 +2,7 @@
 
 #include <M5Unified.h>
 #include <esp_system.h>
+#include <soc/timer_group_struct.h>
 #include <esp_task_wdt.h>
 
 #include "crash_guard.h"
@@ -111,7 +112,7 @@ void preparePins() {
 // wait, read preamble 0x1000 + dummy word, then 40 bytes. The first 4 bytes are width/height.
 bool probeController(lgfx::Bus_SPI& bus, uint32_t& idOut) {
     idOut = 0;
-    pinMode(kPinEpdBusy, INPUT);
+    pinMode(kPinEpdBusy, INPUT_PULLUP);
     uint32_t t = millis();
     while (digitalRead(kPinEpdBusy) == LOW) {
         if (millis() - t > 1024) return false;  // never ready
@@ -223,7 +224,7 @@ bool fallbackActive() { return g_bootMode == screen_track::BootMode::StockFallba
 void feed() { esp_task_wdt_reset(); }
 
 bool waitBusyHigh(uint32_t timeoutMs, const char* what) {
-    pinMode(kPinEpdBusy, INPUT);
+    pinMode(kPinEpdBusy, INPUT_PULLUP);  // keep the pull-up Panel_IT8951::init() set
     const uint32_t t = millis();
     while (digitalRead(kPinEpdBusy) == LOW) {
         if (millis() - t >= timeoutMs) {
@@ -304,12 +305,17 @@ void begin() {
     g_bootMode = cd.mode;
     g_crashCount = cd.next.count;
     // Arm the watchdog for this task (the loop task): a hang anywhere in setup ends in a reset.
-    esp_task_wdt_init(kWatchdogS, true);
+    const esp_err_t wdtRc = esp_task_wdt_init(kWatchdogS, true);  // already running: updates the timeout
     esp_task_wdt_add(NULL);
     mark("pre_begin");
     log("reset_reason_early", resetReasonName(rr));
     log("crash_count", (long)g_crashCount);
     log("wdt_timeout_s", (long)kWatchdogS);
+    log("wdt_init_rc", (long)wdtRc);
+    // The timeout actually programmed into the hardware watchdog (MWDT0 stage 0): ticks x prescale
+    // / 80 kHz-per-ms, so that "15000" confirms the 15 s timeout is in effect.
+    log("wdt_effective_ms",
+        (long)((uint64_t)TIMERG0.wdt_config2 * (uint64_t)TIMERG0.wdt_config1.clk_prescale / 80000ull));
     if (g_bootMode == screen_track::BootMode::GiveUp) {
         // Even the stock start-up keeps crashing. Do not loop: switch the device off. (Pressing
         // the power button starts it again with a clean counter.)
