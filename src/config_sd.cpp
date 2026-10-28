@@ -71,6 +71,29 @@ Status readFile(std::string &out) {
   return status;
 }
 
+Status stat(config::Fingerprint &fp) {
+  fp = config::Fingerprint();
+  if (!mount()) {
+    digitalWrite(kPinCs, HIGH);
+    return Status::NoCard;
+  }
+  Status status = Status::Ok;
+  {
+    File f = SD.open(kPath, FILE_READ);
+    if (!f || f.isDirectory()) {
+      status = Status::NoFile;
+    } else if (f.size() > config::kMaxFileBytes) {
+      status = Status::TooLarge;
+    } else {
+      fp.size = uint32_t(f.size());
+      fp.mtime = uint32_t(f.getLastWrite());
+    }
+    if (f) f.close();
+  }
+  unmount();
+  return status;
+}
+
 LoadResult load() {
   LoadResult r;
   std::string text;

@@ -19,4 +19,7 @@ struct Loaded {
 
 Loaded load();
 
+// Drops the parsed-config cache in internal flash (call after /config.yaml was replaced).
+void invalidateCache();
+
 }  // namespace app_config

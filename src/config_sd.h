@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "config_cache.h"
 #include "config_model.h"
 
 namespace config_sd {
@@ -32,6 +33,9 @@ struct LoadResult {
   Status status = Status::NoCard;
   config::ParseResult parse;  // only meaningful when status == Ok
 };
+
+// Size + mtime of /config.yaml without reading it (mounts and unmounts like readFile).
+Status stat(config::Fingerprint &fp);
 
 // readFile() + config::parseConfig().
 LoadResult load();

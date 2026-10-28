@@ -30,3 +30,7 @@ Per ARCHITECTURE.md ("parsed only when the file changes", "SD for editing, inter
 ## Notes
 - PC-only until the device is back. Don't touch src/main.cpp beyond a one-line call if unavoidable
   (task 024 edits main.cpp in parallel).
+- PC part done (2026-10-28): lib/config config_cache (binary "MPCC" + CRC32, all fields; 7 tests incl.
+  every truncation and bit flip), `config_sd::stat`, cache behind `app_config::load()` (LittleFS
+  `/config.cache`, tmp + rename), invalidated by `putfile config.yaml`. Device timing check pending.
+  Known limit: a PC edit keeping size and mtime identical isn't detected.

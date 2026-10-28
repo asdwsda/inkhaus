@@ -1,6 +1,9 @@
 #include "app_config.h"
 
 #include <Arduino.h>
+#include <LittleFS.h>
+
+#include <string>
 
 #include "boot.h"
 #include "config_sd.h"
@@ -111,7 +114,59 @@ Loaded fromParse(config::ParseResult &&pr, bool demo, const char *source) {
   return l;
 }
 
+// Parsed-config cache in LittleFS (task 025): fingerprint (size + mtime of the SD file) + binary
+// model. Holds the same secrets as config.yaml; never logged.
+constexpr const char *kCachePath = "/config.cache";
+constexpr const char *kCacheTmp = "/config.cache.tmp";
+
+bool fsReady() {
+  static bool tried = false, ok = false;
+  if (!tried) {
+    tried = true;
+    ok = LittleFS.begin(true);  // formats an unusable partition once
+  }
+  return ok;
+}
+
+bool readCache(const config::Fingerprint &want, config::Config &out) {
+  if (!fsReady()) return false;
+  File f = LittleFS.open(kCachePath, "r");
+  if (!f) return false;
+  const size_t n = f.size();
+  if (n == 0 || n > 2 * config::kMaxFileBytes) {
+    f.close();
+    return false;
+  }
+  std::string data(n, '\0');
+  const size_t got = f.read(reinterpret_cast<uint8_t *>(&data[0]), n);
+  f.close();
+  config::Fingerprint fp;
+  return got == n && config::unpackCache(data, fp, out) && fp == want;
+}
+
+void writeCache(const config::Fingerprint &fp, const config::Config &cfg) {
+  if (!fsReady()) return;
+  const std::string data = config::packCache(fp, cfg);
+  LittleFS.remove(kCacheTmp);
+  File f = LittleFS.open(kCacheTmp, "w");
+  if (!f) return;
+  const size_t put = f.write(reinterpret_cast<const uint8_t *>(data.data()), data.size());
+  f.close();
+  if (put == data.size()) LittleFS.remove(kCachePath);
+  if (put != data.size() || !LittleFS.rename(kCacheTmp, kCachePath)) {
+    LittleFS.remove(kCacheTmp);
+    LittleFS.remove(kCachePath);
+  }
+}
+
 }  // namespace
+
+void invalidateCache() {
+  if (fsReady()) {
+    LittleFS.remove(kCachePath);
+    LittleFS.remove(kCacheTmp);
+  }
+}
 
 Loaded load() {
 #if defined(TEST_CONFIG_BROKEN) || defined(TEST_CONFIG_MOCKUP)
@@ -124,17 +179,33 @@ Loaded load() {
 #endif
 #else
   const uint32_t t0 = millis();
+  config::Fingerprint fp;
+  const config_sd::Status st = config_sd::stat(fp);
+  if (st == config_sd::Status::Ok) {
+    Loaded l;
+    if (readCache(fp, l.cfg)) {
+      l.source = "cache";
+      Serial.printf("CONFIG: source=cache ms=%lu\n", (unsigned long)(millis() - t0));
+      return l;
+    }
+  } else {
+    invalidateCache();  // no card / no file: a stale cache must not outlive its source
+  }
   config_sd::LoadResult r = config_sd::load();
   boot::log("config_sd", config_sd::statusText(r.status));
   boot::log("config_sd_ms", (long)(millis() - t0));
   switch (r.status) {
     case config_sd::Status::Ok:
+      if (r.parse.ok() && st == config_sd::Status::Ok) writeCache(fp, r.parse.config);
+      else invalidateCache();
+      Serial.printf("CONFIG: source=sd ms=%lu\n", (unsigned long)(millis() - t0));
       return fromParse(std::move(r.parse), false, "sd");
     case config_sd::Status::NoCard:
     case config_sd::Status::NoFile: {
       // No config on the card: the demo from config.example.yaml (fake values only).
       size_t n = size_t(kDemoYamlEnd - kDemoYamlStart);
       while (n > 0 && kDemoYamlStart[n - 1] == '\0') --n;  // embed_txtfiles appends a NUL
+      Serial.printf("CONFIG: source=demo ms=%lu\n", (unsigned long)(millis() - t0));
       return fromParse(config::parseConfig(kDemoYamlStart, n), true, "demo");
     }
     default: {

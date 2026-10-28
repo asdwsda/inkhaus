@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "app_config.h"
 #include "boot.h"
 #include "config_sd.h"
 #include "provision_proto.h"
@@ -120,6 +121,7 @@ void receive(const Request &req) {
     free(buf);
     return;
   }
+  if (req.name == "config.yaml") app_config::invalidateCache();
   Serial.printf("PUT-OK %u %s\n", (unsigned)req.size, hex32(req.crc).c_str());
   Serial.printf("%s\n", configSummary(config::parseConfig(reinterpret_cast<const char *>(buf), req.size)).c_str());
   free(buf);
