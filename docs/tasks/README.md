@@ -32,3 +32,4 @@
 | 028 | [State wording and icons](028-state-wording.md) | in-progress | 026 |
 | 029 | [Wake log on the SD card](029-wake-log-sd.md) | in-progress | 024 |
 | 030 | [Configurable sensor attributes (config + data)](030-sensor-attributes.md) | done | 003, 004, 017 |
+| 032 | [Separate secrets.yaml from config.yaml](032-separate-secrets.md) | in-progress | 003, 020, 025 |
