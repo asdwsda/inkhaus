@@ -351,7 +351,6 @@ void setup() {
   d.setRotation(rotation);
   if (kind == power::Session::LowBattery) lowBatterySleep();  // returns only if sleeping failed
   if (!g_scheduled) input::begin();  // a scheduled refresh never initialises touch input
-  g_wakeGuard.arm(g_wake, millis());
 
   g_cfg = app_config::load();
   const app_config::Loaded &cfg = g_cfg;
@@ -409,6 +408,7 @@ void setup() {
   // Leave the controller idle: close any read burst before a restart or sleep.
   boot::log("settle_bst_end", boot::endBurstRead() ? 1L : 0L);
   boot::setupDone();
+  g_wakeGuard.arm(g_wake, millis());  // last: the 3 s cap counts from when input starts
 
 #ifdef TLS_CHECK
   tls_check::run();

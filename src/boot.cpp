@@ -8,6 +8,7 @@
 #include "crash_guard.h"
 
 #include <esp_sleep.h>
+#include <driver/gpio.h>
 
 #include "lgfx/v1/panel/Panel_IT8951.hpp"
 #include "lgfx/v1/touch/Touch_GT911.hpp"
@@ -284,6 +285,9 @@ void setupDone() {
 }
 
 void begin() {
+  // Very first: release the pad holds left by sleep::enter() (GPIO2 main power) before any pin write.
+  gpio_deep_sleep_hold_dis();
+  gpio_hold_dis(static_cast<gpio_num_t>(kPinPwr));
     // 4 KB receive buffer: the putfile transfer (task 020) lets the host send 1 KB between ACKs.
     const size_t rxSize = Serial.setRxBufferSize(4096);  // must precede begin()
     Serial.begin(115200);

@@ -47,3 +47,11 @@ of the boot/refresh rules):
   no rtcIntPin, no power_hold pin; _powerOff then just deep-sleeps, :1716-1783). GPIO2 = M5EPD_MAIN_PWR_PIN comes from
   M5GFX.cpp:1644. The BM8563 INT is not a GPIO in M5Unified, so the ESP32 timer stands in for it on USB.
 - Next (device): see the check list in the architect report.
+- Review fixes (2026-10-28): GPIO2 hold released first thing in `boot::begin()`; wake guard armed at the
+  end of setup. Still open from the review: the IT8951 is left running in touch-mode deep sleep
+  (measure), GPIO2 re-asserted 400 ms after power-off (check `path=deepsleep_fallback` never appears
+  on battery), the second `prepareSleep()` may trigger a full refresh, minor alarm rounding.
+- Device, first run (USB): sleep after 20 s idle → `path=poweroff (GPIO2 low)` → `path=deepsleep_fallback
+  (still powered: USB)` as designed.
+- Follow-up (task 023): a config with no entities makes the HA fetch fail with Parse (empty template);
+  "nothing to fetch" should count as success.
