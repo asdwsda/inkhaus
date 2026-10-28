@@ -40,3 +40,21 @@ Out of scope: TLS session resumption (later, together with power measurements).
   by task 020). Until then, test the TLS handshake with a test-only build flag that sets a public
   test URL; no credentials are needed for a 401 check.
 - Found during task 004: Arduino-ESP32 2.0.17 has `setCACertBundle()` but ships no bundle.
+- 2026-10-28: the first attempt was blocked: the permission check refused to execute the downloaded
+  `certs/gen_crt_bundle.py`. The user then approved the ESP-IDF generator and the full bundle
+  (option A). Next session: run `tools/gen_ca_bundle.sh`. If the check blocks it again, the user approves
+  it in the permission prompt or runs `tools/gen_ca_bundle.sh` once themselves (agents never work
+  around the check). Then re-add `board_build.embed_files = certs/x509_crt_bundle` to
+  platformio.ini (removed again so other builds don't fail), build, check `nm` and the flash delta,
+  and run the live 401 check once the user's config is on the SD card.
+- Already present (uncommitted): certs/cacert.pem (curl.se Mozilla list, 118 roots, sha256
+  796f1389…3cbe), certs/gen_crt_bundle.py (sha256 1e8f0dc9…3020), tools/gen_ca_bundle.sh.
+- PC part done (2026-10-28, uncommitted): bundle generated twice, identical sha256 8ca33067…5aec
+  (also matches the user's own run); 54752 bytes, 118 roots incl. GTS Root R1/R4 and ISRG Root X1
+  (checked with a self-written host reader); `board_build.embed_files` re-added; transport unchanged
+  (`setCACertBundle` with the weak symbol). The symbols are kept by the linker only once the
+  transport is referenced (wiring task 023 or the TLS_CHECK hook).
+- `src/tls_check.cpp` (only with `-DTLS_CHECK -DTLS_CHECK_URL=\"…\"`): SD config → Wi-Fi → GET →
+  `TLSCHK:` lines. Hook in setup() to be added by task 023.
+- Device check still open: `https://ha.example.org/api/` → status=401 verified; `https://self-signed.badssl.com/`
+  → rejected (status=0 + error); report a Cloudflare 403/challenge if it appears.
