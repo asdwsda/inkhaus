@@ -41,19 +41,18 @@ Design decisions and the reasons behind them are in [docs/ARCHITECTURE.md](docs/
 
 ## Status
 
-Work in progress. The device is not usable as a remote yet.
+Working on the real device, not finished yet.
 
-| Done (unit-tested on the PC) | Not done yet |
-|---|---|
-| Project skeleton, pinned toolchain | Drawing the widgets on the e-ink panel |
-| Settings (stored in NVS) | Wi-Fi, sleep/wake and power handling on the device |
-| `config.yaml` parser and validation | Settings screen |
-| Home Assistant client (states, service calls, fallback) | HTTPS certificate bundle (task 008) |
-| Power policy (what to do on each wake, sleep plan) | Any on-device test: it hasn't run on hardware yet |
-| UI layout engine (grid, tabs, hit-testing, rocker navigation) | |
+| Works on the device | Built, device check pending | Not done yet |
+|---|---|---|
+| Config-driven tabs and widgets, clean e-ink refreshes | Sleep and wake on battery, touch-wake mode | TLS session resumption (faster wakes) |
+| Touch and rocker navigation, focus ring | Settings screen on the device | Charts and history |
+| Writing `config.yaml` over USB (`tools/provision.py`) | Taps controlling HA entities (tested natively) | BLE ideas (see ARCHITECTURE.md) |
+| Wi-Fi with fast reconnect (~0.4 s cached) | Config cache in internal flash | |
+| HTTPS to Home Assistant, incl. Cloudflare-hosted domains | Readable text states, remote-URL-first | |
+| Fetching real states from Home Assistant, NTP clock | | |
 
 The task list and its progress are in [docs/tasks/README.md](docs/tasks/README.md).
-Right now the firmware only shows a "hello" screen with the version number.
 
 ## Hardware
 
@@ -76,7 +75,8 @@ The first build downloads the ESP32 toolchain (a few hundred MB).
 ## Configuration
 
 1. Copy [`config.example.yaml`](config.example.yaml) to the **root of the SD card** as
-   `config.yaml`.
+   `config.yaml`, or send it over USB without a card reader:
+   `python3 tools/provision.py path/to/config.yaml` (prints only a summary, never the content).
 2. Fill in your Wi-Fi details, your Home Assistant URL(s), and a long-lived access token
    (Home Assistant → your profile → Security → Long-lived access tokens).
 3. Define your tabs and widgets. The widget type comes from the entity's domain:
