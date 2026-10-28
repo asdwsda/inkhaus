@@ -6,6 +6,7 @@
 #include <esp_wifi.h>
 
 #include <cstring>
+#include <ctime>
 
 #include "net_policy.h"
 
@@ -20,6 +21,12 @@ Connector g_conn;
 net::State g_state = net::State::Idle;
 CacheRecord g_cache;
 bool g_cacheLoaded = false;
+CacheRecord g_persisted;  // what NVS holds (default = nothing valid), to write only on change
+volatile bool g_authLatch = false;  // wrong-password disconnect reason seen in this attempt
+bool g_eventsHooked = false;
+
+uint32_t nowEpoch() { return plausibleEpoch((int64_t)time(nullptr)); }
+
 bool g_usingCache = false;
 uint32_t g_connectMs = 0;
 uint32_t g_startMs = 0;
@@ -39,11 +46,14 @@ bool nvsLoad(CacheRecord &r) {
     return ok;
 }
 
+// Writes only if r differs from what NVS already holds (flash wear).
 void nvsSave(const CacheRecord &r) {
+    if (sameRecord(r, g_persisted)) return;
     Preferences p;
     if (!p.begin("netcache", false)) return;
     p.putBytes("rec", &r, sizeof(r));
     p.end();
+    g_persisted = r;
 }
 
 void nvsClear() {
@@ -51,19 +61,26 @@ void nvsClear() {
     if (!p.begin("netcache", false)) return;
     p.remove("rec");
     p.end();
+    g_persisted = CacheRecord{};
 }
 
 bool lanIsStatic() { return g_cfg.hasStaticIp; }
 
 void loadCache() {
     g_cache = CacheRecord{};
+    g_persisted = CacheRecord{};
+    CacheRecord n;
+    bool haveNvs = nvsLoad(n);
+    if (haveNvs) g_persisted = n;
     // RTC survives deep sleep / ESP.restart; NVS survives power-off.
     if (cacheValid(g_rtc, g_cfg.ssid, lanIsStatic())) {
         g_cache = g_rtc;
-    } else {
-        CacheRecord n;
-        if (nvsLoad(n) && cacheValid(n, g_cfg.ssid, lanIsStatic())) g_cache = n;
+    } else if (haveNvs && cacheValid(n, g_cfg.ssid, lanIsStatic())) {
+        g_cache = n;
     }
+    CacheRecord aged = applyLeaseAge(g_cache, nowEpoch());
+    if (!sameRecord(aged, g_cache)) Serial.println("NET: lease=expired");
+    g_cache = aged;
     g_cacheLoaded = true;
 }
 
@@ -86,18 +103,37 @@ void applyIpConfig(bool useLease) {
     WiFi.config(IPAddress(0u), IPAddress(0u), IPAddress(0u));  // back to DHCP
 }
 
-void startAttempt(Attempt a) {
+// Returns false if WiFi.begin refused to start (it returns WL_CONNECT_FAILED then).
+bool startAttempt(Attempt a) {
+    g_authLatch = false;
     WiFi.disconnect(false, false);
+    wl_status_t st;
     if (a == Attempt::Cached) {
         applyIpConfig(true);
-        WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str(), g_cache.channel, g_cache.bssid);
+        st = WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str(), g_cache.channel, g_cache.bssid);
         Serial.printf("NET: phase=attempt_cached ch=%u lease=%d\n", g_cache.channel,
                       hasLease(g_cache) ? 1 : 0);
     } else {
         applyIpConfig(false);
-        WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str());
+        st = WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str());
         Serial.println("NET: phase=attempt_scan");
     }
+    if (st == WL_CONNECT_FAILED) {
+        Serial.printf("NET: begin_failed attempt=%s\n", a == Attempt::Cached ? "cached" : "scan");
+        return false;
+    }
+    return true;
+}
+
+// Starts `a`; if begin() itself fails, lets the state machine move on (cached -> scan -> Failed).
+Phase launch(Attempt a) {
+    Phase ph = Phase::Connecting;
+    while (a != Attempt::None && !startAttempt(a)) {
+        Attempt next = Attempt::None;
+        ph = g_conn.startFailed(next);
+        a = next;
+    }
+    return ph;
 }
 
 void remember() {
@@ -106,15 +142,19 @@ void remember() {
     if (b) memcpy(bssid, b, 6);
     CacheRecord r = makeRecord(g_cfg.ssid, bssid, (uint8_t)WiFi.channel(), lanIsStatic(),
                                (uint32_t)WiFi.localIP(), (uint32_t)WiFi.gatewayIP(),
-                               (uint32_t)WiFi.subnetMask(), (uint32_t)WiFi.dnsIP());
-    bool changed = !g_cacheLoaded || memcmp(&r, &g_cache, sizeof(r)) != 0;
+                               (uint32_t)WiFi.subnetMask(), (uint32_t)WiFi.dnsIP(), nowEpoch());
+    r.lease_epoch = hasLease(r) ? nowEpoch() : 0;
     g_cache = r;
     g_rtc = r;
-    if (changed) nvsSave(r);  // limit flash wear: only when something differs
+    nvsSave(r);  // only writes when something differs (flash wear)
 }
 
 LinkStatus linkStatus() {
-    switch (WiFi.status()) {
+    wl_status_t st = WiFi.status();
+    // Arduino 2.0.17: after an auth failure on the first connect the driver retries by itself
+    // and status() may flip back to IDLE/DISCONNECTED, so the reason is latched by the event.
+    if (st != WL_CONNECTED && g_authLatch) return LinkStatus::AuthFailed;
+    switch (st) {
         case WL_CONNECTED: return LinkStatus::Connected;
         case WL_CONNECT_FAILED:
         case WL_NO_SSID_AVAIL: return LinkStatus::Failed;
@@ -135,6 +175,14 @@ void begin(const config::WifiConfig &wifi) {
         return;
     }
     logSsid("begin");
+    if (!g_eventsHooked) {
+        g_eventsHooked = true;
+        WiFi.onEvent(
+            [](arduino_event_id_t, arduino_event_info_t info) {
+                if (isAuthReason(info.wifi_sta_disconnected.reason)) g_authLatch = true;
+            },
+            ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+    }
     WiFi.persistent(false);
     WiFi.setAutoReconnect(false);
     WiFi.mode(WIFI_STA);
@@ -145,8 +193,11 @@ void begin(const config::WifiConfig &wifi) {
     Serial.printf("NET: cache=%s failures=%u\n", use ? "hit" : (g_cache.magic ? "invalid" : "miss"),
                   (unsigned)g_cache.failures);
     g_startMs = millis();
-    startAttempt(g_conn.start(g_startMs, use));
     g_state = State::Connecting;
+    if (launch(g_conn.start(g_startMs, use)) == Phase::Failed) {
+        Serial.println("NET: phase=failed reason=begin");
+        g_state = State::Failed;
+    }
 }
 
 State poll() {
@@ -164,7 +215,7 @@ State poll() {
     Phase ph = g_conn.step(now, linkStatus(), next);
     if (next != Attempt::None) {
         Serial.println("NET: phase=cache_failed_fallback_scan");
-        startAttempt(next);
+        if (launch(next) == Phase::Failed) ph = Phase::Failed;
     }
     if (ph == Phase::Connected) {
         g_connectMs = now - g_startMs;
@@ -175,7 +226,9 @@ State poll() {
                       WiFi.RSSI(), WiFi.channel());
     } else if (ph == Phase::Failed) {
         g_state = State::Failed;
-        if (g_conn.cachedFailed() && g_usingCache) {
+        if (g_conn.authFailed()) {
+            Serial.println("NET: auth_failed");  // wrong password: says nothing about the cache
+        } else if (g_conn.cachedFailed() && g_usingCache) {
             CacheRecord r = afterCachedFailure(g_cache);
             g_cache = r;
             g_rtc = r;
@@ -183,12 +236,23 @@ State poll() {
                 Serial.println("NET: cache=invalid");
                 g_rtc = CacheRecord{};
                 nvsClear();
+            } else {
+                nvsSave(r);  // keep the failure count across a power cycle
             }
         }
         Serial.printf("NET: phase=failed connect_ms=%u\n", (unsigned)(now - g_startMs));
         WiFi.disconnect(false, false);
     }
     return g_state;
+}
+
+void invalidateLease() {
+    if (!g_cacheLoaded || !hasLease(g_cache)) return;
+    CacheRecord r = dropLease(g_cache);
+    g_cache = r;
+    if (cacheValid(g_rtc, g_cfg.ssid, lanIsStatic())) g_rtc = r;
+    nvsSave(r);
+    Serial.println("NET: lease=invalidated");
 }
 
 void stop() {

@@ -17,6 +17,10 @@ void stop();
 // Wi-Fi off, modem sleep released. Call before sleep / power-off.
 void powerDown();
 
+// Forgets the cached DHCP lease (BSSID/channel stay), in RAM, RTC and NVS. Call when the
+// host is unreachable although Wi-Fi is up. The next connect then runs DHCP.
+void invalidateLease();
+
 int rssi();          // dBm, 0 if not connected
 int channel();       // 0 if not connected
 uint32_t connectMs();  // duration of the last successful connect, 0 if none

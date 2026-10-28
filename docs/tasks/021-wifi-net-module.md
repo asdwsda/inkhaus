@@ -40,3 +40,6 @@ Needs device: yes for the final check (needs the user's config on SD, task 020)
   `net::invalidateLease()` for the HA client to call on unreachable host, ignored `WiFi.begin`
   return values. Watch on the device: Arduino's first_connect internal retry overlapping our
   fallback; `begin()` after Failed without powerDown.
+- Review fixes done (2026-10-28): field-by-field `sameRecord`, failure count persisted to NVS (on change),
+  `net::invalidateLease()` + 24 h lease age (RTC epoch), `WiFi.begin` return checked, wrong password
+  logged as `auth_failed` without counting as a cache failure. 35 net tests. Device check pending.

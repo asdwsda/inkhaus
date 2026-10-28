@@ -1,5 +1,7 @@
 #include <unity.h>
 
+#include <cstddef>
+
 #include "net_policy.h"
 
 using namespace netpolicy;
@@ -214,6 +216,97 @@ void test_corrupt_magic_invalid() {
     TEST_ASSERT_FALSE(cacheValid(r, "home", false));
 }
 
+void test_same_record_field_by_field() {
+    CacheRecord a = rec(), b = rec();
+    TEST_ASSERT_TRUE(sameRecord(a, b));
+    b.lease_epoch = 1800000000;
+    TEST_ASSERT_TRUE(sameRecord(a, b));  // epoch ignored
+    b = a; b.failures = 1;
+    TEST_ASSERT_FALSE(sameRecord(a, b));
+    b = a; b.bssid[5] ^= 1;
+    TEST_ASSERT_FALSE(sameRecord(a, b));
+    b = a; b.ip = 99;
+    TEST_ASSERT_FALSE(sameRecord(a, b));
+    b = a; b.channel = 7;
+    TEST_ASSERT_FALSE(sameRecord(a, b));
+    b = a; b.static_ip = 1;
+    TEST_ASSERT_FALSE(sameRecord(a, b));
+}
+void test_same_record_ignores_padding() {
+    CacheRecord a = rec(), b = rec();
+    unsigned char *pb = reinterpret_cast<unsigned char *>(&b);
+    for (size_t i = 0; i < sizeof(b); ++i) pb[i] ^= 0;  // keep fields
+    // scribble over the padding bytes after the 6-byte bssid + channel/failures/static_ip
+    pb[offsetof(CacheRecord, static_ip) + 1] = 0xAB;
+    TEST_ASSERT_TRUE(sameRecord(a, b));
+}
+void test_plausible_epoch() {
+    TEST_ASSERT_EQUAL_UINT32(0, plausibleEpoch(0));
+    TEST_ASSERT_EQUAL_UINT32(0, plausibleEpoch(12345));
+    TEST_ASSERT_EQUAL_UINT32(0, plausibleEpoch(-5));
+    TEST_ASSERT_EQUAL_UINT32(0, plausibleEpoch(0x1FFFFFFFFll));
+    TEST_ASSERT_EQUAL_UINT32(1800000000u, plausibleEpoch(1800000000));
+}
+void test_lease_age_limit() {
+    const uint32_t t = 1800000000;
+    CacheRecord r = makeRecord("home", kB, 6, false, 1, 2, 3, 4, t);
+    TEST_ASSERT_FALSE(leaseExpired(r, t + kLeaseMaxAgeS));
+    TEST_ASSERT_TRUE(leaseExpired(r, t + kLeaseMaxAgeS + 1));
+    TEST_ASSERT_FALSE(leaseExpired(r, 0));          // clock unset now
+    TEST_ASSERT_TRUE(leaseExpired(r, t - 10));      // clock went backwards
+    CacheRecord u = makeRecord("home", kB, 6, false, 1, 2, 3, 4, 0);
+    TEST_ASSERT_FALSE(leaseExpired(u, t + 10 * kLeaseMaxAgeS));  // never stamped
+}
+void test_apply_lease_age_keeps_cache_and_failures() {
+    const uint32_t t = 1800000000;
+    CacheRecord r = makeRecord("home", kB, 6, false, 1, 2, 3, 4, t);
+    r.failures = 1;
+    CacheRecord o = applyLeaseAge(r, t + kLeaseMaxAgeS + 1);
+    TEST_ASSERT_FALSE(hasLease(o));
+    TEST_ASSERT_EQUAL_UINT32(0, o.lease_epoch);
+    TEST_ASSERT_EQUAL_UINT8(1, o.failures);
+    TEST_ASSERT_TRUE(cacheValid(o, "home", false));
+    TEST_ASSERT_TRUE(sameRecord(applyLeaseAge(r, t + 5), r));
+}
+void test_drop_lease() {
+    CacheRecord o = dropLease(rec());
+    TEST_ASSERT_FALSE(hasLease(o));
+    TEST_ASSERT_TRUE(cacheUsable(o, "home", false));
+}
+void test_auth_reasons() {
+    TEST_ASSERT_TRUE(isAuthReason(202));
+    TEST_ASSERT_TRUE(isAuthReason(15));
+    TEST_ASSERT_TRUE(isAuthReason(204));
+    TEST_ASSERT_TRUE(isAuthReason(14));
+    TEST_ASSERT_FALSE(isAuthReason(201));  // NO_AP_FOUND
+    TEST_ASSERT_FALSE(isAuthReason(8));
+}
+void test_auth_failed_not_cache_failure() {
+    Connector c;
+    c.start(0, true);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(500, LinkStatus::AuthFailed, n));
+    TEST_ASSERT_TRUE(c.authFailed());
+    TEST_ASSERT_FALSE(c.cachedFailed());
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+    c.start(1000, true);
+    TEST_ASSERT_FALSE(c.authFailed());
+}
+void test_start_failed_cached_goes_to_scan_then_failed() {
+    Connector c;
+    c.start(0, true);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.startFailed(n));
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+    TEST_ASSERT_TRUE(c.cachedFailed());
+    TEST_ASSERT_EQUAL(Phase::Failed, c.startFailed(n));
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+    Connector d;
+    d.start(0, false);
+    TEST_ASSERT_EQUAL(Phase::Failed, d.startFailed(n));
+    TEST_ASSERT_FALSE(d.cachedFailed());
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_default_record_invalid);
@@ -242,5 +335,14 @@ int main() {
     RUN_TEST(test_static_record_drops_lease_values);
     RUN_TEST(test_ssid_hash_case_and_empty);
     RUN_TEST(test_corrupt_magic_invalid);
+    RUN_TEST(test_same_record_field_by_field);
+    RUN_TEST(test_same_record_ignores_padding);
+    RUN_TEST(test_plausible_epoch);
+    RUN_TEST(test_lease_age_limit);
+    RUN_TEST(test_apply_lease_age_keeps_cache_and_failures);
+    RUN_TEST(test_drop_lease);
+    RUN_TEST(test_auth_reasons);
+    RUN_TEST(test_auth_failed_not_cache_failure);
+    RUN_TEST(test_start_failed_cached_goes_to_scan_then_failed);
     return UNITY_END();
 }
