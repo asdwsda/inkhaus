@@ -1,6 +1,6 @@
 # 018: Session logic: Wi-Fi, HA fetch, action queue (PC-only part)
 
-Status: in-progress
+Status: done
 Depends on: 004, 005
 UI spec: none
 Needs device: no (wiring to Wi-Fi and HTTP on the device is a later task)
@@ -46,3 +46,11 @@ commands (Wi-Fi connect, HTTP via `ha_client`, render, sleep).
 
 ## Notes
 - Runs in a git worktree in parallel with task 017 (device). Don't touch src/ or other lib modules.
+- Result: `lib/session` SessionMachine (events in, commands out, ms clock): queue with
+  last-action-wins, confirmation with 2 retries, offline/auth handling, scheduled sessions,
+  hard cap, low battery. 37 tests including a 500-run fuzz test (one request in flight, nothing
+  after Sleep). Built in a worktree, merged as one commit.
+- Follow-up in task 019: explicit on/off actions and sending queued actions before the first
+  fetch (the current version fetches first).
+- For the device wiring: the loop must keep sending `tick` events (sleep is only evaluated on
+  events); the device supplies the epoch and the UTC offset in `start`.
