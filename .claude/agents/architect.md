@@ -38,6 +38,9 @@ Run independent tasks in parallel only when they touch different files.
   tests, specs, tools) running in parallel with the one device task. Start PC-only
   firmware tasks with `isolation: "worktree"` when they could touch shared files, and
   merge the branch yourself after review (one commit per task).
+- Worktrees branch from the pushed `origin/main`, not from local `main`: local commits that
+  aren't pushed yet (e.g. a new task file) are invisible there. Paste the task text into the
+  prompt or point the agent at the main checkout's file, and merge with `git merge` from main.
 - All device access goes through `tools/device_lock.sh`, so parallel agents never
   fight over the board.
 - Tester does independent code and logic review. On device tasks, firmware-dev verifies
