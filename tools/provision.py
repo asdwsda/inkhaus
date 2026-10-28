@@ -122,6 +122,16 @@ def main():
     with ser:
         # Opening the port may reset the board. Wait for the end of a boot if one is running; if no
         # boot output shows up, the board was already running.
+        # Wake/reset the board first: in deep sleep it doesn't answer, and opening the port alone
+        # doesn't wake it. DTR+RTS asserted together, then released, resets this CP2104 board.
+        try:
+            ser.dtr = True
+            ser.rts = True
+            time.sleep(0.2)
+            ser.dtr = False
+            ser.rts = False
+        except (OSError, serial.SerialException):
+            pass  # no modem control lines (e.g. the pty used by tools/tests); nothing to reset
         print("waiting for the device (a boot may be in progress) ...")
         ser.reset_input_buffer()
         seen_boot = False
@@ -140,9 +150,17 @@ def main():
             time.sleep(0.3)
         ser.reset_input_buffer()
 
-        ser.write(("putfile %s %d %08x\n" % (args.name, size, crc)).encode())
-        ser.flush()
-        resp = wait_for(ser, r"^PUT-(READY|ERR)", 5)
+        # The first loop pass after a boot can be busy for several seconds (full redraw, Wi-Fi
+        # start), so retry the command a few times before giving up.
+        resp = None
+        for attempt in range(4):
+            ser.reset_input_buffer()
+            ser.write(("putfile %s %d %08x\n" % (args.name, size, crc)).encode())
+            ser.flush()
+            resp = wait_for(ser, r"^PUT-(READY|ERR)", 4)
+            if resp is not None:
+                break
+            print("no answer yet, retrying (%d) ..." % (attempt + 1))
         if resp is None:
             print("no answer from the device (is the firmware new enough?)", file=sys.stderr)
             return 1
