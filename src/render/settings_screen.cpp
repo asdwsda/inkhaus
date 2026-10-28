@@ -142,10 +142,17 @@ void drawSettings(M5Canvas &c, const sui::SettingsScreen &s, const SettingsInfo 
   auto txt = [](const std::string &t) { return sui::InfoText{sui::Icon::None, t}; };
   drawInfoRow(c, L.info[0], "Firmware", txt(info.firmware), false);
   drawInfoRow(c, L.info[1], "Battery", sui::batteryText(info.battery), false);
-  drawInfoRow(c, L.info[2], "Home Assistant", sui::haText(ha, info.now), false);
-  drawInfoRow(c, L.info[3], "Wi-Fi", sui::wifiText(info.wifi), false);
-  drawInfoRow(c, L.info[4], "Config", sui::configText(info.config), true);
-  drawInfoRow(c, L.info[5], "Config errors", txt(sui::errorsText(info.config)), false);
+  if (s.saved().demo_mode) {  // saved demo mode: the app runs the embedded demo (spec section 6)
+    drawInfoRow(c, L.info[2], "Home Assistant", txt(sui::kDemoHaText), false);
+    drawInfoRow(c, L.info[3], "Wi-Fi", txt(sui::kDemoWifiText), false);
+    drawInfoRow(c, L.info[4], "Config", txt(sui::kDemoConfigText), true);
+    drawInfoRow(c, L.info[5], "Config errors", txt("0"), false);
+  } else {
+    drawInfoRow(c, L.info[2], "Home Assistant", sui::haText(ha, info.now), false);
+    drawInfoRow(c, L.info[3], "Wi-Fi", sui::wifiText(info.wifi), false);
+    drawInfoRow(c, L.info[4], "Config", sui::configText(info.config), true);
+    drawInfoRow(c, L.info[5], "Config errors", txt(sui::errorsText(info.config)), false);
+  }
 
   // Footer.
   const sui::RefreshState rs = s.refreshState();

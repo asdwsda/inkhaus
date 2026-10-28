@@ -23,10 +23,11 @@ void test_portrait_layout() {
   auto L = computeSettingsLayout(Orientation::Portrait);
   expectRect(404, 11, 120, 32, L.unsavedChip);
   expectRect(0, 54, 540, 2, L.headerRule);
-  expectRect(16, 68, 508, 88, L.rows[0]);
-  expectRect(16, 168, 508, 88, L.rows[1]);
-  expectRect(16, 268, 508, 88, L.rows[2]);
-  expectRect(16, 368, 508, 88, L.rows[3]);
+  expectRect(16, 68, 508, 68, L.rows[0]);
+  expectRect(16, 148, 508, 68, L.rows[1]);
+  expectRect(16, 228, 508, 68, L.rows[2]);
+  expectRect(16, 308, 508, 68, L.rows[3]);
+  expectRect(16, 388, 508, 68, L.rows[4]);
   expectRect(16, 468, 508, 64, L.note);
   expectRect(16, 880, 248, 64, L.refreshButton);
   expectRect(276, 880, 248, 64, L.backButton);
@@ -52,10 +53,11 @@ void test_landscape_layout() {
   auto L = computeSettingsLayout(Orientation::Landscape);
   expectRect(824, 9, 120, 32, L.unsavedChip);
   expectRect(0, 50, 960, 2, L.headerRule);
-  expectRect(16, 64, 456, 88, L.rows[0]);
-  expectRect(16, 164, 456, 88, L.rows[1]);
-  expectRect(16, 264, 456, 88, L.rows[2]);
-  expectRect(16, 364, 456, 88, L.rows[3]);
+  expectRect(16, 64, 456, 68, L.rows[0]);
+  expectRect(16, 144, 456, 68, L.rows[1]);
+  expectRect(16, 224, 456, 68, L.rows[2]);
+  expectRect(16, 304, 456, 68, L.rows[3]);
+  expectRect(16, 384, 456, 68, L.rows[4]);
   expectRect(16, 464, 456, 64, L.note);
   expectRect(488, 464, 222, 64, L.refreshButton);
   expectRect(722, 464, 222, 64, L.backButton);
@@ -95,24 +97,25 @@ void test_targets_size_gaps_and_bounds() {
 }
 
 void test_row_internals() {
-  ui::Rect row{16, 68, 508, 88};
-  expectRect(32, 86, 220, 24, rowLabelRect(row));
-  expectRect(32, 118, 220, 24, rowHintRect(row));
-  TEST_ASSERT_EQUAL_INT(98, rowLabelCy(row));
-  TEST_ASSERT_EQUAL_INT(130, rowHintCy(row));
-  TEST_ASSERT_EQUAL_INT(112, rowValueCy(row));
+  ui::Rect row{16, 68, 508, 68};
+  expectRect(32, 80, 220, 24, rowLabelRect(row));
+  expectRect(32, 106, 220, 18, rowHintRect(row));
+  TEST_ASSERT_EQUAL_INT(92, rowLabelCy(row));
+  TEST_ASSERT_EQUAL_INT(115, rowHintCy(row));
+  TEST_ASSERT_EQUAL_INT(102, rowValueCy(row));
   TEST_ASSERT_EQUAL_INT(16 + 492, rowValueRightX(row));
-  ui::Rect land{16, 64, 456, 88};
+  ui::Rect land{16, 64, 456, 68};
   TEST_ASSERT_EQUAL_INT(16 + 440, rowValueRightX(land));
   TEST_ASSERT_EQUAL_INT(16 + 22, pipCentre(row, 0).x);
   TEST_ASSERT_EQUAL_INT(16 + 22 + 100, pipCentre(row, 5).x);
-  TEST_ASSERT_EQUAL_INT(68 + 62, pipCentre(row, 0).y);
+  TEST_ASSERT_EQUAL_INT(68 + 47, pipCentre(row, 0).y);
   TEST_ASSERT_EQUAL_INT(2, pipCount(0));
   TEST_ASSERT_EQUAL_INT(2, pipCount(1));
   TEST_ASSERT_EQUAL_INT(6, pipCount(2));
   TEST_ASSERT_EQUAL_INT(4, pipCount(3));
-  expectRect(32, 118, 24, 24, rowWarnIconRect(row));
-  TEST_ASSERT_EQUAL_INT(16 + 46, rowWarnTextX(row));
+  expectRect(16 + 356, 90, 24, 24, rowWarnIconRect(row));
+  expectRect(16 + 304, 86, 24, 24, rowWarnIconRect(land));
+  TEST_ASSERT_EQUAL_INT(16 + 16, rowWarnTextX(row));
   ui::Rect note{16, 468, 508, 64};
   expectRect(28, 480, 40, 40, noteIconRect(note));
   TEST_ASSERT_EQUAL_INT(80, noteTextX(note));
@@ -279,14 +282,14 @@ void test_rocker_focus_order_and_wrap() {
   Settings saved;
   SettingsScreen sc(saved, Orientation::Portrait, true);
   TEST_ASSERT_EQUAL_INT(0, sc.focus());
-  for (int i = 1; i <= 5; ++i) {
+  for (int i = 1; i <= 6; ++i) {
     sc.onKey(LogicalKey::Next);
     TEST_ASSERT_EQUAL_INT(i, sc.focus());
   }
   sc.onKey(LogicalKey::Next);
   TEST_ASSERT_EQUAL_INT(0, sc.focus());
   sc.onKey(LogicalKey::Prev);
-  TEST_ASSERT_EQUAL_INT(5, sc.focus());
+  TEST_ASSERT_EQUAL_INT(6, sc.focus());
 }
 
 void test_ring_dirty_is_old_and_new_inflated_by_6() {
@@ -294,8 +297,8 @@ void test_ring_dirty_is_old_and_new_inflated_by_6() {
   SettingsScreen sc(saved, Orientation::Portrait, true);
   auto u = sc.onKey(LogicalKey::Next);
   TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));
-  expectRect(10, 62, 520, 100, u.dirty[0]);  // row 1 inflated by 6
-  expectRect(10, 162, 520, 100, u.dirty[1]);  // row 2 inflated by 6
+  expectRect(10, 62, 520, 80, u.dirty[0]);  // row 1 inflated by 6
+  expectRect(10, 142, 520, 80, u.dirty[1]);  // row 2 inflated by 6
   // hidden ring: only the new position is drawn
   SettingsScreen hidden(saved, Orientation::Portrait, false);
   u = hidden.onKey(LogicalKey::Next);
@@ -475,7 +478,7 @@ void test_touch_hits_each_target_both_orientations() {
 }
 
 void test_every_row_cycles_full_circle_and_chip_tracks_dirty() {
-  const int sizes[] = {2, 2, 6, 4};
+  const int sizes[] = {2, 2, 6, 4, 2};
   for (int row = 0; row < kRowCount; ++row) {
     Settings saved;
     SettingsScreen sc(saved, Orientation::Portrait, false);
@@ -503,7 +506,7 @@ void test_every_row_cycles_full_circle_and_chip_tracks_dirty() {
 void test_all_rows_changed_and_restored_is_write_free() {
   Settings saved;
   SettingsScreen sc(saved, Orientation::Portrait, true);
-  const int sizes[] = {2, 2, 6, 4};
+  const int sizes[] = {2, 2, 6, 4, 2};
   for (int row = 0; row < kRowCount; ++row) {
     for (int k = 0; k < sizes[row]; ++k) sc.onKey(LogicalKey::Push);
     sc.onKey(LogicalKey::Next);
@@ -519,8 +522,8 @@ void test_leave_returns_exactly_the_edited_settings() {
   saved.refresh_interval_min = 30;
   saved.idle_timeout_s = 30;
   SettingsScreen sc(saved, Orientation::Portrait, false);
-  sc.onTouch({100, 312});  // refresh 30 -> 60
-  sc.onTouch({100, 412});  // idle 30 -> 60
+  sc.onTouch({100, 262});  // refresh 30 -> 60
+  sc.onTouch({100, 342});  // idle 30 -> 60
   auto l = sc.leave();
   TEST_ASSERT_TRUE(l.save);
   TEST_ASSERT_FALSE(l.orientationChanged);
@@ -683,9 +686,49 @@ static void test_demo_row_model() {
   TEST_ASSERT_FALSE(showsWakeWarning(kDemoRow, s));
 }
 
+static void test_demo_row_layout_touch_and_leave() {
+  auto P = computeSettingsLayout(Orientation::Portrait);
+  auto L = computeSettingsLayout(Orientation::Landscape);
+  TEST_ASSERT_EQUAL_INT(5, kRowCount);
+  TEST_ASSERT_EQUAL_INT(7, kFocusStops);
+  expectRect(16, 880, 248, 64, P.stops[kStopRefresh]);
+  expectRect(722, 464, 222, 64, L.stops[kStopBack]);
+  TEST_ASSERT_EQUAL_INT(422, P.rows[kDemoRow].y + 34);
+  TEST_ASSERT_EQUAL_INT(418, L.rows[kDemoRow].y + 34);
+  // touch cycles the buffer, chip flips, no demoChanged until leave
+  Settings saved;
+  SettingsScreen sc(saved, Orientation::Portrait, false);
+  auto u = sc.onTouch({100, 422});
+  TEST_ASSERT_TRUE(sc.edit().demo_mode);
+  TEST_ASSERT_TRUE(sc.dirty());
+  TEST_ASSERT_EQUAL_INT(3, static_cast<int>(u.dirty.size()));  // value, hint, chip
+  expectRect(16, 388, 508, 68, P.rows[kDemoRow]);
+  auto l = sc.leave();
+  TEST_ASSERT_TRUE(l.demoChanged);
+  TEST_ASSERT_TRUE(l.save);
+  TEST_ASSERT_FALSE(l.orientationChanged);
+  TEST_ASSERT_TRUE(l.settings.demo_mode);
+  // cycled back: no change
+  sc.onTouch({100, 422});
+  l = sc.leave();
+  TEST_ASSERT_FALSE(l.demoChanged);
+  TEST_ASSERT_FALSE(l.save);
+  // other rows do not set demoChanged
+  SettingsScreen sc2(saved, Orientation::Portrait, false);
+  sc2.onTouch({100, 100});
+  TEST_ASSERT_FALSE(sc2.leave().demoChanged);
+  // rocker: stop 5 (index 4) pushes the demo row
+  SettingsScreen sc3(saved, Orientation::Landscape, true);
+  for (int i = 0; i < kDemoRow; ++i) sc3.onKey(LogicalKey::Next);
+  sc3.onKey(LogicalKey::Push);
+  TEST_ASSERT_TRUE(sc3.edit().demo_mode);
+  TEST_ASSERT_EQUAL_STRING("built-in demo", kDemoConfigText);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_demo_row_model);
+  RUN_TEST(test_demo_row_layout_touch_and_leave);
   RUN_TEST(test_portrait_layout);
   RUN_TEST(test_landscape_layout);
   RUN_TEST(test_targets_size_gaps_and_bounds);

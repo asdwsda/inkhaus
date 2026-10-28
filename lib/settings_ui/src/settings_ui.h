@@ -15,13 +15,13 @@ using ui::Point;
 using ui::Rect;
 
 // ---- layout (spec sections 3 and 4) ----
-constexpr int kRowCount = 4;      // Orientation, Wake mode, Refresh every, Idle timeout
+constexpr int kRowCount = 5;      // Orientation, Wake mode, Refresh every, Idle timeout, Demo mode
 constexpr int kInfoRowCount = 6;  // Firmware, Battery, HA, Wi-Fi, Config, Errors
-constexpr int kFocusStops = 6;    // 4 rows, Refresh now, Back
-constexpr int kStopRefresh = 4;   // 0-based focus stop indices
-constexpr int kStopBack = 5;
+constexpr int kFocusStops = 7;    // 5 rows, Refresh now, Back
+constexpr int kStopRefresh = 5;   // 0-based focus stop indices
+constexpr int kStopBack = 6;
 constexpr int kRingInflate = 6;
-// The 5th setting row (Demo mode, task 034). Model only; layout rects follow the revised spec.
+// The 5th setting row (Demo mode, task 034).
 constexpr int kDemoRow = 4;
 
 enum class InfoId { Firmware, Battery, HomeAssistant, WiFi, Config, Errors };
@@ -52,18 +52,18 @@ struct SettingsLayout {
 SettingsLayout computeSettingsLayout(settings::Orientation o);
 
 // Inside one setting row; all results absolute.
-Rect rowLabelRect(const Rect& row);   // row-relative (16,18,220,24), cy 30
-Rect rowHintRect(const Rect& row);    // (16,50,220,24), cy 62
-Rect rowValueRect(const Rect& row);   // (240,0,w-256,88), right aligned, cy 44
+Rect rowLabelRect(const Rect& row);   // row-relative (16,12,220,24), cy 24
+Rect rowHintRect(const Rect& row);    // (16,38,220,18), cy 47
+Rect rowValueRect(const Rect& row);   // (240,0,w-256,68), right aligned, cy 34
 int rowValueRightX(const Rect& row);  // row.x + row.w - 16
 int rowLabelCy(const Rect& row);
 int rowHintCy(const Rect& row);
 int rowValueCy(const Rect& row);
-int pipCount(int rowIndex);  // 2, 2, 6, 4
-Point pipCentre(const Rect& row, int k);  // (row.x + 22 + 20k, row.y + 62)
+int pipCount(int rowIndex);  // 2, 2, 6, 4, 2
+Point pipCentre(const Rect& row, int k);  // (row.x + 22 + 20k, row.y + 47)
 constexpr int kPipDiameter = 12;
-Rect rowWarnIconRect(const Rect& row);  // (16,50,24,24) row-relative
-int rowWarnTextX(const Rect& row);      // row.x + 46 (cy = rowHintCy)
+Rect rowWarnIconRect(const Rect& row);  // 24x24 left of the value, row-relative x = w-152, cy 34
+int rowWarnTextX(const Rect& row);      // row.x + 16 (cy = rowHintCy)
 Rect noteIconRect(const Rect& note);    // (12,12,40,40) slot-relative
 int noteTextX(const Rect& note);        // note.x + 64
 int noteLineCy(const Rect& note, int line);  // line 0: +21, line 1: +43
@@ -140,6 +140,11 @@ InfoText haText(const HaInfo& h, const WallTime& now);
 InfoText wifiText(const WifiInfo& w);
 InfoText configText(const ConfigInfo& c);   // "OK" / alert + "path (line N)" / warn + "no config.yaml on SD"
 std::string errorsText(const ConfigInfo& c);  // "0", "3"; "-" when missing
+
+// Saved demo mode On: the info rows read these (spec section 6); the error count shows "0".
+constexpr const char* kDemoHaText = "Demo mode";
+constexpr const char* kDemoWifiText = "Demo mode";
+constexpr const char* kDemoConfigText = "built-in demo";
 
 // ---- screen state machine (spec sections 2, 5, 6) ----
 constexpr uint32_t kIdleLeaveMs = 60000;  // fixed while Settings is open (rule 5, OPEN-S1)

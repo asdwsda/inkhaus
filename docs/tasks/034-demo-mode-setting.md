@@ -30,3 +30,4 @@ User request: switch to the built-in demo showcase at any time, even with secret
 ## Notes
 - Paused (2026-10-28, credits): logic part done (settings field, demo_mode.* decision logic, config source, reload on leave, row model; 498 tests). Open: 5th row layout/drawing after the settings.md revision; no unit test for demoChanged yet; plan_sleep still schedules refreshes in demo mode.
 - Spec done (settings.md: 5 rows x 68 px, mockups with ids, check_mockups 0). OPEN-S4 accepted as proposed: in demo mode Config shows "built-in demo", Errors 0, Refresh now starts no fetch. Next: firmware 5th row (rects, focus 1-7, drawing).
+- PC part done (2026-10-28): 5th row (rects, focus 1-7, drawing, demo info texts), Refresh now in demo mode = no fetch (failed look per spec); 499 tests. Accepted for now: plan_sleep still schedules refresh wakes in demo mode (wake, nothing to do, sleep). Device check pending.

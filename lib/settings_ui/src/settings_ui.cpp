@@ -39,7 +39,7 @@ SettingsLayout computeSettingsLayout(settings::Orientation o) {
     L.title = {16, 0, 200, 54};
     L.unsavedChip = {404, 11, 120, 32};
     L.headerRule = {0, 54, 540, 2};
-    for (int i = 0; i < kRowCount; ++i) L.rows[i] = {16, 68 + 100 * i, 508, 88};
+    for (int i = 0; i < kRowCount; ++i) L.rows[i] = {16, 68 + 80 * i, 508, 68};
     L.note = {16, 468, 508, 64};
     L.refreshButton = {16, 880, 248, 64};
     L.backButton = {276, 880, 248, 64};
@@ -52,7 +52,7 @@ SettingsLayout computeSettingsLayout(settings::Orientation o) {
     L.title = {16, 0, 200, 50};
     L.unsavedChip = {824, 9, 120, 32};
     L.headerRule = {0, 50, 960, 2};
-    for (int i = 0; i < kRowCount; ++i) L.rows[i] = {16, 64 + 100 * i, 456, 88};
+    for (int i = 0; i < kRowCount; ++i) L.rows[i] = {16, 64 + 80 * i, 456, 68};
     L.note = {16, 464, 456, 64};
     L.refreshButton = {488, 464, 222, 64};
     L.backButton = {722, 464, 222, 64};
@@ -63,13 +63,13 @@ SettingsLayout computeSettingsLayout(settings::Orientation o) {
   return L;
 }
 
-Rect rowLabelRect(const Rect& r) { return {r.x + 16, r.y + 18, 220, 24}; }
-Rect rowHintRect(const Rect& r) { return {r.x + 16, r.y + 50, 220, 24}; }
+Rect rowLabelRect(const Rect& r) { return {r.x + 16, r.y + 12, 220, 24}; }
+Rect rowHintRect(const Rect& r) { return {r.x + 16, r.y + 38, 220, 18}; }
 Rect rowValueRect(const Rect& r) { return {r.x + 240, r.y, r.w - 256, r.h}; }
 int rowValueRightX(const Rect& r) { return r.x + r.w - 16; }
-int rowLabelCy(const Rect& r) { return r.y + 30; }
-int rowHintCy(const Rect& r) { return r.y + 62; }
-int rowValueCy(const Rect& r) { return r.y + 44; }
+int rowLabelCy(const Rect& r) { return r.y + 24; }
+int rowHintCy(const Rect& r) { return r.y + 47; }
+int rowValueCy(const Rect& r) { return r.y + 34; }
 int pipCount(int i) {
   switch (i) {
     case 0: return static_cast<int>(settings::kOrientationValues.size());
@@ -80,9 +80,9 @@ int pipCount(int i) {
   }
   return 0;
 }
-Point pipCentre(const Rect& r, int k) { return {r.x + 22 + 20 * k, r.y + 62}; }
-Rect rowWarnIconRect(const Rect& r) { return {r.x + 16, r.y + 50, 24, 24}; }
-int rowWarnTextX(const Rect& r) { return r.x + 46; }
+Point pipCentre(const Rect& r, int k) { return {r.x + 22 + 20 * k, r.y + 47}; }
+Rect rowWarnIconRect(const Rect& r) { return {r.x + r.w - 152, r.y + 22, 24, 24}; }
+int rowWarnTextX(const Rect& r) { return r.x + 16; }
 Rect noteIconRect(const Rect& n) { return {n.x + 12, n.y + 12, 40, 40}; }
 int noteTextX(const Rect& n) { return n.x + 64; }
 int noteLineCy(const Rect& n, int line) { return n.y + (line == 0 ? 21 : 43); }

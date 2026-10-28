@@ -337,8 +337,8 @@ static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
         handleSettingsResult(settings_flow::refreshDone(false), now);
         return;
       }
-    } else {
-      handleSettingsResult(settings_flow::refreshDone(true), now);
+    } else {  // demo (also saved demo mode): no fetch; Refresh now takes its failed look
+      handleSettingsResult(settings_flow::refreshDone(false), now);
       return;
     }
   }
