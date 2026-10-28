@@ -79,6 +79,14 @@ struct SleepExec {
 };
 SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build);
 
+// ---- local idle sleep (no session: demo mode, config-error screen) --------------------------------
+
+// A local idle timer drives sleep only when no session machine runs (it issues the Sleep command
+// otherwise).
+bool localIdleSleepWanted(bool session_running);
+// Interactive plan from the settings, but never an RTC alarm: nothing to refresh.
+power::SleepPlan localIdlePlan(const settings::Settings &s, int64_t now_epoch, int32_t utc_offset_s);
+
 // ---- swallowing the wake input -------------------------------------------------------------------
 
 // The press that woke the device is still down (or its release/click is still to come) when the loop

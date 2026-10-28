@@ -94,6 +94,14 @@ SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build) {
   return e;
 }
 
+bool localIdleSleepWanted(bool session_running) { return !session_running; }
+
+power::SleepPlan localIdlePlan(const settings::Settings &s, int64_t now_epoch, int32_t utc_offset_s) {
+  power::SleepPlan p = power::plan_sleep(s, power::Session::Interactive, now_epoch, utc_offset_s);
+  p.rtc_alarm_at.reset();
+  return p;
+}
+
 void WakeInputGuard::arm(power::WakeReason r, int64_t now_ms) {
   key_ = r == power::WakeReason::Button;
   touch_ = r == power::WakeReason::Touch;

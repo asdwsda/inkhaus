@@ -347,6 +347,23 @@ void test_guard_key_wake_ignores_touch_and_touch_wake_ignores_key() {
   TEST_ASSERT_FALSE(g.blocksTouch());
 }
 
+void test_local_idle_plan() {
+  TEST_ASSERT_TRUE(app_logic::localIdleSleepWanted(false));
+  TEST_ASSERT_FALSE(app_logic::localIdleSleepWanted(true));
+  settings::Settings s;
+  s.refresh_interval_min = 60;
+  s.wake_mode = settings::WakeMode::Touch;
+  auto p = app_logic::localIdlePlan(s, 1700000000, 3600);
+  TEST_ASSERT_FALSE(p.rtc_alarm_at.has_value());
+  TEST_ASSERT_TRUE(p.touch_wake);
+  TEST_ASSERT_TRUE(p.button_wake);
+  s.wake_mode = settings::WakeMode::Button;
+  p = app_logic::localIdlePlan(s, 1700000000, 0);
+  TEST_ASSERT_FALSE(p.rtc_alarm_at.has_value());
+  TEST_ASSERT_FALSE(p.touch_wake);
+  TEST_ASSERT_TRUE(app_logic::indicatorFor(p, power::Session::Interactive) == app_logic::Indicator::Button);
+}
+
 void test_guard_not_armed_blocks_nothing() {
   WakeInputGuard g;
   g.observe(100, true, true);
@@ -381,6 +398,7 @@ int main() {
   RUN_TEST(test_path_alarm_beyond_limit_has_no_timer_either);
   RUN_TEST(test_path_scheduled_session_keeps_plan_wake_sources);
   RUN_TEST(test_path_timer_matches_rtc_alarm_instant);
+  RUN_TEST(test_local_idle_plan);
   RUN_TEST(test_guard_boundaries);
   RUN_TEST(test_guard_key_wake_ignores_touch_and_touch_wake_ignores_key);
   RUN_TEST(test_guard_not_armed_blocks_nothing);

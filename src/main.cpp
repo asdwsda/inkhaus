@@ -61,6 +61,8 @@ static bool g_demoMode = true;
 static NetTask g_net;
 static std::unique_ptr<session_glue::ArduinoWifi> g_wifi;
 static std::unique_ptr<app_logic::SessionDriver> g_drv;
+static power::IdleTimer g_localIdle;  // sleep timer when no session runs (demo, config error)
+static bool g_localIdleOn = false;
 static bool g_sessionOver = false;  // the machine asked to sleep; any input starts a new session
 static bool g_settingsRefreshing = false;
 static uint32_t g_refreshSeq = 0;  // fetchSeq() when the Settings refresh was issued
@@ -353,7 +355,7 @@ static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
 
 // Shared tail of every sleep: indicator frame (not for the low-battery notice), Wi-Fi off, controller
 // idle, then the real sleep. Returns only if sleeping failed.
-static void goToSleep(power::SleepPlan plan, power::Session session) {
+static void goToSleep(power::SleepPlan plan, power::Session session, bool localIdle = false) {
   uint32_t now = millis();
   const bool low = session == power::Session::LowBattery;
   session_glue::ntpAbort();
@@ -362,7 +364,8 @@ static void goToSleep(power::SleepPlan plan, power::Session session) {
     // refresh interval, so the plan is made again from the settings now in effect.
     handleSettingsResult(settings_flow::tick(now + 3600u * 1000u), now);
     const int64_t epoch = session_glue::wallClock();
-    plan = power::plan_sleep(g_settings, session, epoch, utcOffsetAt(epoch));
+    plan = localIdle ? app_logic::localIdlePlan(g_settings, epoch, utcOffsetAt(epoch))
+                     : power::plan_sleep(g_settings, session, epoch, utcOffsetAt(epoch));
   }
   if (!low && present::framesOk()) {
     present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
@@ -522,6 +525,15 @@ void loop() {
   if (e.kind != input::Event::None && g_real && g_drv) {
     if (g_sessionOver) startSession(now);  // a new interactive session (real sleep comes later)
     else g_drv->input(now);
+  }
+  if (app_logic::localIdleSleepWanted(g_real && g_drv)) {  // demo / config error: no session machine
+    if (!g_localIdleOn) { g_localIdle = power::IdleTimer(g_settings.idle_timeout_s); g_localIdle.start(now / 1000); g_localIdleOn = true; }
+    if (e.kind != input::Event::None || settings_flow::active()) g_localIdle.on_input(now / 1000);
+    if (g_localIdle.should_sleep(now / 1000)) {
+      const int64_t epoch = session_glue::wallClock();
+      goToSleep(app_logic::localIdlePlan(g_settings, epoch, utcOffsetAt(epoch)), power::Session::Interactive, true);
+      g_localIdle.on_input(millis() / 1000);  // sleeping failed: try again later
+    }
   }
   if (settings_flow::active()) {
     if (e.kind == input::Event::Touch) handleSettingsResult(settings_flow::onTouch(e.point, now), now);
