@@ -297,6 +297,17 @@ void test_path_scheduled_session_keeps_plan_wake_sources() {
   TEST_ASSERT_EQUAL(int(Indicator::Button), int(s.indicator));
 }
 
+void test_exec_resolution() {
+  SleepExec e = resolveSleepExec(SleepMethod::PowerOff, false);
+  TEST_ASSERT_FALSE(e.gpio2_low);
+  TEST_ASSERT_TRUE(e.epd_standby);
+  e = resolveSleepExec(SleepMethod::PowerOff, true);
+  TEST_ASSERT_TRUE(e.gpio2_low);
+  e = resolveSleepExec(SleepMethod::DeepSleep, true);
+  TEST_ASSERT_FALSE(e.gpio2_low);
+  TEST_ASSERT_TRUE(e.epd_standby);
+}
+
 void test_path_timer_matches_rtc_alarm_instant() {
   // The timer stand-in is the plan's instant minus now, not the minute-rounded one; it must never be < 1 s.
   power::SleepPlan p;
@@ -353,6 +364,7 @@ int main() {
   RUN_TEST(test_alarm_fields);
   RUN_TEST(test_alarm_fields_rejects);
   RUN_TEST(test_path_button_mode);
+  RUN_TEST(test_exec_resolution);
   RUN_TEST(test_path_touch_mode);
   RUN_TEST(test_path_no_alarm_cases);
   RUN_TEST(test_path_low_battery);

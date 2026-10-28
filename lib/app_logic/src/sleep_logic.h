@@ -68,6 +68,17 @@ struct SleepPath {
 SleepPath planSleepPath(const power::SleepPlan &plan, power::Session session, int64_t now_epoch);
 const char *methodName(SleepMethod m);
 
+// What enter() does for a planned method (task 035). A PowerOff plan (Button mode, low battery) uses
+// ESP32 deep sleep with the GPIO2 power hold kept ("deepsleep_hold") unless the build has
+// -DSLEEP_POWER_OFF (the old GPIO2-low path, kept for testing). The IT8951 goes to standby before
+// every real sleep. The GT911 is never put to sleep: its wake needs a pulse on INT (GPIO36), which is
+// input-only on the ESP32, so a sleeping GT911 could not be brought back.
+struct SleepExec {
+  bool gpio2_low = false;    // old path: release the main power hold, fall back to deep sleep on USB
+  bool epd_standby = true;   // IT8951 STANDBY (keeps image memory) before sleeping
+};
+SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build);
+
 // ---- swallowing the wake input -------------------------------------------------------------------
 
 // The press that woke the device is still down (or its release/click is still to come) when the loop

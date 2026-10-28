@@ -34,3 +34,4 @@ reset button all do nothing); on USB everything works. The GPIO2-low power-off p
   (VBUS sense if available on this board, else infer from battery voltage trend) so the next test
   shows it directly.
 - User test (2026-10-28): unplugged while awake → kept working on battery. So the battery is OK; the failure is waking from the GPIO2-low power-off (rocker and reset do nothing without power). Confirms this task’s approach; SLEEP_POWER_OFF stays a test-only flag.
+- PC part done (2026-10-28): PowerOff plans → deep sleep with GPIO2 hold, IT8951 STANDBY (0x0002, keeps memory; wake = SYS_RUN in probeController, fallback stock). GT911 left awake: its wake needs the host to drive INT (GPIO36, input-only) → risk of a dead touch panel; its standby current is the open cost, decided by the battery test. `BOOT: charging=` logged. SLEEP_POWER_OFF flag keeps the old path. 500 tests.

@@ -42,6 +42,11 @@ bool waitBusyHigh(uint32_t timeoutMs, const char* what);
 // Bounded; false if the controller did not accept it.
 bool endBurstRead();
 
+// Puts the IT8951 into STANDBY (keeps image memory) as the last display operation before a deep
+// sleep (closes a read burst first). The next boot::begin() after ESP_RST_DEEPSLEEP sends SYS_RUN
+// before probing; a controller that then does not answer takes the stock path (cold). Bounded waits.
+bool controllerStandby();
+
 // Bounded check that the controller answers (BUSY high). If it does not, resets it (hardware
 // reset pulse, full panel init) and reports it as cold. Returns true when no recovery was needed.
 bool ensureControllerReady(const char* where);

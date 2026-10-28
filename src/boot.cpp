@@ -30,6 +30,8 @@ bool g_recoveredCold = false;  // we reset the controller ourselves: its image m
 constexpr uint32_t kWatchdogS = BOOT_WDT_S;
 constexpr uint32_t kReadyWaitMs = 300;  // BUSY should be high between commands
 constexpr uint16_t kCmdMemBstEnd = 0x0015;  // IT8951 MEM_BST_END (Panel_IT8951.inl:54)
+constexpr uint16_t kCmdSysRun = 0x0001;     // IT8951 SYS_RUN (Panel_IT8951.inl:46)
+bool g_wokeFromStandby = false;             // deep-sleep wake: the IT8951 may be in STANDBY
 
 // Crash counter in RTC memory: survives watchdog resets, panics and ESP.restart(); garbage after
 // power-on (screen_track::crashGuard checks the magic).
@@ -123,6 +125,19 @@ bool probeController(lgfx::Bus_SPI& bus, uint32_t& idOut) {
     configureBus(bus, 8000000, 8000000);
     if (!bus.init()) return false;
     bus.beginTransaction();
+    if (g_wokeFromStandby) {
+        // After a deep sleep (task 035) the controller was left in STANDBY by controllerStandby():
+        // SYS_RUN (as Panel_IT8951::setPowerSave(false), .inl:526) wakes it with its image memory
+        // intact. If it still does not answer GET_DEV_INFO below, the caller falls back to the stock
+        // start-up with the reset pulse (cold, full redraw).
+        digitalWrite(kPinEpdCs, LOW);
+        bus.writeData(__builtin_bswap16(0x6000) | (uint32_t)__builtin_bswap16(kCmdSysRun) << 16, 32);
+        bus.wait();
+        digitalWrite(kPinEpdCs, HIGH);
+        t = millis();
+        while (digitalRead(kPinEpdBusy) == LOW && millis() - t < 192) delay(1);
+        log("standby_wake", "sys_run");
+    }
     digitalWrite(kPinEpdCs, LOW);
     bus.writeData(__builtin_bswap16(0x6000), 16);
     bus.writeData(__builtin_bswap16(0x0302), 16);
@@ -258,6 +273,17 @@ bool endBurstRead() {
     return ok && waitBusyHigh(kReadyWaitMs, "after_bst_end");
 }
 
+bool controllerStandby() {
+    if (M5.getBoard() != m5::board_t::board_M5Paper) return false;
+    auto* p = static_cast<lgfx::Panel_IT8951*>(M5.Display.getPanel());
+    if (!p || !p->getBus()) return false;
+    endBurstRead();  // any open read burst must be closed before the next command
+    if (!waitBusyHigh(kReadyWaitMs, "standby")) return false;
+    p->setPowerSave(true);  // STANDBY 0x0002 (Panel_IT8951.inl:526): clocks gated, image memory kept
+    // Unlike setSleep(true) (SLEEP 0x0003, .inl:509), whose wake is init(true) = hardware reset.
+    return waitBusyHigh(kReadyWaitMs, "after_standby");
+}
+
 bool ensureControllerReady(const char* where) {
     if (waitBusyHigh(kReadyWaitMs, where)) return true;
     // Stuck: hardware reset of the controller and a full panel init (rotation is restored by it).
@@ -297,6 +323,7 @@ void begin() {
     // give up. A watchdog reset or a panic counts; anything else (power-on, button, software
     // restart, deep sleep) starts over.
     const esp_reset_reason_t rr = esp_reset_reason();
+    g_wokeFromStandby = rr == ESP_RST_DEEPSLEEP;
     const bool crashed = rr == ESP_RST_TASK_WDT || rr == ESP_RST_INT_WDT || rr == ESP_RST_WDT ||
                          rr == ESP_RST_PANIC;
     // Woken from the give-up sleep by the rocker: retry, starting with the stock fallback (count 1
@@ -387,6 +414,8 @@ void begin() {
 void logHealth() {
     log("reset_reason", resetReasonName(esp_reset_reason()));
     log("battery_mv", (long)M5.Power.getBatteryVoltage());
+    // No VBUS sense is known for this board; charging state shows USB when the PMIC reports it.
+    log("charging", (long)M5.Power.isCharging());
 }
 
 }  // namespace boot

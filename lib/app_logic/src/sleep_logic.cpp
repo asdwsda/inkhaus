@@ -87,6 +87,13 @@ SleepPath planSleepPath(const power::SleepPlan &plan, power::Session session, in
 
 const char *methodName(SleepMethod m) { return m == SleepMethod::PowerOff ? "poweroff" : "deepsleep"; }
 
+SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build) {
+  SleepExec e;
+  e.gpio2_low = planned == SleepMethod::PowerOff && power_off_build;
+  e.epd_standby = !e.gpio2_low;  // power gone anyway on the old path
+  return e;
+}
+
 void WakeInputGuard::arm(power::WakeReason r, int64_t now_ms) {
   key_ = r == power::WakeReason::Button;
   touch_ = r == power::WakeReason::Touch;
