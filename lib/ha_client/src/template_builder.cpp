@@ -7,7 +7,7 @@
 namespace {
 
 const char* domain_attrs(const std::string& domain) {
-  if (domain == "cover") return "current_position";
+  if (domain == "cover") return "current_position,supported_features";
   if (domain == "light") return "brightness";
   if (domain == "climate")
     return "current_temperature,temperature,current_humidity,hvac_mode,hvac_action,"

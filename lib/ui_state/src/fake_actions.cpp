@@ -49,6 +49,7 @@ ActionResult fakeAction(config::WidgetType type, int sub, const std::vector<cons
         EntityState s = *m;
         if (sub == 1) s.state = "opening";
         else if (sub == 3) s.state = "closing";
+        else if (!s.coverHasPosition()) s.state = "stopped";  // no feedback: nothing to infer
         else s.state = s.current_position.value_or(0) > 0 ? "open" : "closed";
         r.states.push_back(s);
       }

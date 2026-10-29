@@ -180,6 +180,19 @@ void test_input_postpones_sleep() {
   TEST_ASSERT_EQUAL(1, count(c, C::Sleep));
 }
 
+// Task 040: a cover without position feedback has no expected state; a 200 response that still
+// says "unknown" confirms, it is not a failure.
+void test_empty_expectation_confirmed_by_unknown_response() {
+  Driver d;
+  online(d);
+  auto c = d.send(Event::user_action({"cover.x"}, Action::CoverOpen));
+  const Command* call = find(c, C::CallService);
+  TEST_ASSERT_NOT_NULL(call);
+  c = d.send(Event::service_done(call->ticket, HaError::None, {"cover.x"}, {es("cover.x", "unknown")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "cover.x"));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Failed, "cover.x"));
+}
+
 void test_taps_before_wifi_are_queued() {
   Driver d;
   d.start();
@@ -948,6 +961,7 @@ int main(int, char**) {
   RUN_TEST(test_response_without_entity_falls_back_to_fetch);
   RUN_TEST(test_queued_tap_call_before_initial_fetch);
   RUN_TEST(test_input_postpones_sleep);
+  RUN_TEST(test_empty_expectation_confirmed_by_unknown_response);
   RUN_TEST(test_taps_before_wifi_are_queued);
   RUN_TEST(test_toggle_twice_sends_nothing);
   RUN_TEST(test_fetch_all_after_actions_confirms_matching_states);

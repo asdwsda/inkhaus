@@ -9,13 +9,18 @@
 struct EntityState {
   std::string id;
   std::string state;       // raw HA state string ("on", "open", "21.5", ...)
-  bool available = false;  // false for unavailable / unknown / missing entities
+  bool available = false;  // false for unavailable / missing (unknown is available) entities
   int64_t last_changed = 0;  // epoch seconds, 0 if unknown
   std::string friendly_name;
 
   // cover
   std::optional<int> current_position;
-  // light
+  std::optional<int> supported_features;  // bit mask; cover SET_POSITION = 4
+  // True if the cover reports/accepts a position (unknown mask: assume yes unless state is unknown).
+  bool coverHasPosition() const {
+    if (supported_features) return (*supported_features & 4) != 0;
+    return state != "unknown";
+  }  // light
   std::optional<int> brightness;
   // climate (temperature / humidity are shared with weather)
   std::optional<double> current_temperature;
@@ -48,7 +53,7 @@ struct EntityState {
   bool operator==(const EntityState& o) const {
     return id == o.id && state == o.state && available == o.available &&
            last_changed == o.last_changed && friendly_name == o.friendly_name &&
-           current_position == o.current_position && brightness == o.brightness &&
+           current_position == o.current_position && supported_features == o.supported_features && brightness == o.brightness &&
            current_temperature == o.current_temperature && temperature == o.temperature &&
            current_humidity == o.current_humidity && humidity == o.humidity &&
            hvac_mode == o.hvac_mode && hvac_action == o.hvac_action &&

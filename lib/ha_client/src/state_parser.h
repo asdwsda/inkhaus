@@ -12,7 +12,7 @@ struct ParseResult {
 };
 
 // Parses the output of the state template. Entities that are missing, have
-// "s": null, or whose state is "unavailable"/"unknown" get available=false.
+// "s": null, or whose state is "unavailable" get available=false ("unknown" is a normal state, task 040).
 ParseResult parse_state_response(const std::string& json,
                                  const std::vector<std::string>& requested_ids);
 

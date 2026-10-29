@@ -633,7 +633,7 @@ The status line has the wide-widget room (group must end at x <= W-272; widest
 | paused | Paused | pause filled | battery group shown |
 | idle | Idle | none | battery group shown |
 | error | the `status` attribute (truncated with `…` to the line limit), else `Error` | none | alert badge, no battery group |
-| unavailable / unknown / other | `n/a` (other known strings: humanised, 11.4) | none | unavailable: dotted frame, battery `-` |
+| unavailable / other | `n/a` (unknown: `-`, normal look; other known strings: humanised, 11.4) | none | unavailable: dotted frame, battery `-` |
 
 Low battery: the battery icon S gets the "!" glyph (as in the status bar) when
 `battery_level` <= 20 % **and** the state is not `docked` (a docked vacuum at 20 % is
@@ -651,7 +651,8 @@ Position p = `current_position` (0..100). Text widths: `Opening 100%` 12 chars =
 | open | Open | p = 100 or p missing: `Open`; otherwise `Open p%` (e.g. `Open 40%`; this is also how a stopped cover is shown, HA has no `stopped` state) |
 | opening | Opening | `Opening p%` |
 | closing | Closing | `Closing p%` |
-| unavailable / unknown | n/a | n/a |
+| unknown | - (normal look, buttons enabled; after a tap the optimistic `Opening` / `Closing` / `Stopped` until the next fetch) | - |
+| unavailable | n/a | n/a |
 | loading | - | - |
 
 Button fill follows section 1 (opening -> up filled, closing -> down filled).
@@ -661,7 +662,7 @@ Button fill follows section 1 (opening -> up filled, closing -> down filled).
 Applies to sensor text states, vacuum/cover states not listed above, and anything
 unknown:
 
-1. `unknown` and `unavailable` (any case) -> `n/a`.
+1. `unavailable` (any case) -> `n/a`; `unknown` -> `-` with the normal look (a normal state, not unavailable).
 2. Otherwise humanise: underscores to spaces, whole string lower-cased, first letter
    upper-cased (`partly_cloudy` -> `Partly cloudy`, `HEAT_COOL` -> `Heat cool`).
 3. Truncate with `…` to the width of the text box (F24: 152 px landscape 1x1 box,

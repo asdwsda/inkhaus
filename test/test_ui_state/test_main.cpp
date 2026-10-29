@@ -167,7 +167,7 @@ void test_humanise_and_text_state() {
   TEST_ASSERT_EQUAL_STRING("21.5", humanise("21.5").c_str());
   TEST_ASSERT_EQUAL_STRING("-", humanise("").c_str());
   TEST_ASSERT_EQUAL_STRING("Heat cool", humanise("HEAT_COOL").c_str());
-  TEST_ASSERT_EQUAL_STRING("n/a", humanise("Unknown").c_str());
+  TEST_ASSERT_EQUAL_STRING("-", humanise("Unknown").c_str());
   TEST_ASSERT_EQUAL_STRING("n/a", humanise("UNAVAILABLE").c_str());
   EntityState s = E("sun.sun", "above_horizon");
   SensorView sv = sensorView(&s);
@@ -257,6 +257,25 @@ void test_fake_cover() {
   c.current_position = 40;
   TEST_ASSERT_EQUAL_STRING("open", fakeAction(WidgetType::Cover, 2, {&c}).states[0].state.c_str());
   TEST_ASSERT_FALSE(fakeAction(WidgetType::Cover, 0, {&c}).changed);
+}
+
+// Task 040: the user's shutter (state unknown, supported_features 11, no position).
+void test_unknown_cover_no_position() {
+  EntityState c = E("cover.livingroom_shutter", "unknown");
+  c.supported_features = 11;
+  CoverView v = coverView({&c}, false);
+  TEST_ASSERT_TRUE(v.look == Look::Normal);
+  TEST_ASSERT_EQUAL_STRING("-", v.state.c_str());
+  TEST_ASSERT_EQUAL_STRING("-", coverView({&c, &c}, true).state.c_str());
+  ActionResult open = fakeAction(WidgetType::Cover, 1, {&c});
+  TEST_ASSERT_TRUE(open.changed);
+  TEST_ASSERT_EQUAL_STRING("Opening", coverView({&open.states[0]}, false).state.c_str());
+  TEST_ASSERT_EQUAL_STRING("Closing", coverView({&fakeAction(WidgetType::Cover, 3, {&c}).states[0]}, false).state.c_str());
+  ActionResult stop = fakeAction(WidgetType::Cover, 2, {&c});
+  TEST_ASSERT_EQUAL_STRING("Stopped", coverView({&stop.states[0]}, false).state.c_str());
+  EntityState un = E("cover.u", "unavailable", false);
+  TEST_ASSERT_TRUE(coverView({&un}, false).look == Look::Unavailable);
+  TEST_ASSERT_FALSE(fakeAction(WidgetType::Cover, 1, {&un}).changed);
 }
 
 void test_fake_climate_step_and_limits() {
@@ -619,8 +638,8 @@ static void test_binary_sensor_table() {
   TEST_ASSERT_TRUE(uv.look == Look::Unavailable);
   EntityState k = E("binary_sensor.x", "unknown");
   uv = toggleView(WidgetType::BinarySensor, &k, false);
-  TEST_ASSERT_EQUAL_STRING("n/a", uv.state.c_str());
-  TEST_ASSERT_TRUE(uv.look == Look::Unavailable);
+  TEST_ASSERT_EQUAL_STRING("-", uv.state.c_str());
+  TEST_ASSERT_TRUE(uv.look == Look::Normal);
 }
 
 static void test_vacuum_wording() {
@@ -649,8 +668,8 @@ static void test_vacuum_wording() {
   EntityState u = E("vacuum.r", "unavailable", false);
   TEST_ASSERT_EQUAL_STRING("n/a", vacuumView(&u).status.c_str());
   EntityState k = E("vacuum.r", "unknown");
-  TEST_ASSERT_EQUAL_STRING("n/a", vacuumView(&k).status.c_str());
-  TEST_ASSERT_TRUE(vacuumView(&k).look == Look::Unavailable);
+  TEST_ASSERT_EQUAL_STRING("-", vacuumView(&k).status.c_str());
+  TEST_ASSERT_TRUE(vacuumView(&k).look == Look::Normal);
   EntityState o = E("vacuum.r", "spot_cleaning");
   TEST_ASSERT_EQUAL_STRING("Spot cleaning", vacuumView(&o).status.c_str());
   // Low battery: <= 20 % and not docked; the percent stays.
@@ -675,7 +694,7 @@ static void test_cover_wording() {
       {"open", std::nullopt, "Open"}, {"open", 100, "Open"}, {"open", 40, "Open 40%"},
       {"opening", std::nullopt, "Opening"}, {"opening", 55, "Opening 55%"},
       {"closing", std::nullopt, "Closing"}, {"closing", 100, "Closing 100%"},
-      {"unavailable", std::nullopt, "n/a"}, {"unknown", std::nullopt, "n/a"},
+      {"unavailable", std::nullopt, "n/a"}, {"unknown", std::nullopt, "-"},
       {"weird_state", std::nullopt, "Weird state"},
   };
   for (const Row &r : rows) {
@@ -696,7 +715,8 @@ static void test_generic_fallback() {
   s.state = "HEAT_COOL";
   TEST_ASSERT_EQUAL_STRING("Heat cool", sensorView(&s).value.c_str());
   s.state = "unknown";
-  TEST_ASSERT_EQUAL_STRING("n/a", sensorView(&s).value.c_str());
+  TEST_ASSERT_EQUAL_STRING("-", sensorView(&s).value.c_str());
+  TEST_ASSERT_TRUE(sensorView(&s).look == Look::Normal);
   s.state = "";
   TEST_ASSERT_EQUAL_STRING("-", sensorView(&s).value.c_str());
 }
@@ -967,6 +987,7 @@ int main() {
   RUN_TEST(test_fake_toggle_and_group);
   RUN_TEST(test_toggle_intent_from_shown_state);
   RUN_TEST(test_fake_cover);
+  RUN_TEST(test_unknown_cover_no_position);
   RUN_TEST(test_fake_climate_step_and_limits);
   RUN_TEST(test_fake_vacuum);
   RUN_TEST(test_demo_states_cover_every_entity);

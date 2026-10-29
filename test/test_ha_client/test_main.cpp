@@ -18,6 +18,23 @@ void tearDown() {}
 
 // ---- template builder ----
 
+void test_unknown_cover_without_position() {
+  const std::string json =
+      "{\"cover.livingroom_shutter\": {\"s\": \"unknown\", \"lc\": 1700000000, \"a\": "
+      "{\"friendly_name\": \"Shutter\", \"current_position\": null, \"is_closed\": null, "
+      "\"device_class\": \"shutter\", \"supported_features\": 11}}}";
+  ParseResult r = parse_state_response(json, {"cover.livingroom_shutter"});
+  TEST_ASSERT_TRUE(r.ok);
+  const EntityState& e = r.states[0];
+  TEST_ASSERT_TRUE(e.available);
+  TEST_ASSERT_EQUAL_STRING("unknown", e.state.c_str());
+  TEST_ASSERT_FALSE(e.current_position.has_value());
+  TEST_ASSERT_EQUAL(11, *e.supported_features);
+  TEST_ASSERT_FALSE(e.coverHasPosition());
+  ParseResult u = parse_state_response("{\"cover.a\": {\"s\": \"unavailable\", \"a\": {}}}", {"cover.a"});
+  TEST_ASSERT_FALSE(u.states[0].available);
+}
+
 void test_template_golden() {
   std::string t, err;
   TEST_ASSERT_TRUE(build_state_template({"cover.shutter", "foo.bar"}, t, err));
@@ -25,7 +42,8 @@ void test_template_golden() {
       "{\"cover.shutter\": {% set s = states.cover['shutter'] %}{% if s %}{{ {'s': s.state, "
       "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
       "s.attributes.get('friendly_name'), 'current_position': "
-      "s.attributes.get('current_position')}}|tojson }}{% else %}{\"s\": null}{% endif %}, "
+      "s.attributes.get('current_position'), 'supported_features': "
+      "s.attributes.get('supported_features')}}|tojson }}{% else %}{\"s\": null}{% endif %}, "
       "\"foo.bar\": {% set s = states.foo['bar'] %}{% if s %}{{ {'s': s.state, "
       "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
       "s.attributes.get('friendly_name')}}|tojson }}{% else %}{\"s\": null}{% endif %}}";
@@ -120,7 +138,7 @@ void test_parser_all_domains() {
   TEST_ASSERT_EQUAL(90, *r.states[5].battery_level);
   TEST_ASSERT_EQUAL_STRING("Docked", r.states[5].status.c_str());
   TEST_ASSERT_FALSE(r.states[6].available);  // unavailable
-  TEST_ASSERT_FALSE(r.states[7].available);  // unknown
+  TEST_ASSERT_TRUE(r.states[7].available);  // unknown is a normal state (task 040)
   TEST_ASSERT_FALSE(r.states[8].available);  // {"s": null}
   TEST_ASSERT_FALSE(r.states[9].available);  // not in response
   TEST_ASSERT_EQUAL_STRING("light.absent", r.states[9].id.c_str());
@@ -670,6 +688,7 @@ void test_keep_alive_stale_connection_retried_once() {
 
 int main() {
   UNITY_BEGIN();
+  RUN_TEST(test_unknown_cover_without_position);
   RUN_TEST(test_template_golden);
   RUN_TEST(test_template_binary_sensor_golden);
   RUN_TEST(test_parser_binary_sensor_device_class);

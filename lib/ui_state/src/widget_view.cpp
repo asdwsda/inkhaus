@@ -137,17 +137,22 @@ CoverView coverView(const std::vector<const EntityState *> &members, bool group)
   if (!group) {
     const EntityState *m = nullptr;
     for (auto *x : members) if (x) { m = x; break; }
-    if (m->state == "unknown" || m->state == "unavailable") {
+    if (m->state == "unknown") v.state = "-";
+    else if (m->state == "unavailable") {
       v.look = Look::Unavailable;
       v.state = "n/a";
-    } else if (m->state == "closed") v.state = "Closed";
+    } else if (m->state == "stopped") v.state = "Stopped";
+    else if (m->state == "closed") v.state = "Closed";
     else if (m->state == "open") v.state = (m->current_position && *m->current_position < 100) ? withPos("Open", m->current_position) : "Open";
     else if (m->state == "opening") v.state = withPos("Opening", m->current_position);
     else if (m->state == "closing") v.state = withPos("Closing", m->current_position);
     else v.state = humanise(m->state);
     return v;
   }
-  if (anyOpening) v.state = "Opening";
+  bool allUnknown = true;
+  for (auto *m : members) if (m && m->available) allUnknown &= m->state == "unknown";
+  if (allUnknown) v.state = "-";
+  else if (anyOpening) v.state = "Opening";
   else if (anyClosing) v.state = "Closing";
   else if (allClosed) v.state = "Closed";
   else if (samePos && pos) v.state = (*pos < 100) ? withPos("Open", pos) : "Open";
@@ -177,12 +182,11 @@ ToggleView toggleView(config::WidgetType type, const EntityState *st, bool badge
   }
   v.on = st->state == "on";
   v.state = v.on ? "On" : "Off";
+  if (st->state == "unknown") {
+    v.state = "-";
+    return v;
+  }
   if (type == config::WidgetType::BinarySensor) {
-    if (st->state == "unknown") {
-      v.look = Look::Unavailable;
-      v.state = "n/a";
-      return v;
-    }
     binaryTexts(st->device_class, v);
   }
   if (v.on && type == config::WidgetType::Light && st->brightness && !badgeShown) {
@@ -234,7 +238,8 @@ std::string humanise(const std::string &raw) {
     if (c == '_') c = ' ';
     else if (c >= 'A' && c <= 'Z') c = char(c - 'A' + 'a');
   }
-  if (s == "unknown" || s == "unavailable") return "n/a";
+  if (s == "unavailable") return "n/a";
+  if (s == "unknown") return "-";
   if (s.empty()) return "-";
   return capitalize(s);
 }
@@ -351,8 +356,7 @@ VacuumView vacuumView(const EntityState *st) {
   }
   const std::string &s = st->state;
   if (s == "unknown") {
-    v.look = Look::Unavailable;
-    v.status = "n/a";
+    v.status = "-";
     return v;
   }
   if (s == "cleaning") { v.status = "Cleaning"; v.startFilled = true; }

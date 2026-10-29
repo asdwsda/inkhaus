@@ -29,3 +29,4 @@ out (unavailable look) and unusable.
 - [ ] `unavailable` still gives the unavailable look; `pio test -e native` and the builds pass.
 
 ## Notes
+- PC part done (2026-10-29): available=false only for unavailable/missing; supported_features fetched for covers; unknown → normal look "-"; optimistic Opening/Closing/Stopped briefly, back to "-" once the call is confirmed (user: no last-command display wanted). 525 tests. Device check pending.

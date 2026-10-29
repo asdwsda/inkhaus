@@ -41,6 +41,7 @@ constexpr size_t kMaxAttrs = 16;  // scalar attributes kept per entity
 void fill_attributes(EntityState& e, JsonVariantConst a) {
     e.friendly_name = str_of(a["friendly_name"]);
     e.current_position = int_of(a["current_position"], 0, 100);
+    e.supported_features = int_of(a["supported_features"], 0, 1 << 30);
     e.brightness = int_of(a["brightness"], 0, 255);
     e.current_temperature = dbl_of(a["current_temperature"]);
     e.temperature = dbl_of(a["temperature"]);
@@ -124,7 +125,7 @@ ParseResult parse_state_response(const std::string& json,
     JsonVariantConst s = v["s"];
     if (v.is<JsonObjectConst>() && s.is<const char*>()) {
       e.state = s.as<const char*>();
-      e.available = e.state != "unavailable" && e.state != "unknown";
+      e.available = e.state != "unavailable";
       e.last_changed = lc_of(v["lc"]);
       JsonVariantConst a = v["a"];
       fill_attributes(e, a);
@@ -160,7 +161,7 @@ ParseResult parse_service_response(const std::string& json,
     EntityState e;
     e.id = id;
     e.state = item["state"].as<const char*>();
-    e.available = e.state != "unavailable" && e.state != "unknown";
+    e.available = e.state != "unavailable";
     e.last_changed = iso_to_epoch(item["last_changed"].as<const char*>());
     // Only the attributes the template path would have fetched, in the same order.
     JsonDocument filtered;
