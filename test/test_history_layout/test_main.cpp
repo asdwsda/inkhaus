@@ -123,6 +123,15 @@ void test_time_ticks_landscape_tz() {
   TEST_ASSERT_EQUAL_STRING("18:00", l[0].label.c_str());
 }
 
+void test_time_tick_step_ignores_position() {
+  // 24 h portrait (4 ticks max): always 6 h, wherever the window sits (round hour, half past, TZ shift)
+  for (int64_t off = 0; off < 86400; off += 1800) {
+    TEST_ASSERT_EQUAL(21600, (int)timeTickStep(kNow - 86400 - off, kNow - off, 392, utc));
+    TEST_ASSERT_EQUAL(21600, (int)timeTickStep(kNow - 86400 - off, kNow - off, 392, plus1));
+    TEST_ASSERT_EQUAL(10800, (int)timeTickStep(kNow - 86400 - off, kNow - off, 764, utc));
+  }
+}
+
 void test_time_ticks_days() {
   auto w = timeTicks(kNow - 7 * 86400, kNow, 764, utc);  // 7 d: daily ticks, weekday labels
   TEST_ASSERT_EQUAL(7, (int)w.size());
@@ -220,6 +229,7 @@ int main(int, char**) {
   RUN_TEST(test_time_ticks_portrait);
   RUN_TEST(test_time_ticks_landscape_tz);
   RUN_TEST(test_time_ticks_days);
+  RUN_TEST(test_time_tick_step_ignores_position);
   RUN_TEST(test_fit_labels);
   RUN_TEST(test_lane_spans);
   RUN_TEST(test_changes);

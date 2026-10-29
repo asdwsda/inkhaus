@@ -245,10 +245,13 @@ void fullRefresh(bool whiteFirst, const char *why) {
 
 // Refreshes one changed rectangle. Fastest only if the panel's content there (what was pushed
 // last) is pure black/white; otherwise one quality refresh. Keeps g_panel and g_prev exact.
+bool g_fastestOnce = false;  // fastestOverGreysOnce()
+
 void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   auto &d = M5.Display;
-  const bool grey = unknownPanel || panelHasGrey(r);
-  const char *reason = unknownPanel ? "boot_unknown_panel" : (grey ? "panel_has_grey" : "panel_bw");
+  const bool forced = g_fastestOnce && !unknownPanel;
+  const bool grey = !forced && (unknownPanel || panelHasGrey(r));
+  const char *reason = unknownPanel ? "boot_unknown_panel" : forced ? "hint_fastest" : (grey ? "panel_has_grey" : "panel_bw");
   Serial.printf("PRESENT: rect=%d,%d,%d,%d mode=%s reason=%s\n", r.x, r.y, r.w, r.h, grey ? "quality" : "fastest",
                 reason);
   if (grey) {
@@ -262,6 +265,9 @@ void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
     ++g_partialCount;
     g_partialArea += long(r.w) * long(r.h);
     g_havePending = true;
+    // UNVERIFIED: after a forced fastest over greys the panel is not clean black/white. Keep the rect
+    // marked as grey so the next refresh of it is a quality one (clears the ghost).
+    if (forced) buf(g_panel)[size_t(r.y) * size_t(g_w) + size_t(r.x)] = 128;
   }
   copyToPrev(r);
 }
@@ -407,9 +413,13 @@ void bootFrame(bool forceFull) {
 static int g_renderTab = -1;
 void setLogTab(int tab) { g_renderTab = tab; }
 
+void fastestOverGreysOnce() { g_fastestOnce = true; }
+
 bool show(Mode mode, uint32_t now) {
   auto &d = M5.Display;
   g_lastShowMs = now;
+  const bool hint = g_fastestOnce && mode != Mode::Full && !g_forceFull;
+  struct Clear { ~Clear() { g_fastestOnce = false; } } clearHint;
   if (mode == Mode::Full || g_forceFull) {
     if (mode != Mode::Full) boot::log("full_after_failure", 1);
     Serial.printf("APP: render tab=%d rects=1 mode=full\n", g_renderTab);
@@ -424,7 +434,7 @@ bool show(Mode mode, uint32_t now) {
   long area = 0;
   for (const Rect &r : rects) area += long(r.w) * long(r.h);
   const long screen = long(g_w) * long(g_h);
-  if (area * 100 > screen * kBigChangePct) {
+  if (!hint && area * 100 > screen * kBigChangePct) {
     boot::log("big_change_pct", area * 100 / screen);
     Serial.printf("APP: render tab=%d rects=%u mode=full\n", g_renderTab, (unsigned)rects.size());
     fullRefresh(false, "full_big_change");

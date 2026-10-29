@@ -38,6 +38,11 @@ void bootFrame(bool forceFull);
 // Returns true if anything was refreshed.
 enum class Mode { Partial, Full };
 bool show(Mode mode, uint32_t now);
+// One-shot hint for the NEXT show() only (task 053, docs/ui/history.md section 7): refresh the changed
+// rects with epd_fastest even though the panel holds greys there (a faint ghost is accepted; the history
+// Loading frame). The rects stay marked as "may hold grey", so the frame after it is a quality refresh.
+// Skips the big-change full refresh. Cleared by that show(), whether or not anything changed.
+void fastestOverGreysOnce();
 void setLogTab(int tab);  // tab index shown in the "APP: render" log line
 
 // Call regularly: after 2 s without a frame, runs one GC16 full refresh if the ghost debt is

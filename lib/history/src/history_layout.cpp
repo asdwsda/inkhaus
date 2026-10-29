@@ -192,11 +192,14 @@ std::vector<TimeTick> ticksFor(int64_t step, int64_t start, int64_t end, int w, 
 
 }  // namespace
 
-int64_t timeTickStep(int64_t start, int64_t end, int plotW, TzOffsetFn tz) {
+int64_t timeTickStep(int64_t start, int64_t end, int plotW, TzOffsetFn) {
   if (end <= start || plotW <= 0) return 0;
-  const size_t maxT = static_cast<size_t>(std::max(1, plotW / 90));
+  // From the range and width only: the worst case count of ticks in a window is ceil(range / step), so a
+  // step that passes this never depends on where the window sits against the round hours or the TZ.
+  const int64_t range = end - start;
+  const int64_t maxT = std::max(1, plotW / 90);
   for (int64_t s : kSteps)
-    if (ticksFor(s, start, end, plotW, tz).size() <= maxT) return s;
+    if ((range + s - 1) / s <= maxT) return s;
   return kSteps[sizeof kSteps / sizeof kSteps[0] - 1];
 }
 

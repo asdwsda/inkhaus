@@ -4,6 +4,7 @@
 
 #include <cstdio>
 
+#include "history_graph.h"
 #include "history_popup.h"
 #include "widget_view.h"
 
@@ -23,6 +24,7 @@ struct Geo {
   int valueX = 0, valueBaseline = 0;
   int rangeRight = 0, rangeCy1 = 0;
   int noteX = 0, noteCy = 0;
+  int legendRight = 0;
 };
 
 Geo geo(settings::Orientation o) {
@@ -38,7 +40,7 @@ Geo geo(settings::Orientation o) {
     g.nameX = 56; g.nameCy = 134; g.nameMaxW = 300;
     g.valueX = 372; g.valueBaseline = 148;
     g.rangeRight = 824; g.rangeCy1 = 121;
-    g.noteX = 56; g.noteCy = 482;
+    g.noteX = 56; g.noteCy = 482; g.legendRight = 904;
   } else {
     g.plot = {92, 372, 392, 264};
     g.axisLeft = {91, 368, 2, 269};
@@ -46,7 +48,7 @@ Geo geo(settings::Orientation o) {
     g.nameX = 32; g.nameCy = 260; g.nameMaxW = 396;
     g.valueX = 32; g.valueBaseline = 342;
     g.rangeRight = 508; g.rangeCy1 = 315;
-    g.noteX = 32; g.noteCy = 700;
+    g.noteX = 32; g.noteCy = 700; g.legendRight = 508;
   }
   return g;
 }
@@ -130,6 +132,70 @@ const char *reasonText(HistReason r) {
   }
 }
 
+const config::Widget *widgetOf(const uistate::AppState &app) {
+  const uistate::HistoryPopup &h = app.history();
+  const auto &tabs = app.config().tabs;
+  if (h.tab() < 0 || size_t(h.tab()) >= tabs.size()) return nullptr;
+  const auto &ws = tabs[size_t(h.tab())].widgets;
+  if (h.widget() < 0 || size_t(h.widget()) >= ws.size()) return nullptr;
+  return &ws[size_t(h.widget())];
+}
+
+// "Open" / "Closed", "On" / "Off", ... from the entity's device class (same table as the widget).
+void stateWords(const uistate::AppState &app, std::string &on, std::string &off) {
+  EntityState e;
+  const EntityState *cur = app.store().get(app.history().entity());
+  if (cur) e.device_class = cur->device_class;
+  e.available = true;
+  e.state = "on";
+  on = uistate::toggleView(config::WidgetType::BinarySensor, &e, false).state;
+  e.state = "off";
+  off = uistate::toggleView(config::WidgetType::BinarySensor, &e, false).state;
+}
+
+std::string lower(std::string s) {
+  for (char &ch : s) ch = char(tolower((unsigned char)ch));
+  return s;
+}
+
+// Range line 2 (docs/ui/history.md section 3.1).
+std::string rangeLine2(const uistate::HistoryPopup &h, int decimals, const std::string &onWord) {
+  if (h.spec().chart == uistate::HistChart::Step) {
+    const history::StepSummary ss = history::stepSummary(h.series());
+    const int64_t min = ss.onSeconds / 60;
+    std::string t = min >= 120 ? std::to_string(min / 60) + " h " + std::to_string(min % 60) + " min"
+                               : std::to_string(min) + " min";
+    return std::to_string(ss.episodes) + "x " + lower(onWord) + ", " + t + " total";
+  }
+  float lo, hi;
+  if (!h.series().range(lo, hi)) return "";
+  return "min " + history::formatValue(lo, decimals) + " max " + history::formatValue(hi, decimals);
+}
+
+// Legend, right-aligned at g.legendRight: swatch 24 x 12 centred on the note line, then its text.
+int legendEntry(M5Canvas &c, int right, int cy, uint32_t fill, bool outline, const std::string &text) {
+  const int tw = textWidth(c, Font::F18, text);
+  drawTextCy(c, Font::F18, text, right, cy, Align::Right, INK);
+  const int sx = right - tw - 8 - 24;
+  if (outline) {
+    c.fillRect(sx, cy - 6, 24, 12, INK);
+    c.fillRect(sx + 2, cy - 4, 20, 8, PAPER);
+  } else {
+    c.fillRect(sx, cy - 6, 24, 12, fill);
+  }
+  return sx;
+}
+
+void drawLegend(M5Canvas &c, const uistate::HistoryPopup &h, const Geo &g, const std::string &onWord,
+                const std::string &offWord) {
+  if (h.spec().chart == uistate::HistChart::Step) {
+    const int x = legendEntry(c, g.legendRight, g.noteCy, PAPER, true, offWord);
+    legendEntry(c, x - 16, g.noteCy, INK, false, onWord);
+  } else {
+    legendEntry(c, g.legendRight, g.noteCy, HIST_GRID, false, "min-max");
+  }
+}
+
 }  // namespace
 
 void drawHistoryPopup(M5Canvas &c, const uistate::AppState &app) {
@@ -150,9 +216,30 @@ void drawHistoryPopup(M5Canvas &c, const uistate::AppState &app) {
   const bool graph = (h.state() == HistState::Ready || h.state() == HistState::Stale) && h.hasData();
   if (graph && !h.series().empty()) {
     drawTextCy(c, Font::F18, "Last " + hoursText(h.spec().hours), g.rangeRight, g.rangeCy1, Align::Right, INK);
-    // TODO 052 hook: draw the graph (axes, grid, line/step/bar, range line 2, legend) from h.series() and
-    // h.spec().chart into the plot rect / lane. Until it exists the plot area stays empty.
-    drawAxesFrame(c, g);
+    const config::Widget *w = widgetOf(app);
+    HistoryGraphInput in;
+    in.landscape = g.landscape;
+    in.series = &h.series();
+    in.decimals = w && w->decimals ? *w->decimals : 1;
+    if (w) {
+      in.hasMin = w->history.min.has_value();
+      in.hasMax = w->history.max.has_value();
+      in.fixedMin = w->history.min.value_or(0);
+      in.fixedMax = w->history.max.value_or(0);
+    }
+    switch (h.spec().chart) {
+      case uistate::HistChart::Line: in.type = history::ChartType::Line; break;
+      case uistate::HistChart::Step: in.type = history::ChartType::Step; break;
+      case uistate::HistChart::Bar: in.type = history::ChartType::Bar; break;  // not reachable before the statistics task
+    }
+    std::string onWord = "Open", offWord = "Closed";
+    if (in.type == history::ChartType::Step) stateWords(app, onWord, offWord);
+    in.onWord = onWord;
+    in.offWord = offWord;
+    if (!drawHistoryGraph(c, in)) drawAxesFrame(c, g);
+    const std::string l2 = rangeLine2(h, in.decimals, onWord);
+    if (!l2.empty()) drawTextCy(c, Font::F18, l2, g.rangeRight, g.rangeCy1 + 26, Align::Right, INK);
+    drawLegend(c, h, g, onWord, offWord);
     return;
   }
   drawAxesFrame(c, g);

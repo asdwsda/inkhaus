@@ -1,10 +1,11 @@
 #include "history_popup.h"
 
+#include "history_layout.h"
+
 namespace uistate {
 
 int historyColumns(bool landscape, bool step) {
-  if (step) return landscape ? 824 : 452;
-  return landscape ? 764 : 392;
+  return history::graphLayout(step ? history::ChartType::Step : history::ChartType::Line, landscape).columns();
 }
 
 bool historyEnabledFor(const config::Widget &w) {
