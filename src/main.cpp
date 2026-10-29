@@ -12,6 +12,7 @@
 #include "config_sd.h"
 #include "boot.h"
 #include "brightness_intent.h"
+#include "history_cache_sd.h"
 #include "deferred_tap.h"
 #include "input.h"
 #include "net.h"
@@ -269,6 +270,86 @@ static void showFrame(uint32_t now) {
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 
+// ---- history popup (task 053, docs/ui/history.md) ----
+// The popup model lives in AppState; this glue does the cache lookup, hands the fetch to the net task and
+// feeds the result back. PSRAM map + SD files per entity (lib/history cache_store).
+static history_cache_sd::Backend g_histSd;
+static history::CacheStore g_histCache(&g_histSd);
+static std::shared_ptr<volatile bool> g_histCancel;  // set when the popup closes during a fetch
+static uistate::HistoryJob g_histJob;
+static bool g_histWaitNet = false;  // a job is planned but Wi-Fi is not up yet
+static bool g_histChanged = false;  // a result arrived: redraw
+
+static uint32_t histHash() { return history::paramsHash(g_app.history().spec().params); }
+
+static uistate::HistOutcome histOutcome(HaError e) {
+  switch (e) {
+    case HaError::None: return uistate::HistOutcome::Ok;
+    case HaError::TooLarge:
+    case HaError::Timeout: return uistate::HistOutcome::TooMany;  // the 512 KB / 15 s limits
+    case HaError::Cancelled: return uistate::HistOutcome::Cancelled;
+    case HaError::Parse: return uistate::HistOutcome::Unavailable;
+    default: return uistate::HistOutcome::Unreachable;
+  }
+}
+
+static void onHistoryDone(app_logic::NetEvent &&ev) {
+  uistate::HistoryPopup &h = g_app.historyPopup();
+  const int64_t epoch = session_glue::wallClock();
+  const uistate::HistOutcome o = histOutcome(ev.error);
+  const std::string id = h.entity();
+  if (h.onFetchDone(ev.ticket, o, std::move(ev.series), epoch)) {
+    g_histChanged = true;
+    if (o == uistate::HistOutcome::Ok && h.state() == uistate::HistState::Ready)
+      g_histCache.put(id, histHash(), h.series(), epoch);  // UNVERIFIED: the SD write (~tens of ms) is fine here
+  }
+}
+
+// Just after the popup opened: cache lookup (shown at once when found), then plan the fetch.
+static void historyOpened() {
+  uistate::HistoryPopup &h = g_app.historyPopup();
+  history::Series s;
+  int64_t at = 0;
+  const history::Freshness f =
+      g_histCache.lookup(h.entity(), histHash(), session_glue::wallClock(), h.spec().hours, s, at);
+  h.applyCache(f, s, at);
+  g_histWaitNet = h.takeFetch(session_glue::wallClock(), g_histJob);
+}
+
+// Every loop: starts a planned fetch once Wi-Fi is up, fails it when there is no way to get it, and aborts a
+// running one when the popup was closed. The popup being open keeps the session awake (see loop()).
+static void historyPump() {
+  if (g_app.historyPopup().takeCancel()) {
+    if (g_histCancel) *g_histCancel = true;
+    g_histWaitNet = false;
+  }
+  if (!g_histWaitNet) return;
+  if (!g_real || !g_drv || g_drv->status() == session::Status::Offline ||
+      g_drv->status() == session::Status::AuthError) {
+    g_histWaitNet = false;
+    if (g_app.historyPopup().fetchUnavailable()) g_histChanged = true;
+    return;
+  }
+  if (!g_drv->wifiUp()) return;
+  g_histWaitNet = false;
+  g_histCancel = std::make_shared<volatile bool>(false);
+  app_logic::NetCommand c;
+  c.type = app_logic::NetCommand::Type::History;
+  c.ticket = g_histJob.ticket;
+  c.histEntity = g_histJob.entity;
+  c.histStart = g_histJob.start;
+  c.histEnd = g_histJob.end;
+  c.histColumns = g_histJob.columns;
+  c.histCancel = g_histCancel;
+  g_drv->postHistory(c);
+}
+
+// Closes the popup and aborts its fetch (before sleep, session restart).
+static void historyShutdown() {
+  g_app.closeHistory();
+  historyPump();
+}
+
 // ---- session ----
 
 static power::WakeReason g_sessionWake = power::WakeReason::Button;  // the wake reason the session was planned with
@@ -293,6 +374,12 @@ static void startSession(uint32_t now, bool restart = false) {
   g_drv.reset(new app_logic::SessionDriver(g_cfg.cfg.entityIds, g_app.store(), *g_wifi, g_net,
                                            session_glue::wallClock, appLog));
   g_sessionOver = false;
+  g_drv->setHistoryHandler(onHistoryDone);
+  if (g_app.history().fetching() || g_histWaitNet) {  // the old net session is gone: its result will not arrive
+    g_histWaitNet = false;
+    if (g_histCancel) *g_histCancel = true;
+    if (g_app.historyPopup().fetchUnavailable()) g_histChanged = true;
+  }
   wakelog::sessionStarted(now);
   // The offset is taken now (local time at planning time); the machine plans the wake-up from it.
   if (!restart) g_sessionWake = g_firstSession ? g_wake : power::WakeReason::Button;
@@ -475,6 +562,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   const bool low = session == power::Session::LowBattery;
   session_glue::ntpAbort();
   if (!low) {
+    historyShutdown();
     g_app.closeBrightness(now);  // flush the unsent value; the frozen screen never shows the popup (brightness.md rule 5)
     // Settings auto-leave before sleeping (settings.md rule 5). Whether or not Settings was open now,
     // the plan is made again from the settings in effect now: the session machine's plan was made
@@ -681,7 +769,7 @@ void loop() {
         (e.kind == input::Event::Touch && g_wakeGuard.blocksTouch()))
       e = input::Event();  // the press that woke the device
   }
-  const bool popupOpen = g_app.brightnessOpen();  // no idle sleep while open: its own 10 s close comes first
+  const bool popupOpen = g_app.modalOpen();  // no idle sleep while open: brightness closes itself after 10 s; history stays awake while it fetches
   if ((e.kind != input::Event::None || popupOpen) && g_real && g_drv) {
     if (g_sessionOver) startSession(now);  // a new interactive session (real sleep comes later)
     else g_drv->input(now);
@@ -703,13 +791,17 @@ void loop() {
   } else if (e.kind == input::Event::LongTouch) {
     const auto d = g_defer.longPress();
     if (d.kind == uistate::DeferredTap::Result::LongPress) changed |= g_app.longPress(d.point, now);
+    else if (g_app.longPress(e.point, now)) {  // a sensor / binary widget: the history popup
+      historyOpened();
+      changed = true;
+    }
   } else if (e.kind == input::Event::TouchRelease) {
     const auto d = g_defer.release();  // a short tap on a dimmable light: on/off as usual
     if (d.kind == uistate::DeferredTap::Result::Tap) {
       g_tapNow = now;
       changed |= g_app.touch(d.point, now);
     }
-  } else if (e.kind == input::Event::Touch && g_app.brightnessOpen()) {
+  } else if (e.kind == input::Event::Touch && g_app.modalOpen()) {
     g_tapNow = now;
     changed |= g_app.touch(e.point, now);  // modal: outside closes, controls act
   } else if (e.kind == input::Event::Touch && g_app.screen() == uistate::Screen::Tabs &&
@@ -729,11 +821,14 @@ void loop() {
       changed |= g_app.touch(e.point, now);
     }
   } else if (e.kind == input::Event::Key) {
-    if (e.key == ui::PhysicalKey::LongPush && !g_app.brightnessOpen() && g_app.screen() == uistate::Screen::Tabs &&
+    if (e.key == ui::PhysicalKey::LongPush && !g_app.modalOpen() && g_app.screen() == uistate::Screen::Tabs &&
         g_app.focus().mode == ui::FocusMode::Tab) {
       openSettings(true, now);
-    } else if (e.key == ui::PhysicalKey::LongPush && !g_app.brightnessOpen() && g_app.openBrightnessFocused(now)) {
+    } else if (e.key == ui::PhysicalKey::LongPush && !g_app.modalOpen() && g_app.openBrightnessFocused(now)) {
       g_defer.cancel();
+      changed = true;
+    } else if (e.key == ui::PhysicalKey::LongPush && !g_app.modalOpen() && g_app.openHistoryFocused(now)) {
+      historyOpened();
       changed = true;
     } else {
       g_tapNow = now;
@@ -779,6 +874,9 @@ void loop() {
       changed = true;
     }
   }
+
+  historyPump();
+  if (g_histChanged) { g_histChanged = false; changed = true; }
 
   if (!settings_flow::active() && g_app.screen() == uistate::Screen::Tabs) {
     // A phase change repaints only the label region: the frame diff leaves everything else alone.

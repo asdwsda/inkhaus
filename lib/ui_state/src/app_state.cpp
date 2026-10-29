@@ -16,6 +16,7 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   orientation_ = o;
   demo_ = demo;
   screen_ = Screen::Tabs;
+  hist_.close();
   store_ = StateStore();
   if (demo) store_.update(demoStates(cfg_));
   focus_ = ui::FocusState();
@@ -232,6 +233,7 @@ bool AppState::setMarks(const std::map<std::string, Mark> &marks) {
 bool AppState::tick(uint32_t now) {
   bool changed = false;
   lastNow_ = now;
+  if (hist_.tick(now)) changed = true;  // the Loading frame appears after its delay
   if (popup_.isOpen()) {
     const EntityState *s = store_.get(popup_.entityId());
     bool closed = false;
@@ -273,6 +275,7 @@ bool AppState::tick(uint32_t now) {
 bool AppState::touch(ui::Point p, uint32_t now) {
   if (screen_ != Screen::Tabs) return false;
   lastNow_ = now;
+  if (hist_.isOpen()) return historyTouch(p);
   if (popup_.isOpen()) return popupTouch(p, now);
   const ui::Hit hit = ui::hitTest(layout_, p);
   const int tabCount = int(cfg_.tabs.size());
@@ -318,6 +321,10 @@ bool AppState::touch(ui::Point p, uint32_t now) {
 bool AppState::rocker(ui::PhysicalKey key, uint32_t now) {
   if (screen_ != Screen::Tabs) return false;
   lastNow_ = now;
+  if (hist_.isOpen()) {  // UP / DOWN do nothing; PUSH and long push close
+    if (key == ui::PhysicalKey::Push || key == ui::PhysicalKey::LongPush) return closeHistory();
+    return false;
+  }
   if (popup_.isOpen()) return popupRocker(key, now);
   const ui::LogicalKey lk = ui::mapRocker(key, orientation_, false);
   // Anything but tab stepping acts on the shown content: let a pending tab switch happen first.
@@ -378,8 +385,46 @@ bool AppState::openBrightness(int idx, uint32_t now) {
 }
 
 bool AppState::longPress(ui::Point p, uint32_t now) {
-  if (!dimmableLightAt(p)) return false;
-  return openBrightness(ui::hitTest(layout_, p).index, now);
+  if (dimmableLightAt(p)) return openBrightness(ui::hitTest(layout_, p).index, now);
+  if (historyWidgetAt(p)) return openHistory(ui::hitTest(layout_, p).index, now);
+  return false;
+}
+
+// ---- history popup (task 053) ----
+
+bool AppState::historyWidgetAt(ui::Point p) const {
+  if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;
+  const ui::Hit hit = ui::hitTest(layout_, p);
+  if (hit.kind != ui::HitKind::Widget) return false;
+  const config::Widget *w = widgetAt(shownTab_, hit.index);
+  return w && historyEnabledFor(*w);
+}
+
+bool AppState::openHistory(int idx, uint32_t now) {
+  if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;
+  const config::Widget *w = widgetAt(shownTab_, idx);
+  if (!w || !historyEnabledFor(*w)) return false;
+  hist_.open(makeHistorySpec(*w, orientation_ == settings::Orientation::Landscape), shownTab_, idx, now);
+  return true;
+}
+
+// UNVERIFIED: sensors and binary sensors are not focusable today (ui::isFocusable), so the rocker never
+// reaches this; it works as soon as the architect makes them focusable (task 053 report).
+bool AppState::openHistoryFocused(uint32_t now) {
+  if (focus_.mode == ui::FocusMode::Tab || !focus_.ringVisible) return false;
+  const int idx = focusedWidgetIndex();
+  return idx >= 0 && openHistory(idx, now);
+}
+
+bool AppState::closeHistory() { return hist_.close(); }
+
+bool AppState::historyTouch(ui::Point p) {
+  switch (historyHitTest(historyLayout(orientation_), p)) {
+    case HistoryHit::Outside:
+    case HistoryHit::Close: return closeHistory();
+    case HistoryHit::Panel: return false;
+  }
+  return false;
 }
 
 bool AppState::openBrightnessFocused(uint32_t now) {

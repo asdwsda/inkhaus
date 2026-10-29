@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "brightness_screen.h"
+#include "popup_history.h"
 #include "widgets.h"
 
 namespace render {
@@ -228,6 +229,7 @@ void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &s
   drawPager(c, app);
   drawTabBar(c, app);
   drawBrightnessPopup(c, app);
+  drawHistoryPopup(c, app);
   drawSleepIndicator(c, app.orientation(), status.sleepIndicator);
 }
 

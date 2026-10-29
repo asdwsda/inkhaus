@@ -121,6 +121,9 @@ void NetTask::loop() {
     Evt e;
     e.epoch = c.epoch;
     e.ev = worker.run(c.cmd);
+    if (e.ev.type == app_logic::NetEvent::Type::HistoryDone)
+      Serial.printf("HIST: fetch_ms=%u parse_ms=%u bytes=%u points=%u err=%d\n", (unsigned)e.ev.fetchMs,
+                    (unsigned)e.ev.parseMs, (unsigned)e.ev.bytes, (unsigned)e.ev.points, (int)e.ev.error);
     if (e.ev.type != app_logic::NetEvent::Type::Closed && e.ev.http_status != 0)
       Serial.printf("HTTP: ms=%u reused=%d link=%s\n", (unsigned)e.ev.ms, e.ev.reused ? 1 : 0,
                     e.ev.external ? "remote" : "local");

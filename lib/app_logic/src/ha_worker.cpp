@@ -1,5 +1,9 @@
 #include "ha_worker.h"
 
+#include <chrono>
+
+#include "scanner.h"
+
 namespace app_logic {
 
 bool HaWorker::isExternal(const std::string &base) const {
@@ -27,6 +31,49 @@ Side HaWorker::answeredSide() const {
   return isExternal(r) ? Side::External : Side::Internal;
 }
 
+// Streams the history body into the scanner/collector (bounded RAM, task 050/051). The cancel flag, the
+// 512 KB limit and the 15 s deadline are enforced by stream_history. parse_ms = time spent in the scanner.
+void HaWorker::runHistory(const NetCommand &cmd, NetEvent &e) {
+  using Clock = std::chrono::steady_clock;
+  history::Params hp;
+  hp.start = cmd.histStart;
+  hp.end = cmd.histEnd;
+  hp.columns = cmd.histColumns;
+  if (hp.end <= hp.start || hp.columns < 1 || hp.columns > history::kMaxColumns) {
+    e.error = HaError::Parse;
+    return;
+  }
+  history::Collector col(hp);
+  history::Scanner sc(col);
+  StreamLimits lim;
+  lim.cancel = cmd.histCancel.get();
+  Clock::duration parse{};
+  size_t bytes = 0;
+  const HaResult r = client_->stream_history(
+      cmd.histEntity, cmd.histStart, cmd.histEnd, lim,
+      [&](const char *d, size_t n) {
+        const auto t0 = Clock::now();
+        sc.feed(d, n);
+        parse += Clock::now() - t0;
+        return true;
+      },
+      &bytes);
+  e.error = r.error;
+  e.http_status = r.http_status;
+  e.external = isExternal(r.base_url);
+  e.ms = r.ms;
+  e.fetchMs = r.ms;
+  e.reused = r.reused;
+  e.bytes = bytes;
+  e.parseMs = uint32_t(std::chrono::duration_cast<std::chrono::milliseconds>(parse).count());
+  if (r.error != HaError::None) return;
+  e.scan = sc.finish();
+  e.points = sc.points();
+  e.series = col.finish();
+  if (e.scan == history::ScanResult::Malformed) e.error = HaError::Parse;  // not a history array
+  else if (e.scan == history::ScanResult::Truncated) e.error = HaError::TooLarge;
+}
+
 NetEvent HaWorker::run(const NetCommand &cmd) {
   NetEvent e;
   if (cmd.type == NetCommand::Type::Fetch) {
@@ -39,6 +86,10 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     e.states = std::move(f.states);
     e.ms = f.result.ms;
     e.reused = f.result.reused;
+  } else if (cmd.type == NetCommand::Type::History) {
+    e.type = NetEvent::Type::HistoryDone;
+    e.ticket = cmd.ticket;
+    runHistory(cmd, e);
   } else if (cmd.type == NetCommand::Type::Close) {
     transport_.close();
     e.type = NetEvent::Type::Closed;

@@ -11,6 +11,7 @@
 #include "brightness_layout.h"
 #include "brightness_popup.h"
 #include "config_model.h"
+#include "history_popup.h"
 #include "entity_state.h"
 #include "settings.h"
 #include "state_store.h"
@@ -67,7 +68,7 @@ class AppState {
   // Modal while open: touch() and rocker() go to the popup.
   // A dimmable light widget at p (long press candidate, tab screen only, popup closed).
   bool dimmableLightAt(ui::Point p) const;
-  bool longPress(ui::Point p, uint32_t now);      // opens the popup on a dimmable light; true if opened
+  bool longPress(ui::Point p, uint32_t now);      // opens the popup on a dimmable light (or history on a sensor); true if opened
   bool openBrightnessFocused(uint32_t now);       // rocker long push on the focused dimmable light
   bool closeBrightness(uint32_t now);             // Done (flushes an unsent value); true if it was open
   bool brightnessOpen() const { return popup_.isOpen(); }
@@ -78,6 +79,18 @@ class AppState {
   bool brightnessFailed() const { return bpFailed_; }                              // alert
   // Real mode: sends (entity id, pct 0..100) to Home Assistant. Demo mode applies it to the store.
   void setBrightnessSink(BrightnessSink s) { bsink_ = std::move(s); }
+
+  // ---- history popup (task 053, docs/ui/history.md) ----
+  // Modal like the brightness popup. Opened by a long press / rocker long push on a sensor or binary
+  // widget (lights keep the brightness popup). The caller does the cache lookup and the fetch.
+  bool historyWidgetAt(ui::Point p) const;
+  bool openHistoryFocused(uint32_t now);  // rocker long push on the focused sensor/binary widget
+  bool closeHistory();                    // true if it was open
+  bool historyOpen() const { return hist_.isOpen(); }
+  bool modalOpen() const { return popup_.isOpen() || hist_.isOpen(); }
+  const HistoryPopup &history() const { return hist_; }
+  HistoryPopup &historyPopup() { return hist_; }
+  std::string historyTitle() const { return widgetTitle(hist_.widget()); }
 
   // The content (not only chrome) changed in a way that needs a full-quality refresh (tab or
   // sub-page change). Cleared by takeFull().
@@ -144,11 +157,14 @@ class AppState {
 
   const EntityState *dimmableMember(const config::Widget &w) const;
   bool openBrightness(int widgetIndex, uint32_t now);
+  bool openHistory(int widgetIndex, uint32_t now);
+  bool historyTouch(ui::Point p);
   bool popupTouch(ui::Point p, uint32_t now);
   bool popupRocker(ui::PhysicalKey key, uint32_t now);
   void onBrightnessSend(const std::string &id, int pct);
   void brightnessMarks(bool &changed);
   BrightnessPopup popup_;
+  HistoryPopup hist_;
   BrightnessSink bsink_;
   bool bpUnknown_ = false, bpAwaiting_ = false, bpFailed_ = false, bpSawPending_ = false;
   uint32_t bpSentAt_ = 0, lastNow_ = 0;

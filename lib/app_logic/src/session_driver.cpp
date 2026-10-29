@@ -76,8 +76,12 @@ void SessionDriver::tick(int64_t now) {
   send(Event::tick(), now);
 }
 
-void SessionDriver::onNet(const NetEvent &ev, int64_t now) {
+void SessionDriver::onNet(NetEvent &ev, int64_t now) {
   if (ev.type == NetEvent::Type::Closed) return;
+  if (ev.type == NetEvent::Type::HistoryDone) {
+    if (historyHandler_) historyHandler_(std::move(ev));
+    return;
+  }
   if (ev.type == NetEvent::Type::FetchDone) {
     std::vector<std::string> changed;
     if (ev.error == HaError::None) changed = store_.update(ev.states);

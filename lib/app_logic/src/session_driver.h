@@ -45,6 +45,12 @@ class SessionDriver {
   bool refresh(int64_t nowMs);
   void tick(int64_t nowMs);
 
+  // History jobs (task 053) go through the same net port but are not part of the session machine.
+  // The handler gets every HistoryDone event.
+  using HistoryHandler = std::function<void(NetEvent &&)>;
+  void setHistoryHandler(HistoryHandler h) { historyHandler_ = std::move(h); }
+  void postHistory(const NetCommand &cmd) { net_.post(cmd); }
+
   // One-shot flags, cleared by the call.
   bool takeRender();
   bool takeSleep(SleepRequest &out);
@@ -65,7 +71,7 @@ class SessionDriver {
  private:
   void send(const session::Event &e, int64_t now);
   void execute(const std::vector<session::Command> &cmds, int64_t now);
-  void onNet(const NetEvent &ev, int64_t now);
+  void onNet(NetEvent &ev, int64_t now);
 
   std::vector<std::string> entityIds_;
   StateStore &store_;
@@ -73,6 +79,7 @@ class SessionDriver {
   INetPort &net_;
   std::function<int64_t()> wallClock_;
   Log log_;
+  HistoryHandler historyHandler_;
   session::SessionMachine machine_;
   session::Status status_ = session::Status::Connecting;
   bool wifiPending_ = false, wifiUp_ = false, fetching_ = false, render_ = false, sleepDue_ = false;

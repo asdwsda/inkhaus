@@ -31,6 +31,7 @@ class HaWorker {
 
  private:
   bool isExternal(const std::string &base) const;
+  void runHistory(const NetCommand &cmd, NetEvent &e);
   HttpTransport &transport_;
   std::string internal_, external_, token_;
   std::unique_ptr<HaClient> client_;

@@ -2,6 +2,7 @@
 #include <unity.h>
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -948,6 +949,84 @@ static void test_debuglog_filter_format_rotation() {
   TEST_ASSERT_FALSE(debugLogNeedsRotation(0, 100));
 }
 
+// ---- history job (task 053) ----
+
+struct HistHa : HttpTransport {
+  std::string body;
+  int status = 200;
+  std::string lastUrl;
+  HttpResponse request(const std::string &, const std::string &url, const HttpHeaders &, const std::string &) override {
+    lastUrl = url;
+    HttpResponse r;
+    r.status = status;
+    r.body = body;
+    return r;
+  }
+};
+
+static NetCommand histCmd(std::shared_ptr<volatile bool> cancel = nullptr) {
+  NetCommand c;
+  c.type = NetCommand::Type::History;
+  c.ticket = 7;
+  c.histEntity = "sensor.t";
+  c.histStart = 1767225600;
+  c.histEnd = 1767225600 + 86400;
+  c.histColumns = 100;
+  c.histCancel = cancel;
+  return c;
+}
+
+void test_history_job_streams_into_series() {
+  HistHa ha;
+  ha.body = "[[{\"entity_id\":\"sensor.t\",\"state\":\"20.5\",\"last_changed\":\"2026-01-01T00:00:00+00:00\"},"
+            "{\"state\":\"22.5\",\"last_changed\":\"2026-01-01T12:00:00+00:00\"}]]";
+  HaWorker w(ha, "http://ha.local:8123", "", "SECRET-TOKEN");
+  NetEvent e = w.run(histCmd());
+  TEST_ASSERT_TRUE(e.type == NetEvent::Type::HistoryDone);
+  TEST_ASSERT_EQUAL(7, e.ticket);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL(2, (int)e.points);
+  TEST_ASSERT_EQUAL((int)ha.body.size(), (int)e.bytes);
+  TEST_ASSERT_EQUAL(100, (int)e.series.columns.size());
+  TEST_ASSERT_TRUE(e.series.kind == history::Kind::Numeric);
+  TEST_ASSERT_EQUAL_FLOAT(20.5f, e.series.columns[0].last);
+  TEST_ASSERT_EQUAL_FLOAT(22.5f, e.series.columns[99].last);
+  TEST_ASSERT_TRUE(ha.lastUrl.find("/api/history/period/") != std::string::npos);
+}
+
+void test_history_job_errors_and_cancel() {
+  HistHa ha;
+  HaWorker w(ha, "http://ha.local:8123", "", "T");
+  ha.status = 500;
+  TEST_ASSERT_TRUE(w.run(histCmd()).error == HaError::Http);
+  ha.status = 200;
+  ha.body = "{\"message\":\"nope\"}";  // not a history array
+  TEST_ASSERT_TRUE(w.run(histCmd()).error == HaError::Parse);
+  ha.body = "[[{\"state\":\"1\",\"last_changed\":\"2026-01-01T00:00:00+00:00\"}";  // cut off
+  TEST_ASSERT_TRUE(w.run(histCmd()).error == HaError::TooLarge);
+  auto cancel = std::make_shared<volatile bool>(true);  // closed before it started
+  TEST_ASSERT_TRUE(w.run(histCmd(cancel)).error == HaError::Cancelled);
+  NetCommand bad = histCmd();
+  bad.histColumns = 0;
+  TEST_ASSERT_TRUE(w.run(bad).error == HaError::Parse);
+}
+
+void test_history_event_goes_to_handler_not_session() {
+  Rig r;
+  HistHa hh;
+  hh.body = "[[]]";
+  HaWorker hw(hh, "http://ha.local:8123", "", "T");
+  SyncNetPort port(hw);
+  StateStore st;
+  SessionDriver drv({"light.a"}, st, r.wifi, port, [] { return int64_t(1767225600); }, [](const std::string &) {});
+  int got = 0;
+  drv.setHistoryHandler([&](NetEvent &&e) { got = e.ticket; });
+  drv.postHistory(histCmd());
+  drv.tick(100);
+  TEST_ASSERT_EQUAL(7, got);
+  TEST_ASSERT_FALSE(drv.sessionDone());  // not mistaken for a session fetch
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_plan_urls_matrix);
@@ -994,5 +1073,8 @@ int main() {
   RUN_TEST(test_debuglog_filter_format_rotation);
   RUN_TEST(test_brightness_intent_custom_call_expected_state);
   RUN_TEST(test_brightness_intent_session_last_value_wins_and_confirms);
+  RUN_TEST(test_history_job_streams_into_series);
+  RUN_TEST(test_history_job_errors_and_cancel);
+  RUN_TEST(test_history_event_goes_to_handler_not_session);
   return UNITY_END();
 }
