@@ -90,13 +90,18 @@ std::string serializeConfig(const Config &cfg) {
   w.str(cfg.timezone);
   w.u8(cfg.hasConnection);
   const ConnectionConfig &c = cfg.connection;
-  w.str(c.wifi.ssid);
-  w.str(c.wifi.password);
-  w.u8(c.wifi.hasStaticIp);
-  w.str(c.wifi.staticIp.ip);
-  w.str(c.wifi.staticIp.gateway);
-  w.str(c.wifi.staticIp.subnet);
-  w.str(c.wifi.staticIp.dns);
+  w.u32(uint32_t(c.wifiProfiles.size()));
+  for (const WifiConfig &p : c.wifiProfiles) {
+    w.str(p.ssid);
+    w.str(p.password);
+    w.u8(p.hasStaticIp);
+    w.str(p.staticIp.ip);
+    w.str(p.staticIp.gateway);
+    w.str(p.staticIp.subnet);
+    w.str(p.staticIp.dns);
+    w.str(p.name);
+    w.u8(uint32_t(p.haUrl));
+  }
   w.str(c.ha.internalUrl);
   w.str(c.ha.externalUrl);
   w.str(c.ha.token);
@@ -146,13 +151,24 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
   r.str(c.timezone);
   r.boolean(c.hasConnection);
   ConnectionConfig &cn = c.connection;
-  r.str(cn.wifi.ssid);
-  r.str(cn.wifi.password);
-  r.boolean(cn.wifi.hasStaticIp);
-  r.str(cn.wifi.staticIp.ip);
-  r.str(cn.wifi.staticIp.gateway);
-  r.str(cn.wifi.staticIp.subnet);
-  r.str(cn.wifi.staticIp.dns);
+  uint32_t np = 0;
+  if (!r.count(np, kMaxWifiProfiles)) return false;
+  cn.wifiProfiles.resize(np);
+  for (WifiConfig &p : cn.wifiProfiles) {
+    r.str(p.ssid);
+    r.str(p.password);
+    r.boolean(p.hasStaticIp);
+    r.str(p.staticIp.ip);
+    r.str(p.staticIp.gateway);
+    r.str(p.staticIp.subnet);
+    r.str(p.staticIp.dns);
+    r.str(p.name);
+    uint32_t m = 0;
+    r.u8(m);
+    if (!r.ok || m > 2) return false;
+    p.haUrl = HaUrlMode(m);
+  }
+  if (!cn.wifiProfiles.empty()) cn.wifi = cn.wifiProfiles[0];
   r.str(cn.ha.internalUrl);
   r.str(cn.ha.externalUrl);
   r.str(cn.ha.token);

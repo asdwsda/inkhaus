@@ -10,6 +10,7 @@
 #include "mailbox.h"
 #include "session_driver.h"
 #include "tap_intent.h"
+#include "url_plan.h"
 #include "wall_time.h"
 #include "wakelog_csv.h"
 #include "debuglog.h"
@@ -522,6 +523,112 @@ void test_empty_fetch_is_ok() {
   TEST_ASSERT_EQUAL(0, (int)ha.urls.size());
 }
 
+// ---- URL plan (task 047) ----
+
+void test_plan_urls_matrix() {
+  using LM = LinkMode;
+  UrlPlan p = planUrls(LM::Auto, LM::Auto, Side::None, true);
+  TEST_ASSERT_TRUE(p.first == Side::Internal && !p.exclusive && p.learn);
+  p = planUrls(LM::Auto, LM::Auto, Side::External, true);
+  TEST_ASSERT_TRUE(p.first == Side::External && !p.exclusive && p.learn);
+  p = planUrls(LM::Auto, LM::Internal, Side::External, true);  // profile wins over memory, keeps fallback
+  TEST_ASSERT_TRUE(p.first == Side::Internal && !p.exclusive && !p.learn);
+  p = planUrls(LM::Auto, LM::External, Side::None, true);
+  TEST_ASSERT_TRUE(p.first == Side::External && !p.exclusive && !p.learn);
+  p = planUrls(LM::External, LM::Internal, Side::None, true);  // setting wins over profile, exclusive
+  TEST_ASSERT_TRUE(p.first == Side::External && p.exclusive && !p.learn);
+  p = planUrls(LM::Internal, LM::External, Side::External, true);
+  TEST_ASSERT_TRUE(p.first == Side::Internal && p.exclusive && !p.learn);
+  p = planUrls(LM::External, LM::Auto, Side::External, false);  // no external_url: internal only
+  TEST_ASSERT_TRUE(p.first == Side::Internal && p.exclusive && !p.learn);
+  p = planUrls(LM::Auto, LM::Auto, Side::External, false);
+  TEST_ASSERT_TRUE(p.first == Side::Internal && p.exclusive);
+}
+
+void test_side_to_store() {
+  UrlPlan learn = planUrls(LinkMode::Auto, LinkMode::Auto, Side::None, true);
+  TEST_ASSERT_TRUE(sideToStore(learn, Side::External, Side::None) == Side::External);
+  TEST_ASSERT_TRUE(sideToStore(learn, Side::External, Side::External) == Side::None);  // unchanged
+  TEST_ASSERT_TRUE(sideToStore(learn, Side::None, Side::Internal) == Side::None);
+  UrlPlan fixed = planUrls(LinkMode::Internal, LinkMode::Auto, Side::None, true);
+  TEST_ASSERT_TRUE(sideToStore(fixed, Side::Internal, Side::None) == Side::None);
+}
+
+namespace {
+// Network with a reachable subset of the two URLs; records every requested URL.
+struct ReachTransport : HttpTransport {
+  bool internalUp = true, externalUp = true;
+  std::vector<std::string> urls;
+  HttpResponse request(const std::string &, const std::string &u, const HttpHeaders &, const std::string &) override {
+    urls.push_back(u);
+    HttpResponse r;
+    const bool internal = u.find("ha.local") != std::string::npos;
+    if (internal ? !internalUp : !externalUp) { r.error = "timeout"; return r; }
+    r.status = 200;
+    r.body = "[]";
+    return r;
+  }
+};
+
+// What net_task does per session: plan from (setting, profile, memory), apply, run, learn.
+struct Device {
+  std::map<std::string, Side> memory;  // per-SSID, NVS in the firmware
+  LinkMode setting = LinkMode::Auto;
+  Side session(ReachTransport &t, const std::string &ssid, LinkMode profile) {
+    HaWorker w(t, "http://ha.local:8123", "https://x.example.org", "T");
+    Side stored = memory.count(ssid) ? memory[ssid] : Side::None;
+    UrlPlan plan = planUrls(setting, profile, stored, true);
+    w.applyPlan(plan);
+    t.urls.clear();
+    NetCommand c;
+    c.ids = {"light.a"};
+    NetEvent e = w.run(c);
+    Side answered = e.http_status != 0 ? (e.external ? Side::External : Side::Internal) : Side::None;
+    Side st = sideToStore(plan, answered, stored);
+    if (st != Side::None) memory[ssid] = st;
+    return answered;
+  }
+};
+}  // namespace
+
+// Home -> hotspot -> home: the second visit at home starts on the internal URL again.
+void test_back_to_internal_at_home() {
+  ReachTransport t;
+  Device d;
+  t.internalUp = true;
+  TEST_ASSERT_TRUE(d.session(t, "home", LinkMode::Auto) == Side::Internal);
+  TEST_ASSERT_EQUAL(1, (int)t.urls.size());
+  t.internalUp = false;  // hotspot: internal unreachable, falls back once and remembers per SSID
+  TEST_ASSERT_TRUE(d.session(t, "phone", LinkMode::Auto) == Side::External);
+  TEST_ASSERT_EQUAL(2, (int)t.urls.size());
+  TEST_ASSERT_TRUE(d.memory["phone"] == Side::External);
+  TEST_ASSERT_TRUE(d.memory["home"] == Side::Internal);
+  TEST_ASSERT_TRUE(d.session(t, "phone", LinkMode::Auto) == Side::External);
+  TEST_ASSERT_EQUAL(1, (int)t.urls.size());  // external first, no failing internal attempt
+  t.internalUp = true;  // back home
+  TEST_ASSERT_TRUE(d.session(t, "home", LinkMode::Auto) == Side::Internal);
+  TEST_ASSERT_EQUAL(1, (int)t.urls.size());
+  TEST_ASSERT_TRUE(t.urls[0].find("ha.local") != std::string::npos);
+}
+
+// A fixed profile never learns, and the forced setting has no fallback.
+void test_fixed_profile_and_forced_setting() {
+  ReachTransport t;
+  Device d;
+  t.internalUp = false;
+  TEST_ASSERT_TRUE(d.session(t, "phone", LinkMode::External) == Side::External);
+  TEST_ASSERT_EQUAL(1, (int)t.urls.size());
+  TEST_ASSERT_TRUE(d.memory.empty());
+  d.setting = LinkMode::Internal;  // forced internal on the hotspot: fails, never touches external
+  TEST_ASSERT_TRUE(d.session(t, "phone", LinkMode::External) == Side::None);
+  TEST_ASSERT_EQUAL(1, (int)t.urls.size());
+  TEST_ASSERT_TRUE(t.urls[0].find("ha.local") != std::string::npos);
+  d.setting = LinkMode::External;
+  t.externalUp = true;
+  TEST_ASSERT_TRUE(d.session(t, "home", LinkMode::Auto) == Side::External);
+  TEST_ASSERT_TRUE(d.memory.empty());
+}
+
 // ---- tap intent ----
 
 void test_intent_toggles_and_actions() {
@@ -751,6 +858,10 @@ static void test_debuglog_filter_format_rotation() {
 
 int main() {
   UNITY_BEGIN();
+  RUN_TEST(test_plan_urls_matrix);
+  RUN_TEST(test_side_to_store);
+  RUN_TEST(test_back_to_internal_at_home);
+  RUN_TEST(test_fixed_profile_and_forced_setting);
   RUN_TEST(test_demo_mode_decisions);
   RUN_TEST(test_connect_fetch_render);
   RUN_TEST(test_tap_call_confirm);

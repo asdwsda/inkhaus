@@ -11,6 +11,10 @@ namespace settings {
 enum class WakeMode : int32_t { Button = 0, Touch = 1, TouchAndButton = 2 };
 enum class Orientation : int32_t { Portrait = 0, Landscape = 1 };
 
+// Which HA URL to use (task 047). Auto = whatever the connected Wi-Fi profile says.
+enum class HaLink : int32_t { Auto = 0, Internal = 1, External = 2 };
+constexpr int32_t kMaxWifiProfileIndex = 4;  // matches config::kMaxWifiProfiles
+
 struct Settings {
     WakeMode wake_mode = WakeMode::Button;
     int32_t refresh_interval_min = 60;  // 0 = off
@@ -18,11 +22,14 @@ struct Settings {
     Orientation orientation = Orientation::Portrait;
     bool demo_mode = false;  // built-in demo showcase instead of config.yaml + Home Assistant
     bool debug_log = false;  // SD wake log + /debug.log (task 041)
+    int32_t wifi_profile = 0;  // 0 = Auto (first known network in range), else 1-based profile index
+    HaLink ha_link = HaLink::Auto;
 
     bool operator==(const Settings& o) const {
         return wake_mode == o.wake_mode && refresh_interval_min == o.refresh_interval_min &&
                idle_timeout_s == o.idle_timeout_s && orientation == o.orientation &&
-               demo_mode == o.demo_mode && debug_log == o.debug_log;
+               demo_mode == o.demo_mode && debug_log == o.debug_log &&
+               wifi_profile == o.wifi_profile && ha_link == o.ha_link;
     }
     bool operator!=(const Settings& o) const { return !(*this == o); }
 };
@@ -45,6 +52,8 @@ constexpr const char* kKeyIdleTimeoutS = "idle_s";
 constexpr const char* kKeyOrientation = "orientation";
 constexpr const char* kKeyDemoMode = "demo";  // 0 / 1; absent in old stores = off
 constexpr const char* kKeyDebugLog = "dbglog";  // 0 / 1; absent = off (no schema bump)
+constexpr const char* kKeyWifiProfile = "wifiprof";  // 0 = Auto; absent = Auto (no schema bump)
+constexpr const char* kKeyHaLink = "halink";         // HaLink; absent = Auto
 
 // Abstract key-value store of ints.
 class KeyValueStore {
@@ -61,6 +70,8 @@ bool isValidIdleTimeoutS(int32_t v);
 bool isValidOrientation(int32_t v);
 bool isValidDemoMode(int32_t v);
 bool isValidDebugLog(int32_t v);
+bool isValidWifiProfile(int32_t v);  // 0..kMaxWifiProfileIndex (whether the profile exists is the caller's business)
+bool isValidHaLink(int32_t v);
 
 // Missing/invalid values fall back to the default per field. An unknown
 // schema_version yields all defaults.

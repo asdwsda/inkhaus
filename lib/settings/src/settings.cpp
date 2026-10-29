@@ -32,6 +32,10 @@ bool isValidDemoMode(int32_t v) { return v == 0 || v == 1; }
 
 bool isValidDebugLog(int32_t v) { return v == 0 || v == 1; }
 
+bool isValidWifiProfile(int32_t v) { return v >= 0 && v <= kMaxWifiProfileIndex; }
+
+bool isValidHaLink(int32_t v) { return v >= 0 && v <= static_cast<int32_t>(HaLink::External); }
+
 Settings load(const KeyValueStore& store) {
     Settings s;
     int32_t v;
@@ -50,6 +54,8 @@ Settings load(const KeyValueStore& store) {
         s.orientation = static_cast<Orientation>(v);
     if (store.getInt(kKeyDemoMode, v) && isValidDemoMode(v)) s.demo_mode = v == 1;
     if (store.getInt(kKeyDebugLog, v) && isValidDebugLog(v)) s.debug_log = v == 1;
+    if (store.getInt(kKeyWifiProfile, v) && isValidWifiProfile(v)) s.wifi_profile = v;
+    if (store.getInt(kKeyHaLink, v) && isValidHaLink(v)) s.ha_link = static_cast<HaLink>(v);
     return s;
 }
 
@@ -61,6 +67,8 @@ void save(KeyValueStore& store, const Settings& s) {
     writeIfChanged(store, kKeyOrientation, static_cast<int32_t>(s.orientation));
     writeIfChanged(store, kKeyDemoMode, s.demo_mode ? 1 : 0);
     writeIfChanged(store, kKeyDebugLog, s.debug_log ? 1 : 0);
+    writeIfChanged(store, kKeyWifiProfile, s.wifi_profile);
+    writeIfChanged(store, kKeyHaLink, static_cast<int32_t>(s.ha_link));
 }
 
 }  // namespace settings

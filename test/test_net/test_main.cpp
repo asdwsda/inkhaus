@@ -3,6 +3,7 @@
 #include <cstddef>
 
 #include "net_policy.h"
+#include "wifi_select.h"
 
 using namespace netpolicy;
 
@@ -307,8 +308,56 @@ void test_start_failed_cached_goes_to_scan_then_failed() {
     TEST_ASSERT_FALSE(d.cachedFailed());
 }
 
+
+void test_select_no_scan_cases() {
+    using namespace netselect;
+    TEST_ASSERT_EQUAL(-1, profileWithoutScan(0, 0, -1, false));
+    TEST_ASSERT_EQUAL(1, profileWithoutScan(3, 2, -1, false));    // forced: no scan
+    TEST_ASSERT_EQUAL(0, profileWithoutScan(1, 0, -1, false));    // single profile
+    TEST_ASSERT_EQUAL(0, profileWithoutScan(3, 0, 0, true));      // first one, cache usable
+    TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, 0, false));    // cache worn out -> scan
+    TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, 1, true));     // last was #2: #1 might be back
+    TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, -1, false));
+    TEST_ASSERT_EQUAL(-1, profileWithoutScan(2, 5, -1, false));   // forced beyond the list = Auto
+}
+void test_select_after_scan_list_order() {
+    using namespace netselect;
+    std::vector<std::string> p = {"home", "phone", "office"};
+    bool found = false;
+    // Both in range: list order wins, not scan order.
+    TEST_ASSERT_EQUAL(0, pickAfterScan(p, {"phone", "home"}, 1, &found));
+    TEST_ASSERT_TRUE(found);
+    TEST_ASSERT_EQUAL(1, pickAfterScan(p, {"phone", "neighbour"}, 0, &found));
+    TEST_ASSERT_TRUE(found);
+    TEST_ASSERT_EQUAL(2, pickAfterScan(p, {"office"}, -1, &found));
+}
+void test_select_after_scan_nothing_found() {
+    using namespace netselect;
+    std::vector<std::string> p = {"home", "phone"};
+    bool found = true;
+    TEST_ASSERT_EQUAL(1, pickAfterScan(p, {}, 1, &found));   // fall back to the last one
+    TEST_ASSERT_FALSE(found);
+    TEST_ASSERT_EQUAL(0, pickAfterScan(p, {"x"}, -1, &found));
+    TEST_ASSERT_EQUAL(0, pickAfterScan(p, {"x"}, 7, &found)); // bogus last
+    TEST_ASSERT_EQUAL(-1, pickAfterScan({}, {"x"}, -1, &found));
+}
+void test_per_profile_cache_is_tied_to_its_ssid() {
+    CacheRecord home = makeRecord("home", kB, 6, false, 1, 2, 3, 4);
+    CacheRecord phone = makeRecord("phone", kB, 11, false, 5, 6, 7, 8);
+    TEST_ASSERT_TRUE(cacheUsable(home, "home", false));
+    TEST_ASSERT_FALSE(cacheUsable(home, "phone", false));   // slot mix-up is rejected
+    TEST_ASSERT_TRUE(cacheUsable(phone, "phone", false));
+    phone = afterCachedFailure(afterCachedFailure(phone));
+    TEST_ASSERT_FALSE(cacheUsable(phone, "phone", false));
+    TEST_ASSERT_TRUE(cacheUsable(home, "home", false));      // the other profile is untouched
+}
+
 int main() {
     UNITY_BEGIN();
+    RUN_TEST(test_select_no_scan_cases);
+    RUN_TEST(test_select_after_scan_list_order);
+    RUN_TEST(test_select_after_scan_nothing_found);
+    RUN_TEST(test_per_profile_cache_is_tied_to_its_ssid);
     RUN_TEST(test_default_record_invalid);
     RUN_TEST(test_valid_record);
     RUN_TEST(test_wrong_ssid_invalid);

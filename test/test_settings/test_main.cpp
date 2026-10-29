@@ -314,6 +314,29 @@ void test_keys_fit_nvs_limit_and_lists_are_valid() {
     TEST_ASSERT_FALSE(isValidIdleTimeoutS(0));
 }
 
+void test_wifi_profile_and_ha_link() {
+    FakeStore st;
+    Settings d = load(st);  // old store without the keys
+    TEST_ASSERT_EQUAL_INT32(0, d.wifi_profile);
+    TEST_ASSERT_TRUE(d.ha_link == HaLink::Auto);
+    st.data[kKeyWifiProfile] = 9;  // out of range
+    st.data[kKeyHaLink] = 3;
+    d = load(st);
+    TEST_ASSERT_EQUAL_INT32(0, d.wifi_profile);
+    TEST_ASSERT_TRUE(d.ha_link == HaLink::Auto);
+    Settings s;
+    s.wifi_profile = 2;
+    s.ha_link = HaLink::External;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT32(2, st.data[kKeyWifiProfile]);
+    TEST_ASSERT_EQUAL_INT32(2, st.data[kKeyHaLink]);
+    Settings r = load(st);
+    TEST_ASSERT_TRUE(r == s);
+    s.ha_link = HaLink::Internal;
+    TEST_ASSERT_FALSE(r == s);
+    TEST_ASSERT_TRUE(strlen(kKeyWifiProfile) <= 15 && strlen(kKeyHaLink) <= 15);
+}
+
 int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_demo_mode_default_old_store_invalid_roundtrip);
@@ -333,5 +356,6 @@ int main(int, char**) {
     RUN_TEST(test_save_into_future_schema_store_stamps_current_version);
     RUN_TEST(test_keys_fit_nvs_limit_and_lists_are_valid);
     RUN_TEST(test_wake_mode_migration_and_roundtrip);
+    RUN_TEST(test_wifi_profile_and_ha_link);
     return UNITY_END();
 }

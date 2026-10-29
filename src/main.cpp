@@ -252,6 +252,7 @@ static void startSession(uint32_t now) {
   g_net.reset();
   session_glue::ntpSessionStart();
   g_drv.reset();  // before the Wi-Fi adapter it points to
+  net::configure(g_cfg.cfg.connection.wifiProfiles, g_settings.wifi_profile, (int)g_settings.ha_link);  // task 047
   g_wifi.reset(new session_glue::ArduinoWifi(g_cfg.cfg.connection.wifi));
   g_drv.reset(new app_logic::SessionDriver(g_cfg.cfg.entityIds, g_app.store(), *g_wifi, g_net,
                                            session_glue::wallClock, appLog));

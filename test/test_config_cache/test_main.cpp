@@ -18,7 +18,13 @@ Config fullConfig() {
   c.version = 1;
   c.timezone = "UTC0";
   c.hasConnection = true;
-  c.connection.wifi = {"ssid-x", "pw-y", true, {"10.0.0.2", "10.0.0.1", "255.255.255.0", "1.1.1.1"}};
+  c.connection.wifi = {"ssid-x", "pw-y", true, {"10.0.0.2", "10.0.0.1", "255.255.255.0", "1.1.1.1"}, "Home",
+                       HaUrlMode::Internal};
+  WifiConfig second;
+  second.ssid = "phone";
+  second.name = "Hotspot";
+  second.haUrl = HaUrlMode::External;
+  c.connection.wifiProfiles = {c.connection.wifi, second};
   c.connection.ha = {"http://a:8123", "https://b", "tok"};
   c.groups = {{"g1", {"cover.a", "cover.b"}}, {"g2", {}}};
   Widget w1;
@@ -43,6 +49,11 @@ void expectEqual(const Config &a, const Config &b) {
   TEST_ASSERT_EQUAL_STRING(a.timezone.c_str(), b.timezone.c_str());
   TEST_ASSERT_EQUAL(a.hasConnection, b.hasConnection);
   TEST_ASSERT_EQUAL_STRING(a.connection.wifi.staticIp.dns.c_str(), b.connection.wifi.staticIp.dns.c_str());
+  TEST_ASSERT_EQUAL(a.connection.wifiProfiles.size(), b.connection.wifiProfiles.size());
+  for (size_t i = 0; i < a.connection.wifiProfiles.size(); ++i) {
+    TEST_ASSERT_EQUAL_STRING(a.connection.wifiProfiles[i].name.c_str(), b.connection.wifiProfiles[i].name.c_str());
+    TEST_ASSERT_TRUE(a.connection.wifiProfiles[i].haUrl == b.connection.wifiProfiles[i].haUrl);
+  }
   TEST_ASSERT_EQUAL_STRING(a.connection.ha.token.c_str(), b.connection.ha.token.c_str());
   TEST_ASSERT_EQUAL(a.tabs.size(), b.tabs.size());
   TEST_ASSERT_EQUAL(a.groups.size(), b.groups.size());

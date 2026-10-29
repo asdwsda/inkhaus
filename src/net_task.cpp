@@ -6,39 +6,35 @@
 #include <cstring>
 
 #include "ha_transport_arduino.h"
+#include "net.h"
+#include "url_plan.h"
 
 namespace {
-// Remembered base URL: RTC memory survives deep sleep, NVS survives power loss. Written on change only.
-struct RememberedRec {
-  uint32_t magic;
-  char url[160];
-};
-constexpr uint32_t kRememberedMagic = 0x52454D31;
-RTC_NOINIT_ATTR RememberedRec g_remembered;
+// What the device learned per Wi-Fi network (task 047): 1 = internal URL answered, 2 = external.
+// Stored as a side, never as a URL; key = "b" + SSID hash (hex), namespace "netbase".
+void sideKey(uint32_t ssidHash, char *out) { snprintf(out, 12, "b%08x", (unsigned)ssidHash); }
 
-std::string loadRemembered() {
-  if (g_remembered.magic == kRememberedMagic) {
-    g_remembered.url[sizeof(g_remembered.url) - 1] = 0;
-    return g_remembered.url;
-  }
+app_logic::Side loadSide(uint32_t ssidHash) {
   Preferences p;
-  if (!p.begin("net", true)) return "";
-  String v = p.getString("base", "");
+  if (!p.begin("netbase", true)) return app_logic::Side::None;
+  char k[12];
+  sideKey(ssidHash, k);
+  const int v = p.getUChar(k, 0);
   p.end();
-  return std::string(v.c_str());
+  return v == 1 ? app_logic::Side::Internal : v == 2 ? app_logic::Side::External : app_logic::Side::None;
 }
 
-void saveRemembered(const std::string &url) {
-  if (url.empty() || url.size() >= sizeof(g_remembered.url)) return;
-  if (g_remembered.magic != kRememberedMagic || url != g_remembered.url) {
-    g_remembered.magic = kRememberedMagic;
-    std::strncpy(g_remembered.url, url.c_str(), sizeof(g_remembered.url) - 1);
-    g_remembered.url[sizeof(g_remembered.url) - 1] = 0;
-  }
+void saveSide(uint32_t ssidHash, app_logic::Side s) {
   Preferences p;
-  if (!p.begin("net", false)) return;
-  if (p.getString("base", "") != String(url.c_str())) p.putString("base", url.c_str());
+  if (!p.begin("netbase", false)) return;
+  char k[12];
+  sideKey(ssidHash, k);
+  p.putUChar(k, (uint8_t)s);
   p.end();
+}
+
+app_logic::LinkMode toMode(int v) {  // HaLink and HaUrlMode both: 0 Auto, 1 Internal, 2 External
+  return v == 1 ? app_logic::LinkMode::Internal : v == 2 ? app_logic::LinkMode::External : app_logic::LinkMode::Auto;
 }
 }  // namespace
 
@@ -63,8 +59,13 @@ void NetTask::entry(void *self) { static_cast<NetTask *>(self)->loop(); }
 void NetTask::loop() {
   ArduinoHttpTransport transport(4000, 8000);
   app_logic::HaWorker worker(transport, internal_, external_, token_);
-  worker.setRemembered(loadRemembered());  // ignored unless it is one of our two URLs
-  std::string lastSaved = worker.remembered();
+  // The plan depends on the connected network and the Settings: recomputed when either changes.
+  // UNVERIFIED: net::linkInfo() read from this core while the UI core writes it is tear-tolerant
+  // (three words; a stale mix only delays the plan to the next command).
+  net::LinkInfo planned;
+  bool havePlan = false;
+  app_logic::UrlPlan plan;
+  app_logic::Side stored = app_logic::Side::None;
   for (;;) {
     Cmd c;
     if (!cmds_.pop(c)) {
@@ -72,15 +73,31 @@ void NetTask::loop() {
       continue;
     }
     if (c.epoch != epoch_.load()) continue;  // belongs to a finished session
+    const net::LinkInfo li = net::linkInfo();
+    if (c.cmd.type != app_logic::NetCommand::Type::Close &&
+        (!havePlan || li.ssidHash != planned.ssidHash || li.haUrl != planned.haUrl || li.haLink != planned.haLink)) {
+      stored = li.ssidHash ? loadSide(li.ssidHash) : app_logic::Side::None;
+      plan = app_logic::planUrls(toMode(li.haLink), toMode(li.haUrl), stored, !external_.empty());
+      worker.applyPlan(plan);
+      planned = li;
+      havePlan = true;
+      Serial.printf("APP: url_plan first=%s exclusive=%d learn=%d\n",
+                    plan.first == app_logic::Side::External ? "external" : "internal", plan.exclusive ? 1 : 0,
+                    plan.learn ? 1 : 0);
+    }
     Evt e;
     e.epoch = c.epoch;
     e.ev = worker.run(c.cmd);
     if (e.ev.type != app_logic::NetEvent::Type::Closed && e.ev.http_status != 0)
       Serial.printf("HTTP: ms=%u reused=%d link=%s\n", (unsigned)e.ev.ms, e.ev.reused ? 1 : 0,
                     e.ev.external ? "remote" : "local");
-    if (worker.remembered() != lastSaved) {
-      lastSaved = worker.remembered();
-      saveRemembered(lastSaved);
+    if (e.ev.type != app_logic::NetEvent::Type::Closed && e.ev.http_status != 0 && planned.ssidHash) {
+      const app_logic::Side answered = e.ev.external ? app_logic::Side::External : app_logic::Side::Internal;
+      const app_logic::Side w = app_logic::sideToStore(plan, answered, stored);
+      if (w != app_logic::Side::None) {
+        saveSide(planned.ssidHash, w);
+        stored = w;
+      }
     }
     evts_.push(std::move(e));
   }

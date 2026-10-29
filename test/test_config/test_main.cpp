@@ -180,6 +180,77 @@ void test_secrets_static_ip_paths() {
   TEST_ASSERT_TRUE(found);
 }
 
+bool hasSecretsError(const SecretsResult &r, const std::string &path) {
+  for (const auto &e : r.errors)
+    if (e.path == path) return true;
+  return false;
+}
+
+const char *kHa = "home_assistant:\n  internal_url: http://10.0.0.2:8123\n"
+                  "  external_url: https://x.example.com\n  token: SECRETtoken\n";
+
+void test_secrets_wifi_single_mapping_is_list_of_one() {
+  SecretsResult r = parseSecrets(kSecrets);
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL(1, (int)r.connection.wifiProfiles.size());
+  TEST_ASSERT_EQUAL_STRING("SECRETssid", r.connection.wifiProfiles[0].ssid.c_str());
+  TEST_ASSERT_EQUAL_STRING("Network 1", r.connection.wifiProfiles[0].name.c_str());
+  TEST_ASSERT_TRUE(r.connection.wifiProfiles[0].haUrl == HaUrlMode::Auto);
+}
+
+void test_secrets_wifi_profile_list() {
+  SecretsResult r = parseSecrets(std::string(
+      "wifi:\n  - name: Home\n    ssid: SECRETa\n    password: pw1\n    ha_url: internal\n"
+      "    static_ip: {ip: 10.0.0.9, gateway: 10.0.0.1, subnet: 255.255.255.0, dns: 10.0.0.1}\n"
+      "  - name: Phone\n    ssid: SECRETb\n    ha_url: external\n"
+      "  - ssid: SECRETc\n") + kHa);
+  TEST_ASSERT_TRUE(r.ok());
+  const auto &p = r.connection.wifiProfiles;
+  TEST_ASSERT_EQUAL(3, (int)p.size());
+  TEST_ASSERT_EQUAL_STRING("Home", p[0].name.c_str());
+  TEST_ASSERT_TRUE(p[0].haUrl == HaUrlMode::Internal);
+  TEST_ASSERT_TRUE(p[0].hasStaticIp);
+  TEST_ASSERT_TRUE(p[1].haUrl == HaUrlMode::External);
+  TEST_ASSERT_FALSE(p[1].hasStaticIp);
+  TEST_ASSERT_EQUAL_STRING("Network 3", p[2].name.c_str());
+  TEST_ASSERT_TRUE(p[2].haUrl == HaUrlMode::Auto);
+  TEST_ASSERT_EQUAL_STRING("SECRETa", r.connection.wifi.ssid.c_str());  // wifi == first profile
+}
+
+void test_secrets_wifi_list_errors_no_values() {
+  SecretsResult r = parseSecrets(std::string(
+      "wifi:\n  - ssid: SECRETa\n    name: N\n    ha_url: SECRETmode\n"
+      "  - ssid: SECRETa\n    name: N\n"
+      "  - name: x\n  - 5\n") + kHa);
+  TEST_ASSERT_FALSE(r.ok());
+  TEST_ASSERT_TRUE(hasSecretsError(r, "wifi[0].ha_url"));
+  TEST_ASSERT_TRUE(hasSecretsError(r, "wifi[1].ssid"));   // duplicate SSID
+  TEST_ASSERT_TRUE(hasSecretsError(r, "wifi[1].name"));   // duplicate name
+  TEST_ASSERT_TRUE(hasSecretsError(r, "wifi[2].ssid"));   // missing
+  TEST_ASSERT_TRUE(hasSecretsError(r, "wifi[3]"));
+  for (const auto &e : r.errors) {
+    TEST_ASSERT_NULL(strstr(e.message.c_str(), "SECRET"));
+    TEST_ASSERT_NULL(strstr(e.path.c_str(), "SECRET"));
+  }
+}
+
+void test_secrets_wifi_list_limits_and_external_needs_url() {
+  TEST_ASSERT_FALSE(parseSecrets(std::string("wifi: []\n") + kHa).ok());
+  std::string many = "wifi:\n";
+  for (int i = 0; i < 5; ++i) many += "  - ssid: s" + std::to_string(i) + "\n";
+  SecretsResult r = parseSecrets(many + kHa);
+  TEST_ASSERT_TRUE(hasSecretsError(r, "wifi"));
+  r = parseSecrets(
+      "wifi:\n  - ssid: a\n    ha_url: external\n"
+      "home_assistant:\n  internal_url: http://h\n  token: t\n");
+  TEST_ASSERT_TRUE(hasSecretsError(r, "wifi[0].ha_url"));
+  r = parseSecrets(  // single mapping: no index in the path
+      "wifi:\n  ssid: a\n  ha_url: external\n"
+      "home_assistant:\n  internal_url: http://h\n  token: t\n");
+  TEST_ASSERT_TRUE(hasSecretsError(r, "wifi.ha_url"));
+  TEST_ASSERT_FALSE(parseSecrets(std::string("wifi: 7\n") + kHa).ok());
+}
+
 void test_merge_secrets_win() {
   SecretsResult s = parseSecrets(kSecrets);
   MergeOutcome m = mergeSecrets(parseConfig(kMinimal), &s);
@@ -697,5 +768,9 @@ int main(int, char **) {
   RUN_TEST(test_attr_options_absent_by_default);
   RUN_TEST(test_attr_options_errors);
   RUN_TEST(test_attr_errors_do_not_echo_values);
+  RUN_TEST(test_secrets_wifi_single_mapping_is_list_of_one);
+  RUN_TEST(test_secrets_wifi_profile_list);
+  RUN_TEST(test_secrets_wifi_list_errors_no_values);
+  RUN_TEST(test_secrets_wifi_list_limits_and_external_needs_url);
   return UNITY_END();
 }

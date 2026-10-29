@@ -1,7 +1,10 @@
 #pragma once
 // Executes one network command with the HA client (blocking; runs on the network task, or inline
 // in tests). Never logs the token, bodies or error messages.
+#include <memory>
 #include <string>
+
+#include "url_plan.h"
 
 #include "ha_client.h"
 #include "net_msgs.h"
@@ -12,17 +15,25 @@ class HaWorker {
  public:
   HaWorker(HttpTransport &transport, std::string internalUrl, std::string externalUrl,
            std::string token)
-      : transport_(transport), internal_(internalUrl), client_(transport, std::move(internalUrl), std::move(externalUrl), std::move(token)) {}
+      : transport_(transport),
+        internal_(internalUrl),
+        external_(externalUrl),
+        token_(token),
+        client_(new HaClient(transport, std::move(internalUrl), std::move(externalUrl), std::move(token))) {}
 
   NetEvent run(const NetCommand &cmd);
-  const std::string &remembered() const { return client_.remembered_base(); }
-  void setRemembered(const std::string &b) { client_.set_remembered(b); }
+  const std::string &remembered() const { return client_->remembered_base(); }
+  void setRemembered(const std::string &b) { client_->set_remembered(b); }
+  // Applies a URL plan (task 047): `first` is tried first; exclusive = no fallback to the other URL.
+  void applyPlan(const UrlPlan &plan);
+  // Which URL answered last (None before the first success).
+  Side answeredSide() const;
 
  private:
   bool isExternal(const std::string &base) const;
   HttpTransport &transport_;
-  std::string internal_;
-  HaClient client_;
+  std::string internal_, external_, token_;
+  std::unique_ptr<HaClient> client_;
 };
 
 // Port between the driver and the network side.

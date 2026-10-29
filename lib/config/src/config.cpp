@@ -107,6 +107,7 @@ class Validator {
  private:
   const LineMap &lines_;
   ParseResult &r_;
+  bool wifiIsList_ = false;
 
   void err(const std::string &path, const std::string &msg) {
     int line = 0;
@@ -255,15 +256,29 @@ class Validator {
     const std::string wifiPath = join(base0, "wifi");
     const std::string haPath = join(base0, "home_assistant");
 
-    if (c["wifi"].isNull()) {
+    JsonVariantConst wv = c["wifi"];
+    if (wv.isNull()) {
       err(wifiPath, "missing required field");
-    } else if (!c["wifi"].is<JsonObjectConst>()) {
-      err(wifiPath, "must be a mapping");
+    } else if (wv.is<JsonObjectConst>()) {
+      wifiProfile(wv.as<JsonObjectConst>(), wifiPath, 0);  // old single-mapping format
+    } else if (wv.is<JsonArrayConst>()) {
+      JsonArrayConst arr = wv.as<JsonArrayConst>();
+      if (arr.size() == 0) err(wifiPath, "needs at least one profile");
+      if (arr.size() > kMaxWifiProfiles)
+        err(wifiPath, "too many profiles (max " + std::to_string(kMaxWifiProfiles) + ")");
+      size_t i = 0;
+      for (JsonVariantConst item : arr) {
+        const std::string p = wifiPath + "[" + std::to_string(i) + "]";
+        if (i < kMaxWifiProfiles) {
+          if (item.is<JsonObjectConst>())
+            wifiProfile(item.as<JsonObjectConst>(), p, i);
+          else
+            err(p, "must be a mapping");
+        }
+        ++i;
+      }
     } else {
-      JsonObjectConst w = c["wifi"];
-      str(w, "ssid", wifiPath, true, cc.wifi.ssid);
-      str(w, "password", wifiPath, false, cc.wifi.password);
-      if (!w["static_ip"].isNull()) staticIp(w["static_ip"], wifiPath);
+      err(wifiPath, "must be a mapping or a list of mappings");
     }
 
     if (c["home_assistant"].isNull()) {
@@ -282,16 +297,60 @@ class Validator {
         err(base + ".external_url", "must start with https://");
       str(h, "token", base, true, cc.ha.token);
     }
+    if (cc.ha.externalUrl.empty()) {
+      for (size_t i = 0; i < cc.wifiProfiles.size(); ++i)
+        if (cc.wifiProfiles[i].haUrl == HaUrlMode::External)
+          err(wifiProfilePath(wifiPath, i), "ha_url external needs home_assistant.external_url");
+    }
+    if (!cc.wifiProfiles.empty()) cc.wifi = cc.wifiProfiles[0];
   }
 
-  void staticIp(JsonVariantConst v, const std::string &wifiPath) {
+  // A single mapping has no index in its path ("wifi.ssid"); list entries do ("wifi[1].ssid").
+  std::string wifiProfilePath(const std::string &wifiPath, size_t i) const {
+    return wifiIsList_ ? wifiPath + "[" + std::to_string(i) + "].ha_url" : join(wifiPath, "ha_url");
+  }
+
+  void wifiProfile(JsonObjectConst w, const std::string &path, size_t index) {
+    ConnectionConfig &cc = r_.config.connection;
+    wifiIsList_ = path.find('[') != std::string::npos;
+    WifiConfig prof;
+    str(w, "ssid", path, true, prof.ssid);
+    str(w, "password", path, false, prof.password);
+    if (!w["static_ip"].isNull()) staticIp(w["static_ip"], path, prof);
+    if (str(w, "name", path, false, prof.name)) {
+      if (prof.name.empty() || prof.name.size() > kMaxProfileName)
+        err(join(path, "name"), "must be 1.." + std::to_string(kMaxProfileName) + " characters");
+      for (const WifiConfig &o : cc.wifiProfiles)
+        if (o.name == prof.name) {
+          err(join(path, "name"), "duplicate profile name");
+          break;
+        }
+    }
+    if (prof.name.empty()) prof.name = "Network " + std::to_string(index + 1);
+    std::string mode;
+    if (str(w, "ha_url", path, false, mode)) {
+      if (mode == "auto") prof.haUrl = HaUrlMode::Auto;
+      else if (mode == "internal") prof.haUrl = HaUrlMode::Internal;
+      else if (mode == "external") prof.haUrl = HaUrlMode::External;
+      else err(join(path, "ha_url"), "must be internal, external or auto");
+    }
+    if (!prof.ssid.empty())
+      for (const WifiConfig &o : cc.wifiProfiles)
+        if (o.ssid == prof.ssid) {
+          err(join(path, "ssid"), "duplicate SSID in another profile");
+          break;
+        }
+    cc.wifiProfiles.push_back(std::move(prof));
+  }
+
+  void staticIp(JsonVariantConst v, const std::string &wifiPath, WifiConfig &wc) {
     const std::string base = join(wifiPath, "static_ip");
     if (!v.is<JsonObjectConst>()) {
       err(base, "must be a mapping with ip, gateway, subnet and dns");
       return;
     }
     JsonObjectConst o = v.as<JsonObjectConst>();
-    StaticIp &s = r_.config.connection.wifi.staticIp;
+    StaticIp &s = wc.staticIp;
     struct F {
       const char *key;
       std::string *out;
@@ -305,7 +364,7 @@ class Validator {
         all = false;
       }
     }
-    r_.config.connection.wifi.hasStaticIp = all;
+    wc.hasStaticIp = all;
   }
 
   void groups(JsonVariantConst v) {

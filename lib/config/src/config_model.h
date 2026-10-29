@@ -42,11 +42,18 @@ struct StaticIp {
   std::string ip, gateway, subnet, dns;
 };
 
+// Which Home Assistant URL a Wi-Fi profile uses (task 047). Auto = learned per SSID.
+enum class HaUrlMode { Auto, Internal, External };
+constexpr size_t kMaxWifiProfiles = 4;
+constexpr size_t kMaxProfileName = 20;
+
 struct WifiConfig {
   std::string ssid;
   std::string password;
   bool hasStaticIp = false;
   StaticIp staticIp;
+  std::string name;                  // display name; defaults to "Network N"
+  HaUrlMode haUrl = HaUrlMode::Auto;
 };
 
 struct HomeAssistantConfig {
@@ -56,7 +63,8 @@ struct HomeAssistantConfig {
 };
 
 struct ConnectionConfig {
-  WifiConfig wifi;
+  WifiConfig wifi;                      // the first profile (kept for single-network callers)
+  std::vector<WifiConfig> wifiProfiles; // all profiles in list order; [0] == wifi
   HomeAssistantConfig ha;
 };
 
