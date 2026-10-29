@@ -14,13 +14,13 @@ frame is still on the panel). It tells the user the device is alive during the
 Wi-Fi/config start-up (seconds) and which firmware runs. Data: app name and tagline
 (constants), version = `FW_VERSION` (the same string as the Settings Firmware row).
 
-## 2. Name proposal
+## 2. Name
 
-Short name **Paper Remote**, tagline `for Home Assistant`, footer `M5Paper e-ink
-remote`. (The long form "M5Paper HA Remote" stays the repo/product name; "Paper
-Remote" fits on one line at F56 in both orientations, about 390 px wide.) The name
-is a single constant, so it can be changed without a layout change as long as it
-stays <= 440 px at F56 (about 12 characters); longer names step down to F40.
+The app is named **Inkling** (user choice, ARCHITECTURE.md 2026-10-29), tagline `for Home
+Assistant`, footer `M5Paper e-ink remote`. (The long form "M5Paper HA Remote" stays the
+repo/product name.) "Inkling" at F56 is about 190 px wide, so it fits on one line in both
+orientations. The name is a single constant; a name longer than 440 px at F56 (about 12
+characters) steps down to F40.
 
 ## 3. Refresh
 
@@ -35,8 +35,8 @@ No partial updates, no progress bar, no animation.
 
 | Element | Rect | cy | Font / grey | Content |
 |---------|------|----|-------------|---------|
-| Logo | (90, 170, 360, 400), see 6 | | black, #888 | house with a remote inside |
-| Title | box (16, 650, 508, 80), centred x = 270 | 690 | F56 INK | `Paper Remote` |
+| Logo | (90, 170, 360, 400), see 6 | | black, #888 | house with a remote inside (old mark, see 8) |
+| Title | box (16, 650, 508, 80), centred x = 270 | 690 | F56 INK | `Inkling` |
 | Tagline | box (16, 734, 508, 36), centred | 752 | F24 DIM (#444) | `for Home Assistant` |
 | Divider | (235, 796, 70, 2) | | OFF (#888) | |
 | Version | box (16, 822, 508, 36), centred | 840 | F24 INK | `v0.3.1` |
@@ -50,7 +50,7 @@ margins >= 16.
 | Element | Rect | cy | Font / grey | Content |
 |---------|------|----|-------------|---------|
 | Logo | (70, 70, 360, 400) | | as portrait | same logo, same size |
-| Title | x = 500, box (500, 165, 444, 80) | 205 | F56 INK, left | `Paper Remote` |
+| Title | x = 500, box (500, 165, 444, 80) | 205 | F56 INK, left | `Inkling` |
 | Tagline | x = 500, box (500, 248, 444, 36) | 266 | F24 DIM, left | `for Home Assistant` |
 | Divider | (500, 306, 70, 2) | | OFF | |
 | Version | x = 500, box (500, 328, 444, 36) | 346 | F24 INK, left | `v0.3.1` |
@@ -72,3 +72,11 @@ A house with an e-paper remote in its window. Only #000, #888 (and white).
 
 None: the splash is static. If the saved orientation cannot be read it is drawn in
 portrait. Version shows `v?` if `FW_VERSION` is not defined (a dev build).
+
+## 8. Logo status (task 044)
+
+The splash still draws the **old mark** (section 6, house with a remote) until the user
+picks one of the three variants on `docs/ui/logo-variants.svg` (A drop house, B toggle
+"i", C one-stroke house). When picked, section 6 is replaced by the chosen 100 x 100
+symbol scaled to the Logo rect (same position, mark centred in it) and the mark is also
+usable at 48 px (the sheet shows each at 48 px). Everything else on the splash stays.

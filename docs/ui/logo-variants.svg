@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
+<!-- Inkling logo variants, sheet 960x540. Spec: docs/ui/splash.md section 8. Greys: #000, #444, #888 only (white background).
+     Marks are 100x100 symbols (stroke 8 where stroked); shown at 160 px and at 48 px. -->
+<defs>
+<symbol id="m-a" viewBox="0 0 100 100">
+ <path d="M50 3 L77.3 48.5 A32 32 0 1 1 22.7 48.5 Z" fill="#000"/>
+ <path d="M41 100 V80 a9 9 0 0 1 18 0 V100 Z" fill="#fff"/>
+ <path d="M30 68 A22 22 0 0 0 36 80" fill="none" stroke="#888" stroke-width="5" stroke-linecap="round" transform="translate(0,-4)"/>
+</symbol>
+<symbol id="m-b" viewBox="0 0 100 100">
+ <path d="M50 2 L61.7 16.6 A15 15 0 1 1 38.3 16.6 Z" fill="#000"/>
+ <rect x="31" y="48" width="38" height="52" rx="19" fill="#000"/>
+ <circle cx="50" cy="67" r="10" fill="#fff"/>
+</symbol>
+<symbol id="m-c" viewBox="0 0 100 100">
+ <path d="M62 90 H88 V46 L50 12 L12 46 V90 H30" fill="none" stroke="#000" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M50 56 L61.4 71.8 A14 14 0 1 1 38.6 71.8 Z" fill="#000"/>
+</symbol>
+</defs>
+<rect width="960" height="540" fill="#fff"/>
+<text x="24" y="28" font-size="24" font-weight="bold" fill="#000" dominant-baseline="central">Inkling: logo variants</text>
+<text x="936" y="28" font-size="18" fill="#444" text-anchor="end" dominant-baseline="central">pick one; splash keeps the old mark until then</text>
+
+<g id="p-a" transform="translate(24,56)">
+<rect x="1" y="1" width="286" height="462" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
+<text x="16" y="28" font-size="18" fill="#444" dominant-baseline="central">A  Drop house</text>
+<use xlink:href="#m-a" href="#m-a" x="64" y="52" width="160" height="160"/>
+<text x="144" y="258" font-size="56" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkling</text>
+<text x="144" y="304" font-size="22" fill="#444" text-anchor="middle" dominant-baseline="central">for Home Assistant</text>
+<rect x="109" y="340" width="70" height="2" fill="#888"/>
+<use xlink:href="#m-a" href="#m-a" x="84" y="378" width="48" height="48"/>
+<text x="148" y="402" font-size="18" fill="#444" dominant-baseline="central">48 px</text>
+</g>
+<g id="p-b" transform="translate(336,56)">
+<rect x="1" y="1" width="286" height="462" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
+<text x="16" y="28" font-size="18" fill="#444" dominant-baseline="central">B  Toggle i</text>
+<use xlink:href="#m-b" href="#m-b" x="64" y="52" width="160" height="160"/>
+<text x="144" y="258" font-size="56" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkling</text>
+<text x="144" y="304" font-size="22" fill="#444" text-anchor="middle" dominant-baseline="central">for Home Assistant</text>
+<rect x="109" y="340" width="70" height="2" fill="#888"/>
+<use xlink:href="#m-b" href="#m-b" x="84" y="378" width="48" height="48"/>
+<text x="148" y="402" font-size="18" fill="#444" dominant-baseline="central">48 px</text>
+</g>
+<g id="p-c" transform="translate(648,56)">
+<rect x="1" y="1" width="286" height="462" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
+<text x="16" y="28" font-size="18" fill="#444" dominant-baseline="central">C  One-stroke house</text>
+<use xlink:href="#m-c" href="#m-c" x="64" y="52" width="160" height="160"/>
+<text x="144" y="258" font-size="56" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkling</text>
+<text x="144" y="304" font-size="22" fill="#444" text-anchor="middle" dominant-baseline="central">for Home Assistant</text>
+<rect x="109" y="340" width="70" height="2" fill="#888"/>
+<use xlink:href="#m-c" href="#m-c" x="84" y="378" width="48" height="48"/>
+<text x="148" y="402" font-size="18" fill="#444" dominant-baseline="central">48 px</text>
+</g>
+</svg>

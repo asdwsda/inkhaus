@@ -27,7 +27,7 @@
   <line x1="247" y1="268" x2="257" y2="268" stroke="#fff" stroke-width="2"/>
   <line x1="247" y1="288" x2="257" y2="288" stroke="#fff" stroke-width="2"/>
 </g>
-<text x="500" y="205" font-size="56" fill="#000" text-anchor="start" dominant-baseline="central">Paper Remote</text>
+<text x="500" y="205" font-size="56" fill="#000" text-anchor="start" dominant-baseline="central">Inkling</text>
 <text x="500" y="266" font-size="24" fill="#444" text-anchor="start" dominant-baseline="central">for Home Assistant</text>
 <rect x="500" y="306" width="70" height="2" fill="#888"/>
 <text x="500" y="346" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">v0.3.1</text>

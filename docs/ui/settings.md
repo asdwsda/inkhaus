@@ -5,19 +5,19 @@ level** (layout.md 7.2) or by a **tap on the battery cluster** in the status bar
 (hit kind `settings`, layout.md section 6). Shown in the current orientation; no
 tab bar, no status bar. Values from `docs/ui/STYLE.md` (revision 3: touch targets
 64, gaps 12, every text and icon placed by its centre line `cy`). Mockups:
-`settings-portrait.svg`, `settings-landscape.svg`, `advanced-portrait.svg`,
-`advanced-landscape.svg` (revision 6, task 041: the main page has four setting
-rows and an **Advanced** row that opens the Advanced page, section 8). Rect = (x, y, w, h); screen
+`settings-portrait.svg`, `settings-landscape.svg`, `tools-portrait.svg`,
+`tools-landscape.svg` (revision 6, task 041: the main page has four setting
+rows and a **Tools** row that opens the Tools page, section 8). Rect = (x, y, w, h); screen
 coordinates unless it says "row-relative".
 
 ## 1. Purpose and data sources
 
-Let the user change the device settings (four on this page, two more on the Advanced page, section 8), trigger a refresh, and see
+Let the user change the device settings (four on this page, two more on the Tools page, section 8), trigger a refresh, and see
 read-only diagnostics.
 
 | Item | Source |
 |------|--------|
-| Orientation, wake mode, refresh interval, idle timeout (main page); demo mode, debug log (Advanced page) | `settings::Settings` (lib/settings). Allowed values and cycle order = `kOrientationValues`, `kWakeModeValues`, `kRefreshIntervalMinValues` = {0, 15, 30, 60, 120, 240}, `kIdleTimeoutSValues` = {10, 20, 30, 60}, `demo_mode` (bool, `Off` -> `On`; task 034), `debug_log` (bool, `Off` -> `On`, NVS `dbglog`, default Off; task 041) |
+| Orientation, wake mode, refresh interval, idle timeout (main page); demo mode, debug log (Tools page) | `settings::Settings` (lib/settings). Allowed values and cycle order = `kOrientationValues`, `kWakeModeValues`, `kRefreshIntervalMinValues` = {0, 15, 30, 60, 120, 240}, `kIdleTimeoutSValues` = {10, 20, 30, 60}, `demo_mode` (bool, `Off` -> `On`; task 034), `debug_log` (bool, `Off` -> `On`, NVS `dbglog`, default Off; task 041) |
 | Refresh now | the same state fetch as a tap on the "updated" label (ha_client) |
 | Firmware version | build-time constant (firmware-dev: needs a `FW_VERSION` define; architect to confirm where it comes from) |
 | Battery % and voltage | M5Unified power API, read when the screen opens and after every successful "Refresh now" |
@@ -32,7 +32,7 @@ No Home Assistant entity or service is used except the shared state fetch.
 
 1. **Edit buffer.** Opening Settings copies the saved settings into an edit
    buffer. Taps/pushes change only the buffer and the screen.
-1a. **One edit buffer for both pages.** The Advanced page edits the same buffer; the `unsaved` chip shows on both pages; going to Advanced and back (Back or long push on Advanced) saves nothing and applies nothing.
+1a. **One edit buffer for both pages.** The Tools page edits the same buffer; the `unsaved` chip shows on both pages; going to Tools and back (Back or long push on Tools) saves nothing and applies nothing.
 2. **Saved on leaving, not on every tap.** Each NVS write costs flash wear and
    power. Leaving = Back button on the main page, rocker long push on the main page, or the idle auto-leave
    (rule 5). On leave: if buffer != saved, `settings::save()` runs once (it
@@ -83,13 +83,13 @@ Margins 16, gaps between targets 12. White background. **All text that can chang
 | Row 2 Wake mode | (16, 152, 508, 72) | 188 | same | button |
 | Row 3 Refresh every | (16, 236, 508, 72) | 272 | same | button |
 | Row 4 Idle timeout | (16, 320, 508, 72) | 356 | same | button |
-| Advanced row | (16, 404, 508, 64) | 436 | border 2 INK, radius 8, PAPER | navigation button, see 3.5 |
+| Tools row | (16, 404, 508, 64) | 436 | border 2 INK, radius 8, PAPER | navigation button, see 3.5 |
 | Note slot | (16, 480, 508, 64) | 512 | see 3.2 | touch-wake warning |
 | Info hairline + rows | (16, 560 ... 864) | | see 3.3 | read-only |
 | Refresh now button | (16, 880, 248, 64) | 912 | border 2, radius 8 | action |
 | Back button | (276, 880, 248, 64) | 912 | border 2, radius 8 | action |
 
-Row height is 72 (the demo-mode row moved to the Advanced page, so four rows: 4 x 72 + 3 x 12 = 324). The freed height is spent as: rows 72 (a 64 px target plus room for the two-line label/hint block), a 12 px gap, the 64 px Advanced row, a 12 px gap, then the note slot. Vertical sums: header 56; +12 = 68; rows 324 -> 392; +12 = 404; Advanced 64 -> 468; +12 = 480; note slot 64 -> 544; +16 = 560; info 5 x 48 + 64 = 304 -> 864; +16 = 880; footer 64 -> 944; +16 = 960. The info rows keep their size; only their y moved (+12). Horizontal: 16 + 248 + 12 + 248 + 16 = 540.
+Row height is 72 (the demo-mode row moved to the Tools page, so four rows: 4 x 72 + 3 x 12 = 324). The freed height is spent as: rows 72 (a 64 px target plus room for the two-line label/hint block), a 12 px gap, the 64 px Tools row, a 12 px gap, then the note slot. Vertical sums: header 56; +12 = 68; rows 324 -> 392; +12 = 404; Tools 64 -> 468; +12 = 480; note slot 64 -> 544; +16 = 560; info 5 x 48 + 64 = 304 -> 864; +16 = 880; footer 64 -> 944; +16 = 960. The info rows keep their size; only their y moved (+12). Horizontal: 16 + 248 + 12 + 248 + 16 = 540.
 
 ### 3.1 Setting row (row-relative, width 508, height 72)
 
@@ -121,9 +121,9 @@ radius 8; alert icon (M) at slot-relative (12, 12, 40, 40), cy = 32; text lines
 (F18 INK, left) from x = 64 with cy = 21 and cy = 43 (block centred on 32):
 `Touch wake shortens battery life.` / `Button wake is recommended.`
 
-### 3.5 Advanced row (button-relative, 508 x 64; landscape 456 x 64)
+### 3.5 Tools row (button-relative, 508 x 64; landscape 456 x 64)
 
-Not a setting: it opens the Advanced page. Look: same border as the rows, but no pips and a chevron, so it reads as navigation. Label `Advanced` F24 INK at x = 16, cy = 32. Summary F18 INK, right-aligned at x = W - 64 (444 / 392), cy = 32: `Demo Off, Log Off` (current buffer values, so a user sees what is hidden behind it). Chevron_right icon (M, 40 x 40) at (W - 52, 12), cy = 32.
+Not a setting: it opens the Tools page. Look: same border as the rows, but no pips and a chevron, so it reads as navigation. Label `Tools` F24 INK at x = 16, cy = 32. Summary F18 INK, right-aligned at x = W - 64 (444 / 392), cy = 32: `Demo Off, Log Off` (current buffer values, so a user sees what is hidden behind it). Chevron_right icon (M, 40 x 40) at (W - 52, 12), cy = 32.
 
 ### 3.3 Info rows
 
@@ -168,13 +168,13 @@ Two columns: settings on the left (16..472), info and actions on the right
 | Row 2 Wake mode | (16, 144, 456, 68) | 178 | | |
 | Row 3 Refresh every | (16, 224, 456, 68) | 258 | | |
 | Row 4 Idle timeout | (16, 304, 456, 68) | 338 | | |
-| Advanced row | (16, 384, 456, 64) | 416 | see 3.5 | summary right edge x = 392 |
+| Tools row | (16, 384, 456, 64) | 416 | see 3.5 | summary right edge x = 392 |
 | Note slot | (16, 460, 456, 64) | 492 | see below | |
 | Info rows | (488, 64 ... 416, 456, ...) | | as portrait, value x = 158 (width 298) | |
 | Refresh now button | (488, 464, 222, 64) | 496 | | |
 | Back button | (722, 464, 222, 64) | 496 | | |
 
-Layout choice: the four rows keep the height 68 (landscape is height-limited; 4 x 68 + 3 x 12 = 308). Vertical sums (left column): header 52; +12 = 64; rows 308 -> 372; +12 = 384; Advanced 64 -> 448; +12 = 460; note slot 64 -> 524; +16 = 540. Right column and footer are unchanged (info 64 -> 416, footer 464 -> 528). Horizontal: 16 + 456 + 16 + 456 + 16 = 960. Footer: 488 + 222 + 12 + 222 = 944.
+Layout choice: the four rows keep the height 68 (landscape is height-limited; 4 x 68 + 3 x 12 = 308). Vertical sums (left column): header 52; +12 = 64; rows 308 -> 372; +12 = 384; Tools 64 -> 448; +12 = 460; note slot 64 -> 524; +16 = 540. Right column and footer are unchanged (info 64 -> 416, footer 464 -> 528). Horizontal: 16 + 456 + 16 + 456 + 16 = 960. Footer: 488 + 222 + 12 + 222 = 944.
 
 Landscape row internals (row-relative, width 456, height 68): identical to
 portrait with width 456: label x = 16, cy = 24; pips x = 22 + 20*k, cy = 47; value
@@ -206,11 +206,11 @@ so here it falls to F18 or wraps (fit rule).
 |--------|--------|------------------|
 | Setting row (whole rect) | cycle to the next value in the edit buffer | row value rect + hint rect; note slot if wake mode changed; unsaved chip if dirty flag flipped |
 | Refresh now | start the state fetch (ignored while one runs) | button (pending look: dashed 3 px border, hourglass M instead of the icon); on completion: button, HA row, Battery row |
-| Advanced row | open the Advanced page (section 8); no save | full refresh (GC16) |
+| Tools row | open the Tools page (section 8); no save | full refresh (GC16) |
 | Back | leave (rule 2/3) | full refresh |
 | anything else | nothing | |
 
-All targets are >= 64 x 64 (rows 72 / 68 high, Advanced and footer 64 high) with >= 12 px between
+All targets are >= 64 x 64 (rows 72 / 68 high, Tools and footer 64 high) with >= 12 px between
 them (rows are 12 apart, footer buttons 12 apart; landscape columns 16 apart).
 Settings is **entered by touch** with a tap on the battery cluster of the tab
 screen (hit kind `settings`); there is no status bar inside Settings.
@@ -218,7 +218,7 @@ screen (hit kind `settings`); there is no status bar inside Settings.
 ### Rocker
 
 Focus stops in order: 1 Orientation, 2 Wake mode, 3 Refresh every, 4 Idle
-timeout, 5 Advanced, 6 Refresh now, 7 Back. Entry focus = stop 1. The ring is the standard
+timeout, 5 Tools, 6 Refresh now, 7 Back. Entry focus = stop 1. The ring is the standard
 focus ring (3 px, 3..6 px outside the rect; the 12 px gaps and 16 px margins
 hold it; ring dirty region = rect inflated by 6).
 
@@ -226,7 +226,7 @@ hold it; ring dirty region = rect inflated by 6).
 |-----|--------|
 | PREV (up) | previous stop, wraps 1 -> 7 |
 | NEXT (down) | next stop, wraps 7 -> 1 |
-| PUSH | on a row (stops 1-4): cycle value; on Advanced: open the Advanced page; on Refresh now: start fetch; on Back: leave (this is not a dialog; for any yes/no dialog: UP = yes, DOWN = no, PUSH = skip, STYLE.md section 10b) |
+| PUSH | on a row (stops 1-4): cycle value; on Tools: open the Tools page; on Refresh now: start fetch; on Back: leave (this is not a dialog; for any yes/no dialog: UP = yes, DOWN = no, PUSH = skip, STYLE.md section 10b) |
 | LONG_PUSH | leave (same as Back), from any stop |
 
 Ring move redraws old and new rects (inflated by 6), partial. Key mapping follows
@@ -234,7 +234,7 @@ layout.md 7.1 (`PREV`/`NEXT`, invert flag).
 
 ### Refreshes
 
-- Enter and leave Settings, and the transitions main page <-> Advanced page: GC16 full refresh (STYLE.md section 10; sub-page change).
+- Enter and leave Settings, and the transitions main page <-> Tools page: GC16 full refresh (STYLE.md section 10; sub-page change).
 - Everything else above: one partial refresh of the listed region, no clean-up
   pass. Value texts are INK, so a row value cycles with `epd_fastest`; a region
   that still holds greys (the hint line is black/white, but info rows hold DIM
@@ -263,7 +263,7 @@ Loading state: none (everything is read synchronously when the screen opens).
 ## 7. OPEN items
 
 - OPEN-S1: idle timeout inside Settings fixed at 60 s (proposal).
-- OPEN-S5: Advanced summary text (`Demo Off, Log Off`) is a proposal.
+- OPEN-S5: Tools summary text (`Demo Off, Log Off`) is a proposal.
 - (resolved) OPEN-S2: the touch path to Settings is a tap on the battery cluster.
 - OPEN-S4: in demo mode the Config row text `built-in demo` and the inert Refresh now are proposals (task 034 does not say); architect to confirm.
 - OPEN-S3: first line of info only shows the first config error; a scrollable
@@ -271,15 +271,15 @@ Loading state: none (everything is read synchronously when the screen opens).
 - Questions for the architect: where `FW_VERSION` comes from; whether the config
   module exposes path + line + count for errors.
 
-## 8. Advanced page (task 041)
+## 8. Tools page (task 041)
 
-Second system page, reached from the **Advanced** row of the main page. Mockups: `advanced-portrait.svg` (demo Off, debug log On, focus on Debug log, note visible, unsaved), `advanced-landscape.svg` (demo On, debug log Off, focus on Back). Header as the main page (title `Advanced`, `unsaved` chip when the shared buffer is dirty). No tab bar, no status bar.
+Second system page, reached from the **Tools** row of the main page. Mockups: `tools-portrait.svg` (demo Off, debug log On, focus on Debug log, note visible, unsaved), `tools-landscape.svg` (demo On, debug log Off, focus on Back). Header as the main page (title `Tools`, `unsaved` chip when the shared buffer is dirty). No tab bar, no status bar.
 
 ### 8.1 Layout, portrait (540 x 960)
 
 | Element | Rect | cy | Font / grey | Content |
 |---------|------|----|-------------|---------|
-| Title | (16, 0, 200, 54) | 27 | F40 INK | `Advanced` |
+| Title | (16, 0, 200, 54) | 27 | F40 INK | `Tools` |
 | Unsaved chip, header rule | as 3 | | | |
 | Row 1 Demo mode | (16, 68, 508, 88) | 112 | border 2, radius 8 | button |
 | Row 2 Debug log | (16, 168, 508, 88) | 212 | same | button |
@@ -307,12 +307,12 @@ Two columns of 456 (16 px apart) so the page matches the main page's column grid
 |--------|--------|--------|
 | Demo mode row | toggle `demo_mode` in the buffer (Off <-> On) | row value; unsaved chip if dirty flipped (partial) |
 | Debug log row | toggle `debug_log` in the buffer | row value; note slot appears/clears; chip (partial) |
-| Back | return to the main page (no save, no apply); main page focus = Advanced row | GC16 full |
+| Back | return to the main page (no save, no apply); main page focus = Tools row | GC16 full |
 | anything else | nothing | |
 
 Rocker: focus stops 1 Demo mode, 2 Debug log, 3 Back (portrait top to bottom, landscape left to right then Back). Entry focus = stop 1. PREV/NEXT move and wrap. PUSH on a row toggles, on Back returns. **LONG_PUSH = Back** (one level up, not out of Settings). The Back target and the row targets are >= 64 px (rows 88, Back 64), >= 12 px apart. Focus ring as in section 5 (dirty rect inflated by 6; the rows' 12 px gap and 16 px margins hold it).
 
-Saving and effects: unchanged (rules 1a to 3): everything is saved and applied when Settings is left from the main page (Back, long push there, or the idle auto-leave, which also fires from the Advanced page after 60 s and leaves Settings entirely, saving the buffer).
+Saving and effects: unchanged (rules 1a to 3): everything is saved and applied when Settings is left from the main page (Back, long push there, or the idle auto-leave, which also fires from the Tools page after 60 s and leaves Settings entirely, saving the buffer).
 
 ### 8.4 States
 

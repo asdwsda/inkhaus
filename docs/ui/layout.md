@@ -7,7 +7,7 @@ rectangles are in `docs/ui/widgets.md`; the Settings screen is in
 `x <= px < x+w` and `y <= py < y+h`.
 
 Revision 3 (compact): cell 104 high, gap 12, touch minimum 64, portrait 2 x 7,
-landscape 5 x 4, "wide" widgets (2 cells portrait, 3 landscape), all types are
+landscape 5 x 4 (or 4 x 4 with `landscape_columns: 4`, section 2a), "wide" widgets (2 cells portrait, 3 landscape), all types are
 1 row high, new hit kind `settings`, new rect `sleepIndicator`, focus ring and
 dirty inflation 6.
 
@@ -70,6 +70,29 @@ Arithmetic (all exact):
 
 Widget pixel sizes: STYLE.md section 4.
 
+### 2a. Landscape variant `landscape_columns: 4` (task 043)
+
+A tab may set `landscape_columns: 4` (default 5; the grid above). Portrait is not
+affected. Mockup: `proposal-landscape-4col.svg`. Everything in the landscape column of
+the table above stays except:
+
+| | Landscape, 4 columns |
+|---|----------------------|
+| Columns / rows | 4 / 4 |
+| Cell | 223 x 104 |
+| Column x | 16, 251, 486, 721 |
+| Row y | 72, 188, 304, 420 (unchanged) |
+| Wide widget (2 cells) | 458 x 104 |
+
+| Check | Sum |
+|-------|-----|
+| Width | 16 + (4*223 + 3*12 = 892 + 36 = 928) + 16 = 960 |
+| Wide | 2*223 + 12 = 458 |
+| Right edge | 721 + 223 = 944 |
+
+Typical tab: row 1 two covers (x 16, 486), row 2 two climates, row 3 four toggles,
+row 4 free.
+
 ## 3. Widget sizes
 
 Size in cells (w x h). "Wide" = 2 cells in portrait, 3 cells in landscape
@@ -89,6 +112,17 @@ clamped. "Default" is used when config has no `size`.
 | binary_sensor | 1x1 (1x1..1x1) | 1x1 | |
 | weather | 2x1 (1x1..2x1) | 2x1 (1x1..2x1) | |
 | vacuum | 2x1 (2x1..2x1) | 3x1 (3x1..3x1) | wide |
+
+With `landscape_columns: 4` the wide widgets (cover, cover group, climate, vacuum) are
+**2 cells** (458 px), not 3; the other landscape sizes and min/max are unchanged
+except that `w` is clamped to 4 columns. The 458 px rows fit widgets.md as follows
+(the wide layout is shrunk, not changed):
+- **cover**: name room 206 px (x 12..218 of the widget); buttons up (230,20), stop
+  (307,21), down (383,21), each 62..64 px, as in the mockup.
+- **climate**: the left block is 158 px (x 12..170); minus (183,21), target text centred
+  at x 314, plus (383,21). The humidity row stays on line 2. When line 2 is full (humidity
+  plus the action text/icon do not fit in 158 px), the **flame icon moves to the end of
+  the name line** (x 146..170) instead of line 2.
 
 Why fixed sizes: a 1x1 toggle stretched to 2 cells would leave a large empty area
 (STYLE.md 4b fill rule), and the wide widgets only have one layout. A config
@@ -362,6 +396,19 @@ are generated from it.
 - (new) Closing sums: portrait 16+248+12+248+16 = 540 and 56+12+800+12+80 = 960;
   landscape 16+880+48+16 = 960 and 72+452+16 = 540. A unit test asserts them from
   the constants.
+
+### 8.1a Geometry with `landscape_columns: 4` (new)
+
+- Columns x 16, 251, 486, 721; rows y 72, 188, 304, 420; columns / rows 4 / 4; cell
+  223 x 104. Content, tab bar, status rects as in 8.1.
+- 1x1 at (3,0) = (721,72,223,104); 2x1 at (0,0) = (16,72,458,104); 2x1 at (2,0) =
+  (486,72,458,104); 4x1 at (0,3) = (16,420,928,104) (right edge 944).
+- Wide types default to 2x1 (cover, cover group, climate, vacuum); a requested 3x1
+  is clamped to 2x1 and reported. `w = min(w, 4)`. Pager (rows reserved) as in 8.1,
+  with prev (16,440,120,64) and next (824,440,120,64) unchanged.
+- Closing sum: 16 + 892 + 36 + 16 = 960.
+- Flow example: cover, cover, climate, climate, 4 lights land at (0,0), (2,0), (0,1),
+  (2,1), then (0,2), (1,2), (2,2), (3,2).
 
 ### 8.2 Sizes, clamping and flow
 

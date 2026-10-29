@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans">
-  <!-- Advanced page, portrait 540x960. Spec: docs/ui/settings.md section 8. Shown: demo Off, debug log On (unsaved, note visible), focus on row 2. Widgets: w-1 Demo mode, w-2 Debug log, w-3 note, w-4 Back. -->
+  <!-- Tools page, portrait 540x960. Spec: docs/ui/settings.md section 8. Shown: demo Off, debug log On (unsaved, note visible), focus on row 2. Widgets: w-1 Demo mode, w-2 Debug log, w-3 note, w-4 Back. -->
   <defs>
     <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="20,3 20,10 13,10" fill="currentColor"/></symbol>
@@ -8,7 +8,7 @@
   </defs>
 
   <rect x="0" y="0" width="540" height="960" fill="#fff"/>
-<text x="16" y="27" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">Advanced</text>
+<text x="16" y="27" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">Tools</text>
 <rect x="404" y="11" width="120" height="32" rx="8" fill="#000"/>
 <text x="464" y="27" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">unsaved</text>
 <rect x="0" y="54" width="540" height="2" fill="#000"/>
