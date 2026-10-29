@@ -7,30 +7,51 @@
 
 #include "ha_transport_arduino.h"
 #include "net.h"
+#include "session_glue.h"
 #include "url_plan.h"
 
 namespace {
-// What the device learned per Wi-Fi network (task 047): 1 = internal URL answered, 2 = external.
-// Stored as a side, never as a URL; key = "b" + SSID hash (hex), namespace "netbase".
-void sideKey(uint32_t ssidHash, char *out) { snprintf(out, 12, "b%08x", (unsigned)ssidHash); }
+// What the device learned per Wi-Fi network (task 047): which side answered, when (wall clock and session
+// counter, for the re-probe of a learned external). Stored as a side, never as a URL; key = "l" + SSID hash
+// (hex), namespace "netbase". The session counter is "sess".
+struct LearnedRec {
+  uint8_t side;
+  int64_t epoch;
+  uint32_t session;
+};
+void sideKey(uint32_t ssidHash, char *out) { snprintf(out, 12, "l%08x", (unsigned)ssidHash); }
 
-app_logic::Side loadSide(uint32_t ssidHash) {
+app_logic::Learned loadLearned(uint32_t ssidHash) {
+  app_logic::Learned l;
   Preferences p;
-  if (!p.begin("netbase", true)) return app_logic::Side::None;
+  if (!p.begin("netbase", true)) return l;
   char k[12];
   sideKey(ssidHash, k);
-  const int v = p.getUChar(k, 0);
+  LearnedRec r;
+  if (p.getBytes(k, &r, sizeof r) == sizeof r)
+    l = {r.side == 1 ? app_logic::Side::Internal : r.side == 2 ? app_logic::Side::External : app_logic::Side::None,
+         r.epoch, r.session};
   p.end();
-  return v == 1 ? app_logic::Side::Internal : v == 2 ? app_logic::Side::External : app_logic::Side::None;
+  return l;
 }
 
-void saveSide(uint32_t ssidHash, app_logic::Side s) {
+void saveLearned(uint32_t ssidHash, const app_logic::Learned &l) {
   Preferences p;
   if (!p.begin("netbase", false)) return;
   char k[12];
   sideKey(ssidHash, k);
-  p.putUChar(k, (uint8_t)s);
+  const LearnedRec r{(uint8_t)l.side, l.epoch, l.session};
+  p.putBytes(k, &r, sizeof r);
   p.end();
+}
+
+uint32_t bumpSessionCounter() {
+  Preferences p;
+  if (!p.begin("netbase", false)) return 0;
+  const uint32_t n = p.getUInt("sess", 0) + 1;
+  p.putUInt("sess", n);
+  p.end();
+  return n;
 }
 
 app_logic::LinkMode toMode(int v) {  // HaLink and HaUrlMode both: 0 Auto, 1 Internal, 2 External
@@ -60,12 +81,14 @@ void NetTask::loop() {
   ArduinoHttpTransport transport(4000, 8000);
   app_logic::HaWorker worker(transport, internal_, external_, token_);
   // The plan depends on the connected network and the Settings: recomputed when either changes.
-  // UNVERIFIED: net::linkInfo() read from this core while the UI core writes it is tear-tolerant
-  // (three words; a stale mix only delays the plan to the next command).
+  // net::linkInfo() is a consistent snapshot (published under a spinlock in net.cpp).
   net::LinkInfo planned;
   bool havePlan = false;
   app_logic::UrlPlan plan;
-  app_logic::Side stored = app_logic::Side::None;
+  app_logic::Learned stored;
+  bool stale = false;
+  uint32_t plannedEpoch = 0;
+  uint32_t sessionNo = 0;
   for (;;) {
     Cmd c;
     if (!cmds_.pop(c)) {
@@ -74,10 +97,18 @@ void NetTask::loop() {
     }
     if (c.epoch != epoch_.load()) continue;  // belongs to a finished session
     const net::LinkInfo li = net::linkInfo();
+    const bool newSession = c.epoch != plannedEpoch;
     if (c.cmd.type != app_logic::NetCommand::Type::Close &&
-        (!havePlan || li.ssidHash != planned.ssidHash || li.haUrl != planned.haUrl || li.haLink != planned.haLink)) {
-      stored = li.ssidHash ? loadSide(li.ssidHash) : app_logic::Side::None;
-      plan = app_logic::planUrls(toMode(li.haLink), toMode(li.haUrl), stored, !external_.empty());
+        (!havePlan || newSession || li.ssidHash != planned.ssidHash || li.haUrl != planned.haUrl || li.haLink != planned.haLink)) {
+      if (newSession) {  // UNVERIFIED: one NVS write per session is acceptable wear
+        sessionNo = bumpSessionCounter();
+        plannedEpoch = c.epoch;
+      }
+      const int64_t nowEpoch = session_glue::wallClock();
+      stored = li.ssidHash ? loadLearned(li.ssidHash) : app_logic::Learned();
+      stale = app_logic::learnedStale(stored, nowEpoch, sessionNo);
+      plan = app_logic::planUrls(toMode(li.haLink), toMode(li.haUrl),
+                                 app_logic::effectiveRemembered(stored, nowEpoch, sessionNo), !external_.empty());
       worker.applyPlan(plan);
       planned = li;
       havePlan = true;
@@ -93,10 +124,10 @@ void NetTask::loop() {
                     e.ev.external ? "remote" : "local");
     if (e.ev.type != app_logic::NetEvent::Type::Closed && e.ev.http_status != 0 && planned.ssidHash) {
       const app_logic::Side answered = e.ev.external ? app_logic::Side::External : app_logic::Side::Internal;
-      const app_logic::Side w = app_logic::sideToStore(plan, answered, stored);
-      if (w != app_logic::Side::None) {
-        saveSide(planned.ssidHash, w);
-        stored = w;
+      if (app_logic::shouldStoreLearned(plan, answered, stored, stale)) {
+        stored = {answered, session_glue::wallClock(), sessionNo};
+        stale = false;
+        saveLearned(planned.ssidHash, stored);
       }
     }
     evts_.push(std::move(e));

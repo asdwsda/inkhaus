@@ -320,6 +320,23 @@ void test_select_no_scan_cases() {
     TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, -1, false));
     TEST_ASSERT_EQUAL(-1, profileWithoutScan(2, 5, -1, false));   // forced beyond the list = Auto
 }
+void test_select_direct_failure_falls_back_to_scan() {
+    using namespace netselect;
+    TEST_ASSERT_TRUE(scanAfterDirectFailure(2, 0, true, false));
+    TEST_ASSERT_TRUE(scanAfterDirectFailure(3, 9, true, false));   // forced beyond list = Auto
+    TEST_ASSERT_FALSE(scanAfterDirectFailure(2, 0, true, true));   // only once
+    TEST_ASSERT_FALSE(scanAfterDirectFailure(2, 0, false, false)); // the attempt was a scan pick
+    TEST_ASSERT_FALSE(scanAfterDirectFailure(1, 0, true, false));  // nothing else to pick
+    TEST_ASSERT_FALSE(scanAfterDirectFailure(3, 2, true, false));  // forced is exclusive
+    // After the failure of profile 0 the scan must pick another one.
+    std::vector<std::string> p = {"home", "phone"};
+    bool found = false;
+    TEST_ASSERT_EQUAL(1, pickAfterScan(p, {"home", "phone"}, 0, &found, 0));
+    TEST_ASSERT_TRUE(found);
+    TEST_ASSERT_EQUAL(1, pickAfterScan(p, {"home"}, 0, &found, 0));   // nothing else seen: not 0
+    TEST_ASSERT_FALSE(found);
+    TEST_ASSERT_EQUAL(-1, pickAfterScan({"home"}, {}, 0, &found, 0));
+}
 void test_select_after_scan_list_order() {
     using namespace netselect;
     std::vector<std::string> p = {"home", "phone", "office"};
@@ -355,6 +372,7 @@ void test_per_profile_cache_is_tied_to_its_ssid() {
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_select_no_scan_cases);
+    RUN_TEST(test_select_direct_failure_falls_back_to_scan);
     RUN_TEST(test_select_after_scan_list_order);
     RUN_TEST(test_select_after_scan_nothing_found);
     RUN_TEST(test_per_profile_cache_is_tied_to_its_ssid);

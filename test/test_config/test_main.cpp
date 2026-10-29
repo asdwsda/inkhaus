@@ -239,7 +239,11 @@ void test_secrets_wifi_list_limits_and_external_needs_url() {
   std::string many = "wifi:\n";
   for (int i = 0; i < 5; ++i) many += "  - ssid: s" + std::to_string(i) + "\n";
   SecretsResult r = parseSecrets(many + kHa);
+  TEST_ASSERT_FALSE(r.ok());  // 5 profiles are rejected, not silently capped
   TEST_ASSERT_TRUE(hasSecretsError(r, "wifi"));
+  std::string four = "wifi:\n";
+  for (int i = 0; i < 4; ++i) four += "  - ssid: s" + std::to_string(i) + "\n";
+  TEST_ASSERT_TRUE(parseSecrets(four + kHa).ok());
   r = parseSecrets(
       "wifi:\n  - ssid: a\n    ha_url: external\n"
       "home_assistant:\n  internal_url: http://h\n  token: t\n");

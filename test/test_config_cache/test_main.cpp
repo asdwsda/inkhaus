@@ -143,6 +143,15 @@ void test_pack_unpack_fingerprint() {
 }
 
 
+void test_more_than_four_profiles_rejected() {
+  Config c = fullConfig(), out;
+  c.connection.wifiProfiles.assign(5, c.connection.wifi);
+  TEST_ASSERT_FALSE(deserializeConfig(serializeConfig(c), out));
+  c.connection.wifiProfiles.resize(4);
+  TEST_ASSERT_TRUE(deserializeConfig(serializeConfig(c), out));
+  TEST_ASSERT_EQUAL(4, (int)out.connection.wifiProfiles.size());
+}
+
 void test_roundtrip_landscape_columns() {
   Config c = fullConfig(), out;
   c.tabs[0].landscapeColumns = 4;
@@ -175,6 +184,7 @@ void test_roundtrip_attribute_options() {
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_roundtrip_all_fields);
+  RUN_TEST(test_more_than_four_profiles_rejected);
   RUN_TEST(test_roundtrip_landscape_columns);
   RUN_TEST(test_roundtrip_example_yaml);
   RUN_TEST(test_roundtrip_default_config);

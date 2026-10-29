@@ -17,7 +17,12 @@ int profileWithoutScan(int profileCount, int forced, int lastConnected, bool las
 // Auto after a scan: the first profile (list order) whose SSID was seen. If none was seen (scan
 // failed, hidden SSID): the last connected profile, else the first. -1 only for an empty list.
 // `found` (optional) tells whether a scan hit decided.
+// `exclude` (>= 0) is a profile that just failed; it is never picked (-1 if no other exists).
 int pickAfterScan(const std::vector<std::string> &profileSsids, const std::vector<std::string> &seen,
-                  int lastConnected, bool *found = nullptr);
+                  int lastConnected, bool *found = nullptr, int exclude = -1);
+
+// A connect that skipped the scan (profileWithoutScan) failed: scan once and pick another profile?
+// Only in Auto (forced beyond the list counts as Auto) with 2+ profiles, and only once per begin().
+bool scanAfterDirectFailure(int profileCount, int forced, bool directWithoutScan, bool alreadyScanned);
 
 }  // namespace netselect

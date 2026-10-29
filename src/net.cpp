@@ -36,9 +36,14 @@ bool g_scanning = false;
 uint32_t g_scanT0 = 0;
 constexpr uint32_t kScanTimeoutMs = 6000;
 // Read by the network task (core 0): plain words, written when the link comes up / goes down.
-volatile int g_linkProfile = -1;
-volatile uint32_t g_linkHash = 0;
-volatile int g_linkHaUrl = 0;
+// The three words are published together under a spinlock (both cores), so a reader never sees a mix.
+portMUX_TYPE g_linkMux = portMUX_INITIALIZER_UNLOCKED;
+int g_linkProfile = -1;
+uint32_t g_linkHash = 0;
+int g_linkHaUrl = 0;
+bool g_directTry = false;  // this attempt skipped the scan (profileWithoutScan)
+bool g_scanned = false;    // a scan already ran in this begin()
+int g_exclude = -1;        // profile that failed before the fallback scan
 
 config::WifiConfig g_cfg;
 Connector g_conn;
@@ -197,10 +202,17 @@ void remember() {
 }
 
 void publishLink(bool up) {
-    g_linkProfile = up ? g_active : -1;
-    g_linkHaUrl = up ? (int)g_cfg.haUrl : 0;
-    g_linkHash = up ? ssidHash(g_cfg.ssid) : 0;
+    const int prof = up ? g_active : -1;
+    const int haUrl = up ? (int)g_cfg.haUrl : 0;
+    const uint32_t hash = up ? ssidHash(g_cfg.ssid) : 0;
+    portENTER_CRITICAL(&g_linkMux);
+    g_linkProfile = prof;
+    g_linkHaUrl = haUrl;
+    g_linkHash = hash;
+    portEXIT_CRITICAL(&g_linkMux);
 }
+
+void startScan();
 
 // Connects with the active profile (cache or scan attempt).
 void connectActive() {
@@ -215,14 +227,21 @@ void connectActive() {
     if (launch(g_conn.start(g_startMs, use)) == Phase::Failed) {
         wakelog::logf("NET: phase=failed reason=begin" "\n");
         g_state = net::State::Failed;
+        if (netselect::scanAfterDirectFailure((int)g_profiles.size(), g_forced, g_directTry, g_scanned)) {
+            g_exclude = g_active;
+            g_directTry = false;
+            startScan();
+        }
     }
 }
 
 // Auto, nothing to skip the scan: start an asynchronous scan for the known SSIDs.
 void startScan() {
     g_scanning = true;
+    g_scanned = true;
     g_scanT0 = millis();
     g_state = net::State::Connecting;
+    esp_wifi_scan_stop();  // no-op when idle
     WiFi.scanDelete();
     WiFi.scanNetworks(true, false, false, 300);  // UNVERIFIED: async scan with 300 ms/channel dwell finds the APs in <= ~4 s
     wakelog::logf("NET: phase=scan profiles=%u\n", (unsigned)g_profiles.size());
@@ -232,12 +251,15 @@ void finishScan() {
     std::vector<std::string> seen;
     int n = WiFi.scanComplete();
     for (int i = 0; i < n; ++i) seen.push_back(WiFi.SSID(i).c_str());
+    // On the 6 s timeout the scan is still running: scanDelete() would not stop it, and begin()
+    // fails while a scan is active.
+    if (n == WIFI_SCAN_RUNNING) esp_wifi_scan_stop();  // UNVERIFIED: stops the async scan so the following begin() succeeds
     WiFi.scanDelete();
     g_scanning = false;
     std::vector<std::string> ssids;
     for (const auto &w : g_profiles) ssids.push_back(w.ssid);
     bool found = false;
-    int pick = netselect::pickAfterScan(ssids, seen, lastProfile(), &found);
+    int pick = netselect::pickAfterScan(ssids, seen, lastProfile(), &found, g_exclude);
     wakelog::logf("NET: scan_done aps=%d found=%d pick=%d ms=%u\n", n, found ? 1 : 0, pick,
                   (unsigned)(millis() - g_scanT0));
     activate(pick);
@@ -301,6 +323,9 @@ void begin(const config::WifiConfig &wifi) {
         lastUsable = cacheUsable(c, g_profiles[last].ssid, g_profiles[last].hasStaticIp);
     }
     const int pick = netselect::profileWithoutScan((int)g_profiles.size(), g_forced, last, lastUsable);
+    g_directTry = pick >= 0;
+    g_scanned = false;
+    g_exclude = -1;
     if (pick >= 0) {
         activate(pick);
         connectActive();
@@ -358,6 +383,14 @@ State poll() {
         }
         wakelog::logf("NET: phase=failed connect_ms=%u\n", (unsigned)(now - g_startMs));
         WiFi.disconnect(false, false);
+        if (netselect::scanAfterDirectFailure((int)g_profiles.size(), g_forced, g_directTry, g_scanned)) {
+            // Direct connect to the last profile failed (moved away from it): scan once, pick another.
+            wakelog::logf("NET: direct_failed profile=%d fallback=scan\n", g_active);
+            g_exclude = g_active;
+            g_directTry = false;
+            g_authLatch = false;
+            startScan();
+        }
     }
     return g_state;
 }
@@ -394,9 +427,11 @@ uint32_t connectMs() { return g_connectMs; }
 
 LinkInfo linkInfo() {
     LinkInfo i;
+    portENTER_CRITICAL(&g_linkMux);
     i.profile = g_linkProfile;
     i.ssidHash = g_linkHash;
     i.haUrl = g_linkHaUrl;
+    portEXIT_CRITICAL(&g_linkMux);
     i.haLink = g_haLink;
     return i;
 }
