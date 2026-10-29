@@ -20,7 +20,7 @@ class ArduinoHttpTransport : public HttpTransport {
     return keep_.request(method, url, headers, body);
   }
   // Streaming (task 051): own request on the shared sockets, no 64 KB cap. Drops the kept
-  // connection first and again afterwards unless the body completed.
+  // connection first; the streaming connection is dropped after the call (one-shot).
   StreamResult stream(const std::string& method, const std::string& url, const HttpHeaders& headers,
                       const std::string& body, const StreamLimits& lim, const ChunkFn& sink) override {
     keep_.close();

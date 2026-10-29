@@ -6,6 +6,8 @@
 #include "body_limit.h"
 #include "keep_alive.h"
 #include "ha_client.h"
+#include "chunked_decoder.h"
+#include "stream_pump.h"
 #include "service_call.h"
 #include "state_parser.h"
 #include "template_builder.h"
@@ -836,6 +838,209 @@ void test_history_default_stream_and_normal_cap_unchanged() {
   TEST_ASSERT_EQUAL(512 * 1024, kStreamMaxBytes);
 }
 
+// ---- chunked decoder + pump (task 051 fix) ----
+static std::string dec_all(const std::string& in, size_t step, ChunkedDecoder::Status* last = nullptr) {
+  ChunkedDecoder d;
+  std::string out;
+  ChunkedDecoder::Status st = ChunkedDecoder::Status::Ok;
+  for (size_t i = 0; i < in.size(); i += step) {
+    st = d.feed(in.data() + i, std::min(step, in.size() - i), [&](const char* p, size_t n) { out.append(p, n); return true; });
+    if (st == ChunkedDecoder::Status::Error) break;
+  }
+  if (last) *last = st;
+  return out;
+}
+
+void test_chunked_decoder_split_everywhere() {
+  const std::string in = "5\r\nhello\r\nA;ext=1\r\n0123456789\r\n0\r\nX-T: 1\r\n\r\nIGNORED";
+  for (size_t step = 1; step <= in.size(); step++) {
+    ChunkedDecoder::Status st;
+    TEST_ASSERT_EQUAL_STRING("hello0123456789", dec_all(in, step, &st).c_str());
+    TEST_ASSERT_TRUE(st == ChunkedDecoder::Status::Done);
+  }
+  ChunkedDecoder::Status st;
+  dec_all("FF\r\n", 1, &st);  // incomplete: not done
+  TEST_ASSERT_TRUE(st == ChunkedDecoder::Status::Ok);
+  dec_all("1a\r\n", 3, &st);
+  TEST_ASSERT_TRUE(st == ChunkedDecoder::Status::Ok);
+}
+
+void test_chunked_decoder_errors_and_abort() {
+  ChunkedDecoder::Status st;
+  dec_all("zz\r\n", 2, &st);
+  TEST_ASSERT_TRUE(st == ChunkedDecoder::Status::Error);
+  dec_all("2\r\nabXX", 1, &st);  // missing CRLF after data
+  TEST_ASSERT_TRUE(st == ChunkedDecoder::Status::Error);
+  dec_all("123456789\r\n", 4, &st);  // size too long
+  TEST_ASSERT_TRUE(st == ChunkedDecoder::Status::Error);
+  ChunkedDecoder d;
+  TEST_ASSERT_TRUE(d.feed("3\r\nabc\r\n0\r\n\r\n", 14, [](const char*, size_t) { return false; }) == ChunkedDecoder::Status::Aborted);
+}
+
+struct FakeSrc : StreamSource {
+  uint32_t t = 0;
+  std::deque<std::string> data;  // pieces; "" entry = nothing available this poll
+  bool closed_after = false;     // report closed when drained
+  int idles = 0;
+  std::function<void()> on_idle;
+  int read(uint8_t* buf, size_t cap) override {
+    if (data.empty()) return closed_after ? -1 : 0;
+    std::string& f = data.front();
+    if (f.empty()) { data.pop_front(); return 0; }
+    size_t n = std::min(cap, f.size());
+    memcpy(buf, f.data(), n);
+    f.erase(0, n);
+    if (f.empty()) data.pop_front();
+    return (int)n;
+  }
+  uint32_t now() override { return t; }
+  void idle() override { idles++; t += 5; if (on_idle) on_idle(); }
+};
+
+void test_pump_chunked_and_identity() {
+  FakeSrc s;
+  s.data = {"3\r\nab", "c\r\n0\r\n", "\r\n"};
+  StreamResult r; r.status = 200;
+  std::string got;
+  pump_body(s, BodyKind::Chunked, -1, StreamLimits{}, 0, [&](const char* p, size_t n) { got.append(p, n); return true; }, r);
+  TEST_ASSERT_EQUAL_STRING("abc", got.c_str());
+  TEST_ASSERT_TRUE(r.completed());
+  FakeSrc s2;
+  s2.data = {"hello world"};
+  StreamResult r2; r2.status = 200;
+  got.clear();
+  pump_body(s2, BodyKind::Identity, 5, StreamLimits{}, 0, [&](const char* p, size_t n) { got.append(p, n); return true; }, r2);
+  TEST_ASSERT_EQUAL_STRING("hello", got.c_str());
+  TEST_ASSERT_TRUE(r2.completed());
+  FakeSrc s3;  // unknown length: until close
+  s3.data = {"ab", "cd"}; s3.closed_after = true;
+  StreamResult r3; r3.status = 200;
+  got.clear();
+  pump_body(s3, BodyKind::Identity, -1, StreamLimits{}, 0, [&](const char* p, size_t n) { got.append(p, n); return true; }, r3);
+  TEST_ASSERT_EQUAL_STRING("abcd", got.c_str());
+  TEST_ASSERT_TRUE(r3.completed());
+}
+
+void test_pump_stall_hits_deadline_without_data() {
+  FakeSrc s;
+  s.data = {"3\r\nabc\r\n"};  // then silence, connection stays open
+  StreamLimits lim; lim.deadline_ms = 100;
+  StreamResult r; r.status = 200;
+  pump_body(s, BodyKind::Chunked, -1, lim, 0, [](const char*, size_t) { return true; }, r);
+  TEST_ASSERT_TRUE(r.deadline);
+  TEST_ASSERT_EQUAL(3, r.bytes);
+  TEST_ASSERT_TRUE(s.idles > 0);
+  TEST_ASSERT_FALSE(r.completed());
+}
+
+void test_pump_cancel_while_idle_and_sink_abort() {
+  FakeSrc s;
+  volatile bool cancel = false;
+  s.on_idle = [&] { if (s.idles == 3) cancel = true; };
+  StreamLimits lim; lim.cancel = &cancel;
+  StreamResult r; r.status = 200;
+  pump_body(s, BodyKind::Identity, 10, lim, 0, [](const char*, size_t) { return true; }, r);
+  TEST_ASSERT_TRUE(r.cancelled);
+  TEST_ASSERT_EQUAL(0, r.bytes);
+  FakeSrc s2; s2.data = {"abc"};
+  StreamResult r2; r2.status = 200;
+  pump_body(s2, BodyKind::Identity, 3, StreamLimits{}, 0, [](const char*, size_t) { return false; }, r2);
+  TEST_ASSERT_TRUE(r2.cancelled);
+}
+
+void test_pump_limits_and_truncation() {
+  FakeSrc s; s.data = {"3\r\nabcdef"};
+  StreamLimits lim; lim.max_bytes = 2;
+  StreamResult r; r.status = 200;
+  pump_body(s, BodyKind::Chunked, -1, lim, 0, [](const char*, size_t) { return true; }, r);
+  TEST_ASSERT_TRUE(r.too_large);
+  FakeSrc s2; s2.data = {"3\r\nab"}; s2.closed_after = true;  // closed mid chunk
+  StreamResult r2; r2.status = 200;
+  pump_body(s2, BodyKind::Chunked, -1, StreamLimits{}, 0, [](const char*, size_t) { return true; }, r2);
+  TEST_ASSERT_EQUAL(0, r2.status);
+  TEST_ASSERT_FALSE(r2.error.empty());
+  FakeSrc s3; s3.data = {"ab"}; s3.closed_after = true;  // short identity body
+  StreamResult r3; r3.status = 200;
+  pump_body(s3, BodyKind::Identity, 5, StreamLimits{}, 0, [](const char*, size_t) { return true; }, r3);
+  TEST_ASSERT_EQUAL(0, r3.status);
+  FakeSrc s4; s4.data = {"3\r\nab"}; s4.closed_after = true;
+  StreamResult r4; r4.status = 200;
+  pump_body(s4, BodyKind::Chunked, -1, StreamLimits{}, 0, [](const char*, size_t) { return true; }, r4);
+  FakeSrc s5; s5.data = {"zz\r\n"};
+  StreamResult r5; r5.status = 200;
+  pump_body(s5, BodyKind::Chunked, -1, StreamLimits{}, 0, [](const char*, size_t) { return true; }, r5);
+  TEST_ASSERT_EQUAL(0, r5.status);
+}
+
+// Fallback policy and budget (decisions 2 and 3).
+struct BudgetFake : HttpTransport {
+  std::vector<StreamLimits> lims;
+  std::deque<StreamResult> results;
+  std::deque<std::string> deliver;
+  HttpResponse request(const std::string&, const std::string&, const HttpHeaders&, const std::string&) override { return {}; }
+  StreamResult stream(const std::string&, const std::string&, const HttpHeaders&, const std::string&,
+                      const StreamLimits& lim, const ChunkFn& sink) override {
+    lims.push_back(lim);
+    StreamResult r = results.front(); results.pop_front();
+    std::string d = deliver.front(); deliver.pop_front();
+    if (!d.empty()) { sink(d.data(), d.size()); r.bytes = d.size(); }
+    return r;
+  }
+};
+
+void test_history_fallback_policy() {
+  auto sink = [](const char*, size_t) { return true; };
+  {  // deadline with 0 bytes: falls back, gets the remaining time, remembered base set after success
+    BudgetFake t;
+    StreamResult d; d.status = 200; d.deadline = true; d.ms = 6000;
+    StreamResult ok; ok.status = 200; ok.ms = 100;
+    t.results = {d, ok}; t.deliver = {"", "x"};
+    HaClient c(t, kInt, kExt, "T");
+    HaResult r = c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink);
+    TEST_ASSERT_TRUE(r.ok());
+    TEST_ASSERT_EQUAL(15000, t.lims[0].deadline_ms);
+    TEST_ASSERT_EQUAL(9000, t.lims[1].deadline_ms);
+    TEST_ASSERT_EQUAL(6100, r.ms);
+  }
+  {  // budget exhausted: no second attempt
+    BudgetFake t;
+    StreamResult d; d.deadline = true; d.ms = 15000;
+    t.results = {d}; t.deliver = {""};
+    HaClient c(t, kInt, kExt, "T");
+    HaResult r = c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink);
+    TEST_ASSERT_EQUAL(HaError::Timeout, r.error);
+    TEST_ASSERT_EQUAL(1, (int)t.lims.size());
+  }
+  {  // bytes delivered then network error / deadline: never falls back, base not remembered
+    BudgetFake t;
+    StreamResult n; n.error = "lost";
+    StreamResult d; d.status = 200; d.deadline = true;
+    t.results = {n, d}; t.deliver = {"ab", "cd"};
+    HaClient c(t, kInt, kExt, "T");
+    size_t bytes = 0;
+    HaResult r = c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink, &bytes);
+    TEST_ASSERT_EQUAL(HaError::Network, r.error);
+    TEST_ASSERT_EQUAL(2, bytes);
+    HaResult r2 = c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink);
+    TEST_ASSERT_EQUAL(HaError::Timeout, r2.error);
+    TEST_ASSERT_EQUAL(2, (int)t.lims.size());
+    TEST_ASSERT_EQUAL_STRING("", c.remembered_base().c_str());
+  }
+  {  // non-2xx: no fallback, no remembered base; too_large and cancel too
+    BudgetFake t;
+    StreamResult e; e.status = 500;
+    StreamResult big; big.status = 200; big.too_large = true;
+    StreamResult can; can.status = 200; can.cancelled = true;
+    t.results = {e, big, can}; t.deliver = {"", "", ""};
+    HaClient c(t, kInt, kExt, "T");
+    TEST_ASSERT_EQUAL(HaError::Http, c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink).error);
+    TEST_ASSERT_EQUAL(HaError::TooLarge, c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink).error);
+    TEST_ASSERT_EQUAL(HaError::Cancelled, c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink).error);
+    TEST_ASSERT_EQUAL(3, (int)t.lims.size());
+    TEST_ASSERT_EQUAL_STRING("", c.remembered_base().c_str());
+  }
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_unknown_cover_without_position);
@@ -884,5 +1089,12 @@ int main() {
   RUN_TEST(test_history_stream_deadline_gate);
   RUN_TEST(test_history_stream_fallback_and_errors);
   RUN_TEST(test_history_default_stream_and_normal_cap_unchanged);
+  RUN_TEST(test_chunked_decoder_split_everywhere);
+  RUN_TEST(test_chunked_decoder_errors_and_abort);
+  RUN_TEST(test_pump_chunked_and_identity);
+  RUN_TEST(test_pump_stall_hits_deadline_without_data);
+  RUN_TEST(test_pump_cancel_while_idle_and_sink_abort);
+  RUN_TEST(test_pump_limits_and_truncation);
+  RUN_TEST(test_history_fallback_policy);
   return UNITY_END();
 }

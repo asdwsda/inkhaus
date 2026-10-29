@@ -1,7 +1,7 @@
 #pragma once
 // Streaming GET/POST for large responses (task 051): the body is handed to a chunk callback and
 // never accumulated, so the 64 KB cap of normal calls does not apply; a per-request byte limit,
-// a deadline and a cancel flag take its place.
+// a deadline (one budget per call) and a cancel flag take its place.
 #include <cstddef>
 #include <cstdint>
 #include <functional>

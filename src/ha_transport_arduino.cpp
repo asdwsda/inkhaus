@@ -1,6 +1,7 @@
 #include "ha_transport_arduino.h"
 
 #include "body_limit.h"
+#include "stream_pump.h"
 
 // Arduino-ESP32 2.0.x does not ship a ready CA bundle: the app must embed a
 // binary x509 bundle (generated from the Mozilla roots, e.g. with ESP-IDF's
@@ -32,24 +33,23 @@ class CappedStream : public Stream {
   uint32_t start_;
 };
 
-// Stream adapter for streaming requests: bytes go through a StreamGate to the chunk callback.
-class GateStream : public Stream {
+// StreamSource over a connected WiFiClient (task 051 fix).
+class ClientSource : public StreamSource {
  public:
-  GateStream(const StreamLimits& lim, const ChunkFn& sink, uint32_t start_ms)
-      : gate_(lim, sink), start_(start_ms) {}
-  size_t write(const uint8_t* p, size_t n) override {
-    return gate_.accept(reinterpret_cast<const char*>(p), n, millis() - start_, res);
+  explicit ClientSource(WiFiClient* c) : c_(c) {}
+  int read(uint8_t* buf, size_t cap) override {
+    int avail = c_->available();
+    if (avail > 0) {
+      int n = c_->read(buf, cap < (size_t)avail ? cap : (size_t)avail);
+      if (n > 0) return n;
+    }
+    return c_->connected() || c_->available() > 0 ? 0 : -1;
   }
-  size_t write(uint8_t b) override { return write(&b, 1); }
-  int available() override { return 0; }
-  int read() override { return -1; }
-  int peek() override { return -1; }
-  void flush() override {}
-  StreamResult res;
+  uint32_t now() override { return millis(); }
+  void idle() override { delay(5); }
 
  private:
-  StreamGate gate_;
-  uint32_t start_;
+  WiFiClient* c_;
 };
 }  // namespace
 
@@ -128,10 +128,10 @@ void ArduinoHttpTransport::Raw::drop() {
   secure_.stop();
 }
 
-// UNVERIFIED: writeToStream() on a chunked, 100+ KB body keeps calling write() in pieces of at most
-// the TCP buffer size, and a short write aborts it with HTTPC_ERROR_STREAM_WRITE; with an unknown
-// length (chunked) the read timeout (8 s) is the only stall guard besides our deadline, which is
-// checked per chunk. UNVERIFIED: no heap spike (no body accumulation).
+// UNVERIFIED: the body is read straight from getStreamPtr() in 512 byte slices (stream_pump), so the
+// 15 s deadline and the cancel flag are checked even when the server stalls; Transfer-Encoding is
+// read via collectHeaders(); HTTPClient has consumed exactly the headers when sendRequest returns.
+// UNVERIFIED: no heap spike (no body accumulation).
 StreamResult ArduinoHttpTransport::Raw::stream(const std::string& method, const std::string& url,
                                                const HttpHeaders& headers, const std::string& body,
                                                const StreamLimits& lim, const ChunkFn& sink) {
@@ -158,26 +158,21 @@ StreamResult ArduinoHttpTransport::Raw::stream(const std::string& method, const 
     return out;
   }
   for (const auto& h : headers) http_.addHeader(h.first.c_str(), h.second.c_str());
+  static const char* kCollect[] = {"Transfer-Encoding"};
+  http_.collectHeaders(kCollect, 1);
   int code = http_.sendRequest(method.c_str(), (uint8_t*)body.data(), body.size());
   if (code > 0) {
     out.status = code;
     if (code >= 200 && code < 300) {
-      GateStream gs(lim, sink, start);
-      int ret = http_.writeToStream(&gs);
-      out.bytes = gs.res.bytes;
-      out.too_large = gs.res.too_large;
-      out.cancelled = gs.res.cancelled;
-      out.deadline = gs.res.deadline;
-      if (ret < 0 && !out.too_large && !out.cancelled && !out.deadline) {
-        out.status = 0;  // transport error mid-body
-        out.error = HTTPClient::errorToString(ret).c_str();
-      }
+      const bool chunked = http_.header("Transfer-Encoding").indexOf("chunked") >= 0;
+      ClientSource src(http_.getStreamPtr());
+      pump_body(src, chunked ? BodyKind::Chunked : BodyKind::Identity, chunked ? -1 : http_.getSize(),
+                lim, start, sink, out);
     }
   } else {
     out.error = HTTPClient::errorToString(code).c_str();
   }
   http_.end();
-  drop();  // one-shot: the connection state after a long body is not worth keeping
   http_.setReuse(true);
   out.ms = millis() - start;
   return out;

@@ -124,25 +124,31 @@ HaResult HaClient::stream_history(const std::string& entity_id, int64_t start_ep
   HttpHeaders headers = {{"Authorization", "Bearer " + token_}, {"Accept", "application/json"}};
   r.error = HaError::Network;
   r.message = "no base URL configured";
+  uint32_t spent = 0;  // one deadline budget for the whole call, fallbacks included
+  size_t total = 0;
   for (const std::string& base : bases) {
-    StreamResult s = transport_.stream("GET", base + path, headers, "", lim, sink);
-    if (bytes_out) *bytes_out = s.bytes;
-    r.ms = s.ms;
+    StreamLimits l = lim;
+    if (spent >= lim.deadline_ms) { r.error = HaError::Timeout; r.message = "deadline exceeded"; return r; }
+    l.deadline_ms = lim.deadline_ms - spent;
+    StreamResult s = transport_.stream("GET", base + path, headers, "", l, sink);
+    total += s.bytes;
+    if (bytes_out) *bytes_out = total;
+    spent += s.ms;
+    r.ms = spent;
     r.reused = s.reused;
     if (s.cancelled) { r.error = HaError::Cancelled; r.message = "cancelled"; return r; }
     if (s.too_large) { r.error = HaError::TooLarge; r.message = "response too large"; r.base_url = base; return r; }
-    if (s.deadline) { r.error = HaError::Timeout; r.message = "deadline exceeded"; return r; }
-    if (s.status == 0) {  // connect failure or transport error
-      r.error = HaError::Network;
-      r.message = s.error;
-      if (s.bytes > 0) return r;  // partial data already delivered: no fallback
+    if (s.deadline || s.status == 0) {  // timeout or connect/transport failure
+      if (s.deadline) { r.error = HaError::Timeout; r.message = "deadline exceeded"; }
+      else { r.error = HaError::Network; r.message = s.error; }
+      if (s.bytes > 0) return r;  // partial data already delivered: never fall back
       continue;
     }
     r.http_status = s.status;
     r.base_url = base;
     if (s.status == 401) { r.error = HaError::Auth; r.message = "unauthorized"; }
     else if (s.status < 200 || s.status >= 300) { r.error = HaError::Http; r.message = "HTTP " + std::to_string(s.status); }
-    else { r.error = HaError::None; r.message.clear(); remembered_ = base; }
+    else { r.error = HaError::None; r.message.clear(); remembered_ = base; }  // only a complete 2xx body
     return r;
   }
   return r;
