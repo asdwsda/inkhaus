@@ -9,23 +9,13 @@
 
   <rect x="0" y="0" width="960" height="540" fill="#fff"/>
 <g id="logo" transform="translate(70,70)">
-  <line x1="10" y1="385" x2="350" y2="385" stroke="#888" stroke-width="6" stroke-linecap="round"/>
-  <rect x="254" y="50" width="32" height="70" fill="#000"/>
-  <rect x="44" y="176" width="272" height="194" fill="#fff" stroke="#000" stroke-width="14"/>
-  <polyline points="4,180 180,24 356,180" fill="none" stroke="#000" stroke-width="18" stroke-linejoin="round" stroke-linecap="round"/>
-  <rect x="115" y="200" width="130" height="152" rx="14" fill="#fff" stroke="#000" stroke-width="8"/>
-  <rect x="129" y="214" width="102" height="110" fill="#fff" stroke="#888" stroke-width="3"/>
-  <rect x="141" y="226" width="46" height="24" rx="12" fill="#000"/>
-  <circle cx="175" cy="238" r="8" fill="#fff"/>
-  <rect x="195" y="236" width="24" height="5" fill="#000"/>
-  <rect x="142.5" y="262.5" width="45" height="23" rx="11.5" fill="#fff" stroke="#000" stroke-width="3"/>
-  <circle cx="154" cy="274" r="7" fill="#000"/>
-  <rect x="195" y="272" width="24" height="5" fill="#888"/>
-  <rect x="141" y="298" width="78" height="5" fill="#888"/>
-  <circle cx="180" cy="338" r="5" fill="#000"/>
-  <rect x="245" y="248" width="14" height="60" rx="7" fill="#000"/>
-  <line x1="247" y1="268" x2="257" y2="268" stroke="#fff" stroke-width="2"/>
-  <line x1="247" y1="288" x2="257" y2="288" stroke="#fff" stroke-width="2"/>
+<!-- variant D, 100x100 symbol scaled x3.6 (360x360), centred in the 360x400 Logo rect -->
+<g transform="translate(0,20) scale(3.6)">
+<path d="M74 90 H88 V46 L50 12 L12 46 V90 H26" fill="none" stroke="#000" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M50 28.27 L56.36 34.64 A9 9 0 1 1 43.64 34.64 Z" fill="#000"/>
+ <rect x="38" y="55" width="24" height="35" rx="12" fill="#000"/>
+ <circle cx="50" cy="67" r="7" fill="#fff"/>
+</g>
 </g>
 <text x="500" y="205" font-size="56" fill="#000" text-anchor="start" dominant-baseline="central">Inkling</text>
 <text x="500" y="266" font-size="24" fill="#444" text-anchor="start" dominant-baseline="central">for Home Assistant</text>

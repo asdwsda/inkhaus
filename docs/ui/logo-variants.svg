@@ -16,39 +16,52 @@
  <path d="M62 90 H88 V46 L50 12 L12 46 V90 H30" fill="none" stroke="#000" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
  <path d="M50 56 L61.4 71.8 A14 14 0 1 1 38.6 71.8 Z" fill="#000"/>
 </symbol>
+<symbol id="m-d" viewBox="0 0 100 100">
+ <path d="M74 90 H88 V46 L50 12 L12 46 V90 H26" fill="none" stroke="#000" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M50 28.27 L56.36 34.64 A9 9 0 1 1 43.64 34.64 Z" fill="#000"/>
+ <rect x="38" y="55" width="24" height="35" rx="12" fill="#000"/>
+ <circle cx="50" cy="67" r="7" fill="#fff"/>
+</symbol>
 </defs>
 <rect width="960" height="540" fill="#fff"/>
 <text x="24" y="28" font-size="24" font-weight="bold" fill="#000" dominant-baseline="central">Inkling: logo variants</text>
-<text x="936" y="28" font-size="18" fill="#444" text-anchor="end" dominant-baseline="central">pick one; splash keeps the old mark until then</text>
+<text x="936" y="28" font-size="18" fill="#444" text-anchor="end" dominant-baseline="central">chosen: D (C house + B toggle-i)</text>
 
-<g id="p-a" transform="translate(24,56)">
-<rect x="1" y="1" width="286" height="462" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
-<text x="16" y="28" font-size="18" fill="#444" dominant-baseline="central">A  Drop house</text>
-<use xlink:href="#m-a" href="#m-a" x="64" y="52" width="160" height="160"/>
-<text x="144" y="258" font-size="56" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkling</text>
-<text x="144" y="304" font-size="22" fill="#444" text-anchor="middle" dominant-baseline="central">for Home Assistant</text>
-<rect x="109" y="340" width="70" height="2" fill="#888"/>
-<use xlink:href="#m-a" href="#m-a" x="84" y="378" width="48" height="48"/>
-<text x="148" y="402" font-size="18" fill="#444" dominant-baseline="central">48 px</text>
+<g id="p-d" transform="translate(24,56)">
+<rect x="1" y="1" width="418" height="462" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
+<text x="16" y="28" font-size="18" font-weight="bold" fill="#000" dominant-baseline="central">D  Toggle-i house (chosen)</text>
+<use xlink:href="#m-d" href="#m-d" x="105" y="52" width="210" height="210"/>
+<text x="210" y="312" font-size="64" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkling</text>
+<text x="210" y="360" font-size="26" fill="#444" text-anchor="middle" dominant-baseline="central">for Home Assistant</text>
+<rect x="175" y="392" width="70" height="2" fill="#888"/>
+<use xlink:href="#m-d" href="#m-d" x="130" y="404" width="48" height="48"/>
+<text x="194" y="428" font-size="18" fill="#444" dominant-baseline="central">48 px</text>
 </g>
-<g id="p-b" transform="translate(336,56)">
-<rect x="1" y="1" width="286" height="462" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
-<text x="16" y="28" font-size="18" fill="#444" dominant-baseline="central">B  Toggle i</text>
-<use xlink:href="#m-b" href="#m-b" x="64" y="52" width="160" height="160"/>
-<text x="144" y="258" font-size="56" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkling</text>
-<text x="144" y="304" font-size="22" fill="#444" text-anchor="middle" dominant-baseline="central">for Home Assistant</text>
-<rect x="109" y="340" width="70" height="2" fill="#888"/>
-<use xlink:href="#m-b" href="#m-b" x="84" y="378" width="48" height="48"/>
-<text x="148" y="402" font-size="18" fill="#444" dominant-baseline="central">48 px</text>
+<g id="p-a" transform="translate(468,56)">
+<rect x="1" y="1" width="466" height="146" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
+<text x="16" y="24" font-size="18" fill="#444" dominant-baseline="central">A  Drop house</text>
+<use xlink:href="#m-a" href="#m-a" x="24" y="36" width="96" height="96"/>
+<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkling</text>
+<text x="144" y="118" font-size="18" fill="#444" dominant-baseline="central">for Home Assistant</text>
+<use xlink:href="#m-a" href="#m-a" x="380" y="76" width="48" height="48"/>
+<text x="436" y="100" font-size="14" fill="#444" dominant-baseline="central">48</text>
 </g>
-<g id="p-c" transform="translate(648,56)">
-<rect x="1" y="1" width="286" height="462" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
-<text x="16" y="28" font-size="18" fill="#444" dominant-baseline="central">C  One-stroke house</text>
-<use xlink:href="#m-c" href="#m-c" x="64" y="52" width="160" height="160"/>
-<text x="144" y="258" font-size="56" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkling</text>
-<text x="144" y="304" font-size="22" fill="#444" text-anchor="middle" dominant-baseline="central">for Home Assistant</text>
-<rect x="109" y="340" width="70" height="2" fill="#888"/>
-<use xlink:href="#m-c" href="#m-c" x="84" y="378" width="48" height="48"/>
-<text x="148" y="402" font-size="18" fill="#444" dominant-baseline="central">48 px</text>
+<g id="p-b" transform="translate(468,214)">
+<rect x="1" y="1" width="466" height="146" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
+<text x="16" y="24" font-size="18" fill="#444" dominant-baseline="central">B  Toggle i</text>
+<use xlink:href="#m-b" href="#m-b" x="24" y="36" width="96" height="96"/>
+<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkling</text>
+<text x="144" y="118" font-size="18" fill="#444" dominant-baseline="central">for Home Assistant</text>
+<use xlink:href="#m-b" href="#m-b" x="380" y="76" width="48" height="48"/>
+<text x="436" y="100" font-size="14" fill="#444" dominant-baseline="central">48</text>
+</g>
+<g id="p-c" transform="translate(468,372)">
+<rect x="1" y="1" width="466" height="146" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
+<text x="16" y="24" font-size="18" fill="#444" dominant-baseline="central">C  One-stroke house</text>
+<use xlink:href="#m-c" href="#m-c" x="24" y="36" width="96" height="96"/>
+<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkling</text>
+<text x="144" y="118" font-size="18" fill="#444" dominant-baseline="central">for Home Assistant</text>
+<use xlink:href="#m-c" href="#m-c" x="380" y="76" width="48" height="48"/>
+<text x="436" y="100" font-size="14" fill="#444" dominant-baseline="central">48</text>
 </g>
 </svg>

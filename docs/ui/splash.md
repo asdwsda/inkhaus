@@ -35,7 +35,7 @@ No partial updates, no progress bar, no animation.
 
 | Element | Rect | cy | Font / grey | Content |
 |---------|------|----|-------------|---------|
-| Logo | (90, 170, 360, 400), see 6 | | black, #888 | house with a remote inside (old mark, see 8) |
+| Logo | (90, 170, 360, 400), see 6 | | black only | variant D, toggle-i house (see 6, 8) |
 | Title | box (16, 650, 508, 80), centred x = 270 | 690 | F56 INK | `Inkling` |
 | Tagline | box (16, 734, 508, 36), centred | 752 | F24 DIM (#444) | `for Home Assistant` |
 | Divider | (235, 796, 70, 2) | | OFF (#888) | |
@@ -56,17 +56,16 @@ margins >= 16.
 | Version | x = 500, box (500, 328, 444, 36) | 346 | F24 INK, left | `v0.3.1` |
 | Footer | x = 500, box (500, 486, 444, 28) | 500 | F18 DIM, left | `M5Paper e-ink remote` |
 
-## 6. Logo construction (360 x 400 local box, origin at the Logo rect; all shapes, no gradients)
+## 6. Logo construction (variant D, "toggle-i house"; source `docs/ui/logo-inkling.svg`, 100 x 100 viewBox)
 
-A house with an e-paper remote in its window. Only #000, #888 (and white).
-- Ground line: (10, 385)-(350, 385), 6 px, #888, round caps.
-- Chimney: (254, 50, 32, 70) black.
-- House body: rect (44, 176, 272, 194), 14 px black stroke, white fill.
-- Roof: polyline (4,180) (180,24) (356,180), 18 px black stroke, round joins and caps.
-- Remote (the M5Paper): rounded rect (115, 200, 130, 152), r 14, 8 px black stroke, white fill; screen rect (129, 214, 102, 110) 3 px #888 stroke.
-- On the screen: toggle ON (pill (141, 226, 46, 24) black fill, white knob r 8 at (175, 238)) with a black stub (195, 236, 24, 5); toggle OFF (outline pill, 3 px black stroke, black knob r 7 at (154, 274)) with a #888 stub; a #888 line (141, 298, 78, 5). This echoes the app's rule: filled = on, outline = off.
-- Home dot: black circle r 5 at (180, 338).
-- Rocker: black rounded bar (245, 248, 14, 60) on the right edge, two white 2 px dividers at y = 268 and 288 (the 3-way button).
+Black on white, no greys, no gradients. On the splash the symbol is drawn at 360 x 360
+(scale 3.6) centred in the 360 x 400 Logo rect (offset (0, 20)); the same symbol is used
+for the 48 px icon. Coordinates below are in the 100 x 100 symbol; every stroke is 9.
+- House: open polyline, 9 px black stroke, round joins and caps: (74,90) (88,90) (88,46) (50,12) (12,46) (12,90) (26,90). The gap (26..74) in the floor is the doorway.
+- Dot of the i (the ink drop): black, round part r 9 at (50,41), tip at (50,28.3); path `M50 28.27 L56.36 34.64 A9 9 0 1 1 43.64 34.64 Z`.
+- Stem of the i (toggle, ON): black pill (38, 55, 24, 35), r 12, standing on the floor line (bottom y 90) in the doorway; white knob r 7 at (50,67). Knob ring = 5, stem width 24 = about 2.7 x the house stroke.
+- Clearances: drop tip to roof underside about 6; drop to stem 5; stem to floor ends about 8.
+- Filled = on, as in the app: the toggle shows the ON state.
 
 ## 7. States
 
@@ -75,8 +74,7 @@ portrait. Version shows `v?` if `FW_VERSION` is not defined (a dev build).
 
 ## 8. Logo status (task 044)
 
-The splash still draws the **old mark** (section 6, house with a remote) until the user
-picks one of the three variants on `docs/ui/logo-variants.svg` (A drop house, B toggle
-"i", C one-stroke house). When picked, section 6 is replaced by the chosen 100 x 100
-symbol scaled to the Logo rect (same position, mark centred in it) and the mark is also
-usable at 48 px (the sheet shows each at 48 px). Everything else on the splash stays.
+**Chosen: D** (variant C one-stroke house with variant B toggle-i in the doorway),
+sheet `docs/ui/logo-variants.svg`, standalone mark `docs/ui/logo-inkling.svg` (100 x 100,
+for the firmware icon generator; render at 360 px for the splash and at 48 px for icons).
+It reads at 48 px (dot, stem and knob stay distinct). Everything else on the splash is unchanged.
