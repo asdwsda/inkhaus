@@ -9,6 +9,7 @@
 
 #include <esp_sleep.h>
 #include <driver/gpio.h>
+#include <driver/rtc_io.h>
 
 #include "lgfx/v1/panel/Panel_IT8951.hpp"
 #include "lgfx/v1/touch/Touch_GT911.hpp"
@@ -314,10 +315,15 @@ void begin() {
   // Very first: release the pad holds left by sleep::enter() (GPIO2 main power) before any pin write.
   gpio_deep_sleep_hold_dis();
   gpio_hold_dis(static_cast<gpio_num_t>(kPinPwr));
+  rtc_gpio_hold_dis(GPIO_NUM_2);
+  rtc_gpio_deinit(GPIO_NUM_2);
+  pinMode(kPinPwr, OUTPUT);
+  digitalWrite(kPinPwr, HIGH);
     // 4 KB receive buffer: the putfile transfer (task 020) lets the host send 1 KB between ACKs.
     const size_t rxSize = Serial.setRxBufferSize(4096);  // must precede begin()
     Serial.begin(115200);
     Serial.printf("BOOT: serial_rx_buffer=%u\n", (unsigned)rxSize);
+    Serial.println("BOOT: hold_released=1");
     g_t0Us = micros();
     // Crash counter first: decides between the normal and the fallback start-up, and whether to
     // give up. A watchdog reset or a panic counts; anything else (power-on, button, software

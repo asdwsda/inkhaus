@@ -196,6 +196,14 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
   digitalWrite(kPinMainPower, HIGH);
   gpio_hold_en(kPinMainPower);
   gpio_deep_sleep_hold_en();
+  // On battery the pad hold alone did not survive deep sleep (task 035 device evidence): also make
+  // GPIO2 (RTC_GPIO12) an RTC output held high, and keep the RTC peripheral domain powered.
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
+  rtc_gpio_init(GPIO_NUM_2);
+  rtc_gpio_set_direction(GPIO_NUM_2, RTC_GPIO_MODE_OUTPUT_ONLY);
+  rtc_gpio_set_level(GPIO_NUM_2, 1);
+  rtc_gpio_hold_en(GPIO_NUM_2);
+  Serial.println("SLEEP: hold=rtc");
 
   if (sp.wake_touch) {
     releaseTouchInt();
