@@ -22,37 +22,28 @@ void drawStatusBar(M5Canvas &c, const uistate::AppState &app, const StatusInfo &
       drawTextCy(c, Font::F18, "updated 14:05", 48, cy, Align::Left, INK);
     }
   } else if (st.link != Link::None) {
-    const Icon icon = st.link == Link::Online       ? Icon::Wifi
-                      : st.link == Link::Connecting ? Icon::WifiDot
-                      : st.link == Link::AuthError  ? Icon::Alert
-                                                    : Icon::WifiOff;
+    const Icon icon = st.link == Link::Online           ? Icon::Wifi
+                      : st.link == Link::ConnectingWifi ? Icon::WifiJoin
+                      : st.link == Link::Fetching       ? Icon::CloudDown
+                      : st.link == Link::AuthError      ? Icon::Lock
+                      : st.link == Link::Demo           ? Icon::Demo
+                                                        : Icon::WifiOff;
     drawIcon(c, icon, 24, 16, land ? 20 : 15, INK);
-    const bool auth = st.link == Link::AuthError;
-    // Stale chip: filled INK with PAPER text; portrait also shows a clock icon (STYLE.md 5.3).
-    const uint32_t fg = st.stale ? PAPER : INK;
-    const std::string l1 = auth ? "token rejected" : st.label1;
-    const std::string l2 = auth ? "" : st.label2;
-    if (st.stale) {
-      if (land) {
-        c.fillRoundRect(48, 8, 112, 48, 6, INK);
-      } else {
-        const int w = std::min(240, 42 + textWidth(c, Font::F18, l1));
-        c.fillRoundRect(44, 11, w, 32, 6, INK);
-        drawIcon(c, Icon::Clock, 24, 48, 15, PAPER);
-      }
-    }
+    std::string l1 = st.label1;
+    if (!land && textWidth(c, Font::F18, l1) > 206 && l1.compare(0, 8, "updated ") == 0) l1 = l1.substr(8);
     if (land) {
-      if (l2.empty()) {
-        drawTextCy(c, Font::F18, l1, 56, 32, Align::Left, fg);
+      if (st.label2.empty()) {
+        drawTextCy(c, Font::F18, l1, 56, 32, Align::Left, INK);
       } else {
-        drawTextCy(c, Font::F18, l1, 56, 21, Align::Left, fg);
-        drawTextCy(c, Font::F18, l2, 56, 43, Align::Left, fg);
+        drawTextCy(c, Font::F18, l1, 56, 21, Align::Left, INK);
+        drawTextCy(c, Font::F18, st.label2, 56, 43, Align::Left, INK);
       }
     } else {
-      drawTextCy(c, Font::F18, l1, st.stale ? 78 : 48, cy, Align::Left, fg);
+      drawTextCy(c, Font::F18, l1, 48, cy, Align::Left, INK);
     }
+    if (st.outdated) drawIcon(c, Icon::Clock, 24, land ? 136 : 260, land ? 20 : 15, INK);
   } else if (app.demo()) {
-    drawTextCy(c, Font::F18, "Demo", 16, cy, Align::Left, INK);
+    drawTextCy(c, Font::F18, "demo mode", 16, cy, Align::Left, INK);
   }
   // Battery: explicit rectangles (STYLE.md 5.4).
   const std::string pctText = std::to_string(std::clamp(st.batteryPct, 0, 100)) + "%";
@@ -174,24 +165,39 @@ void drawErrorScreen(M5Canvas &c, const uistate::AppState &app) {
   }
 }
 
-// STYLE.md 5.5. Portrait: icons only in (292,3,112,48). Landscape: banner (172,4,648,56) with text.
+// Bold look for text: drawn twice, 1 px apart (the built-in fonts have no bold).
+void drawBoldCy(M5Canvas &c, Font f, const std::string &t, int x, int cy) {
+  drawTextCy(c, f, t, x, cy, Align::Left, INK);
+  drawTextCy(c, f, t, x + 1, cy, Align::Left, INK);
+}
+
+// STYLE.md 5.5: an outline pill (2 px INK border, PAPER inside) with moon, bold "Zz" and the wake glyph.
+// Portrait: icons only, pill (293,4,110,46). Landscape: pill (173,5,646,54) with the wake text.
 void drawSleepIndicator(M5Canvas &c, Orientation o, SleepIndicator v) {
   if (v == SleepIndicator::None) return;
   const bool btn = v == SleepIndicator::Button;
-  const ui::Rect r = ui::sleepIndicatorRect(o);
-  c.fillRoundRect(r.x, r.y, r.w, r.h, 8, INK);
   const Icon glyph = btn ? Icon::Sidebtn : Icon::Finger;
   if (o == Orientation::Landscape) {
+    c.fillRoundRect(173, 5, 646, 54, 27, INK);
+    c.fillRoundRect(175, 7, 642, 50, 25, PAPER);
     const std::string text = btn ? "Press the side button to wake" : "Tap the screen to wake";
-    const int group = 40 + 12 + 40 + 20 + textWidth(c, Font::F24, text);
-    const int x = r.x + std::max(0, (r.w - group) / 2);
-    const int cy = r.y + r.h / 2;
-    drawIcon(c, Icon::Moon, 40, x, cy - 20, PAPER);
-    drawIcon(c, glyph, 40, x + 52, cy - 20, PAPER);
-    drawTextCy(c, Font::F24, text, x + 112, cy, Align::Left, PAPER);
+    const int zz = textWidth(c, Font::F24, "Zz") + 1;
+    const int tw = textWidth(c, Font::F24, text);
+    const int group = 32 + 8 + zz + 16 + tw + 12 + 32;
+    int x = 173 + (646 - group) / 2;
+    drawIcon(c, Icon::Moon, 32, x, 16, INK);
+    x += 32 + 8;
+    drawBoldCy(c, Font::F24, "Zz", x, 32);
+    x += zz + 16;
+    drawTextCy(c, Font::F24, text, x, 32, Align::Left, INK);
+    x += tw + 12;
+    drawIcon(c, glyph, 32, x, 16, INK);
   } else {
-    drawIcon(c, Icon::Moon, 40, r.x + 8, r.y + 4, PAPER);
-    drawIcon(c, glyph, 40, r.x + 64, r.y + 4, PAPER);
+    c.fillRoundRect(293, 4, 110, 46, 23, INK);
+    c.fillRoundRect(295, 6, 106, 42, 21, PAPER);
+    drawIcon(c, Icon::Moon, 28, 304, 13, INK);
+    drawBoldCy(c, Font::F18, "Zz", 337, 27);
+    drawIcon(c, glyph, 24, 368, 15, INK);
   }
 }
 

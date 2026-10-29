@@ -17,6 +17,8 @@ enum class Icon : uint8_t {
   ChevR,
   Clock,
   Cloud,
+  CloudDown,
+  Demo,
   Dock,
   DoorOff,
   DoorOn,
@@ -36,6 +38,7 @@ enum class Icon : uint8_t {
   GasOn,
   Hourglass,
   Lightning,
+  Lock,
   LockClosed,
   LockOpen,
   Minus,
@@ -69,6 +72,7 @@ enum class Icon : uint8_t {
   Warn,
   Wifi,
   WifiDot,
+  WifiJoin,
   WifiOff,
   WindowOff,
   WindowOn,
@@ -76,7 +80,7 @@ enum class Icon : uint8_t {
 };
 
 // 8-bit coverage bitmap (0 = nothing, 255 = ink), size x size, row-major.
-// Sizes: 24 (S), 40 (M), 48 (L). nullptr for other sizes.
+// Sizes: 24 (S), 40 (M), 48 (L); moon also 28 and 32, sidebtn and finger also 32. nullptr for other sizes.
 const uint8_t* iconBitmap(Icon icon, int size);
 
 }  // namespace render

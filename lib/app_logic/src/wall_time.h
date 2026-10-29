@@ -32,4 +32,13 @@ struct Label {
 Label refreshLabel(int64_t lastOkEpoch, int64_t nowEpoch, int32_t utcOffsetS, int refreshIntervalMin,
                    bool lastFetchFailed, bool landscape);
 
+
+// Link phase of the status bar (STYLE.md 5.3). The bar is never blank: every phase has a label.
+enum class Phase { ConnectingWifi, Fetching, Online, Offline, AuthError, Demo };
+// Label + outdated-clock flag for a phase. lastOk: last good fetch (or the epoch restored from the cache,
+// task 037), 0 = none. `outdated` (the clock icon) = the refreshLabel stale rule, and always with Offline /
+// AuthError when values from an earlier fetch exist.
+Label statusLabel(Phase phase, int64_t lastOkEpoch, int64_t nowEpoch, int32_t utcOffsetS, int refreshIntervalMin,
+                  bool lastFetchFailed, bool landscape);
+
 }  // namespace app_logic

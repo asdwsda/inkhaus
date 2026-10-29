@@ -110,23 +110,46 @@ static int32_t batteryMv() {
 
 static bool landscape() { return g_app.orientation() == settings::Orientation::Landscape; }
 
+// Status bar phase (STYLE.md 5.3): never blank. Values restored from the cache (g_restoredEpoch, task 037)
+// count as the last good update until a fetch result replaces them.
 static void updateStatus() {
   g_status.batteryPct = batteryPercent();
-  if (!g_real || !g_drv) return;
+  using P = app_logic::Phase;
+  P phase = P::Demo;
+  int64_t lastOk = 0;
+  bool failed = false;
+  if (g_real) {
+    phase = P::ConnectingWifi;  // before the session driver exists (first frame)
+    if (g_drv) {
+      lastOk = g_drv->lastOkEpoch() ? g_drv->lastOkEpoch() : g_restoredEpoch;
+      failed = g_drv->lastFetchFailed();
+      switch (g_drv->status()) {
+        case session::Status::Connecting: phase = g_drv->wifiUp() ? P::Fetching : P::ConnectingWifi; break;
+        case session::Status::Online: phase = g_drv->fetching() ? P::Fetching : P::Online; break;
+        case session::Status::Offline: phase = P::Offline; break;
+        case session::Status::AuthError: phase = P::AuthError; break;
+      }
+    } else {
+      lastOk = g_restoredEpoch;
+    }
+  } else if (!g_demoMode) {
+    return;
+  }
   using L = render::Link;
-  switch (g_drv->status()) {
-    case session::Status::Connecting: g_status.link = L::Connecting; break;
-    case session::Status::Online: g_status.link = g_drv->fetching() ? L::Connecting : L::Online; break;
-    case session::Status::Offline: g_status.link = L::Offline; break;
-    case session::Status::AuthError: g_status.link = L::AuthError; break;
+  switch (phase) {
+    case P::ConnectingWifi: g_status.link = L::ConnectingWifi; break;
+    case P::Fetching: g_status.link = L::Fetching; break;
+    case P::Online: g_status.link = L::Online; break;
+    case P::Offline: g_status.link = L::Offline; break;
+    case P::AuthError: g_status.link = L::AuthError; break;
+    case P::Demo: g_status.link = L::Demo; break;
   }
   const int64_t nowEpoch = session_glue::wallClock();
-  const app_logic::Label l = app_logic::refreshLabel(g_drv->lastOkEpoch(), nowEpoch, utcOffsetAt(nowEpoch),
-                                                     g_settings.refresh_interval_min, g_drv->lastFetchFailed(),
-                                                     landscape());
+  const app_logic::Label l = app_logic::statusLabel(phase, lastOk, nowEpoch, utcOffsetAt(nowEpoch),
+                                                    g_settings.refresh_interval_min, failed, landscape());
   g_status.label1 = l.line1;
   g_status.label2 = l.line2;
-  g_status.stale = l.stale;
+  g_status.outdated = l.stale;
 }
 
 static render::SleepIndicator toRender(app_logic::Indicator i) {
@@ -598,6 +621,15 @@ void loop() {
       g_sessionOver = true;
       changed = true;
     }
+  }
+
+  if (!settings_flow::active() && g_app.screen() == uistate::Screen::Tabs) {
+    // A phase change repaints only the label region: the frame diff leaves everything else alone.
+    const render::StatusInfo before = g_status;
+    updateStatus();
+    if (before.link != g_status.link || before.label1 != g_status.label1 || before.label2 != g_status.label2 ||
+        before.outdated != g_status.outdated)
+      changed = true;
   }
 
   shot::Hooks hooks;

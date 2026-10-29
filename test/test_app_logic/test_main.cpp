@@ -535,6 +535,50 @@ void test_civil_roundtrip() {
   TEST_ASSERT_EQUAL(1, off.hour);
 }
 
+// Status phases (task 038): every phase has a label; the clock marks outdated values.
+void test_status_labels() {
+  const int64_t now = 1767225600 + 14 * 3600 + 5 * 60;
+  const int64_t ok = now - 60;
+  Label l = statusLabel(Phase::ConnectingWifi, 0, now, 0, 60, false, false);
+  TEST_ASSERT_EQUAL_STRING("connecting Wi-Fi", l.line1.c_str());
+  TEST_ASSERT_FALSE(l.stale);
+  l = statusLabel(Phase::ConnectingWifi, ok, now, 0, 60, false, true);
+  TEST_ASSERT_EQUAL_STRING("Wi-Fi", l.line1.c_str());
+  TEST_ASSERT_EQUAL_STRING("joining", l.line2.c_str());
+  l = statusLabel(Phase::Fetching, now - 3 * 3600, now, 0, 60, false, false);  // restored, older than 2 x 60 min
+  TEST_ASSERT_EQUAL_STRING("fetching states", l.line1.c_str());
+  TEST_ASSERT_TRUE(l.stale);
+  l = statusLabel(Phase::Fetching, ok, now, 0, 60, false, true);
+  TEST_ASSERT_EQUAL_STRING("fetching", l.line1.c_str());
+  TEST_ASSERT_EQUAL_STRING("states", l.line2.c_str());
+  TEST_ASSERT_FALSE(l.stale);
+  l = statusLabel(Phase::Online, ok, now, 0, 60, false, false);
+  TEST_ASSERT_EQUAL_STRING("updated 14:04", l.line1.c_str());
+  l = statusLabel(Phase::Offline, ok, now, 0, 60, true, false);
+  TEST_ASSERT_EQUAL_STRING("offline, last 14:04", l.line1.c_str());
+  TEST_ASSERT_TRUE(l.stale);
+  l = statusLabel(Phase::Offline, ok, now, 0, 60, true, true);
+  TEST_ASSERT_EQUAL_STRING("offline", l.line1.c_str());
+  TEST_ASSERT_EQUAL_STRING("14:04", l.line2.c_str());
+  l = statusLabel(Phase::Offline, now - 86400, now, 0, 60, true, false);
+  TEST_ASSERT_EQUAL_STRING("offline, last 31.12. 14:05", l.line1.c_str());
+  l = statusLabel(Phase::Offline, 0, now, 0, 60, true, false);
+  TEST_ASSERT_EQUAL_STRING("offline", l.line1.c_str());
+  TEST_ASSERT_FALSE(l.stale);
+  l = statusLabel(Phase::AuthError, ok, now, 0, 60, true, true);
+  TEST_ASSERT_EQUAL_STRING("token", l.line1.c_str());
+  TEST_ASSERT_EQUAL_STRING("rejected", l.line2.c_str());
+  TEST_ASSERT_TRUE(l.stale);
+  l = statusLabel(Phase::AuthError, 0, now, 0, 60, true, false);
+  TEST_ASSERT_EQUAL_STRING("token rejected", l.line1.c_str());
+  TEST_ASSERT_FALSE(l.stale);
+  l = statusLabel(Phase::Demo, 0, 0, 0, 60, false, false);
+  TEST_ASSERT_EQUAL_STRING("demo mode", l.line1.c_str());
+  l = statusLabel(Phase::Demo, 0, 0, 0, 60, false, true);
+  TEST_ASSERT_EQUAL_STRING("demo", l.line1.c_str());
+  TEST_ASSERT_EQUAL_STRING("mode", l.line2.c_str());
+}
+
 void test_label() {
   const int64_t now = 1767225600 + 14 * 3600 + 5 * 60;
   Label l = refreshLabel(now - 60, now, 0, 60, false, false);
@@ -669,6 +713,7 @@ int main() {
   RUN_TEST(test_ntp_policy);
   RUN_TEST(test_civil_roundtrip);
   RUN_TEST(test_label);
+  RUN_TEST(test_status_labels);
   RUN_TEST(test_mailbox);
   RUN_TEST(test_remembered_external_tried_first);
   RUN_TEST(test_empty_fetch_is_ok);

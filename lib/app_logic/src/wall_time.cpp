@@ -82,4 +82,49 @@ Label refreshLabel(int64_t lastOk, int64_t now, int32_t off, int refreshMin, boo
   return l;
 }
 
+Label statusLabel(Phase phase, int64_t lastOk, int64_t now, int32_t off, int refreshMin, bool failed,
+                  bool landscape) {
+  Label l;
+  auto two = [&](const char *a, const char *b, const char *whole) {
+    if (landscape) { l.line1 = a; l.line2 = b; }
+    else l.line1 = whole;
+  };
+  const bool have = plausibleEpoch(lastOk);
+  switch (phase) {
+    case Phase::ConnectingWifi:
+      two("Wi-Fi", "joining", "connecting Wi-Fi");
+      l.stale = have && refreshLabel(lastOk, now, off, refreshMin, failed, landscape).stale;
+      return l;
+    case Phase::Fetching:
+      two("fetching", "states", "fetching states");
+      l.stale = have && refreshLabel(lastOk, now, off, refreshMin, failed, landscape).stale;
+      return l;
+    case Phase::Demo: two("demo", "mode", "demo mode"); return l;
+    case Phase::Online: return refreshLabel(lastOk, now, off, refreshMin, failed, landscape);
+    case Phase::AuthError: two("token", "rejected", "token rejected"); l.stale = have; return l;
+    case Phase::Offline: {
+      l.stale = have;
+      if (!have) {
+        if (landscape) { l.line1 = "offline"; l.line2 = "never"; }
+        else l.line1 = "offline";
+        return l;
+      }
+      const Civil c = epochToCivil(lastOk, off);
+      char hm[8];
+      snprintf(hm, sizeof hm, "%02d:%02d", c.hour, c.minute);
+      bool sameDay = true;
+      if (plausibleEpoch(now)) {
+        const Civil n = epochToCivil(now, off);
+        sameDay = n.year == c.year && n.month == c.month && n.day == c.day;
+      }
+      char dm[12] = "";
+      if (!sameDay) snprintf(dm, sizeof dm, "%02d.%02d.", c.day, c.month);
+      if (landscape) { l.line1 = "offline"; l.line2 = sameDay ? hm : dm; }
+      else l.line1 = std::string("offline, last ") + (sameDay ? "" : std::string(dm) + " ") + hm;
+      return l;
+    }
+  }
+  return l;
+}
+
 }  // namespace app_logic
