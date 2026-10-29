@@ -1,6 +1,6 @@
 # 042: v1.0 release
 
-Status: todo
+Status: in-progress
 Depends on: 041 and the user's check of the current firmware
 UI spec: none
 Needs device: yes (final smoke test)
