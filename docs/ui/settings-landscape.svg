@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
-  <!-- Settings main page, landscape 960x540. Spec: docs/ui/settings.md section 4 (revision 6). Shown: demo On (summary on the Tools row), wake Button (note slot empty), no focus ring. Widgets: w-1..w-4 rows, w-5 Tools, w-6 Refresh now, w-7 Back. -->
+  <!-- Settings overview, landscape. Spec: docs/ui/settings.md section 3/4. Shown: unsaved, focus on Network, 3 config errors. Widgets: w-1..w-4 category rows, w-5 Refresh now, w-6 Back. -->
   <defs>
     <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="20,3 20,10 13,10" fill="currentColor"/></symbol>
@@ -13,50 +13,33 @@
 <text x="884" y="25" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">unsaved</text>
 <rect x="0" y="50" width="960" height="2" fill="#000"/>
 <g id="w-1">
-<rect id="w-1-frame" x="16" y="64" width="456" height="68" rx="8" fill="#fff"/>
-<rect x="17" y="65" width="454" height="66" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<text id="w-1-label" x="32" y="88" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Orientation</text>
-<circle id="w-1-pip0" cx="38" cy="111" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<circle id="w-1-pip1" cx="58" cy="111" r="6" fill="#000"/>
-<text id="w-1-value" x="456" y="98" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Landscape</text>
+<rect id="w-1-frame" x="16" y="64" width="456" height="96" rx="8" fill="#fff"/>
+<rect x="17" y="65" width="454" height="94" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-1-label" x="32" y="98" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Display</text>
+<text id="w-1-sub" x="32" y="130" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Portrait</text>
+<use id="w-1-icon" xlink:href="#i-chev-r" href="#i-chev-r" x="420" y="92" width="40" height="40" color="#000"/>
 </g>
 <g id="w-2">
-<rect id="w-2-frame" x="16" y="144" width="456" height="68" rx="8" fill="#fff"/>
-<rect x="17" y="145" width="454" height="66" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<text id="w-2-label" x="32" y="168" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Wake mode</text>
-<circle id="w-2-pip0" cx="38" cy="191" r="6" fill="#000"/>
-<circle id="w-2-pip1" cx="58" cy="191" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<circle id="w-2-pip2" cx="78" cy="191" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<text id="w-2-value" x="456" y="178" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Button</text>
+<rect id="w-2-frame" x="16" y="172" width="456" height="96" rx="8" fill="#fff"/>
+<rect x="17" y="173" width="454" height="94" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-2-label" x="32" y="206" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Sleep &amp; wake</text>
+<text id="w-2-sub" x="32" y="238" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Touch, 60 min, 20 s</text>
+<use id="w-2-icon" xlink:href="#i-chev-r" href="#i-chev-r" x="420" y="200" width="40" height="40" color="#000"/>
 </g>
+<rect x="11.5" y="275.5" width="465" height="105" rx="12.5" fill="none" stroke="#000" stroke-width="3"/>
 <g id="w-3">
-<rect id="w-3-frame" x="16" y="224" width="456" height="68" rx="8" fill="#fff"/>
-<rect x="17" y="225" width="454" height="66" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<text id="w-3-label" x="32" y="248" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Refresh every</text>
-<circle id="w-3-pip0" cx="38" cy="271" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<circle id="w-3-pip1" cx="58" cy="271" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<circle id="w-3-pip2" cx="78" cy="271" r="6" fill="#000"/>
-<circle id="w-3-pip3" cx="98" cy="271" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<circle id="w-3-pip4" cx="118" cy="271" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<circle id="w-3-pip5" cx="138" cy="271" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<text id="w-3-value" x="456" y="258" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">30 min</text>
+<rect id="w-3-frame" x="16" y="280" width="456" height="96" rx="8" fill="#fff"/>
+<rect x="17" y="281" width="454" height="94" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-3-label" x="32" y="314" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Network</text>
+<text id="w-3-sub" x="32" y="346" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Wi-Fi Auto, HA Auto</text>
+<use id="w-3-icon" xlink:href="#i-chev-r" href="#i-chev-r" x="420" y="308" width="40" height="40" color="#000"/>
 </g>
 <g id="w-4">
-<rect id="w-4-frame" x="16" y="304" width="456" height="68" rx="8" fill="#fff"/>
-<rect x="17" y="305" width="454" height="66" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<text id="w-4-label" x="32" y="328" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Idle timeout</text>
-<circle id="w-4-pip0" cx="38" cy="351" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<circle id="w-4-pip1" cx="58" cy="351" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<circle id="w-4-pip2" cx="78" cy="351" r="6" fill="#000"/>
-<circle id="w-4-pip3" cx="98" cy="351" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<text id="w-4-value" x="456" y="338" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">30 s</text>
-</g>
-<g id="w-5">
-<rect id="w-5-frame" x="16" y="384" width="456" height="64" rx="8" fill="#fff"/>
-<rect x="17" y="385" width="454" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<text id="w-5-label" x="32" y="416" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Tools</text>
-<text id="w-5-value" x="408" y="416" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">Demo On, Log Off</text>
-<use id="w-5-icon" xlink:href="#i-chev-r" href="#i-chev-r" x="420" y="396" width="40" height="40" color="#000"/>
+<rect id="w-4-frame" x="16" y="388" width="456" height="96" rx="8" fill="#fff"/>
+<rect x="17" y="389" width="454" height="94" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-4-label" x="32" y="422" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Tools</text>
+<text id="w-4-sub" x="32" y="454" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Demo Off, Log Off</text>
+<use id="w-4-icon" xlink:href="#i-chev-r" href="#i-chev-r" x="420" y="416" width="40" height="40" color="#000"/>
 </g>
 <rect x="488" y="64" width="456" height="1" fill="#888"/>
 <text x="488" y="92" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Firmware</text>
@@ -66,26 +49,28 @@
 <text x="646" y="148" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">78%, 3.92 V</text>
 <rect x="488" y="176" width="456" height="1" fill="#888"/>
 <text x="488" y="204" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Home Assistant</text>
-<text x="646" y="204" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Demo mode</text>
+<text x="646" y="204" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">internal, ok 14:05</text>
 <rect x="488" y="232" width="456" height="1" fill="#888"/>
 <text x="488" y="260" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Wi-Fi</text>
-<text x="646" y="260" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Demo mode</text>
+<text x="646" y="260" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">HomeNet-5G</text>
 <rect x="488" y="288" width="456" height="1" fill="#888"/>
 <text x="488" y="324" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Config</text>
-<text x="646" y="324" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">built-in demo</text>
+<use xlink:href="#i-alert" href="#i-alert" x="630" y="298" width="24" height="24" color="#000"/>
+<text x="662" y="310" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">tabs[0].widgets[2].entity</text>
+<text x="662" y="338" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">(line 34)</text>
 <rect x="488" y="360" width="456" height="1" fill="#888"/>
 <text x="488" y="388" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Config errors</text>
-<text x="646" y="388" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">0</text>
-<g id="w-6">
-<rect id="w-6-frame" x="488" y="464" width="222" height="64" rx="8" fill="#fff"/>
+<text x="646" y="388" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">3</text>
+<g id="w-5">
+<rect id="w-5-frame" x="488" y="464" width="222" height="64" rx="8" fill="#fff"/>
 <rect x="489" y="465" width="220" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<use id="w-6-icon" xlink:href="#i-refresh" href="#i-refresh" x="500" y="476" width="40" height="40" color="#000"/>
-<text id="w-6-label" x="548" y="496" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Refresh now</text>
+<use id="w-5-icon" xlink:href="#i-refresh" href="#i-refresh" x="500" y="476" width="40" height="40" color="#000"/>
+<text id="w-5-label" x="548" y="496" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Refresh now</text>
 </g>
-<g id="w-7">
-<rect id="w-7-frame" x="722" y="464" width="222" height="64" rx="8" fill="#fff"/>
+<g id="w-6">
+<rect id="w-6-frame" x="722" y="464" width="222" height="64" rx="8" fill="#fff"/>
 <rect x="723" y="465" width="220" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<use id="w-7-icon" xlink:href="#i-chev-l" href="#i-chev-l" x="734" y="476" width="40" height="40" color="#000"/>
-<text id="w-7-label" x="782" y="496" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Back</text>
+<use id="w-6-icon" xlink:href="#i-chev-l" href="#i-chev-l" x="734" y="476" width="40" height="40" color="#000"/>
+<text id="w-6-label" x="782" y="496" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Back</text>
 </g>
 </svg>

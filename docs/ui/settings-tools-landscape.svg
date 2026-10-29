@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
-  <!-- Tools page, landscape 960x540. Spec: docs/ui/settings.md section 8. Shown: demo On, debug log Off (note slot (488,164,456,64) empty), focus on Back. Widgets: w-1 Demo mode, w-2 Debug log, w-3 Back. -->
+  <!-- Tools page, landscape. Spec: settings.md section 8.4. Widgets: rows, note (portrait, debug log On), Back. -->
   <defs>
     <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="20,3 20,10 13,10" fill="currentColor"/></symbol>

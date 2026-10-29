@@ -4,10 +4,7 @@ System screen (not config-driven). Opened by a **long push of the rocker at TAB
 level** (layout.md 7.2) or by a **tap on the battery cluster** in the status bar
 (hit kind `settings`, layout.md section 6). Shown in the current orientation; no
 tab bar, no status bar. Values from `docs/ui/STYLE.md` (revision 3: touch targets
-64, gaps 12, every text and icon placed by its centre line `cy`). Mockups:
-`settings-portrait.svg`, `settings-landscape.svg`, `tools-portrait.svg`,
-`tools-landscape.svg` (revision 6, task 041: the main page has four setting
-rows and a **Tools** row that opens the Tools page, section 8). Rect = (x, y, w, h); screen
+64, gaps 12, every text and icon placed by its centre line `cy`). Mockups (revision 7, task 047): overview `settings-portrait.svg` / `settings-landscape.svg`; category pages `settings-display-*.svg`, `settings-sleep-*.svg`, `settings-network-*.svg`, `settings-tools-*.svg` (each `-portrait` / `-landscape`). The old `tools-*.svg` are removed. Rect = (x, y, w, h); screen
 coordinates unless it says "row-relative".
 
 ## 1. Purpose and data sources
@@ -18,6 +15,7 @@ read-only diagnostics.
 | Item | Source |
 |------|--------|
 | Orientation, wake mode, refresh interval, idle timeout (main page); demo mode, debug log (Tools page) | `settings::Settings` (lib/settings). Allowed values and cycle order = `kOrientationValues`, `kWakeModeValues`, `kRefreshIntervalMinValues` = {0, 15, 30, 60, 120, 240}, `kIdleTimeoutSValues` = {10, 20, 30, 60}, `demo_mode` (bool, `Off` -> `On`; task 034), `debug_log` (bool, `Off` -> `On`, NVS `dbglog`, default Off; task 041) |
+| Wi-Fi, HA connection (Network page; task 047) | `settings::Settings` fields `wifi_profile` (`Auto` or a profile name from secrets.yaml) and `ha_link` (`auto` / `internal` / `external`); hints read the connected profile name and the link in use from lib/net / ha_client |
 | Refresh now | the same state fetch as a tap on the "updated" label (ha_client) |
 | Firmware version | build-time constant (firmware-dev: needs a `FW_VERSION` define; architect to confirm where it comes from) |
 | Battery % and voltage | M5Unified power API, read when the screen opens and after every successful "Refresh now" |
@@ -32,7 +30,7 @@ No Home Assistant entity or service is used except the shared state fetch.
 
 1. **Edit buffer.** Opening Settings copies the saved settings into an edit
    buffer. Taps/pushes change only the buffer and the screen.
-1a. **One edit buffer for both pages.** The Tools page edits the same buffer; the `unsaved` chip shows on both pages; going to Tools and back (Back or long push on Tools) saves nothing and applies nothing.
+1a. **One edit buffer for all pages** (see section 3).
 2. **Saved on leaving, not on every tap.** Each NVS write costs flash wear and
    power. Leaving = Back button on the main page, rocker long push on the main page, or the idle auto-leave
    (rule 5). On leave: if buffer != saved, `settings::save()` runs once (it
@@ -70,60 +68,52 @@ No Home Assistant entity or service is used except the shared state fetch.
    `settings.h` array and wraps from the last to the first. There is no
    "previous" (longest cycle is 6 values; Demo mode and Debug log cycle Off -> On -> Off).
 
-## 3. Layout, portrait (540 x 960)
 
-Margins 16, gaps between targets 12. White background. **All text that can change (setting values, hints, info values, chip, button labels) is INK** (STYLE.md section 1, revision 5); the only grey text is the static info labels (F18 DIM) and the OFF hairlines.
+## 3. Structure (revision 7)
 
-| Element | Rect | cy | Font / grey | Content |
-|---------|------|----|-------------|---------|
-| Title | x = 16, box (16, 0, 200, 54) | 27 | F40 INK, left | `Settings` |
-| Unsaved chip | (404, 11, 120, 32) | 27 | F18 PAPER on INK fill, radius 8, centred | `unsaved` (only when dirty) |
-| Header rule | (0, 54, 540, 2) | | INK fill | |
-| Row 1 Orientation | (16, 68, 508, 72) | 104 | border 2 INK, radius 8, PAPER | button |
-| Row 2 Wake mode | (16, 152, 508, 72) | 188 | same | button |
-| Row 3 Refresh every | (16, 236, 508, 72) | 272 | same | button |
-| Row 4 Idle timeout | (16, 320, 508, 72) | 356 | same | button |
-| Tools row | (16, 404, 508, 64) | 436 | border 2 INK, radius 8, PAPER | navigation button, see 3.5 |
-| Note slot | (16, 480, 508, 64) | 512 | see 3.2 | touch-wake warning |
-| Info hairline + rows | (16, 560 ... 864) | | see 3.3 | read-only |
-| Refresh now button | (16, 880, 248, 64) | 912 | border 2, radius 8 | action |
-| Back button | (276, 880, 248, 64) | 912 | border 2, radius 8 | action |
+Settings is a two-level system: the **overview** (main page) lists four **category rows**; each opens a **category page** with the settings of that group. Orientation moved to Display; Wake mode, Refresh every and Idle timeout to Sleep & wake; Demo mode and Debug log to Tools; Network is new.
 
-Row height is 72 (the demo-mode row moved to the Tools page, so four rows: 4 x 72 + 3 x 12 = 324). The freed height is spent as: rows 72 (a 64 px target plus room for the two-line label/hint block), a 12 px gap, the 64 px Tools row, a 12 px gap, then the note slot. Vertical sums: header 56; +12 = 68; rows 324 -> 392; +12 = 404; Tools 64 -> 468; +12 = 480; note slot 64 -> 544; +16 = 560; info 5 x 48 + 64 = 304 -> 864; +16 = 880; footer 64 -> 944; +16 = 960. The info rows keep their size; only their y moved (+12). Horizontal: 16 + 248 + 12 + 248 + 16 = 540.
+| Category | Settings (edit buffer fields) |
+|----------|-------------------------------|
+| Display | Orientation |
+| Sleep & wake | Wake mode, Refresh every, Idle timeout |
+| Network | Wi-Fi (`Auto` / profile names from secrets.yaml), HA connection (`Auto` / `Internal` / `External`) |
+| Tools | Demo mode, Debug log |
 
-### 3.1 Setting row (row-relative, width 508, height 72)
+Rule changes: rule 1a now reads "one edit buffer for all pages"; the `unsaved` chip (header, same place) shows on the overview and on every category page; moving between levels (category row, Back, LONG_PUSH on a category page) saves and applies nothing. Rules 2 to 7 are unchanged, with these additions: **Wi-Fi / HA connection** changes apply on leaving Settings (the network session restarts once, after the tab screen is drawn; Demo mode On starts none). The idle auto-leave (60 s) fires from any page and leaves Settings entirely, saving the buffer. **Value cycling** for Wi-Fi: `Auto` -> profile 1 -> ... -> profile N -> `Auto` (list order of secrets.yaml); HA connection `Auto` -> `Internal` -> `External` -> `Auto`.
 
-Centre line of the row: cy = 36. Label and hint form a two-line block centred on 36
-(label F24 cy = 26, hint cy = 49, inside the 12 px widget padding the checker uses);
-the value is centred on cy = 36. (Landscape rows are 68 high: cy = 34, label 24, hint 47.)
+Shared geometry (unchanged from revision 6): margins 16, gaps 12, header 54 (portrait) / 50 (landscape) with title F40 INK left, `unsaved` chip (404, 11, 120, 32) / (824, 9, 120, 32) F18 PAPER on INK radius 8, header rule 2 px INK, white background, all changing text INK, static captions F18 DIM (grey 4 / #444), OFF hairlines. Back button (276, 880, 248, 64) portrait / (722, 464, 222, 64) landscape, footer button internals as 3.4.
 
-| Element | Rect | cy | Font / grey | Content |
-|---------|------|----|-------------|---------|
-| Label | x = 16, box (16, 12, 220, 28) | 26 | F24 INK, left | `Orientation`, `Wake mode`, `Refresh every`, `Idle timeout` |
-| Hint / pips | (16, 40, 220, 18) | 49 | see below | |
-| Value | right edge x = 492, box (240, 0, 252, 72) | 36 | F40 INK, right | value text |
+### 3.0 Overview, portrait (540 x 960)
 
-Pips (hint line): one circle of diameter 12 per allowed value, centres at
-row-relative x = 22 + 20*k, cy = 49 (portrait) / 47 (landscape); the current value's pip is INK-filled,
-the others are 2 px outlines (shape, not grey). 2 pips for orientation, 3 for wake mode, 6 for refresh, 4 for idle. The warn icon next to the
-wake value is removed (task 039).
+| Element | Rect | cy | Font / grey |
+|---------|------|----|-------------|
+| Title `Settings`, chip, rule | as above | 27 | |
+| Row 1 Display | (16, 68, 508, 96) | | border 2 INK, radius 8, PAPER |
+| Row 2 Sleep & wake | (16, 176, 508, 96) | | same |
+| Row 3 Network | (16, 284, 508, 96) | | same |
+| Row 4 Tools | (16, 392, 508, 96) | | same |
+| Info block | (16, 504 ... 808) | | section 3.3, rows 48/48/48/48/64/48 from y = 504 |
+| Refresh now | (16, 880, 248, 64) | 912 | 3.4 |
+| Back | (276, 880, 248, 64) | 912 | 3.4 |
 
-Value texts: Orientation `Portrait` / `Landscape`; Wake `Button` / `Touch` / `Touch & Button`;
-Refresh `Off`, `15 min`, `30 min`, `60 min`, `120 min`, `240 min`; Idle `10 s`,
-`20 s`, `30 s`, `60 s`. Widest: `Landscape` at F40 is about 215 px, fits the
-252 px value rect and leaves room next to the longest label (`Refresh every`, about
-163 px at F24: 16 + 163 = 179 < 508 - 16 - 215 = 277).
+Category row (row-relative, 508 x 96): label F24 INK left at x = 16, cy = 34; **one-line summary** F18 INK left at x = 16, cy = 66; chevron_right icon (M, 40 x 40) at (W - 52, 28), cy = 48. Summaries (from the edit buffer, so they follow unsaved changes; fit rule F18 then `...`): Display `Portrait` / `Landscape`; Sleep & wake `<wake>, <refresh>, <idle>` e.g. `Touch, 60 min, 20 s` (wake `Button` / `Touch` / `Touch & Button` shortened to `Both` only if it does not fit); Network `Wi-Fi <value>, HA <value>` e.g. `Wi-Fi Auto, HA Auto` or `Wi-Fi Hotspot, HA Internal`; Tools `Demo Off, Log Off`. Vertical sums: header 56 +12 = 68; 4 x 96 + 3 x 12 = 420 -> 488; +16 = 504; info 304 -> 808; footer 880 (72 px of free space between).
 
-### 3.2 Note slot (508 x 64)
+Info rows (3.3 table) change only in wording: HA row `internal, ok 14:05` / `external, ok 14:05` (the link in use; was local / remote); Wi-Fi row shows the SSID of the connected profile.
 
-Empty (nothing drawn, no border) unless wake mode is Touch or Touch & Button. Then: 2 px INK border,
-radius 8; alert icon (M) at slot-relative (12, 12, 40, 40), cy = 32; text lines
-(F18 INK, left) from x = 64 with cy = 21 and cy = 43 (block centred on 32):
-`Touch wake shortens battery life.` / `Button wake is recommended.`
+### 3.0.1 Overview, landscape (960 x 540)
 
-### 3.5 Tools row (button-relative, 508 x 64; landscape 456 x 64)
+Left column rows (16, 64 + 108 k, 456, 96), k = 0..3 (Display 64, Sleep & wake 172, Network 280, Tools 388; last ends 484). Row internals as portrait with W = 456. Right column unchanged: info rows from (488, 64) with heights 56/56/56/56/72/56, value x = 646 (the two-line config value falls to F18 here), Refresh now (488, 464, 222, 64), Back (722, 464, 222, 64).
 
-Not a setting: it opens the Tools page. Look: same border as the rows, but no pips and a chevron, so it reads as navigation. Label `Tools` F24 INK at x = 16, cy = 32. Summary F18 INK, right-aligned at x = W - 64 (444 / 392), cy = 32: `Demo Off, Log Off` (current buffer values, so a user sees what is hidden behind it). Chevron_right icon (M, 40 x 40) at (W - 52, 12), cy = 32.
+## 3.1 Setting row (category pages)
+
+Two row types. **Pip rows** (2 to 6 fixed values: Orientation, Wake mode, Refresh every, Idle timeout): exactly the revision 6 row (portrait 508 x 72, landscape 456 x 68; label F24 at x = 16 cy 26/24, pips x = 22 + 20 k cy 49/47, value F40 right edge x = W - 16). **Hint rows** (Wi-Fi, HA connection, Demo mode, Debug log): 88 high; label F24 cy = 32, hint F18 INK cy = 62, value F40 INK right edge x = W - 16, cy = 44; no pips (the value set is open or the row has a hint). Value fit rule for profile names: F40, then F24, then `...` (box 240..492 wide).
+
+Value texts: as revision 6; Wi-Fi `Auto` or the profile name; HA connection `Auto` / `Internal` / `External`; Demo mode, Debug log `Off` / `On`.
+
+### 3.2 Note slot (W x 64): as revision 6 (alert icon M at (12, 12), lines F18 cy 21 / 43), shown only when its condition holds.
+
+
 
 ### 3.3 Info rows
 
@@ -154,93 +144,21 @@ Times: same day `14:05`; earlier day `26.10. 13:05`.
 (There is no separate badge: the status shows in the icon slot, so the label
 never collides with it. `Refresh now` is about 149 px at F24, ends at x = 209.)
 
-## 4. Layout, landscape (960 x 540)
 
-Two columns: settings on the left (16..472), info and actions on the right
-(488..944), 16 px between columns.
+## 5. Interactions (overview)
 
-| Element | Rect | cy | Font / grey | Content |
-|---------|------|----|-------------|---------|
-| Title | x = 16, box (16, 0, 200, 50) | 25 | F40 INK, left | `Settings` |
-| Unsaved chip | (824, 9, 120, 32) | 25 | F18 PAPER on INK, radius 8, centred | `unsaved` (when dirty) |
-| Header rule | (0, 50, 960, 2) | | INK | |
-| Row 1 Orientation | (16, 64, 456, 68) | 98 | as portrait | |
-| Row 2 Wake mode | (16, 144, 456, 68) | 178 | | |
-| Row 3 Refresh every | (16, 224, 456, 68) | 258 | | |
-| Row 4 Idle timeout | (16, 304, 456, 68) | 338 | | |
-| Tools row | (16, 384, 456, 64) | 416 | see 3.5 | summary right edge x = 392 |
-| Note slot | (16, 460, 456, 64) | 492 | see below | |
-| Info rows | (488, 64 ... 416, 456, ...) | | as portrait, value x = 158 (width 298) | |
-| Refresh now button | (488, 464, 222, 64) | 496 | | |
-| Back button | (722, 464, 222, 64) | 496 | | |
+| Target | Action | Redraw |
+|--------|--------|--------|
+| Category row (whole rect) | open that category page; no save | full refresh (GC16) |
+| Refresh now | start the state fetch (ignored while one runs) | button (pending look: dashed 3 px border, hourglass M); on completion: button, HA row, Battery row |
+| Back | leave Settings: save if dirty, apply (rule 2/3) | full refresh |
 
-Layout choice: the four rows keep the height 68 (landscape is height-limited; 4 x 68 + 3 x 12 = 308). Vertical sums (left column): header 52; +12 = 64; rows 308 -> 372; +12 = 384; Tools 64 -> 448; +12 = 460; note slot 64 -> 524; +16 = 540. Right column and footer are unchanged (info 64 -> 416, footer 464 -> 528). Horizontal: 16 + 456 + 16 + 456 + 16 = 960. Footer: 488 + 222 + 12 + 222 = 944.
+Rocker, overview: focus stops 1 Display, 2 Sleep & wake, 3 Network, 4 Tools, 5 Refresh now, 6 Back (landscape: same order, left column then right). Entry focus = stop 1. PREV/NEXT move and wrap. PUSH on a row opens the page; on Refresh now starts the fetch; on Back leaves. **LONG_PUSH = back one level**: on the overview = leave Settings (as Back); on a category page = back to the overview. Focus ring: 3 px, 3..6 px outside the rect (ring dirty rect = rect inflated by 6). Key mapping layout.md 7.1. For yes/no dialogs: UP = yes, DOWN = no, PUSH = skip (not used here).
 
-Landscape row internals (row-relative, width 456, height 68): identical to
-portrait with width 456: label x = 16, cy = 24; pips x = 22 + 20*k, cy = 47; value
-right edge x = 440, cy = 34; Note slot (456 x 64): border 2, radius 8; alert icon (M) at
-(12, 12, 40, 40); text from x = 64, cy = 21 and 43 (`Touch wake shortens battery
-life.` is about 313 px, fits the 380 px left).
+Settings is entered by LONG_PUSH at tab level or a tap on the battery cluster. Targets >= 64 with >= 12 px gaps.
 
-Info rows (unchanged; x = 488, width 456, hairline on each top edge; label x = 0, value
-x = 158 row-relative = 646 absolute):
+Refreshes: enter / leave Settings and every overview <-> category transition = GC16 full; everything else one partial (INK-only regions `epd_fastest`, regions with DIM labels or hairlines `epd_quality`); 12 feedback refreshes trigger a GC16 clean-up at the next quiet moment.
 
-| Row | Rect | cy |
-|-----|------|----|
-| Firmware | (488, 64, 456, 56) | 92 |
-| Battery | (488, 120, 456, 56) | 148 |
-| HA | (488, 176, 456, 56) | 204 |
-| Wi-Fi | (488, 232, 456, 56) | 260 |
-| Config | (488, 288, 456, 72) | 324 (lines 310 / 338) |
-| Errors | (488, 360, 456, 56) | 388 |
-
-Heights: 4 x 56 + 72 + 56 = 352; 64 + 352 = 416. With demo mode On the HA and Wi-Fi rows read `Demo mode`, Config `built-in demo`, Errors `0` (landscape mockup). The config value has 298 px (266
-with an icon); `tabs[0].widgets[2].entity` is about 298 px at F24 and 224 px at F18,
-so here it falls to F18 or wraps (fit rule).
-
-## 5. Interactions
-
-### Touch
-
-| Target | Action | Redraw (partial) |
-|--------|--------|------------------|
-| Setting row (whole rect) | cycle to the next value in the edit buffer | row value rect + hint rect; note slot if wake mode changed; unsaved chip if dirty flag flipped |
-| Refresh now | start the state fetch (ignored while one runs) | button (pending look: dashed 3 px border, hourglass M instead of the icon); on completion: button, HA row, Battery row |
-| Tools row | open the Tools page (section 8); no save | full refresh (GC16) |
-| Back | leave (rule 2/3) | full refresh |
-| anything else | nothing | |
-
-All targets are >= 64 x 64 (rows 72 / 68 high, Tools and footer 64 high) with >= 12 px between
-them (rows are 12 apart, footer buttons 12 apart; landscape columns 16 apart).
-Settings is **entered by touch** with a tap on the battery cluster of the tab
-screen (hit kind `settings`); there is no status bar inside Settings.
-
-### Rocker
-
-Focus stops in order: 1 Orientation, 2 Wake mode, 3 Refresh every, 4 Idle
-timeout, 5 Tools, 6 Refresh now, 7 Back. Entry focus = stop 1. The ring is the standard
-focus ring (3 px, 3..6 px outside the rect; the 12 px gaps and 16 px margins
-hold it; ring dirty region = rect inflated by 6).
-
-| Key | Action |
-|-----|--------|
-| PREV (up) | previous stop, wraps 1 -> 7 |
-| NEXT (down) | next stop, wraps 7 -> 1 |
-| PUSH | on a row (stops 1-4): cycle value; on Tools: open the Tools page; on Refresh now: start fetch; on Back: leave (this is not a dialog; for any yes/no dialog: UP = yes, DOWN = no, PUSH = skip, STYLE.md section 10b) |
-| LONG_PUSH | leave (same as Back), from any stop |
-
-Ring move redraws old and new rects (inflated by 6), partial. Key mapping follows
-layout.md 7.1 (`PREV`/`NEXT`, invert flag).
-
-### Refreshes
-
-- Enter and leave Settings, and the transitions main page <-> Tools page: GC16 full refresh (STYLE.md section 10; sub-page change).
-- Everything else above: one partial refresh of the listed region, no clean-up
-  pass. Value texts are INK, so a row value cycles with `epd_fastest`; a region
-  that still holds greys (the hint line is black/white, but info rows hold DIM
-  labels and OFF hairlines) gets one `epd_quality` refresh instead. Each step
-  counts towards ghost debt (12 feedback refreshes trigger a GC16 full refresh at
-  the next quiet moment, at the latest before sleep).
 
 ## 6. States
 
@@ -263,7 +181,8 @@ Loading state: none (everything is read synchronously when the screen opens).
 ## 7. OPEN items
 
 - OPEN-S1: idle timeout inside Settings fixed at 60 s (proposal).
-- OPEN-S5: Tools summary text (`Demo Off, Log Off`) is a proposal.
+- OPEN-S5: the category summaries (3.0) are proposals.
+- OPEN-S6: Wi-Fi profile names longer than about 12 chars shrink to F24 (then `...`); a profile that is out of range stays selectable.
 - (resolved) OPEN-S2: the touch path to Settings is a tap on the battery cluster.
 - OPEN-S4: in demo mode the Config row text `built-in demo` and the inert Refresh now are proposals (task 034 does not say); architect to confirm.
 - OPEN-S3: first line of info only shows the first config error; a scrollable
@@ -271,57 +190,35 @@ Loading state: none (everything is read synchronously when the screen opens).
 - Questions for the architect: where `FW_VERSION` comes from; whether the config
   module exposes path + line + count for errors.
 
-## 8. Tools page (task 041)
 
-Second system page, reached from the **Tools** row of the main page. Mockups: `tools-portrait.svg` (demo Off, debug log On, focus on Debug log, note visible, unsaved), `tools-landscape.svg` (demo On, debug log Off, focus on Back). Header as the main page (title `Tools`, `unsaved` chip when the shared buffer is dirty). No tab bar, no status bar.
+## 8. Category pages
 
-### 8.1 Layout, portrait (540 x 960)
+All pages: header (title = category name, chip when the buffer is dirty), no tab bar, no status bar, Back at the footer position, rows start at y = 68 (portrait) / 64 (landscape). Landscape uses the same left-column rows (456 wide) unless stated.
 
-| Element | Rect | cy | Font / grey | Content |
-|---------|------|----|-------------|---------|
-| Title | (16, 0, 200, 54) | 27 | F40 INK | `Tools` |
-| Unsaved chip, header rule | as 3 | | | |
-| Row 1 Demo mode | (16, 68, 508, 88) | 112 | border 2, radius 8 | button |
-| Row 2 Debug log | (16, 168, 508, 88) | 212 | same | button |
-| Note slot | (16, 268, 508, 64) | 300 | as 3.2 | only when Debug log = On |
-| (empty) | 332 ... 880 | | | |
-| Back button | (276, 880, 248, 64) | 912 | as 3.4 | same place as Back on the main page |
+### 8.1 Display (`settings-display-*.svg`)
+Portrait: Orientation pip row (16, 68, 508, 72). Below it a static caption F18 DIM at (16, 152) cy 168: `Applied when Settings is left.` Landscape: row (16, 64, 456, 68), caption at (16, 132) cy 148. Mockup shows the changed value (unsaved), focus on the row.
 
-Row internals (row-relative, 508 x 88): label F24 INK x = 16, cy = 32 (`Demo mode`, `Debug log`); hint F18 INK x = 16, cy = 62 (`Sample dashboard, offline`, `Log lines to SD card`); value F40 INK right edge x = 492, cy = 44 (`Off` / `On`). No pips (2-value rows carry a hint instead). Row height 88 (the old four-row height; this page has room). Note slot text: `Writes /debug.log (max 1 MB).` / `Uses more battery.`, alert icon M, lines cy = 21 / 43. Vertical sums: header 56, +12, rows 88 + 12 + 88 = 188 -> 256, +12 = 268, note 64 -> 332.
+### 8.2 Sleep & wake (`settings-sleep-*.svg`)
+Pip rows Wake mode (68), Refresh every (152), Idle timeout (236), then the touch-wake note slot (16, 320, 508, 64) (empty with Button). Landscape: rows at y = 64, 144, 224 (h 68), note (16, 304, 456, 64). Mockups: Wake Touch (note visible), focus on Refresh every.
 
-### 8.2 Layout, landscape (960 x 540)
+### 8.3 Network (`settings-network-*.svg`)
+Hint rows, 88 high. Portrait: Wi-Fi (16, 68, 508, 88), HA connection (16, 168, 508, 88), note slot (16, 268, 508, 64). Landscape: Wi-Fi (16, 64, 456, 88), HA connection (488, 64, 456, 88), note (16, 164, 456, 64) (under Wi-Fi). Hints are live, read from the network state, never edited:
+- Wi-Fi hint: `Connected: <profile name>`; `Connected: -` / alert icon not used, text `Not connected` when no profile joined; `Demo mode` text `Not used (demo mode)`.
+- HA connection hint: `Link: internal` / `Link: external` (the link in use); when the mode is Auto and the profile decides: `Link: external (profile)`; offline `Link: none (offline)`.
+- Note slot (alert icon): only while Wi-Fi is a forced profile (not Auto): `Forced profile: other Wi-Fi` / `networks are not tried.` When HA connection is forced and the other link would be the profile's choice, no note (the hint shows the link).
+Mockups: Wi-Fi forced `Hotspot` (note visible), HA connection `Auto` resolving to external, focus on HA connection.
+Effect: Wi-Fi / HA connection are applied on leaving Settings (rule 3 addition); the hints show the state from when the page opened (snapshot, not live).
 
-| Element | Rect | cy |
-|---------|------|----|
-| Title, chip, rule | as the main page landscape (header 52) | 25 |
-| Row 1 Demo mode | (16, 64, 456, 88) | 108 |
-| Row 2 Debug log | (488, 64, 456, 88) | 108 |
-| Note slot (Debug log On) | (488, 164, 456, 64) | 196 |
-| Back button | (722, 464, 222, 64) | 496 |
+### 8.4 Tools (`settings-tools-*.svg`)
+Hint rows 88 high: Demo mode, Debug log (portrait (16, 68) and (16, 168), landscape (16, 64) and (488, 64)); Debug log note slot (portrait (16, 268, 508, 64), landscape (488, 164, 456, 64)): `Writes /debug.log (max 1 MB).` / `Uses more battery.`, or with no SD card `No SD card: nothing is logged.` / `Insert a card to log.` Hints: `Sample dashboard, offline`, `Log lines to SD card`.
 
-Two columns of 456 (16 px apart) so the page matches the main page's column grid. Row internals as 8.1 with width 456 (value right edge x = 440).
-
-### 8.3 Interactions
-
+### 8.5 Interactions and rocker (all category pages)
 | Target | Action | Redraw |
 |--------|--------|--------|
-| Demo mode row | toggle `demo_mode` in the buffer (Off <-> On) | row value; unsaved chip if dirty flipped (partial) |
-| Debug log row | toggle `debug_log` in the buffer | row value; note slot appears/clears; chip (partial) |
-| Back | return to the main page (no save, no apply); main page focus = Tools row | GC16 full |
-| anything else | nothing | |
+| Row | cycle (3.1 value order) / toggle in the shared buffer | row value (+ hint); note slot if its condition flipped; chip if dirty flipped (partial) |
+| Back | up to the overview (no save, no apply); overview focus = the category row just left | GC16 full |
 
-Rocker: focus stops 1 Demo mode, 2 Debug log, 3 Back (portrait top to bottom, landscape left to right then Back). Entry focus = stop 1. PREV/NEXT move and wrap. PUSH on a row toggles, on Back returns. **LONG_PUSH = Back** (one level up, not out of Settings). The Back target and the row targets are >= 64 px (rows 88, Back 64), >= 12 px apart. Focus ring as in section 5 (dirty rect inflated by 6; the rows' 12 px gap and 16 px margins hold it).
+Rocker: focus stops on a category page = its rows top to bottom (landscape Network and Tools: left to right), then Back. Entry focus = stop 1. PREV/NEXT move and wrap. PUSH on a row cycles; on Back returns. **LONG_PUSH = back one level** (category page -> overview; overview -> leave Settings and save). Ring as section 5. Targets >= 64 (rows 68..88, Back 64), >= 12 px apart. Idle auto-leave: see section 3.
 
-Saving and effects: unchanged (rules 1a to 3): everything is saved and applied when Settings is left from the main page (Back, long push there, or the idle auto-leave, which also fires from the Tools page after 60 s and leaves Settings entirely, saving the buffer).
-
-### 8.4 States
-
-| State | Look |
-|-------|------|
-| Normal | as the mockups |
-| Demo mode On | row value `On`; no extra warning (the main page info rows say `Demo mode`) |
-| Debug log On | note slot visible. If the SD card is missing at the time the page opens, the note reads `No SD card: nothing is logged.` / `Insert a card to log.` (alert icon) |
-| HA offline, entity unavailable | not relevant on this page |
-| Loading | none |
-
-Refresh: enter and leave = GC16 full; toggles = one partial of the row (INK only, `epd_fastest`); note appear/clear = one partial of the note rect.
+States on category pages: Normal as the mockups; Loading none; Network offline: hint `Link: none (offline)` and the rows stay editable; entity unavailable: not relevant.
+Refresh: entering and leaving a page = GC16 full; row toggles = one partial of the row (INK only, `epd_fastest`); note appear/clear = partial of the note rect.
