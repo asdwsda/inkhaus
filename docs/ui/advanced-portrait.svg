@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans">
+  <!-- Advanced page, portrait 540x960. Spec: docs/ui/settings.md section 8. Shown: demo Off, debug log On (unsaved, note visible), focus on row 2. Widgets: w-1 Demo mode, w-2 Debug log, w-3 note, w-4 Back. -->
+  <defs>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="20,3 20,10 13,10" fill="currentColor"/></symbol>
+    <symbol id="i-chev-l" viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24"><polyline points="9,4 17,12 9,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  </defs>
+
+  <rect x="0" y="0" width="540" height="960" fill="#fff"/>
+<text x="16" y="27" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">Advanced</text>
+<rect x="404" y="11" width="120" height="32" rx="8" fill="#000"/>
+<text x="464" y="27" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">unsaved</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/>
+<g id="w-1">
+<rect id="w-1-frame" x="16" y="68" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="17" y="69" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-1-label" x="32" y="100" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Demo mode</text>
+<text id="w-1-hint" x="32" y="130" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Sample dashboard, offline</text>
+<text id="w-1-value" x="508" y="112" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Off</text>
+</g>
+<rect x="11.5" y="163.5" width="517" height="97" rx="12.5" fill="none" stroke="#000" stroke-width="3"/>
+<g id="w-2">
+<rect id="w-2-frame" x="16" y="168" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="17" y="169" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-2-label" x="32" y="200" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Debug log</text>
+<text id="w-2-hint" x="32" y="230" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Log lines to SD card</text>
+<text id="w-2-value" x="508" y="212" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">On</text>
+</g>
+<g id="w-3">
+<rect id="w-3-frame" x="16" y="268" width="508" height="64" rx="8" fill="#fff"/>
+<rect x="17" y="269" width="506" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<use id="w-3-icon" xlink:href="#i-alert" href="#i-alert" x="28" y="280" width="40" height="40" color="#000"/>
+<text id="w-3-l1" x="80" y="289" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Writes /debug.log (max 1 MB).</text>
+<text id="w-3-l2" x="80" y="311" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Uses more battery.</text>
+</g>
+<g id="w-4">
+<rect id="w-4-frame" x="276" y="880" width="248" height="64" rx="8" fill="#fff"/>
+<rect x="277" y="881" width="246" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<use id="w-4-icon" xlink:href="#i-chev-l" href="#i-chev-l" x="288" y="892" width="40" height="40" color="#000"/>
+<text id="w-4-label" x="336" y="912" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Back</text>
+</g>
+</svg>
