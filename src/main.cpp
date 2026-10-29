@@ -217,7 +217,16 @@ static void logFetchApplied() {
   if (tab >= 0 && size_t(tab) < tabs.size()) {
     for (size_t i = 0; i < tabs[size_t(tab)].widgets.size(); ++i)
       for (const auto *m : g_app.widgetData(int(i)).members)
-        if (!m) ++missing;
+      {
+        if (!m) { ++missing; continue; }
+        if (m->available) continue;
+        char st[33];
+        snprintf(st, sizeof st, "%s", m->state.c_str());
+        if (m->current_position)
+          Serial.printf("APP: unavailable id=%s state=%s pos=%d\n", m->id.c_str(), st, *m->current_position);
+        else
+          Serial.printf("APP: unavailable id=%s state=%s pos=-\n", m->id.c_str(), st);
+      }
   }
   Serial.printf("APP: fetch_applied store=%u changed=%u missing_members=%d\n",
                 (unsigned)g_app.store().size(), (unsigned)g_drv->lastChanged(), missing);
