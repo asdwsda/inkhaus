@@ -241,3 +241,18 @@ The project is built with [Claude Code](https://claude.com/claude-code) agents, 
 `.claude/agents/`: an architect who plans, reviews and commits; a UI designer who writes the specs;
 a firmware developer; and a tester. Each task goes through spec, implementation, independent
 testing and review. See [CLAUDE.md](CLAUDE.md) and [docs/tasks/README.md](docs/tasks/README.md).
+
+## License
+
+Copyright (C) 2026 Peter Szabo
+
+Inkling is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of
+the License, or (at your option) any later version. It is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY; see [LICENSE](LICENSE) for details.
+
+Third-party parts keep their own licenses:
+- `certs/gen_crt_bundle.py`: from ESP-IDF, Apache License 2.0 (GPL-3.0 compatible).
+- `certs/cacert.pem` and the generated `certs/x509_crt_bundle`: Mozilla's CA root list, MPL 2.0.
+- Libraries fetched at build time (not bundled): M5Unified and M5GFX (MIT), ArduinoJson (MIT),
+  libyaml (MIT), Unity (MIT, tests only).
