@@ -22,3 +22,10 @@ const EntityState* StateStore::get(const std::string& id) const {
   auto it = states_.find(id);
   return it == states_.end() ? nullptr : &it->second;
 }
+
+std::vector<EntityState> StateStore::all() const {
+  std::vector<EntityState> v;
+  v.reserve(states_.size());
+  for (const auto& kv : states_) v.push_back(kv.second);
+  return v;
+}

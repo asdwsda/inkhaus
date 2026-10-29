@@ -13,6 +13,8 @@ class StateStore {
 
   const EntityState* get(const std::string& id) const;
   size_t size() const { return states_.size(); }
+  // All stored states, ordered by id.
+  std::vector<EntityState> all() const;
 
  private:
   std::map<std::string, EntityState> states_;

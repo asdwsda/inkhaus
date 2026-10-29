@@ -25,3 +25,4 @@ Needs device: yes (later)
 - [ ] On device: wake shows the previous values immediately, before Wi-Fi.
 
 ## Notes
+- PC part done (2026-10-29): lib/model state_codec (MPST + CRC, tests incl. every truncation/corruption), StateStore::all, src/state_cache (RTC 4 KB every save + LittleFS /states.bin on change), hooks in main.cpp (restore before the first frame in real mode, save in goToSleep). main.cpp hooks committed together with task 036. Open: the outdated icon uses g_restoredEpoch (task 038); never-blank behaviour checked on the device.
