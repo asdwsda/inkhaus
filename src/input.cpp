@@ -16,7 +16,11 @@ void push(const Event &e) {
 }
 }  // namespace
 
-void begin() { M5.BtnB.setHoldThresh(600); }
+// UNVERIFIED: M5.Touch hold_begin fires once after 600 ms on the GT911 and a release gives wasReleased().
+void begin() {
+  M5.BtnB.setHoldThresh(600);
+  M5.Touch.setHoldThresh(600);
+}
 
 void inject(const Event &e) { push(e); }
 
@@ -30,6 +34,16 @@ Event poll() {
   if (t.wasPressed()) {
     Event e;
     e.kind = Event::Touch;
+    e.point = {t.x, t.y};
+    push(e);
+  } else if (t.wasHold()) {
+    Event e;
+    e.kind = Event::LongTouch;
+    e.point = {t.x, t.y};
+    push(e);
+  } else if (t.wasReleased()) {
+    Event e;
+    e.kind = Event::TouchRelease;
     e.point = {t.x, t.y};
     push(e);
   }

@@ -33,29 +33,43 @@ void drawPip(M5Canvas &c, int cx, int cy, bool filled) {
   if (!filled) c.fillCircle(cx, cy, d / 2 - 2, PAPER);
 }
 
-void drawRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
-  const Rect &r = s.layout().rows[i];
-  const settings::Settings &e = s.edit();
-  drawBox(c, r, PAPER, INK);
-  const Rect lab = sui::rowLabelRect(r);
-  drawTextCy(c, Font::F24, sui::rowLabel(i), lab.x, sui::rowLabelCy(r), Align::Left, INK);
-  const std::string val = sui::rowValueText(i, e);
-  const int rightX = sui::rowValueRightX(r);
-  const int freeW = rightX - (lab.x + textWidth(c, Font::F24, sui::rowLabel(i)) + sui::kValueGap);
+// Value of a row, right aligned: F40, then F24, then F24 with an ellipsis (spec 3.1).
+void drawValue(M5Canvas &c, const std::string &val, int rightX, int cy, int freeW) {
   const int lvl = sui::valueFitLevel(textWidth(c, Font::F40, val), textWidth(c, Font::F24, val), freeW);
-  if (lvl == 0) {
-    drawTextCy(c, Font::F40, val, rightX, sui::rowValueCy(r), Align::Right, INK);
-  } else {
-    drawTextCy(c, Font::F24, lvl == 1 ? val : fitText(c, Font::F24, val, freeW), rightX, sui::rowValueCy(r), Align::Right, INK);
-  }
-  const int cur = sui::rowValueIndex(i, e);
-  for (int k = 0; k < sui::pipCount(i); ++k) {
-    const ui::Point p = sui::pipCentre(r, k);
-    drawPip(c, p.x, p.y, k == cur);
-  }
+  if (lvl == 0) drawTextCy(c, Font::F40, val, rightX, cy, Align::Right, INK);
+  else drawTextCy(c, Font::F24, lvl == 1 ? val : fitText(c, Font::F24, val, freeW), rightX, cy, Align::Right, INK);
 }
 
-void drawNote(M5Canvas &c, const Rect &n, const char *line1 = sui::kNoteLine1, const char *line2 = sui::kNoteLine2) {
+void drawRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
+  const sui::PageLayout &P = s.pageLayout();
+  const Rect &r = P.rows[i];
+  const sui::RowId id = P.rowIds[i];
+  const settings::Settings &e = s.edit();
+  drawBox(c, r, PAPER, INK);
+  const std::string val = sui::rowValueText(id, e, s.network());
+  if (sui::isPipRow(id)) {
+    const Rect lab = sui::rowLabelRect(r);
+    drawTextCy(c, Font::F24, sui::rowLabel(id), lab.x, sui::rowLabelCy(r), Align::Left, INK);
+    const int rightX = sui::rowValueRightX(r);
+    const int freeW = rightX - (lab.x + textWidth(c, Font::F24, sui::rowLabel(id)) + sui::kValueGap);
+    drawValue(c, val, rightX, sui::rowValueCy(r), freeW);
+    const int cur = sui::rowValueIndex(id, e);
+    for (int k = 0; k < sui::pipCount(id); ++k) {
+      const ui::Point p = sui::pipCentre(r, k);
+      drawPip(c, p.x, p.y, k == cur);
+    }
+    return;
+  }
+  // Hint row (88 high): label, hint (static or live), big value.
+  drawTextCy(c, Font::F24, sui::hintRowLabel(id), r.x + 16, sui::hintRowLabelCy(r), Align::Left, INK);
+  const std::string hint = id == sui::RowId::Wifi     ? sui::wifiHint(s.network())
+                           : id == sui::RowId::HaLink ? sui::haLinkHint(e, s.network())
+                                                      : std::string(sui::hintRowStaticHint(id));
+  drawTextCy(c, Font::F18, fitText(c, Font::F18, hint, r.w - 32 - 140), r.x + 16, sui::hintRowHintCy(r), Align::Left, INK);
+  drawValue(c, val, sui::rowValueRightX(r), sui::hintRowValueCy(r), sui::hintRowValueWidth());
+}
+
+void drawNote(M5Canvas &c, const Rect &n, const char *line1, const char *line2) {
   drawBox(c, n, PAPER, INK);
   const Rect ic = sui::noteIconRect(n);
   drawIcon(c, Icon::Alert, 40, ic.x, ic.y, INK);
@@ -63,25 +77,18 @@ void drawNote(M5Canvas &c, const Rect &n, const char *line1 = sui::kNoteLine1, c
   drawTextCy(c, Font::F18, line2, sui::noteTextX(n), sui::noteLineCy(n, 1), Align::Left, INK);
 }
 
-// Navigation row of the main page (spec 3.5): label, summary of the Tools values, chevron.
-void drawToolsRow(M5Canvas &c, const sui::SettingsScreen &s) {
-  const Rect &r = s.layout().toolsRow;
+// Category row of the overview (spec 3.0): label, one-line summary of the edit buffer, chevron.
+void drawCategory(M5Canvas &c, const sui::SettingsScreen &s, int i) {
+  const Rect &r = s.layout().categories[i];
   drawBox(c, r, PAPER, INK);
-  const int cy = sui::toolsRowCy(r);
-  drawTextCy(c, Font::F24, "Tools", sui::toolsRowLabelX(r), cy, Align::Left, INK);
-  drawTextCy(c, Font::F18, sui::toolsSummary(s.edit()), sui::toolsRowSummaryRightX(r), cy, Align::Right, INK);
-  const Rect ch = sui::toolsRowChevronRect(r);
+  drawTextCy(c, Font::F24, sui::categoryLabel(i), sui::categoryLabelX(r), sui::categoryLabelCy(r), Align::Left, INK);
+  const int maxW = sui::categorySummaryMaxWidth(r);
+  std::string sum = sui::categorySummary(i, s.edit(), s.network());
+  if (textWidth(c, Font::F18, sum) > maxW) sum = sui::categorySummary(i, s.edit(), s.network(), true);
+  if (textWidth(c, Font::F18, sum) > maxW) sum = fitText(c, Font::F18, sum, maxW);
+  drawTextCy(c, Font::F18, sum, sui::categoryLabelX(r), sui::categorySummaryCy(r), Align::Left, INK);
+  const Rect ch = sui::categoryChevronRect(r);
   drawIcon(c, Icon::ChevR, 40, ch.x, ch.y, INK);
-}
-
-// Toggle row of the Tools page (spec 8.1): label, hint, big On/Off value.
-void drawToolsToggle(M5Canvas &c, const sui::SettingsScreen &s, int i) {
-  const Rect &r = s.toolsLayout().rows[i];
-  drawBox(c, r, PAPER, INK);
-  drawTextCy(c, Font::F24, sui::toolsRowLabel(i), r.x + 16, sui::toolsRowLabelCy(r), Align::Left, INK);
-  drawTextCy(c, Font::F18, sui::toolsRowHint(i), r.x + 16, sui::toolsRowHintCy(r), Align::Left, INK);
-  drawTextCy(c, Font::F40, sui::toolsRowValueText(i, s.edit()), sui::toolsRowValueRightX(r),
-             sui::toolsRowValueCy(r), Align::Right, INK);
 }
 
 // Fit rule of the spec: F24, then F18, then an ellipsis (own measure on the canvas).
@@ -152,16 +159,18 @@ void drawHeader(M5Canvas &c, const sui::SettingsScreen &s, const char *title, co
   c.fillRect(rule.x, rule.y, rule.w, rule.h, INK);
 }
 
-void drawToolsPage(M5Canvas &c, const sui::SettingsScreen &s) {
-  const sui::ToolsLayout &T = s.toolsLayout();
+void drawCategoryPage(M5Canvas &c, const sui::SettingsScreen &s) {
+  const sui::PageLayout &P = s.pageLayout();
   drawFocusRing(c, s);
-  drawHeader(c, s, "Tools", T.title, T.unsavedChip, T.headerRule);
-  for (int i = 0; i < sui::kToolsRowCount; ++i) drawToolsToggle(c, s, i);
-  if (sui::toolsShowsNote(s.edit())) {
-    if (s.sdPresent()) drawNote(c, T.note, sui::kToolsNoteLine1, sui::kToolsNoteLine2);
-    else drawNote(c, T.note, sui::kToolsNoCardLine1, sui::kToolsNoCardLine2);
+  drawHeader(c, s, sui::categoryLabel(static_cast<int>(P.page) - 1), P.title, P.unsavedChip, P.headerRule);
+  for (int i = 0; i < P.rowCount; ++i) drawRow(c, s, i);
+  if (P.caption.w > 0)
+    drawTextCy(c, Font::F18, sui::kDisplayCaption, P.caption.x, P.caption.y + P.caption.h / 2, Align::Left, DIM);
+  if (P.note.w > 0 && sui::pageShowsNote(P.page, s.edit())) {
+    const sui::NoteText t = sui::pageNote(P.page, s.sdPresent());
+    drawNote(c, P.note, t.line1, t.line2);
   }
-  drawButtonBox(c, T.backButton, Icon::ChevL, "Back", false);
+  drawButtonBox(c, P.backButton, Icon::ChevL, "Back", false);
 }
 
 }  // namespace
@@ -169,16 +178,14 @@ void drawToolsPage(M5Canvas &c, const sui::SettingsScreen &s) {
 void drawSettings(M5Canvas &c, const sui::SettingsScreen &s, const SettingsInfo &info) {
   const sui::SettingsLayout &L = s.layout();
   c.fillScreen(PAPER);
-  if (s.page() == sui::Page::Tools) {
-    drawToolsPage(c, s);
+  if (s.page() != sui::Page::Main) {
+    drawCategoryPage(c, s);
     return;
   }
   drawFocusRing(c, s);
   drawHeader(c, s, "Settings", L.title, L.unsavedChip, L.headerRule);
 
-  for (int i = 0; i < sui::kRowCount; ++i) drawRow(c, s, i);
-  drawToolsRow(c, s);
-  if (sui::showsNote(s.edit())) drawNote(c, L.note);
+  for (int i = 0; i < sui::kCategoryCount; ++i) drawCategory(c, s, i);
 
   // Info block.
   const sui::HaInfo ha = [&] {

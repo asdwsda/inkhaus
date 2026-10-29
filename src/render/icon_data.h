@@ -16,6 +16,7 @@ enum class Icon : uint8_t {
   ChevL,
   ChevR,
   Clock,
+  Close,
   Cloud,
   CloudDown,
   Demo,

@@ -1,3 +1,4 @@
+#include "brightness_layout.h"
 #include "brightness_popup.h"
 #include <cstring>
 #include <fstream>
@@ -1043,6 +1044,121 @@ void test_sensor_details() {
   TEST_ASSERT_EQUAL_STRING("Absent", v.details[1].label.c_str());
 }
 
+// ---- brightness popup in the app state (task 045) ----
+
+static AppState dimApp(bool marks, int *lightIdx, std::string *id) {
+  AppState a;
+  a.init(exampleConfig(), P, false);
+  a.setMarksDriven(marks, 5000);
+  *lightIdx = findWidget(a, WidgetType::Light);
+  *id = a.config().tabs[0].widgets[size_t(*lightIdx)].entity;
+  EntityState l = E(id->c_str(), "on");
+  l.brightness = 153;  // 60 %
+  a.store().update({l});
+  return a;
+}
+
+void test_brightness_layout_hits_and_bar() {
+  for (auto o : {settings::Orientation::Portrait, settings::Orientation::Landscape}) {
+    const auto l = brightnessLayout(o);
+    TEST_ASSERT_EQUAL(int(BrightnessHit::Outside), int(brightnessHitTest(l, {0, 0})));
+    TEST_ASSERT_EQUAL(int(BrightnessHit::Close), int(brightnessHitTest(l, {l.close.x + 5, l.close.y + 5})));
+    TEST_ASSERT_EQUAL(int(BrightnessHit::Bar), int(brightnessHitTest(l, {l.bar.x + 5, l.bar.y + 5})));
+    TEST_ASSERT_EQUAL(int(BrightnessHit::Preset2), int(brightnessHitTest(l, {l.presets[2].x + 3, l.presets[2].y + 3})));
+    TEST_ASSERT_EQUAL(int(BrightnessHit::Done), int(brightnessHitTest(l, {l.done.x + 3, l.done.y + 3})));
+    TEST_ASSERT_EQUAL(int(BrightnessHit::Panel), int(brightnessHitTest(l, {l.panel.x + 2, l.panel.y + 2})));
+    TEST_ASSERT_TRUE(brightnessBarFraction(l, l.bar.x) == 0.0);
+    TEST_ASSERT_TRUE(brightnessBarFraction(l, l.bar.x + l.bar.w + 50) == 1.0);
+    // every control sits inside the panel
+    for (const ui::Rect &r : {l.close, l.bar, l.minus, l.plus, l.off, l.done, l.presets[0], l.presets[3]})
+      TEST_ASSERT_TRUE(ui::rectInside(r, l.panel));
+  }
+}
+
+void test_app_brightness_open_modal_and_send() {
+  int li; std::string id;
+  AppState a = dimApp(true, &li, &id);
+  std::vector<std::pair<std::string, int>> sent;
+  a.setBrightnessSink([&](const std::string &i, int p) { sent.push_back({i, p}); });
+  const ui::Rect r = widgetRect(a, li);
+  TEST_ASSERT_TRUE(a.dimmableLightAt({r.x + 10, r.y + 10}));
+  TEST_ASSERT_TRUE(a.longPress({r.x + 10, r.y + 10}, 0));
+  TEST_ASSERT_TRUE(a.brightnessOpen());
+  TEST_ASSERT_EQUAL(60, a.brightness().value());
+  const auto l = brightnessLayout(P);
+  // a tap on a tab while open only closes (modal), no tab switch
+  const int shown = a.shownTab();
+  TEST_ASSERT_TRUE(a.touch({l.panel.x + 1, l.panel.y - 20}, 100));
+  TEST_ASSERT_FALSE(a.brightnessOpen());
+  TEST_ASSERT_EQUAL(shown, a.shownTab());
+  // reopen, Plus then bar tap; sends the last value after the debounce
+  a.longPress({r.x + 10, r.y + 10}, 1000);
+  a.touch({l.plus.x + 5, l.plus.y + 5}, 1100);
+  TEST_ASSERT_EQUAL(70, a.brightness().value());
+  a.touch({l.bar.x + l.bar.w / 2, l.bar.y + 10}, 1200);
+  TEST_ASSERT_EQUAL(50, a.brightness().value());
+  TEST_ASSERT_TRUE(a.brightnessAwaiting());
+  a.tick(1500);
+  TEST_ASSERT_EQUAL(0, (int)sent.size());
+  a.tick(1600);
+  TEST_ASSERT_EQUAL(1, (int)sent.size());
+  TEST_ASSERT_EQUAL(50, sent[0].second);
+  // optimistic percent on the widget
+  const WidgetData d = a.widgetData(li);
+  TEST_ASSERT_EQUAL_STRING("On 50%", toggleView(WidgetType::Light, d.members[0], false).state.c_str());
+  // confirmation through the marks: Pending, then gone
+  a.setMarks({{id, Mark::Pending}});
+  TEST_ASSERT_TRUE(a.brightnessAwaiting());
+  a.setMarks({});
+  TEST_ASSERT_FALSE(a.brightnessAwaiting());
+  // rocker: up +10, push closes
+  a.rocker(ui::PhysicalKey::Up, 2000);
+  TEST_ASSERT_EQUAL(60, a.brightness().value());
+  TEST_ASSERT_TRUE(a.rocker(ui::PhysicalKey::Push, 2100));
+  TEST_ASSERT_FALSE(a.brightnessOpen());
+  TEST_ASSERT_EQUAL(2, (int)sent.size());  // close flushed the unsent 60
+  TEST_ASSERT_EQUAL(60, sent[1].second);
+  TEST_ASSERT_EQUAL(60, a.brightness().optimisticPct());  // unconfirmed: the widget keeps showing 60
+}
+
+void test_app_brightness_failed_and_idle_close() {
+  int li; std::string id;
+  AppState a = dimApp(true, &li, &id);
+  a.setBrightnessSink([](const std::string &, int) {});
+  const ui::Rect r = widgetRect(a, li);
+  a.longPress({r.x + 10, r.y + 10}, 0);
+  a.rocker(ui::PhysicalKey::Down, 10);
+  a.tick(500);
+  a.setMarks({{id, Mark::Pending}});
+  a.setMarks({{id, Mark::Failed}});
+  TEST_ASSERT_TRUE(a.brightnessFailed());
+  TEST_ASSERT_TRUE(a.brightnessOpen());
+  TEST_ASSERT_TRUE(a.tick(10010));  // idle close
+  TEST_ASSERT_FALSE(a.brightnessOpen());
+  TEST_ASSERT_FALSE(a.brightnessFailed());
+  TEST_ASSERT_EQUAL(-1, a.brightness().optimisticPct());  // the widget shows the real state again
+}
+
+void test_app_brightness_not_for_plain_lights_and_demo_store() {
+  int li; std::string id;
+  AppState a = dimApp(false, &li, &id);
+  const ui::Rect r = widgetRect(a, li);
+  EntityState plain = E(id.c_str(), "on");
+  plain.color_modes = "onoff";
+  a.store().update({plain});
+  TEST_ASSERT_FALSE(a.longPress({r.x + 10, r.y + 10}, 0));
+  EntityState l = E(id.c_str(), "off");
+  l.brightness = 100;
+  a.store().update({l});
+  TEST_ASSERT_TRUE(a.longPress({r.x + 10, r.y + 10}, 0));
+  TEST_ASSERT_EQUAL(0, a.brightness().value());  // off: starts at 0
+  a.touch({brightnessLayout(P).presets[0].x + 3, brightnessLayout(P).presets[0].y + 3}, 10);
+  a.tick(500);
+  TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());
+  TEST_ASSERT_EQUAL(64, *a.store().get(id)->brightness);  // 25 %
+  TEST_ASSERT_FALSE(a.brightnessAwaiting());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_fmt_number);
@@ -1099,5 +1215,9 @@ int main() {
   RUN_TEST(test_brightness_popup_steps_and_bar);
   RUN_TEST(test_brightness_popup_debounce_sends_last_value);
   RUN_TEST(test_brightness_popup_idle_close_and_off);
+  RUN_TEST(test_brightness_layout_hits_and_bar);
+  RUN_TEST(test_app_brightness_open_modal_and_send);
+  RUN_TEST(test_app_brightness_failed_and_idle_close);
+  RUN_TEST(test_app_brightness_not_for_plain_lights_and_demo_store);
   return UNITY_END();
 }

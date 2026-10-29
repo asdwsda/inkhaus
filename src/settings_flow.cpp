@@ -35,6 +35,10 @@ void open(const settings::Settings &saved, settings::Orientation current, bool r
   g_lastInput = now;
 }
 
+void setNetwork(const settings_ui::NetworkInfo &n) {
+  if (g_screen) g_screen->setNetwork(n);
+}
+
 void setSdPresent(bool present) {
   if (g_screen) g_screen->setSdPresent(present);
 }

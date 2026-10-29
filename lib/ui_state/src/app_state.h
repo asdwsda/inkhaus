@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "brightness_layout.h"
+#include "brightness_popup.h"
 #include "config_model.h"
 #include "entity_state.h"
 #include "settings.h"
@@ -59,7 +61,23 @@ class AppState {
   // Events. All return true if something visible changed.
   bool touch(ui::Point p, uint32_t now);
   bool rocker(ui::PhysicalKey key, uint32_t now);
-  bool tick(uint32_t now);  // commits due pending actions, applies the debounced tab switch
+  bool tick(uint32_t now);  // commits due pending actions, applies the debounced tab switch; popup debounce/idle
+
+  // ---- brightness popup (task 045, docs/ui/brightness.md) ----
+  // Modal while open: touch() and rocker() go to the popup.
+  // A dimmable light widget at p (long press candidate, tab screen only, popup closed).
+  bool dimmableLightAt(ui::Point p) const;
+  bool longPress(ui::Point p, uint32_t now);      // opens the popup on a dimmable light; true if opened
+  bool openBrightnessFocused(uint32_t now);       // rocker long push on the focused dimmable light
+  bool closeBrightness(uint32_t now);             // Done (flushes an unsent value); true if it was open
+  bool brightnessOpen() const { return popup_.isOpen(); }
+  const BrightnessPopup &brightness() const { return popup_; }
+  std::string brightnessTitle() const { return widgetTitle(popup_.widget()); }
+  bool brightnessUnknown() const { return bpUnknown_; }  // light on without a brightness: shows "-"
+  bool brightnessAwaiting() const { return popup_.sendPending() || bpAwaiting_; }  // hourglass
+  bool brightnessFailed() const { return bpFailed_; }                              // alert
+  // Real mode: sends (entity id, pct 0..100) to Home Assistant. Demo mode applies it to the store.
+  void setBrightnessSink(BrightnessSink s) { bsink_ = std::move(s); }
 
   // The content (not only chrome) changed in a way that needs a full-quality refresh (tab or
   // sub-page change). Cleared by takeFull().
@@ -123,6 +141,18 @@ class AppState {
   bool marksDriven_ = false;
   uint32_t safetyMs_ = 30000;
   std::map<std::string, Mark> marks_;
+
+  const EntityState *dimmableMember(const config::Widget &w) const;
+  bool openBrightness(int widgetIndex, uint32_t now);
+  bool popupTouch(ui::Point p, uint32_t now);
+  bool popupRocker(ui::PhysicalKey key, uint32_t now);
+  void onBrightnessSend(const std::string &id, int pct);
+  void brightnessMarks(bool &changed);
+  BrightnessPopup popup_;
+  BrightnessSink bsink_;
+  bool bpUnknown_ = false, bpAwaiting_ = false, bpFailed_ = false, bpSawPending_ = false;
+  uint32_t bpSentAt_ = 0, lastNow_ = 0;
+  mutable EntityState optState_;  // widgetData(): the optimistic light state of the popup's widget
 };
 
 }  // namespace uistate

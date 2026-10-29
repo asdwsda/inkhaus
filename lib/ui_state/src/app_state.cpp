@@ -1,6 +1,7 @@
 #include "app_state.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "demo_states.h"
 #include "fake_actions.h"
@@ -25,6 +26,9 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   marks_.clear();
   switchDue_ = false;
   full_ = false;
+  popup_ = BrightnessPopup();
+  popup_.setSink([this](const std::string &id, int pct) { onBrightnessSend(id, pct); });
+  bpUnknown_ = bpAwaiting_ = bpFailed_ = bpSawPending_ = false;
   relayout();
   refreshFocusFlow();
 }
@@ -102,6 +106,20 @@ WidgetData AppState::widgetData(int idx) const {
   for (const std::string &id : w->entities) {
     auto it = marks_.find(id);
     if (it != marks_.end() && it->second == Mark::Failed) d.failed = true;
+  }
+  // Popup value (task 045): the light shows the optimistic brightness while the popup is open or a
+  // send is unconfirmed ("On 60%" on the widget).
+  const int opt = popup_.optimisticPct();
+  if (opt >= 0 && popup_.tab() == shownTab_ && popup_.widget() == idx && !popup_.entityId().empty()) {
+    for (size_t i = 0; i < d.members.size(); ++i) {
+      if (!d.members[i] || d.members[i]->id != popup_.entityId()) continue;
+      optState_ = *d.members[i];
+      if (!bpUnknown_) {
+        optState_.state = opt > 0 ? "on" : "off";
+        if (opt > 0) optState_.brightness = int(std::lround(opt * 255.0 / 100.0));
+      }
+      d.members[i] = &optState_;
+    }
   }
   for (const Pending &p : pending_) {
     if (p.tab != shownTab_ || p.widget != idx) continue;
@@ -207,11 +225,30 @@ bool AppState::setMarks(const std::map<std::string, Mark> &marks) {
       ++i;
     }
   }
+  brightnessMarks(changed);
   return changed;
 }
 
 bool AppState::tick(uint32_t now) {
   bool changed = false;
+  lastNow_ = now;
+  if (popup_.isOpen()) {
+    const EntityState *s = store_.get(popup_.entityId());
+    bool closed = popup_.tick(now);
+    if (!closed && s && !s->available) {  // the light became unavailable: close
+      popup_.done(now);
+      closed = true;
+    }
+    if (closed) {
+      closeBrightness(now);  // already closed: clears the flags
+      changed = true;
+    }
+  }
+  if (marksDriven_ && bpAwaiting_ && int32_t(now - bpSentAt_) >= int32_t(safetyMs_)) {
+    bpAwaiting_ = false;  // the driver never confirmed: show the real state again
+    popup_.clearOptimistic();
+    changed = true;
+  }
   if (switchDue_ && int32_t(now - switchAt_) >= 0) changed |= applyTabSwitch();
   for (size_t i = 0; i < pending_.size();) {
     if (int32_t(now - pending_[i].commitAt) >= 0) {
@@ -233,6 +270,8 @@ bool AppState::tick(uint32_t now) {
 
 bool AppState::touch(ui::Point p, uint32_t now) {
   if (screen_ != Screen::Tabs) return false;
+  lastNow_ = now;
+  if (popup_.isOpen()) return popupTouch(p, now);
   const ui::Hit hit = ui::hitTest(layout_, p);
   const int tabCount = int(cfg_.tabs.size());
   switch (hit.kind) {
@@ -276,6 +315,8 @@ bool AppState::touch(ui::Point p, uint32_t now) {
 
 bool AppState::rocker(ui::PhysicalKey key, uint32_t now) {
   if (screen_ != Screen::Tabs) return false;
+  lastNow_ = now;
+  if (popup_.isOpen()) return popupRocker(key, now);
   const ui::LogicalKey lk = ui::mapRocker(key, orientation_, false);
   // Anything but tab stepping acts on the shown content: let a pending tab switch happen first.
   bool changed = false;
@@ -303,6 +344,137 @@ bool AppState::rocker(ui::PhysicalKey key, uint32_t now) {
       return runAction(r.widgetIndex, r.sub, now) || true;
   }
   return changed;
+}
+
+// ---- brightness popup (task 045) ----
+
+const EntityState *AppState::dimmableMember(const config::Widget &w) const {
+  if (w.type != WidgetType::Light) return nullptr;
+  for (auto *m : membersOf(w))
+    if (m && m->available && m->dimmable()) return m;
+  return nullptr;
+}
+
+bool AppState::dimmableLightAt(ui::Point p) const {
+  if (screen_ != Screen::Tabs || popup_.isOpen()) return false;
+  const ui::Hit hit = ui::hitTest(layout_, p);
+  if (hit.kind != ui::HitKind::Widget) return false;
+  const config::Widget *w = widgetAt(shownTab_, hit.index);
+  return w && dimmableMember(*w);
+}
+
+bool AppState::openBrightness(int idx, uint32_t now) {
+  if (screen_ != Screen::Tabs || popup_.isOpen()) return false;
+  const config::Widget *w = widgetAt(shownTab_, idx);
+  const EntityState *m = w ? dimmableMember(*w) : nullptr;
+  if (!m) return false;
+  const bool on = m->state == "on";
+  bpUnknown_ = on && !m->brightness;
+  bpAwaiting_ = bpFailed_ = bpSawPending_ = false;
+  popup_.open(m->id, shownTab_, idx, on && m->brightness ? brightnessToPct(*m->brightness) : 0, now);
+  return true;
+}
+
+bool AppState::longPress(ui::Point p, uint32_t now) {
+  if (!dimmableLightAt(p)) return false;
+  return openBrightness(ui::hitTest(layout_, p).index, now);
+}
+
+bool AppState::openBrightnessFocused(uint32_t now) {
+  if (focus_.mode == ui::FocusMode::Tab || !focus_.ringVisible) return false;
+  const int idx = focusedWidgetIndex();
+  return idx >= 0 && openBrightness(idx, now);
+}
+
+bool AppState::closeBrightness(uint32_t now) {
+  const bool was = popup_.isOpen();
+  popup_.done(now);
+  if (bpFailed_) popup_.clearOptimistic();  // the widget shows the real state (with the failed badge)
+  bpFailed_ = false;
+  bpUnknown_ = false;
+  return was;
+}
+
+bool AppState::popupTouch(ui::Point p, uint32_t now) {
+  const BrightnessLayout l = brightnessLayout(orientation_);
+  bool changed = false;
+  switch (brightnessHitTest(l, p)) {
+    case BrightnessHit::Outside:
+    case BrightnessHit::Close:
+    case BrightnessHit::Done:
+      return closeBrightness(now);
+    case BrightnessHit::Panel: return false;
+    case BrightnessHit::Bar: {
+      const int pct = std::max(1, int(std::lround(brightnessBarFraction(l, p.x) * 100.0)));
+      changed = popup_.setPct(pct, now);
+      break;
+    }
+    case BrightnessHit::Minus: changed = popup_.step(-1, now); break;
+    case BrightnessHit::Plus: changed = popup_.step(+1, now); break;
+    case BrightnessHit::Preset0: changed = popup_.preset(0, now); break;
+    case BrightnessHit::Preset1: changed = popup_.preset(1, now); break;
+    case BrightnessHit::Preset2: changed = popup_.preset(2, now); break;
+    case BrightnessHit::Preset3: changed = popup_.preset(3, now); break;
+    case BrightnessHit::Off: changed = popup_.off(now); break;
+  }
+  if (changed) { bpUnknown_ = false; bpFailed_ = false; }
+  return changed;
+}
+
+bool AppState::popupRocker(ui::PhysicalKey key, uint32_t now) {
+  switch (key) {
+    case ui::PhysicalKey::Up:
+    case ui::PhysicalKey::Down: {
+      const bool changed = popup_.step(key == ui::PhysicalKey::Up ? +1 : -1, now);
+      if (changed) { bpUnknown_ = false; bpFailed_ = false; }
+      return changed;
+    }
+    case ui::PhysicalKey::Push:
+    case ui::PhysicalKey::LongPush: return closeBrightness(now);
+  }
+  return false;
+}
+
+void AppState::onBrightnessSend(const std::string &id, int pct) {
+  bpAwaiting_ = true;
+  bpSawPending_ = false;
+  bpFailed_ = false;
+  bpSentAt_ = lastNow_;
+  if (marksDriven_) {
+    if (bsink_) bsink_(id, pct);
+    return;
+  }
+  // Demo: apply to the local store at once.
+  if (const EntityState *cur = store_.get(id)) {
+    EntityState s = *cur;
+    s.state = pct > 0 ? "on" : "off";
+    if (pct > 0) s.brightness = int(std::lround(pct * 255.0 / 100.0));
+    store_.update({s});
+  }
+  bpAwaiting_ = false;
+  popup_.clearOptimistic();
+}
+
+// UNVERIFIED: the session marks the light Pending right after userAction and clears (or Fails) it when the
+// 036 confirmation arrives; a stale Failed mark from an earlier action would show alert at once.
+// Driver marks for the popup's light: Pending then absent = confirmed, Failed = alert until close.
+void AppState::brightnessMarks(bool &changed) {
+  if (!bpAwaiting_ || popup_.sendPending()) return;
+  auto it = marks_.find(popup_.entityId());
+  const Mark m = it == marks_.end() ? Mark::None : it->second;
+  if (m == Mark::Pending) {
+    bpSawPending_ = true;
+  } else if (m == Mark::Failed) {
+    bpAwaiting_ = false;
+    bpFailed_ = popup_.isOpen();
+    popup_.clearOptimistic();
+    changed = true;
+  } else if (bpSawPending_) {
+    bpAwaiting_ = false;
+    bpSawPending_ = false;
+    popup_.clearOptimistic();
+    changed = true;
+  }
 }
 
 }  // namespace uistate

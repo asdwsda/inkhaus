@@ -19,348 +19,6 @@ static void expectRect(int x, int y, int w, int h, const Rect& r) {
   TEST_ASSERT_EQUAL_INT(h, r.h);
 }
 
-void test_portrait_layout() {
-  auto L = computeSettingsLayout(Orientation::Portrait);
-  expectRect(404, 11, 120, 32, L.unsavedChip);
-  expectRect(0, 54, 540, 2, L.headerRule);
-  expectRect(16, 68, 508, 72, L.rows[0]);
-  expectRect(16, 152, 508, 72, L.rows[1]);
-  expectRect(16, 236, 508, 72, L.rows[2]);
-  expectRect(16, 320, 508, 72, L.rows[3]);
-  expectRect(16, 404, 508, 64, L.toolsRow);
-  expectRect(16, 480, 508, 64, L.note);
-  expectRect(16, 880, 248, 64, L.refreshButton);
-  expectRect(276, 880, 248, 64, L.backButton);
-  expectRect(16, 560, 508, 48, L.info[0].rect);
-  expectRect(16, 608, 508, 48, L.info[1].rect);
-  expectRect(16, 656, 508, 48, L.info[2].rect);
-  expectRect(16, 704, 508, 48, L.info[3].rect);
-  expectRect(16, 752, 508, 64, L.info[4].rect);
-  expectRect(16, 816, 508, 48, L.info[5].rect);
-  expectRect(16, 752, 508, 1, L.info[4].hairline);
-  TEST_ASSERT_EQUAL_INT(584, L.info[0].cy);
-  TEST_ASSERT_EQUAL_INT(632, L.info[1].cy);
-  TEST_ASSERT_EQUAL_INT(680, L.info[2].cy);
-  TEST_ASSERT_EQUAL_INT(728, L.info[3].cy);
-  TEST_ASSERT_EQUAL_INT(784, L.info[4].cy);
-  TEST_ASSERT_EQUAL_INT(770, L.info[4].cyLine1);
-  TEST_ASSERT_EQUAL_INT(798, L.info[4].cyLine2);
-  TEST_ASSERT_EQUAL_INT(840, L.info[5].cy);
-  TEST_ASSERT_EQUAL_INT(16 + 158, L.info[0].valueX);
-}
-
-void test_landscape_layout() {
-  auto L = computeSettingsLayout(Orientation::Landscape);
-  expectRect(824, 9, 120, 32, L.unsavedChip);
-  expectRect(0, 50, 960, 2, L.headerRule);
-  expectRect(16, 64, 456, 68, L.rows[0]);
-  expectRect(16, 144, 456, 68, L.rows[1]);
-  expectRect(16, 224, 456, 68, L.rows[2]);
-  expectRect(16, 304, 456, 68, L.rows[3]);
-  expectRect(16, 384, 456, 64, L.toolsRow);
-  expectRect(16, 460, 456, 64, L.note);
-  expectRect(488, 464, 222, 64, L.refreshButton);
-  expectRect(722, 464, 222, 64, L.backButton);
-  expectRect(488, 64, 456, 56, L.info[0].rect);
-  expectRect(488, 120, 456, 56, L.info[1].rect);
-  expectRect(488, 176, 456, 56, L.info[2].rect);
-  expectRect(488, 232, 456, 56, L.info[3].rect);
-  expectRect(488, 288, 456, 72, L.info[4].rect);
-  expectRect(488, 360, 456, 56, L.info[5].rect);
-  TEST_ASSERT_EQUAL_INT(92, L.info[0].cy);
-  TEST_ASSERT_EQUAL_INT(148, L.info[1].cy);
-  TEST_ASSERT_EQUAL_INT(204, L.info[2].cy);
-  TEST_ASSERT_EQUAL_INT(260, L.info[3].cy);
-  TEST_ASSERT_EQUAL_INT(324, L.info[4].cy);
-  TEST_ASSERT_EQUAL_INT(310, L.info[4].cyLine1);
-  TEST_ASSERT_EQUAL_INT(338, L.info[4].cyLine2);
-  TEST_ASSERT_EQUAL_INT(388, L.info[5].cy);
-  TEST_ASSERT_EQUAL_INT(646, L.info[0].valueX);
-  TEST_ASSERT_EQUAL_INT(298, L.info[0].valueWidth);
-}
-
-// Touch targets >= 64 x 64 (footer 64 high), >= 12 px apart; all on screen.
-void test_targets_size_gaps_and_bounds() {
-  for (auto o : {Orientation::Portrait, Orientation::Landscape}) {
-    auto L = computeSettingsLayout(o);
-    ui::Rect screen{0, 0, L.screenW, L.screenH};
-    for (int i = 0; i < kFocusStops; ++i) {
-      TEST_ASSERT_TRUE(L.stops[i].h >= 64);
-      TEST_ASSERT_TRUE(L.stops[i].w >= 64);
-      TEST_ASSERT_TRUE(ui::rectInside(L.stops[i], screen));
-      for (int j = i + 1; j < kFocusStops; ++j) {
-        // gap >= 12 means rects inflated by 5 never overlap
-        TEST_ASSERT_FALSE(ui::rectsOverlap(ui::inflate(L.stops[i], 5), ui::inflate(L.stops[j], 5)));
-      }
-    }
-  }
-}
-
-void test_row_internals() {
-  ui::Rect row{16, 68, 508, 72};
-  expectRect(32, 80, 220, 28, rowLabelRect(row));
-  expectRect(32, 108, 220, 18, rowHintRect(row));
-  TEST_ASSERT_EQUAL_INT(68 + 26, rowLabelCy(row));
-  TEST_ASSERT_EQUAL_INT(68 + 49, rowHintCy(row));
-  TEST_ASSERT_EQUAL_INT(68 + 36, rowValueCy(row));
-  TEST_ASSERT_EQUAL_INT(16 + 492, rowValueRightX(row));
-  ui::Rect land{16, 64, 456, 68};
-  TEST_ASSERT_EQUAL_INT(16 + 440, rowValueRightX(land));
-  TEST_ASSERT_EQUAL_INT(64 + 24, rowLabelCy(land));
-  TEST_ASSERT_EQUAL_INT(64 + 47, rowHintCy(land));
-  TEST_ASSERT_EQUAL_INT(64 + 34, rowValueCy(land));
-  TEST_ASSERT_EQUAL_INT(16 + 22, pipCentre(row, 0).x);
-  TEST_ASSERT_EQUAL_INT(16 + 22 + 100, pipCentre(row, 5).x);
-  TEST_ASSERT_EQUAL_INT(68 + 49, pipCentre(row, 0).y);
-  TEST_ASSERT_EQUAL_INT(2, pipCount(0));
-  TEST_ASSERT_EQUAL_INT(3, pipCount(1));
-  TEST_ASSERT_EQUAL_INT(6, pipCount(2));
-  TEST_ASSERT_EQUAL_INT(4, pipCount(3));
-  ui::Rect note{16, 480, 508, 64};
-  expectRect(28, 492, 40, 40, noteIconRect(note));
-  TEST_ASSERT_EQUAL_INT(80, noteTextX(note));
-  TEST_ASSERT_EQUAL_INT(501, noteLineCy(note, 0));
-  TEST_ASSERT_EQUAL_INT(523, noteLineCy(note, 1));
-  ui::Rect tr{16, 404, 508, 64};
-  TEST_ASSERT_EQUAL_INT(32, toolsRowLabelX(tr));
-  TEST_ASSERT_EQUAL_INT(436, toolsRowCy(tr));
-  TEST_ASSERT_EQUAL_INT(444 + 16, toolsRowSummaryRightX(tr));
-  expectRect(16 + 508 - 52, 416, 40, 40, toolsRowChevronRect(tr));
-  ui::Rect btn{16, 880, 248, 64};
-  expectRect(28, 892, 40, 40, buttonIconRect(btn));
-  expectRect(76, 880, 180, 64, buttonLabelRect(btn));
-}
-
-void test_value_text() {
-  Settings s;
-  s.orientation = Orientation::Landscape;
-  TEST_ASSERT_EQUAL_STRING("Landscape", rowValueText(0, s).c_str());
-  s.orientation = Orientation::Portrait;
-  TEST_ASSERT_EQUAL_STRING("Portrait", rowValueText(0, s).c_str());
-  TEST_ASSERT_EQUAL_STRING("Button", rowValueText(1, s).c_str());
-  s.wake_mode = WakeMode::Touch;
-  TEST_ASSERT_EQUAL_STRING("Touch", rowValueText(1, s).c_str());
-  s.refresh_interval_min = 0;
-  TEST_ASSERT_EQUAL_STRING("Off", rowValueText(2, s).c_str());
-  s.refresh_interval_min = 240;
-  TEST_ASSERT_EQUAL_STRING("240 min", rowValueText(2, s).c_str());
-  s.idle_timeout_s = 10;
-  TEST_ASSERT_EQUAL_STRING("10 s", rowValueText(3, s).c_str());
-  TEST_ASSERT_EQUAL_STRING("Orientation", rowLabel(0));
-  TEST_ASSERT_EQUAL_STRING("Wake mode", rowLabel(1));
-  TEST_ASSERT_EQUAL_STRING("Refresh every", rowLabel(2));
-  TEST_ASSERT_EQUAL_STRING("Idle timeout", rowLabel(3));
-}
-
-void test_cycle_wraps_in_array_order() {
-  Settings s;
-  s.refresh_interval_min = 0;
-  const int expect[] = {15, 30, 60, 120, 240, 0};
-  for (int e : expect) {
-    s = cycleRow(2, s);
-    TEST_ASSERT_EQUAL_INT(e, s.refresh_interval_min);
-  }
-  s.idle_timeout_s = 60;
-  s = cycleRow(3, s);
-  TEST_ASSERT_EQUAL_INT(10, s.idle_timeout_s);
-  s = cycleRow(0, s);
-  TEST_ASSERT_TRUE(s.orientation == Orientation::Landscape);
-  s = cycleRow(0, s);
-  TEST_ASSERT_TRUE(s.orientation == Orientation::Portrait);
-  // cycling changes only its own field
-  Settings t;
-  Settings u = cycleRow(1, t);
-  TEST_ASSERT_TRUE(u.wake_mode == WakeMode::Touch);
-  u.wake_mode = t.wake_mode;
-  TEST_ASSERT_TRUE(u == t);
-}
-
-void test_wake_warning_flags() {
-  Settings s;
-  TEST_ASSERT_FALSE(showsNote(s));
-  s.wake_mode = WakeMode::Touch;
-  TEST_ASSERT_TRUE(showsNote(s));
-  s.wake_mode = WakeMode::TouchAndButton;
-  TEST_ASSERT_TRUE(showsNote(s));
-  TEST_ASSERT_EQUAL_STRING("Touch & Button", rowValueText(1, s).c_str());
-  TEST_ASSERT_EQUAL_STRING("Touch wake shortens battery life.", kNoteLine1);
-  TEST_ASSERT_EQUAL_STRING("Button wake is recommended.", kNoteLine2);
-}
-
-void test_touch_cycles_buffer_only() {
-  Settings saved;  // defaults: Button, 60, 20, Portrait
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  auto u = sc.onTouch({100, 112});  // row 1 orientation
-  TEST_ASSERT_TRUE(sc.edit().orientation == Orientation::Landscape);
-  TEST_ASSERT_TRUE(sc.saved().orientation == Orientation::Portrait);
-  TEST_ASSERT_TRUE(sc.dirty());
-  TEST_ASSERT_TRUE(u.action == Action::None);
-  // layout stays portrait until leave
-  TEST_ASSERT_EQUAL_INT(540, sc.layout().screenW);
-  // dirty: value, hint, chip (flipped)
-  bool chip = false;
-  for (auto& r : u.dirty) chip |= (r == sc.layout().unsavedChip);
-  TEST_ASSERT_TRUE(chip);
-  TEST_ASSERT_EQUAL_INT(3, static_cast<int>(u.dirty.size()));
-}
-
-void test_touch_outside_does_nothing() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  auto u = sc.onTouch({270, 474});  // between the Tools row and note slot
-  TEST_ASSERT_TRUE(u.action == Action::None);
-  TEST_ASSERT_TRUE(u.dirty.empty());
-  u = sc.onTouch({10, 100});  // left margin
-  TEST_ASSERT_TRUE(u.dirty.empty());
-  u = sc.onTouch({100, 700});  // info area
-  TEST_ASSERT_TRUE(u.dirty.empty());
-  TEST_ASSERT_FALSE(sc.dirty());
-}
-
-void test_wake_touch_redraws_note_and_unsaved_chip_toggles() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  auto u = sc.onTouch({100, 212});  // wake row
-  TEST_ASSERT_TRUE(sc.edit().wake_mode == WakeMode::Touch);
-  bool note = false, chip = false;
-  for (auto& r : u.dirty) {
-    note |= (r == sc.layout().note);
-    chip |= (r == sc.layout().unsavedChip);
-  }
-  TEST_ASSERT_TRUE(note);
-  TEST_ASSERT_TRUE(chip);
-  // second tap on another row: dirty stays, chip not redrawn
-  u = sc.onTouch({100, 412});
-  chip = false;
-  for (auto& r : u.dirty) chip |= (r == sc.layout().unsavedChip);
-  TEST_ASSERT_FALSE(chip);
-  // back to Button: note gone, but still dirty (idle changed)
-  u = sc.onTouch({100, 212});
-  TEST_ASSERT_TRUE(sc.dirty());
-}
-
-void test_cycle_back_removes_unsaved_and_leave_is_write_free() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  sc.onTouch({100, 212});
-  TEST_ASSERT_TRUE(sc.dirty());
-  sc.onTouch({100, 212});
-  auto u = sc.onTouch({100, 212});  // Button again (3 values)
-  TEST_ASSERT_FALSE(sc.dirty());
-  bool chip = false;
-  for (auto& r : u.dirty) chip |= (r == sc.layout().unsavedChip);
-  TEST_ASSERT_TRUE(chip);
-  auto l = sc.leave();
-  TEST_ASSERT_FALSE(l.save);
-  TEST_ASSERT_FALSE(l.orientationChanged);
-  TEST_ASSERT_TRUE(l.fullRefresh);
-}
-
-void test_leave_saves_once_and_flags_orientation() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  sc.onTouch({100, 112});
-  auto l = sc.leave();
-  TEST_ASSERT_TRUE(l.save);
-  TEST_ASSERT_TRUE(l.orientationChanged);
-  TEST_ASSERT_TRUE(l.settings.orientation == Orientation::Landscape);
-  TEST_ASSERT_TRUE(l.fullRefresh);
-  // other change only: save but no rotation
-  SettingsScreen sc2(saved, Orientation::Portrait, false);
-  sc2.onTouch({100, 340});
-  l = sc2.leave();
-  TEST_ASSERT_TRUE(l.save);
-  TEST_ASSERT_FALSE(l.orientationChanged);
-}
-
-void test_back_and_long_push_leave() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, true);
-  TEST_ASSERT_TRUE(sc.onTouch({400, 912}).action == Action::Leave);
-  TEST_ASSERT_TRUE(sc.onKey(LogicalKey::LongPush).action == Action::Leave);
-  sc.onKey(LogicalKey::Prev);  // wraps to Back
-  TEST_ASSERT_EQUAL_INT(kStopBack, sc.focus());
-  TEST_ASSERT_TRUE(sc.onKey(LogicalKey::Push).action == Action::Leave);
-}
-
-void test_rocker_focus_order_and_wrap() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, true);
-  TEST_ASSERT_EQUAL_INT(0, sc.focus());
-  for (int i = 1; i <= 6; ++i) {
-    sc.onKey(LogicalKey::Next);
-    TEST_ASSERT_EQUAL_INT(i, sc.focus());
-  }
-  sc.onKey(LogicalKey::Next);
-  TEST_ASSERT_EQUAL_INT(0, sc.focus());
-  sc.onKey(LogicalKey::Prev);
-  TEST_ASSERT_EQUAL_INT(6, sc.focus());
-}
-
-void test_ring_dirty_is_old_and_new_inflated_by_6() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, true);
-  auto u = sc.onKey(LogicalKey::Next);
-  TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));
-  expectRect(10, 62, 520, 84, u.dirty[0]);  // row 1 inflated by 6
-  expectRect(10, 146, 520, 84, u.dirty[1]);  // row 2 inflated by 6
-  // hidden ring: only the new position is drawn
-  SettingsScreen hidden(saved, Orientation::Portrait, false);
-  u = hidden.onKey(LogicalKey::Next);
-  TEST_ASSERT_EQUAL_INT(1, static_cast<int>(u.dirty.size()));
-  TEST_ASSERT_TRUE(hidden.ringVisible());
-}
-
-void test_push_on_row_cycles() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, true);
-  sc.onKey(LogicalKey::Next);  // wake row
-  sc.onKey(LogicalKey::Push);
-  TEST_ASSERT_TRUE(sc.edit().wake_mode == WakeMode::Touch);
-}
-
-void test_refresh_now_flow() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  auto u = sc.onTouch({100, 912});
-  TEST_ASSERT_TRUE(u.action == Action::StartRefresh);
-  TEST_ASSERT_TRUE(sc.refreshState() == RefreshState::Running);
-  // ignored while running
-  u = sc.onTouch({100, 912});
-  TEST_ASSERT_TRUE(u.action == Action::None);
-  TEST_ASSERT_TRUE(u.dirty.empty());
-  // failure: button + HA row only
-  u = sc.refreshDone(false);
-  TEST_ASSERT_TRUE(sc.refreshState() == RefreshState::Failed);
-  TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));
-  // can retry from Failed, success also redraws Battery
-  TEST_ASSERT_TRUE(sc.onTouch({100, 912}).action == Action::StartRefresh);
-  u = sc.refreshDone(true);
-  TEST_ASSERT_TRUE(sc.refreshState() == RefreshState::Idle);
-  TEST_ASSERT_EQUAL_INT(3, static_cast<int>(u.dirty.size()));
-  bool battery = false;
-  for (auto& r : u.dirty) battery |= (r == sc.layout().info[1].rect);
-  TEST_ASSERT_TRUE(battery);
-  // refreshDone without a running fetch does nothing
-  TEST_ASSERT_TRUE(sc.refreshDone(true).dirty.empty());
-}
-
-void test_idle_is_fixed_60s() {
-  TEST_ASSERT_FALSE(SettingsScreen::idleExpired(59999));
-  TEST_ASSERT_TRUE(SettingsScreen::idleExpired(60000));
-}
-
-void test_layout_follows_given_orientation() {
-  Settings saved;
-  saved.orientation = Orientation::Landscape;
-  SettingsScreen sc(saved, Orientation::Landscape, false);
-  TEST_ASSERT_EQUAL_INT(960, sc.layout().screenW);
-  auto u = sc.onTouch({600, 496});  // Refresh now in landscape
-  TEST_ASSERT_TRUE(u.action == Action::StartRefresh);
-  u = sc.onTouch({800, 496});  // Back
-  TEST_ASSERT_TRUE(u.action == Action::Leave);
-}
-
 void test_info_texts() {
   WallTime now{10, 28, 14, 30};
   auto b = batteryText({78, 3920, false});
@@ -377,9 +35,9 @@ void test_info_texts() {
   h.everOk = true;
   h.lastLink = HaInfo::Link::Local;
   h.lastOk = {10, 28, 14, 5};
-  TEST_ASSERT_EQUAL_STRING("local, ok 14:05", haText(h, now).text.c_str());
+  TEST_ASSERT_EQUAL_STRING("internal, ok 14:05", haText(h, now).text.c_str());
   h.lastLink = HaInfo::Link::Remote;
-  TEST_ASSERT_EQUAL_STRING("remote, ok 14:05", haText(h, now).text.c_str());
+  TEST_ASSERT_EQUAL_STRING("external, ok 14:05", haText(h, now).text.c_str());
   h.lastAttemptOk = false;
   h.lastOk = {10, 27, 13, 5};
   auto off = haText(h, now);
@@ -434,194 +92,6 @@ void test_fit_text() {
 
 // ---- tester additions ----
 
-void test_title_and_all_hairlines() {
-  auto P = computeSettingsLayout(Orientation::Portrait);
-  expectRect(16, 0, 200, 54, P.title);
-  const int py[] = {560, 608, 656, 704, 752, 816};
-  for (int i = 0; i < kInfoRowCount; ++i) expectRect(16, py[i], 508, 1, P.info[i].hairline);
-  auto L = computeSettingsLayout(Orientation::Landscape);
-  expectRect(16, 0, 200, 50, L.title);
-  const int ly[] = {64, 120, 176, 232, 288, 360};
-  for (int i = 0; i < kInfoRowCount; ++i) expectRect(488, ly[i], 456, 1, L.info[i].hairline);
-  // stops mirror rows + buttons
-  for (int i = 0; i < kRowCount; ++i) TEST_ASSERT_TRUE(L.stops[i] == L.rows[i]);
-  TEST_ASSERT_TRUE(L.stops[kStopTools] == L.toolsRow);
-  TEST_ASSERT_TRUE(L.stops[kStopRefresh] == L.refreshButton);
-  TEST_ASSERT_TRUE(L.stops[kStopBack] == L.backButton);
-}
-
-void test_touch_hits_each_target_both_orientations() {
-  for (auto o : {Orientation::Portrait, Orientation::Landscape}) {
-    auto L = computeSettingsLayout(o);
-    for (int i = 0; i < kFocusStops; ++i) {
-      Settings saved;
-      SettingsScreen sc(saved, o, false);
-      Rect r = L.stops[i];
-      // corners inside, one pixel outside does nothing
-      auto u = sc.onTouch({r.x, r.y});
-      bool hit = u.action != Action::None || !u.dirty.empty();
-      TEST_ASSERT_TRUE(hit);
-      SettingsScreen sc2(saved, o, false);
-      u = sc2.onTouch({r.x + r.w - 1, r.y + r.h - 1});
-      hit = u.action != Action::None || !u.dirty.empty();
-      TEST_ASSERT_TRUE(hit);
-      SettingsScreen sc3(saved, o, false);
-      u = sc3.onTouch({r.x - 1, r.y + r.h / 2});
-      TEST_ASSERT_TRUE(u.action == Action::None && u.dirty.empty());
-      u = sc3.onTouch({r.x + r.w, r.y + r.h / 2});
-      TEST_ASSERT_TRUE(u.action == Action::None && u.dirty.empty());
-    }
-    // gap between the two footer buttons
-    Settings saved;
-    SettingsScreen sc(saved, o, false);
-    int gapX = L.refreshButton.x + L.refreshButton.w + 5;
-    auto u = sc.onTouch({gapX, L.refreshButton.y + 32});
-    TEST_ASSERT_TRUE(u.action == Action::None && u.dirty.empty());
-    // touch never moves focus or the ring
-    TEST_ASSERT_EQUAL_INT(0, sc.focus());
-    TEST_ASSERT_FALSE(sc.ringVisible());
-  }
-}
-
-void test_every_row_cycles_full_circle_and_chip_tracks_dirty() {
-  const int sizes[] = {2, 3, 6, 4};
-  for (int row = 0; row < kRowCount; ++row) {
-    Settings saved;
-    SettingsScreen sc(saved, Orientation::Portrait, false);
-    Point p{100, sc.layout().rows[row].y + 36};
-    for (int k = 1; k <= sizes[row]; ++k) {
-      auto u = sc.onTouch(p);
-      bool chip = false;
-      for (auto& r : u.dirty) chip |= (r == sc.layout().unsavedChip);
-      if (k == 1) {
-        TEST_ASSERT_TRUE(sc.dirty());
-        TEST_ASSERT_TRUE(chip);
-      } else if (k < sizes[row]) {
-        TEST_ASSERT_TRUE(sc.dirty());
-        TEST_ASSERT_FALSE(chip);
-      } else {
-        TEST_ASSERT_FALSE(sc.dirty());
-        TEST_ASSERT_TRUE(chip);
-      }
-    }
-    TEST_ASSERT_TRUE(sc.edit() == sc.saved());
-    TEST_ASSERT_FALSE(sc.leave().save);
-  }
-}
-
-void test_all_rows_changed_and_restored_is_write_free() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, true);
-  const int sizes[] = {2, 3, 6, 4};
-  for (int row = 0; row < kRowCount; ++row) {
-    for (int k = 0; k < sizes[row]; ++k) sc.onKey(LogicalKey::Push);
-    sc.onKey(LogicalKey::Next);
-  }
-  TEST_ASSERT_FALSE(sc.dirty());
-  auto l = sc.leave();
-  TEST_ASSERT_FALSE(l.save);
-  TEST_ASSERT_FALSE(l.orientationChanged);
-}
-
-void test_leave_returns_exactly_the_edited_settings() {
-  Settings saved;
-  saved.refresh_interval_min = 30;
-  saved.idle_timeout_s = 30;
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  sc.onTouch({100, 262});  // refresh 30 -> 60
-  sc.onTouch({100, 342});  // idle 30 -> 60
-  auto l = sc.leave();
-  TEST_ASSERT_TRUE(l.save);
-  TEST_ASSERT_FALSE(l.orientationChanged);
-  TEST_ASSERT_EQUAL_INT(60, l.settings.refresh_interval_min);
-  TEST_ASSERT_EQUAL_INT(60, l.settings.idle_timeout_s);
-  TEST_ASSERT_TRUE(l.settings.wake_mode == saved.wake_mode);
-  TEST_ASSERT_TRUE(l.settings.orientation == saved.orientation);
-  // leave() is const: calling twice gives the same answer, saved stays untouched
-  auto l2 = sc.leave();
-  TEST_ASSERT_TRUE(l2.settings == l.settings);
-  TEST_ASSERT_EQUAL_INT(30, sc.saved().refresh_interval_min);
-}
-
-void test_orientation_flag_from_landscape() {
-  Settings saved;
-  saved.orientation = Orientation::Landscape;
-  SettingsScreen sc(saved, Orientation::Landscape, false);
-  sc.onTouch({100, 108});  // landscape row 1 -> Portrait
-  auto l = sc.leave();
-  TEST_ASSERT_TRUE(l.save);
-  TEST_ASSERT_TRUE(l.orientationChanged);
-  TEST_ASSERT_TRUE(l.settings.orientation == Orientation::Portrait);
-  // changing and changing back: no flag
-  sc.onTouch({100, 108});
-  l = sc.leave();
-  TEST_ASSERT_FALSE(l.orientationChanged);
-  TEST_ASSERT_FALSE(l.save);
-}
-
-void test_long_push_leaves_from_every_stop_and_does_not_cycle() {
-  for (int stop = 0; stop < kFocusStops; ++stop) {
-    Settings saved;
-    SettingsScreen sc(saved, Orientation::Portrait, true);
-    for (int i = 0; i < stop; ++i) sc.onKey(LogicalKey::Next);
-    auto u = sc.onKey(LogicalKey::LongPush);
-    TEST_ASSERT_TRUE(u.action == Action::Leave);
-    TEST_ASSERT_FALSE(sc.dirty());
-    TEST_ASSERT_TRUE(sc.refreshState() == RefreshState::Idle);
-  }
-}
-
-void test_rocker_push_refresh_and_ignored_while_running() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, true);
-  sc.onKey(LogicalKey::Prev);  // Back
-  sc.onKey(LogicalKey::Prev);  // Refresh now
-  TEST_ASSERT_EQUAL_INT(kStopRefresh, sc.focus());
-  auto u = sc.onKey(LogicalKey::Push);
-  TEST_ASSERT_TRUE(u.action == Action::StartRefresh);
-  u = sc.onKey(LogicalKey::Push);
-  TEST_ASSERT_TRUE(u.action == Action::None);
-  TEST_ASSERT_TRUE(u.dirty.empty());
-  // rows stay active and Back still leaves while a fetch runs
-  sc.onKey(LogicalKey::Next);  // Back
-  TEST_ASSERT_TRUE(sc.onKey(LogicalKey::Push).action == Action::Leave);
-  sc.onTouch({100, 112});
-  TEST_ASSERT_TRUE(sc.dirty());
-  // completion after the buffer changed does not touch the buffer
-  sc.refreshDone(true);
-  TEST_ASSERT_TRUE(sc.dirty());
-}
-
-void test_refresh_failure_state_and_dirty_rects() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Landscape, false);
-  auto u = sc.onTouch({600, 496});
-  TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));  // button + HA row (pending look)
-  TEST_ASSERT_TRUE(u.dirty[0] == sc.layout().refreshButton);
-  TEST_ASSERT_TRUE(u.dirty[1] == sc.layout().info[2].rect);
-  u = sc.refreshDone(false);
-  TEST_ASSERT_TRUE(sc.refreshState() == RefreshState::Failed);
-  bool battery = false;
-  for (auto& r : u.dirty) battery |= (r == sc.layout().info[1].rect);
-  TEST_ASSERT_FALSE(battery);  // battery not re-read on failure
-  // a second failure notification is ignored
-  TEST_ASSERT_TRUE(sc.refreshDone(false).dirty.empty());
-  // a later success clears Failed
-  sc.onTouch({600, 496});
-  sc.refreshDone(true);
-  TEST_ASSERT_TRUE(sc.refreshState() == RefreshState::Idle);
-}
-
-void test_rocker_wake_row_note_dirty() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Landscape, true);
-  sc.onKey(LogicalKey::Next);
-  auto u = sc.onKey(LogicalKey::Push);
-  bool note = false;
-  for (auto& r : u.dirty) note |= (r == sc.layout().note);
-  TEST_ASSERT_TRUE(note);
-  TEST_ASSERT_TRUE(showsNote(sc.edit()));
-}
 
 void test_info_edge_cases() {
   WallTime now{10, 28, 14, 30};
@@ -676,157 +146,6 @@ void test_fit_text_exact_boundaries() {
   TEST_ASSERT_TRUE(fakeMeasure(f.text, 18) <= 100 + 9);  // ellipsis is 3 bytes but 1 char in measure
 }
 
-static void test_tools_row_model() {
-  settings::Settings s;
-  TEST_ASSERT_EQUAL_STRING("Demo mode", toolsRowLabel(kToolsDemoRow));
-  TEST_ASSERT_EQUAL_STRING("Debug log", toolsRowLabel(kToolsDebugRow));
-  TEST_ASSERT_EQUAL_STRING("Sample dashboard, offline", toolsRowHint(kToolsDemoRow));
-  TEST_ASSERT_EQUAL_STRING("Log lines to SD card", toolsRowHint(kToolsDebugRow));
-  TEST_ASSERT_EQUAL_STRING("Off", toolsRowValueText(kToolsDemoRow, s).c_str());
-  TEST_ASSERT_EQUAL_STRING("Demo Off, Log Off", toolsSummary(s).c_str());
-  TEST_ASSERT_FALSE(toolsShowsNote(s));
-  s = toggleToolsRow(kToolsDebugRow, s);
-  TEST_ASSERT_TRUE(s.debug_log);
-  TEST_ASSERT_FALSE(s.demo_mode);
-  TEST_ASSERT_EQUAL_STRING("On", toolsRowValueText(kToolsDebugRow, s).c_str());
-  TEST_ASSERT_TRUE(toolsShowsNote(s));
-  s = toggleToolsRow(kToolsDemoRow, s);
-  TEST_ASSERT_EQUAL_STRING("Demo On, Log On", toolsSummary(s).c_str());
-  s = toggleToolsRow(kToolsDebugRow, toggleToolsRow(kToolsDemoRow, s));
-  TEST_ASSERT_TRUE(s == settings::Settings());
-}
-
-static void test_tools_layout() {
-  auto P = computeToolsLayout(Orientation::Portrait);
-  expectRect(16, 68, 508, 88, P.rows[0]);
-  expectRect(16, 168, 508, 88, P.rows[1]);
-  expectRect(16, 268, 508, 64, P.note);
-  expectRect(276, 880, 248, 64, P.backButton);
-  expectRect(404, 11, 120, 32, P.unsavedChip);
-  TEST_ASSERT_EQUAL_INT(68 + 32, toolsRowLabelCy(P.rows[0]));
-  TEST_ASSERT_EQUAL_INT(68 + 62, toolsRowHintCy(P.rows[0]));
-  TEST_ASSERT_EQUAL_INT(68 + 44, toolsRowValueCy(P.rows[0]));
-  TEST_ASSERT_EQUAL_INT(16 + 492, toolsRowValueRightX(P.rows[0]));
-  auto L = computeToolsLayout(Orientation::Landscape);
-  expectRect(16, 64, 456, 88, L.rows[0]);
-  expectRect(488, 64, 456, 88, L.rows[1]);
-  expectRect(488, 164, 456, 64, L.note);
-  expectRect(722, 464, 222, 64, L.backButton);
-  TEST_ASSERT_EQUAL_INT(488 + 440, toolsRowValueRightX(L.rows[1]));
-  for (auto o : {Orientation::Portrait, Orientation::Landscape}) {
-    auto T = computeToolsLayout(o);
-    ui::Rect screen{0, 0, T.screenW, T.screenH};
-    for (int i = 0; i < kToolsFocusStops; ++i) {
-      TEST_ASSERT_TRUE(T.stops[i].h >= 64);
-      TEST_ASSERT_TRUE(ui::rectInside(T.stops[i], screen));
-      for (int j = i + 1; j < kToolsFocusStops; ++j)
-        TEST_ASSERT_FALSE(ui::rectsOverlap(ui::inflate(T.stops[i], 5), ui::inflate(T.stops[j], 5)));
-    }
-    TEST_ASSERT_FALSE(ui::rectsOverlap(ui::inflate(T.note, 5), ui::inflate(T.backButton, 5)));
-  }
-}
-
-static void test_tools_page_navigation_and_shared_buffer() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  // touch the Tools row: page changes, nothing saved or applied
-  auto u = sc.onTouch({100, 436});
-  TEST_ASSERT_TRUE(u.action == Action::PageChange);
-  TEST_ASSERT_TRUE(sc.page() == Page::Tools);
-  TEST_ASSERT_EQUAL_INT(0, sc.focus());
-  TEST_ASSERT_FALSE(sc.dirty());
-  // toggle Debug log by touch: value + note + chip; the main page behind is unchanged
-  u = sc.onTouch({100, 212});
-  TEST_ASSERT_TRUE(sc.edit().debug_log);
-  TEST_ASSERT_TRUE(sc.dirty());
-  TEST_ASSERT_EQUAL_INT(3, static_cast<int>(u.dirty.size()));  // value, note, chip
-  const auto& TL = sc.toolsLayout();
-  TEST_ASSERT_TRUE(u.dirty[1] == TL.note);
-  TEST_ASSERT_TRUE(u.dirty[2] == TL.unsavedChip);
-  // toggle again: note clears, chip clears
-  u = sc.onTouch({100, 212});
-  TEST_ASSERT_FALSE(sc.dirty());
-  TEST_ASSERT_EQUAL_INT(3, static_cast<int>(u.dirty.size()));
-  // Demo mode row: value + chip only
-  u = sc.onTouch({100, 112});
-  TEST_ASSERT_TRUE(sc.edit().demo_mode);
-  TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));
-  // anything else does nothing (the main page's Refresh position is not a target here)
-  u = sc.onTouch({100, 600});
-  TEST_ASSERT_TRUE(u.action == Action::None && u.dirty.empty());
-  // Back returns to the main page, no leave, edits kept, focus = Tools row
-  u = sc.onTouch({400, 912});
-  TEST_ASSERT_TRUE(u.action == Action::PageChange);
-  TEST_ASSERT_TRUE(sc.page() == Page::Main);
-  TEST_ASSERT_EQUAL_INT(kStopTools, sc.focus());
-  TEST_ASSERT_TRUE(sc.edit().demo_mode);
-  TEST_ASSERT_TRUE(sc.dirty());
-  auto l = sc.leave();
-  TEST_ASSERT_TRUE(l.save);
-  TEST_ASSERT_TRUE(l.demoChanged);
-  TEST_ASSERT_FALSE(l.debugLogChanged);
-  TEST_ASSERT_FALSE(l.orientationChanged);
-}
-
-static void test_tools_page_rocker() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Landscape, true);
-  for (int i = 0; i < kStopTools; ++i) sc.onKey(LogicalKey::Next);
-  TEST_ASSERT_EQUAL_INT(kStopTools, sc.focus());
-  auto u = sc.onKey(LogicalKey::Push);
-  TEST_ASSERT_TRUE(u.action == Action::PageChange);
-  TEST_ASSERT_TRUE(sc.page() == Page::Tools);
-  TEST_ASSERT_EQUAL_INT(0, sc.focus());
-  TEST_ASSERT_EQUAL_INT(3, sc.stopCount());
-  TEST_ASSERT_TRUE(sc.focusRect() == sc.toolsLayout().rows[0]);
-  // order Demo, Debug, Back; wraps both ways
-  u = sc.onKey(LogicalKey::Next);
-  TEST_ASSERT_EQUAL_INT(1, sc.focus());
-  TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));
-  TEST_ASSERT_TRUE(u.dirty[1] == ui::inflate(sc.toolsLayout().rows[1], kRingInflate));
-  sc.onKey(LogicalKey::Next);
-  TEST_ASSERT_EQUAL_INT(kToolsStopBack, sc.focus());
-  sc.onKey(LogicalKey::Next);
-  TEST_ASSERT_EQUAL_INT(0, sc.focus());
-  sc.onKey(LogicalKey::Prev);
-  TEST_ASSERT_EQUAL_INT(kToolsStopBack, sc.focus());
-  // push on a row toggles, on Back returns
-  sc.onKey(LogicalKey::Prev);
-  sc.onKey(LogicalKey::Push);
-  TEST_ASSERT_TRUE(sc.edit().debug_log);
-  sc.onKey(LogicalKey::Next);
-  u = sc.onKey(LogicalKey::Push);
-  TEST_ASSERT_TRUE(u.action == Action::PageChange);
-  TEST_ASSERT_TRUE(sc.page() == Page::Main);
-  TEST_ASSERT_EQUAL_INT(kStopTools, sc.focus());
-  TEST_ASSERT_TRUE(sc.leave().debugLogChanged);
-  // LONG_PUSH on the Tools page = back one level, not out of Settings
-  sc.onKey(LogicalKey::Push);
-  TEST_ASSERT_TRUE(sc.page() == Page::Tools);
-  sc.onKey(LogicalKey::Next);
-  u = sc.onKey(LogicalKey::LongPush);
-  TEST_ASSERT_TRUE(u.action == Action::PageChange);
-  TEST_ASSERT_TRUE(sc.page() == Page::Main);
-  // LONG_PUSH on the main page leaves
-  TEST_ASSERT_TRUE(sc.onKey(LogicalKey::LongPush).action == Action::Leave);
-}
-
-static void test_tools_sd_flag_and_main_page_still_leaves() {
-  Settings saved;
-  SettingsScreen sc(saved, Orientation::Portrait, false);
-  TEST_ASSERT_TRUE(sc.sdPresent());
-  sc.setSdPresent(false);
-  TEST_ASSERT_FALSE(sc.sdPresent());
-  // idle auto-leave is the caller's: leave() works from the Tools page too and saves the buffer
-  sc.onTouch({100, 436});
-  sc.onTouch({100, 212});
-  auto l = sc.leave();
-  TEST_ASSERT_TRUE(l.save);
-  TEST_ASSERT_TRUE(l.settings.debug_log);
-  TEST_ASSERT_TRUE(l.debugLogChanged);
-  TEST_ASSERT_EQUAL_STRING("built-in demo", kDemoConfigText);
-}
-
 static void test_value_fit_level() {
   TEST_ASSERT_EQUAL(0, settings_ui::valueFitLevel(100, 60, 100));
   TEST_ASSERT_EQUAL(1, settings_ui::valueFitLevel(101, 60, 100));
@@ -834,46 +153,383 @@ static void test_value_fit_level() {
   TEST_ASSERT_EQUAL(2, settings_ui::valueFitLevel(300, 101, 100));
 }
 
+// ---- revision 7: overview, category pages, shared buffer ----
+
+static NetworkInfo twoProfiles() {
+  NetworkInfo n;
+  n.profiles = {"Home", "Hotspot"};
+  return n;
+}
+
+static Update touchCentre(SettingsScreen& s, const Rect& r) { return s.onTouch({r.x + r.w / 2, r.y + r.h / 2}); }
+
+void test_overview_layout_both_orientations() {
+  SettingsLayout p = computeSettingsLayout(Orientation::Portrait);
+  expectRect(16, 68, 508, 96, p.categories[0]);
+  expectRect(16, 176, 508, 96, p.categories[1]);
+  expectRect(16, 284, 508, 96, p.categories[2]);
+  expectRect(16, 392, 508, 96, p.categories[3]);
+  expectRect(16, 504, 508, 48, p.info[0].rect);
+  expectRect(16, 696, 508, 64, p.info[4].rect);
+  TEST_ASSERT_EQUAL_INT(808, p.info[5].rect.y + p.info[5].rect.h);
+  expectRect(16, 880, 248, 64, p.refreshButton);
+  expectRect(276, 880, 248, 64, p.backButton);
+  SettingsLayout l = computeSettingsLayout(Orientation::Landscape);
+  expectRect(16, 64, 456, 96, l.categories[0]);
+  expectRect(16, 388, 456, 96, l.categories[3]);
+  expectRect(488, 64, 456, 56, l.info[0].rect);
+  expectRect(722, 464, 222, 64, l.backButton);
+  expectRect(16 + 456 - 52, 64 + 28, 40, 40, categoryChevronRect(l.categories[0]));
+  TEST_ASSERT_EQUAL_INT(64 + 34, categoryLabelCy(l.categories[0]));
+  TEST_ASSERT_EQUAL_INT(64 + 66, categorySummaryCy(l.categories[0]));
+}
+
+void test_page_layouts() {
+  PageLayout d = computePageLayout(Page::Display, Orientation::Portrait);
+  TEST_ASSERT_EQUAL_INT(1, d.rowCount);
+  expectRect(16, 68, 508, 72, d.rows[0]);
+  expectRect(16, 152, 508, 32, d.caption);
+  TEST_ASSERT_EQUAL_INT(0, d.note.w);
+  TEST_ASSERT_EQUAL_INT(2, d.stopCount);
+  PageLayout dl = computePageLayout(Page::Display, Orientation::Landscape);
+  expectRect(16, 64, 456, 68, dl.rows[0]);
+  TEST_ASSERT_EQUAL_INT(132, dl.caption.y);
+
+  PageLayout s = computePageLayout(Page::Sleep, Orientation::Portrait);
+  expectRect(16, 68, 508, 72, s.rows[0]);
+  expectRect(16, 152, 508, 72, s.rows[1]);
+  expectRect(16, 236, 508, 72, s.rows[2]);
+  expectRect(16, 320, 508, 64, s.note);
+  PageLayout sl = computePageLayout(Page::Sleep, Orientation::Landscape);
+  expectRect(16, 144, 456, 68, sl.rows[1]);
+  expectRect(16, 304, 456, 64, sl.note);
+
+  PageLayout n = computePageLayout(Page::Network, Orientation::Portrait);
+  expectRect(16, 68, 508, 88, n.rows[0]);
+  expectRect(16, 168, 508, 88, n.rows[1]);
+  expectRect(16, 268, 508, 64, n.note);
+  PageLayout nl = computePageLayout(Page::Network, Orientation::Landscape);
+  expectRect(488, 64, 456, 88, nl.rows[1]);
+  expectRect(16, 164, 456, 64, nl.note);
+
+  PageLayout t = computePageLayout(Page::Tools, Orientation::Landscape);
+  expectRect(488, 164, 456, 64, t.note);
+  TEST_ASSERT_TRUE(t.rowIds[0] == RowId::Demo && t.rowIds[1] == RowId::Debug);
+}
+
+void test_page_targets_size_gaps_and_screen_bounds() {
+  for (Orientation o : {Orientation::Portrait, Orientation::Landscape}) {
+    for (int pg = 1; pg <= 4; ++pg) {
+      PageLayout L = computePageLayout(static_cast<Page>(pg), o);
+      for (int i = 0; i < L.stopCount; ++i) {
+        const Rect& a = L.stops[i];
+        TEST_ASSERT_TRUE(a.h >= 64 || a.h >= 68);
+        TEST_ASSERT_TRUE(a.x >= 0 && a.y >= 0 && a.x + a.w <= L.screenW && a.y + a.h <= L.screenH);
+        for (int j = i + 1; j < L.stopCount; ++j) {
+          const Rect& b = L.stops[j];
+          const bool apartX = a.x + a.w + 12 <= b.x || b.x + b.w + 12 <= a.x;
+          const bool apartY = a.y + a.h + 12 <= b.y || b.y + b.h + 12 <= a.y;
+          TEST_ASSERT_TRUE(apartX || apartY);
+        }
+      }
+      if (L.note.w > 0) TEST_ASSERT_TRUE(L.note.y + L.note.h <= L.screenH);
+    }
+    SettingsLayout L = computeSettingsLayout(o);
+    for (int i = 0; i < kOverviewStops; ++i)
+      for (int j = i + 1; j < kOverviewStops; ++j) {
+        const Rect &a = L.stops[i], &b = L.stops[j];
+        const bool apartX = a.x + a.w + 12 <= b.x || b.x + b.w + 12 <= a.x;
+        const bool apartY = a.y + a.h + 12 <= b.y || b.y + b.h + 12 <= a.y;
+        TEST_ASSERT_TRUE(apartX || apartY);
+      }
+  }
+}
+
+void test_summaries() {
+  Settings s;
+  NetworkInfo n = twoProfiles();
+  TEST_ASSERT_EQUAL_STRING("Portrait", categorySummary(0, s, n).c_str());
+  s.orientation = Orientation::Landscape;
+  TEST_ASSERT_EQUAL_STRING("Landscape", categorySummary(0, s, n).c_str());
+  s.wake_mode = WakeMode::Touch;
+  s.refresh_interval_min = 60;
+  s.idle_timeout_s = 20;
+  TEST_ASSERT_EQUAL_STRING("Touch, 60 min, 20 s", categorySummary(1, s, n).c_str());
+  s.wake_mode = WakeMode::TouchAndButton;
+  TEST_ASSERT_EQUAL_STRING("Touch & Button, 60 min, 20 s", categorySummary(1, s, n).c_str());
+  TEST_ASSERT_EQUAL_STRING("Both, 60 min, 20 s", categorySummary(1, s, n, true).c_str());
+  TEST_ASSERT_EQUAL_STRING("Wi-Fi Auto, HA Auto", categorySummary(2, s, n).c_str());
+  s.wifi_profile = 2;
+  s.ha_link = settings::HaLink::Internal;
+  TEST_ASSERT_EQUAL_STRING("Wi-Fi Hotspot, HA Internal", categorySummary(2, s, n).c_str());
+  TEST_ASSERT_EQUAL_STRING("Demo Off, Log Off", categorySummary(3, s, n).c_str());
+  s.debug_log = true;
+  TEST_ASSERT_EQUAL_STRING("Demo Off, Log On", categorySummary(3, s, n).c_str());
+}
+
+void test_wifi_and_ha_cycling() {
+  NetworkInfo n = twoProfiles();
+  Settings s;
+  s = cycleRow(RowId::Wifi, s, n);
+  TEST_ASSERT_EQUAL_INT(1, s.wifi_profile);
+  TEST_ASSERT_EQUAL_STRING("Home", rowValueText(RowId::Wifi, s, n).c_str());
+  s = cycleRow(RowId::Wifi, s, n);
+  TEST_ASSERT_EQUAL_STRING("Hotspot", rowValueText(RowId::Wifi, s, n).c_str());
+  s = cycleRow(RowId::Wifi, s, n);
+  TEST_ASSERT_EQUAL_INT(0, s.wifi_profile);
+  TEST_ASSERT_EQUAL_STRING("Auto", rowValueText(RowId::Wifi, s, n).c_str());
+  s.wifi_profile = 4;  // profile no longer in secrets.yaml: back to Auto, shown as such a profile meanwhile
+  TEST_ASSERT_EQUAL_STRING("Profile 4", rowValueText(RowId::Wifi, s, n).c_str());
+  TEST_ASSERT_EQUAL_INT(0, cycleRow(RowId::Wifi, s, n).wifi_profile);
+  NetworkInfo none;  // no profiles: stays Auto
+  TEST_ASSERT_EQUAL_INT(0, cycleRow(RowId::Wifi, Settings(), none).wifi_profile);
+
+  s = Settings();
+  const char* want[] = {"Internal", "External", "Auto", "Internal"};
+  for (const char* w : want) {
+    s = cycleRow(RowId::HaLink, s, n);
+    TEST_ASSERT_EQUAL_STRING(w, rowValueText(RowId::HaLink, s, n).c_str());
+  }
+}
+
+void test_network_hints() {
+  Settings s;
+  NetworkInfo n = twoProfiles();
+  TEST_ASSERT_EQUAL_STRING("Not connected", wifiHint(n).c_str());
+  TEST_ASSERT_EQUAL_STRING("Link: -", haLinkHint(s, n).c_str());
+  n.connected = "Hotspot";
+  n.link = LinkState::External;
+  n.profileDecides = true;
+  TEST_ASSERT_EQUAL_STRING("Connected: Hotspot", wifiHint(n).c_str());
+  TEST_ASSERT_EQUAL_STRING("Link: external (profile)", haLinkHint(s, n).c_str());
+  s.ha_link = settings::HaLink::External;  // forced: the profile does not decide
+  TEST_ASSERT_EQUAL_STRING("Link: external", haLinkHint(s, n).c_str());
+  n.link = LinkState::Internal;
+  n.profileDecides = false;
+  s.ha_link = settings::HaLink::Auto;
+  TEST_ASSERT_EQUAL_STRING("Link: internal", haLinkHint(s, n).c_str());
+  n.link = LinkState::None;
+  TEST_ASSERT_EQUAL_STRING("Link: none (offline)", haLinkHint(s, n).c_str());
+  n.demo = true;
+  TEST_ASSERT_EQUAL_STRING("Not used (demo mode)", wifiHint(n).c_str());
+  TEST_ASSERT_EQUAL_STRING("Not used (demo mode)", haLinkHint(s, n).c_str());
+}
+
+void test_notes_per_page() {
+  Settings s;
+  TEST_ASSERT_FALSE(pageShowsNote(Page::Sleep, s));
+  s.wake_mode = WakeMode::Touch;
+  TEST_ASSERT_TRUE(pageShowsNote(Page::Sleep, s));
+  TEST_ASSERT_FALSE(pageShowsNote(Page::Network, s));
+  s.wifi_profile = 1;
+  TEST_ASSERT_TRUE(pageShowsNote(Page::Network, s));
+  TEST_ASSERT_FALSE(pageShowsNote(Page::Tools, s));
+  s.debug_log = true;
+  TEST_ASSERT_TRUE(pageShowsNote(Page::Tools, s));
+  TEST_ASSERT_FALSE(pageShowsNote(Page::Display, s));
+  TEST_ASSERT_EQUAL_STRING(kToolsNoCardLine1, pageNote(Page::Tools, false).line1);
+  TEST_ASSERT_EQUAL_STRING(kNetNoteLine1, pageNote(Page::Network, true).line1);
+}
+
+void test_category_touch_opens_page_without_saving_and_back_returns() {
+  SettingsScreen s(Settings(), Orientation::Portrait, false);
+  s.setNetwork(twoProfiles());
+  Update u = touchCentre(s, s.layout().categories[2]);
+  TEST_ASSERT_TRUE(u.action == Action::PageChange);
+  TEST_ASSERT_TRUE(s.page() == Page::Network);
+  TEST_ASSERT_FALSE(s.dirty());
+  TEST_ASSERT_EQUAL_INT(0, s.focus());
+  TEST_ASSERT_EQUAL_INT(3, s.stopCount());
+  // Back: up, overview focus on the category just left
+  u = touchCentre(s, s.pageLayout().backButton);
+  TEST_ASSERT_TRUE(u.action == Action::PageChange);
+  TEST_ASSERT_TRUE(s.page() == Page::Main);
+  TEST_ASSERT_EQUAL_INT(2, s.focus());
+}
+
+void test_one_shared_buffer_across_pages_and_chip() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  s.setNetwork(twoProfiles());
+  touchCentre(s, s.layout().categories[0]);  // Display
+  Update u = touchCentre(s, s.pageLayout().rows[0]);  // Orientation -> Landscape
+  TEST_ASSERT_TRUE(s.edit().orientation == Orientation::Landscape);
+  bool chip = false;
+  for (const Rect& r : u.dirty) chip |= r.x == s.pageLayout().unsavedChip.x && r.y == s.pageLayout().unsavedChip.y;
+  TEST_ASSERT_TRUE(chip);
+  touchCentre(s, s.pageLayout().backButton);
+  touchCentre(s, s.layout().categories[2]);  // Network
+  u = touchCentre(s, s.pageLayout().rows[1]);  // HA connection
+  TEST_ASSERT_TRUE(s.edit().ha_link == settings::HaLink::Internal);
+  TEST_ASSERT_EQUAL_INT(1, (int)u.dirty.size());  // value only: chip already shown, no note
+  u = touchCentre(s, s.pageLayout().rows[0]);  // Wi-Fi -> Home: forced profile note appears
+  TEST_ASSERT_EQUAL_INT(1, s.edit().wifi_profile);
+  bool note = false;
+  for (const Rect& r : u.dirty) note |= r.y == s.pageLayout().note.y && r.w == s.pageLayout().note.w;
+  TEST_ASSERT_TRUE(note);
+  // nothing saved by moving between levels; leave reports everything
+  touchCentre(s, s.pageLayout().backButton);
+  u = touchCentre(s, s.layout().backButton);
+  TEST_ASSERT_TRUE(u.action == Action::Leave);
+  LeaveResult r = s.leave();
+  TEST_ASSERT_TRUE(r.save && r.orientationChanged && r.networkChanged);
+  TEST_ASSERT_FALSE(r.demoChanged);
+  TEST_ASSERT_EQUAL_INT(1, r.settings.wifi_profile);
+}
+
+void test_cycling_back_makes_leave_write_free() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  s.setNetwork(twoProfiles());
+  s.onKey(LogicalKey::Push);  // Display
+  s.onKey(LogicalKey::Push);  // Orientation twice
+  s.onKey(LogicalKey::Push);
+  TEST_ASSERT_FALSE(s.dirty());
+  s.onKey(LogicalKey::LongPush);
+  LeaveResult r = s.leave();
+  TEST_ASSERT_FALSE(r.save);
+  TEST_ASSERT_FALSE(r.networkChanged);
+}
+
+void test_network_changed_flag_only_for_network_fields() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  s.setNetwork(twoProfiles());
+  touchCentre(s, s.layout().categories[3]);  // Tools
+  touchCentre(s, s.pageLayout().rows[1]);    // Debug log
+  LeaveResult r = s.leave();
+  TEST_ASSERT_TRUE(r.save && r.debugLogChanged);
+  TEST_ASSERT_FALSE(r.networkChanged);
+}
+
+void test_rocker_focus_orders_and_wrap() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  s.setNetwork(twoProfiles());
+  TEST_ASSERT_EQUAL_INT(0, s.focus());
+  for (int i = 1; i <= 6; ++i) {  // 6 stops: Display, Sleep, Network, Tools, Refresh, Back
+    s.onKey(LogicalKey::Next);
+    TEST_ASSERT_EQUAL_INT(i % 6, s.focus());
+  }
+  s.onKey(LogicalKey::Prev);
+  TEST_ASSERT_EQUAL_INT(kStopBack, s.focus());
+  // enter Sleep & wake: 3 rows + Back
+  s.onKey(LogicalKey::Next);  // 0
+  s.onKey(LogicalKey::Next);  // 1 Sleep
+  Update u = s.onKey(LogicalKey::Push);
+  TEST_ASSERT_TRUE(u.action == Action::PageChange);
+  TEST_ASSERT_TRUE(s.page() == Page::Sleep);
+  TEST_ASSERT_EQUAL_INT(4, s.stopCount());
+  TEST_ASSERT_EQUAL_INT(0, s.focus());
+  s.onKey(LogicalKey::Prev);
+  TEST_ASSERT_EQUAL_INT(3, s.focus());  // Back
+  // Push on a row cycles the buffer
+  s.onKey(LogicalKey::Next);
+  s.onKey(LogicalKey::Push);  // Wake mode Button -> Touch
+  TEST_ASSERT_TRUE(s.edit().wake_mode == WakeMode::Touch);
+  // Push on Back goes up, focus on the Sleep row
+  s.onKey(LogicalKey::Prev);
+  u = s.onKey(LogicalKey::Push);
+  TEST_ASSERT_TRUE(s.page() == Page::Main);
+  TEST_ASSERT_EQUAL_INT(1, s.focus());
+  TEST_ASSERT_TRUE(s.dirty());  // going up saves/applies nothing: still buffered
+}
+
+void test_long_push_is_one_level_back() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  s.setNetwork(twoProfiles());
+  for (int cat = 0; cat < 4; ++cat) {
+    while (s.focus() != cat) s.onKey(LogicalKey::Next);
+    s.onKey(LogicalKey::Push);
+    TEST_ASSERT_TRUE(s.page() == categoryPage(cat));
+    Update u = s.onKey(LogicalKey::LongPush);
+    TEST_ASSERT_TRUE(u.action == Action::PageChange);
+    TEST_ASSERT_TRUE(s.page() == Page::Main);
+    TEST_ASSERT_EQUAL_INT(cat, s.focus());
+  }
+  Update u = s.onKey(LogicalKey::LongPush);  // overview: leave
+  TEST_ASSERT_TRUE(u.action == Action::Leave);
+}
+
+void test_ring_dirty_on_pages() {
+  SettingsScreen s(Settings(), Orientation::Landscape, true);
+  s.setNetwork(twoProfiles());
+  touchCentre(s, s.layout().categories[2]);
+  Update u = s.onKey(LogicalKey::Next);  // Wi-Fi -> HA connection (landscape: right column)
+  TEST_ASSERT_EQUAL_INT(2, (int)u.dirty.size());
+  const Rect infl = ui::inflate(s.pageLayout().rows[1], kRingInflate);
+  expectRect(infl.x, infl.y, infl.w, infl.h, u.dirty[1]);
+  TEST_ASSERT_EQUAL_INT(488, s.focusRect().x);
+}
+
+void test_refresh_still_works_on_overview_only() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  s.setNetwork(twoProfiles());
+  Update u = touchCentre(s, s.layout().refreshButton);
+  TEST_ASSERT_TRUE(u.action == Action::StartRefresh);
+  u = touchCentre(s, s.layout().refreshButton);
+  TEST_ASSERT_TRUE(u.action == Action::None);
+  u = s.refreshDone(true);
+  TEST_ASSERT_EQUAL_INT(3, (int)u.dirty.size());
+  TEST_ASSERT_TRUE(s.refreshState() == RefreshState::Idle);
+  touchCentre(s, s.layout().categories[0]);
+  // touches on the overview's rects do nothing on a category page
+  u = touchCentre(s, s.layout().refreshButton);
+  TEST_ASSERT_TRUE(u.action == Action::None && u.dirty.empty());
+}
+
+void test_idle_is_fixed_60s_from_any_page() {
+  TEST_ASSERT_FALSE(SettingsScreen::idleExpired(59999));
+  TEST_ASSERT_TRUE(SettingsScreen::idleExpired(60000));
+}
+
+void test_tools_toggles_and_values() {
+  NetworkInfo n;
+  Settings s;
+  s = cycleRow(RowId::Demo, s, n);
+  s = cycleRow(RowId::Debug, s, n);
+  TEST_ASSERT_TRUE(s.demo_mode && s.debug_log);
+  TEST_ASSERT_EQUAL_STRING("On", rowValueText(RowId::Demo, s, n).c_str());
+  s = cycleRow(RowId::Demo, s, n);
+  TEST_ASSERT_EQUAL_STRING("Off", rowValueText(RowId::Demo, s, n).c_str());
+  TEST_ASSERT_EQUAL_STRING("Sample dashboard, offline", hintRowStaticHint(RowId::Demo));
+  TEST_ASSERT_EQUAL_STRING("Log lines to SD card", hintRowStaticHint(RowId::Debug));
+}
+
+void test_pip_rows_cycle_full_circle() {
+  NetworkInfo n;
+  const RowId pips[] = {RowId::Orientation, RowId::Wake, RowId::Refresh, RowId::Idle};
+  for (RowId r : pips) {
+    Settings s;
+    TEST_ASSERT_TRUE(isPipRow(r));
+    Settings cur = s;
+    for (int i = 0; i < pipCount(r); ++i) cur = cycleRow(r, cur, n);
+    TEST_ASSERT_TRUE(cur == s);
+  }
+  TEST_ASSERT_FALSE(isPipRow(RowId::Wifi));
+  TEST_ASSERT_EQUAL_INT(0, pipCount(RowId::Wifi));
+}
+
 int main() {
   UNITY_BEGIN();
-  RUN_TEST(test_tools_row_model);
-  RUN_TEST(test_tools_layout);
-  RUN_TEST(test_tools_page_navigation_and_shared_buffer);
-  RUN_TEST(test_tools_page_rocker);
-  RUN_TEST(test_tools_sd_flag_and_main_page_still_leaves);
-  RUN_TEST(test_portrait_layout);
-  RUN_TEST(test_landscape_layout);
-  RUN_TEST(test_targets_size_gaps_and_bounds);
-  RUN_TEST(test_row_internals);
-  RUN_TEST(test_value_text);
-  RUN_TEST(test_cycle_wraps_in_array_order);
-  RUN_TEST(test_wake_warning_flags);
-  RUN_TEST(test_touch_cycles_buffer_only);
-  RUN_TEST(test_touch_outside_does_nothing);
-  RUN_TEST(test_wake_touch_redraws_note_and_unsaved_chip_toggles);
-  RUN_TEST(test_cycle_back_removes_unsaved_and_leave_is_write_free);
-  RUN_TEST(test_leave_saves_once_and_flags_orientation);
-  RUN_TEST(test_back_and_long_push_leave);
-  RUN_TEST(test_rocker_focus_order_and_wrap);
-  RUN_TEST(test_ring_dirty_is_old_and_new_inflated_by_6);
-  RUN_TEST(test_push_on_row_cycles);
-  RUN_TEST(test_refresh_now_flow);
-  RUN_TEST(test_idle_is_fixed_60s);
-  RUN_TEST(test_layout_follows_given_orientation);
   RUN_TEST(test_info_texts);
   RUN_TEST(test_fit_text);
-  RUN_TEST(test_title_and_all_hairlines);
-  RUN_TEST(test_touch_hits_each_target_both_orientations);
-  RUN_TEST(test_every_row_cycles_full_circle_and_chip_tracks_dirty);
-  RUN_TEST(test_all_rows_changed_and_restored_is_write_free);
-  RUN_TEST(test_leave_returns_exactly_the_edited_settings);
-  RUN_TEST(test_orientation_flag_from_landscape);
-  RUN_TEST(test_long_push_leaves_from_every_stop_and_does_not_cycle);
-  RUN_TEST(test_rocker_push_refresh_and_ignored_while_running);
-  RUN_TEST(test_refresh_failure_state_and_dirty_rects);
-  RUN_TEST(test_rocker_wake_row_note_dirty);
   RUN_TEST(test_info_edge_cases);
   RUN_TEST(test_fit_text_exact_boundaries);
   RUN_TEST(test_value_fit_level);
+  RUN_TEST(test_overview_layout_both_orientations);
+  RUN_TEST(test_page_layouts);
+  RUN_TEST(test_page_targets_size_gaps_and_screen_bounds);
+  RUN_TEST(test_summaries);
+  RUN_TEST(test_wifi_and_ha_cycling);
+  RUN_TEST(test_network_hints);
+  RUN_TEST(test_notes_per_page);
+  RUN_TEST(test_category_touch_opens_page_without_saving_and_back_returns);
+  RUN_TEST(test_one_shared_buffer_across_pages_and_chip);
+  RUN_TEST(test_cycling_back_makes_leave_write_free);
+  RUN_TEST(test_network_changed_flag_only_for_network_fields);
+  RUN_TEST(test_rocker_focus_orders_and_wrap);
+  RUN_TEST(test_long_push_is_one_level_back);
+  RUN_TEST(test_ring_dirty_on_pages);
+  RUN_TEST(test_refresh_still_works_on_overview_only);
+  RUN_TEST(test_idle_is_fixed_60s_from_any_page);
+  RUN_TEST(test_tools_toggles_and_values);
+  RUN_TEST(test_pip_rows_cycle_full_circle);
   return UNITY_END();
 }

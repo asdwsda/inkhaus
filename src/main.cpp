@@ -11,6 +11,7 @@
 #include "app_state.h"
 #include "config_sd.h"
 #include "boot.h"
+#include "brightness_intent.h"
 #include "input.h"
 #include "net.h"
 #include "net_task.h"
@@ -181,8 +182,13 @@ static void snapshotInfo() {
   i.battery.millivolts = batteryMv();
   i.battery.charging = M5.Power.isCharging() == m5::Power_Class::is_charging;
   i.wifi.configured = g_real;
-  i.wifi.ssid = g_cfg.cfg.connection.wifi.ssid;
   i.wifi.connected = g_drv && g_drv->wifiUp();
+  i.wifi.ssid = g_cfg.cfg.connection.wifi.ssid;  // task 047: the connected profile's SSID when there is one
+  if (i.wifi.connected) {
+    const std::string active = net::activeProfileName();
+    for (const auto &p : g_cfg.cfg.connection.wifiProfiles)
+      if (p.name == active) i.wifi.ssid = p.ssid;
+  }
   i.config.missing = g_cfg.demo;
   i.config.errorCount = int(g_cfg.errors.size());
   if (!g_cfg.errors.empty()) {
@@ -202,6 +208,22 @@ static void snapshotInfo() {
                                              : settings_ui::HaInfo::Link::Local;
     h.refreshing = g_settingsRefreshing;
   }
+}
+
+// Snapshot for the Settings > Network page (profile names for cycling, live hints).
+static settings_ui::NetworkInfo networkInfo() {
+  settings_ui::NetworkInfo n;
+  for (const auto &p : g_cfg.cfg.connection.wifiProfiles) n.profiles.push_back(p.name);
+  n.demo = g_settings.demo_mode || !g_real;
+  if (n.demo) return n;
+  if (g_drv && g_drv->wifiUp()) n.connected = net::activeProfileName();
+  n.profileDecides = net::linkInfo().haUrl != 0;  // config::HaUrlMode::Auto == 0
+  if (g_drv && g_drv->sessionDone()) {
+    n.link = g_drv->lastFetchFailed() ? settings_ui::LinkState::None
+             : g_drv->lastLinkExternal() ? settings_ui::LinkState::External
+                                         : settings_ui::LinkState::Internal;
+  }
+  return n;
 }
 
 static void drawSettingsFrame(present::Mode mode, uint32_t now) {
@@ -276,6 +298,18 @@ static void onAppAction(int tab, int widget, int sub, const std::vector<EntitySt
   if (ev) g_drv->userAction(*ev, g_tapNow);
 }
 
+// Brightness popup send (task 045): light.turn_on with brightness_pct, or light.turn_off for 0.
+static void onBrightnessSend(const std::string &id, int pct) {
+  if (!g_real || !g_drv) return;
+  auto ev = app_logic::brightnessIntent(id, pct);
+  if (ev) g_drv->userAction(*ev, millis());
+}
+
+// A tap on a dimmable light waits for the release or the long press (task 045).
+static bool g_tapDeferred = false;
+static ui::Point g_tapPoint;
+static uint32_t g_tapAt = 0;
+
 // Driver marks (pending/failed by entity id) -> widget visuals. True if something visible changed.
 static bool syncMarks() {
   if (!g_real || !g_drv) return false;
@@ -295,6 +329,7 @@ static void applyOrientation(settings::Orientation o) {
   present::begin();
   g_app.init(g_cfg.cfg, o, g_demoMode);
   g_app.setActionSink(onAppAction);
+  g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMarksDriven(g_real);
   if (!g_demoMode) g_app.store().update(keep);
   boot::log("orientation", (long)(o == settings::Orientation::Landscape ? 1 : 0));
@@ -324,6 +359,7 @@ static void reloadConfigSource(settings::Orientation o) {
   g_real = !g_demoMode;
   g_app.init(g_cfg.cfg, o, g_demoMode);
   g_app.setActionSink(onAppAction);
+  g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMarksDriven(g_real);
   boot::log("mode", g_real ? "real" : "demo");
   if (g_real) {
@@ -359,11 +395,21 @@ static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
     timedShow(present::Mode::Full, now);
   }
   g_app.takeFull();
+  // Task 047: a changed Wi-Fi profile or HA connection applies at once: a fresh session, after the tab
+  // screen is drawn. (A demo switch already started its own session in reloadConfigSource.)
+  if (r.networkChanged && !r.demoChanged && g_real) {
+    session_glue::ntpAbort();
+    g_drv.reset();  // before the Wi-Fi adapter it points to
+    g_wifi.reset();
+    g_sessionOver = false;
+    startSession(millis());  // net::configure() with the new settings; UNVERIFIED: net::begin restarts a running connect
+  }
 }
 
 static void openSettings(bool ring, uint32_t now) {
   snapshotInfo();
   settings_flow::open(g_settings, g_app.orientation(), ring, now);
+  settings_flow::setNetwork(networkInfo());
   drawSettingsFrame(present::Mode::Full, now);
   wakelog::logf("APP: settings opened\n");
 }
@@ -414,6 +460,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     if (settings_flow::active()) handleSettingsResult(settings_flow::tick(now + 3600u * 1000u), now);
     const int64_t epoch = session_glue::wallClock();
     plan = app_logic::planForSleep(g_settings, session, epoch, utcOffsetAt(epoch), localIdle);
+    g_app.closeBrightness(now);  // the frozen screen never shows the popup (brightness.md rule 5)
   }
   if (!low && present::framesOk()) {
     present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
@@ -512,6 +559,7 @@ void setup() {
     g_real = !g_demoMode;
     g_app.init(cfg.cfg, s.orientation, g_demoMode);
     g_app.setActionSink(onAppAction);
+  g_app.setBrightnessSink(onBrightnessSend);
     g_app.setMarksDriven(g_real);
     boot::log("mode", g_real ? "real" : "demo");
     if (g_real) g_restoredEpoch = state_cache::restore(cfg.cfg.entityIds, g_app.store());
@@ -621,6 +669,25 @@ void loop() {
     else if (e.kind == input::Event::Key)
       handleSettingsResult(settings_flow::onKey(ui::mapRocker(e.key, g_app.orientation(), false), now), now);
     handleSettingsResult(settings_flow::tick(now), now);
+  } else if (e.kind == input::Event::LongTouch) {
+    if (g_tapDeferred) {
+      g_tapDeferred = false;
+      changed |= g_app.longPress(g_tapPoint, now);
+    }
+  } else if (e.kind == input::Event::TouchRelease) {
+    if (g_tapDeferred) {  // a short tap on a dimmable light: on/off as usual, now that it is not a long press
+      g_tapDeferred = false;
+      g_tapNow = now;
+      changed |= g_app.touch(g_tapPoint, now);
+    }
+  } else if (e.kind == input::Event::Touch && g_app.brightnessOpen()) {
+    g_tapNow = now;
+    changed |= g_app.touch(e.point, now);  // modal: outside closes, controls act
+  } else if (e.kind == input::Event::Touch && g_app.screen() == uistate::Screen::Tabs &&
+             g_app.dimmableLightAt(e.point)) {
+    g_tapDeferred = true;
+    g_tapPoint = e.point;
+    g_tapAt = now;
   } else if (e.kind == input::Event::Touch) {
     const ui::Hit hit = g_app.screen() == uistate::Screen::Tabs ? ui::hitTest(g_app.layout(), e.point) : ui::Hit();
     if (hit.kind == ui::HitKind::Settings) {
@@ -635,9 +702,11 @@ void loop() {
       changed |= g_app.touch(e.point, now);
     }
   } else if (e.kind == input::Event::Key) {
-    if (e.key == ui::PhysicalKey::LongPush && g_app.screen() == uistate::Screen::Tabs &&
+    if (e.key == ui::PhysicalKey::LongPush && !g_app.brightnessOpen() && g_app.screen() == uistate::Screen::Tabs &&
         g_app.focus().mode == ui::FocusMode::Tab) {
       openSettings(true, now);
+    } else if (e.key == ui::PhysicalKey::LongPush && !g_app.brightnessOpen() && g_app.openBrightnessFocused(now)) {
+      changed = true;
     } else {
       g_tapNow = now;
       changed |= g_app.rocker(e.key, now);
@@ -692,6 +761,11 @@ void loop() {
   hooks.setPendingMs = [](uint32_t ms) { g_app.setPendingMs(ms); };
   shot::poll(hooks);
 
+  if (g_tapDeferred && now - g_tapAt > 1500) {  // neither release nor hold seen: treat as a tap
+    g_tapDeferred = false;
+    g_tapNow = now;
+    changed |= g_app.touch(g_tapPoint, now);
+  }
   changed |= g_app.tick(now);
   if (changed) showFrame(now);
   present::idle(millis());

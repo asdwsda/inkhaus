@@ -629,6 +629,92 @@ void test_fixed_profile_and_forced_setting() {
   TEST_ASSERT_TRUE(d.memory.empty());
 }
 
+// ---- re-probe of a learned external (task 047) ----
+
+namespace {
+// Like Device, but with the timestamped memory net_task keeps.
+struct ClockDevice {
+  std::map<std::string, Learned> memory;
+  int64_t now = 1800000000;  // 0 = no clock
+  uint32_t sessionNo = 0;
+  Side session(ReachTransport &t, const std::string &ssid) {
+    ++sessionNo;
+    HaWorker w(t, "http://ha.local:8123", "https://x.example.org", "T");
+    Learned stored = memory.count(ssid) ? memory[ssid] : Learned();
+    const bool stale = learnedStale(stored, now, sessionNo);
+    UrlPlan plan = planUrls(LinkMode::Auto, LinkMode::Auto, effectiveRemembered(stored, now, sessionNo), true);
+    w.applyPlan(plan);
+    t.urls.clear();
+    NetCommand c;
+    c.ids = {"light.a"};
+    NetEvent e = w.run(c);
+    Side answered = e.http_status != 0 ? (e.external ? Side::External : Side::Internal) : Side::None;
+    if (shouldStoreLearned(plan, answered, stored, stale)) memory[ssid] = Learned{answered, now, sessionNo};
+    return answered;
+  }
+};
+}  // namespace
+
+void test_learned_stale_rules() {
+  Learned ext{Side::External, 1800000000, 5};
+  TEST_ASSERT_FALSE(learnedStale(ext, 1800000000 + 86399, 6));
+  TEST_ASSERT_TRUE(learnedStale(ext, 1800000000 + 86400, 6));
+  TEST_ASSERT_TRUE(learnedStale(ext, 1800000000 - 10, 6));  // clock went backwards
+  TEST_ASSERT_FALSE(learnedStale(Learned{Side::Internal, 1800000000, 5}, 1800000000 + 999999, 99));  // only external ages
+  TEST_ASSERT_FALSE(learnedStale(Learned(), 1800000000, 99));
+  // no clock now: session counter, every 20th
+  TEST_ASSERT_FALSE(learnedStale(ext, 0, 5 + 19));
+  TEST_ASSERT_TRUE(learnedStale(ext, 0, 5 + 20));
+  // no clock when learned: also sessions
+  Learned noClock{Side::External, 0, 5};
+  TEST_ASSERT_FALSE(learnedStale(noClock, 1800000000, 24));
+  TEST_ASSERT_TRUE(learnedStale(noClock, 1800000000, 25));
+  TEST_ASSERT_TRUE(effectiveRemembered(ext, 1800000000 + 86400, 6) == Side::None);
+  TEST_ASSERT_TRUE(effectiveRemembered(ext, 1800000000 + 10, 6) == Side::External);
+}
+
+// Internal failed once at home (-> external learned), later back to internal.
+void test_internal_failed_once_at_home_then_back_to_internal() {
+  ReachTransport t;
+  ClockDevice d;
+  t.internalUp = false;  // a single bad moment at home
+  TEST_ASSERT_TRUE(d.session(t, "home") == Side::External);
+  t.internalUp = true;
+  TEST_ASSERT_TRUE(d.session(t, "home") == Side::External);  // sticks for now: no failing probe each time
+  TEST_ASSERT_EQUAL(1, (int)t.urls.size());
+  d.now += 86400 + 1;  // a day later: internal first again
+  TEST_ASSERT_TRUE(d.session(t, "home") == Side::Internal);
+  TEST_ASSERT_EQUAL(1, (int)t.urls.size());
+  TEST_ASSERT_TRUE(t.urls[0].find("ha.local") != std::string::npos);
+  TEST_ASSERT_TRUE(d.memory["home"].side == Side::Internal);
+}
+
+// Without a clock: back to internal at the 20th session.
+void test_reprobe_by_session_count_without_clock() {
+  ReachTransport t;
+  ClockDevice d;
+  d.now = 0;
+  t.internalUp = false;
+  TEST_ASSERT_TRUE(d.session(t, "home") == Side::External);  // learned at session 1
+  t.internalUp = true;
+  for (int i = 0; i < 19; ++i) TEST_ASSERT_TRUE(d.session(t, "home") == Side::External);  // sessions 2..20
+  TEST_ASSERT_TRUE(d.session(t, "home") == Side::Internal);  // session 21 = 20 after learning
+}
+
+// Truly on the hotspot: the re-probe costs one failed internal try, and renews the memory.
+void test_reprobe_on_hotspot_renews_external() {
+  ReachTransport t;
+  ClockDevice d;
+  t.internalUp = false;
+  TEST_ASSERT_TRUE(d.session(t, "phone") == Side::External);
+  d.now += 86400 + 1;
+  TEST_ASSERT_TRUE(d.session(t, "phone") == Side::External);
+  TEST_ASSERT_EQUAL(2, (int)t.urls.size());  // internal probe failed, external answered
+  TEST_ASSERT_EQUAL((long)d.now, (long)d.memory["phone"].epoch);  // renewed
+  TEST_ASSERT_TRUE(d.session(t, "phone") == Side::External);
+  TEST_ASSERT_EQUAL(1, (int)t.urls.size());  // no probe again until the next day
+}
+
 // ---- tap intent ----
 
 void test_intent_toggles_and_actions() {
@@ -862,6 +948,10 @@ int main() {
   RUN_TEST(test_side_to_store);
   RUN_TEST(test_back_to_internal_at_home);
   RUN_TEST(test_fixed_profile_and_forced_setting);
+  RUN_TEST(test_learned_stale_rules);
+  RUN_TEST(test_internal_failed_once_at_home_then_back_to_internal);
+  RUN_TEST(test_reprobe_by_session_count_without_clock);
+  RUN_TEST(test_reprobe_on_hotspot_renews_external);
   RUN_TEST(test_demo_mode_decisions);
   RUN_TEST(test_connect_fetch_render);
   RUN_TEST(test_tap_call_confirm);

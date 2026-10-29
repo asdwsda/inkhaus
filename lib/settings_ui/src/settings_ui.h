@@ -14,20 +14,25 @@ namespace settings_ui {
 using ui::Point;
 using ui::Rect;
 
-// ---- layout (spec sections 3 and 4) ----
-constexpr int kRowCount = 4;      // main page: Orientation, Wake mode, Refresh every, Idle timeout
+// ---- structure (spec section 3, revision 7) ----
+// Overview (Page::Main) with four category rows, and one page per category.
+enum class Page { Main, Display, Sleep, Network, Tools };
+constexpr int kCategoryCount = 4;
+inline Page categoryPage(int i) { return static_cast<Page>(i + 1); }
+const char* categoryLabel(int i);  // "Display", "Sleep & wake", "Network", "Tools" (also the page title)
+
+// Setting rows, in the edit buffer order of the categories.
+enum class RowId { Orientation, Wake, Refresh, Idle, Wifi, HaLink, Demo, Debug };
+constexpr int kRowIdCount = 8;
+constexpr int kMaxPageRows = 3;
+bool isPipRow(RowId r);  // Orientation, Wake, Refresh, Idle (2..6 fixed values); the others are hint rows (88 high)
+
+// ---- layout (spec sections 3 and 8) ----
 constexpr int kInfoRowCount = 6;  // Firmware, Battery, HA, Wi-Fi, Config, Errors
-constexpr int kFocusStops = 7;    // main page: 4 rows, Tools, Refresh now, Back
-constexpr int kStopTools = 4;     // 0-based focus stop indices (main page)
-constexpr int kStopRefresh = 5;
-constexpr int kStopBack = 6;
+constexpr int kOverviewStops = 6; // 4 category rows, Refresh now, Back
+constexpr int kStopRefresh = 4;   // 0-based focus stop indices (overview)
+constexpr int kStopBack = 5;
 constexpr int kRingInflate = 6;
-// Tools page (spec section 8): Demo mode, Debug log, Back.
-constexpr int kToolsRowCount = 2;
-constexpr int kToolsDemoRow = 0;
-constexpr int kToolsDebugRow = 1;
-constexpr int kToolsFocusStops = 3;
-constexpr int kToolsStopBack = 2;
 
 enum class InfoId { Firmware, Battery, HomeAssistant, WiFi, Config, Errors };
 
@@ -42,32 +47,38 @@ struct InfoRow {
   int valueWidth = 0;            // width available for the value without icon
 };
 
+// Overview.
 struct SettingsLayout {
   settings::Orientation orientation = settings::Orientation::Portrait;
   int screenW = 0, screenH = 0;
   Rect title;  // text box, F40, vertically centred in the box
   Rect unsavedChip;
   Rect headerRule;
-  Rect rows[kRowCount];
-  Rect toolsRow;  // navigation button to the Tools page
-  Rect note;
+  Rect categories[kCategoryCount];
   InfoRow info[kInfoRowCount];
   Rect refreshButton, backButton;
-  Rect stops[kFocusStops];  // focus order; same rects as rows + buttons
+  Rect stops[kOverviewStops];  // focus order; same rects as categories + buttons
 };
 SettingsLayout computeSettingsLayout(settings::Orientation o);
 
-// Tools page layout (spec section 8).
-struct ToolsLayout {
+// A category page (spec section 8). Focus stops = rows top to bottom (landscape Network/Tools: left to
+// right), then Back.
+struct PageLayout {
+  Page page = Page::Display;
   settings::Orientation orientation = settings::Orientation::Portrait;
   int screenW = 0, screenH = 0;
   Rect title, unsavedChip, headerRule;
-  Rect rows[kToolsRowCount];
-  Rect note;
+  int rowCount = 0;
+  RowId rowIds[kMaxPageRows];
+  Rect rows[kMaxPageRows];
+  Rect note;     // w == 0: the page has no note slot
+  Rect caption;  // Display only (w == 0 elsewhere): text box of the static caption, F18 DIM, cy = y + h / 2
   Rect backButton;
-  Rect stops[kToolsFocusStops];  // Demo mode, Debug log, Back
+  int stopCount = 0;  // rowCount + 1
+  Rect stops[kMaxPageRows + 1];
 };
-ToolsLayout computeToolsLayout(settings::Orientation o);
+PageLayout computePageLayout(Page p, settings::Orientation o);
+constexpr const char* kDisplayCaption = "Applied when Settings is left.";
 
 // Inside one setting row; all results absolute.
 // Main page rows are 72 (portrait) or 68 (landscape) high: label cy = h/2 - 10, hint cy = h/2 + 13,
@@ -82,7 +93,6 @@ int rowValueCy(const Rect& row);
 // Value font decision: 0 = F40 fits, 1 = F24 fits, 2 = neither (truncate F24 with "...").
 constexpr int kValueGap = 16;
 inline int valueFitLevel(int w40, int w24, int freeW) { return w40 <= freeW ? 0 : (w24 <= freeW ? 1 : 2); }
-int pipCount(int rowIndex);  // 2, 3, 6, 4
 Point pipCentre(const Rect& row, int k);  // (row.x + 22 + 20k, hint cy)
 constexpr int kPipDiameter = 12;
 Rect noteIconRect(const Rect& note);    // (12,12,40,40) slot-relative
@@ -91,46 +101,67 @@ int noteLineCy(const Rect& note, int line);  // line 0: +21, line 1: +43
 Rect buttonIconRect(const Rect& button);     // (12,12,40,40) button-relative
 Rect buttonLabelRect(const Rect& button);    // (60,0,w-68,64)
 
-// Tools row of the main page (button-relative, spec 3.5): label x+16, summary right edge W-64,
-// chevron (40x40) at (W-52, 12), all cy = 32.
-int toolsRowLabelX(const Rect& r);
-int toolsRowCy(const Rect& r);
-int toolsRowSummaryRightX(const Rect& r);
-Rect toolsRowChevronRect(const Rect& r);
-// "Demo Off, Log On" (current buffer values).
-std::string toolsSummary(const settings::Settings& s);
+// Category row of the overview (row-relative 508 x 96 / 456 x 96, spec 3.0): label F24 at x + 16, cy + 34;
+// one-line summary F18 at x + 16, cy + 66; chevron (40x40) at (W - 52, 28).
+int categoryLabelX(const Rect& r);
+int categoryLabelCy(const Rect& r);
+int categorySummaryCy(const Rect& r);
+int categorySummaryMaxWidth(const Rect& r);  // W - 32 - 52
+Rect categoryChevronRect(const Rect& r);
 
-// Rows of the Tools page (88 high): label cy +32 (F24), hint cy +62 (F18), value cy +44 (F40, right edge W-16).
-int toolsRowLabelCy(const Rect& r);
-int toolsRowHintCy(const Rect& r);
-int toolsRowValueCy(const Rect& r);
-int toolsRowValueRightX(const Rect& r);
-Rect toolsRowValueRect(const Rect& r);  // dirty region of a toggle
-const char* toolsRowLabel(int i);       // "Demo mode", "Debug log"
-const char* toolsRowHint(int i);        // "Sample dashboard, offline", "Log lines to SD card"
-std::string toolsRowValueText(int i, const settings::Settings& s);  // "Off" / "On"
-settings::Settings toggleToolsRow(int i, const settings::Settings& s);
+// Hint rows (88 high): label cy +32 (F24), hint cy +62 (F18), value cy +44 (F40, right edge W-16).
+int hintRowLabelCy(const Rect& r);
+int hintRowHintCy(const Rect& r);
+int hintRowValueCy(const Rect& r);
+Rect hintRowValueRect(const Rect& r);   // dirty region of a changed value (right 268 px)
+int hintRowValueWidth();                // 252: box 240..492 for profile names (fit rule F40, F24, "...")
+const char* hintRowLabel(RowId r);      // "Wi-Fi", "HA connection", "Demo mode", "Debug log"
+const char* hintRowStaticHint(RowId r); // Demo / Debug hints; "" for the live ones (Wi-Fi, HA connection)
+
+// ---- network info (spec 8.3): a snapshot taken when Settings opens ----
+enum class LinkState { Unknown, None, Internal, External };  // the link in use (None = offline)
+struct NetworkInfo {
+  std::vector<std::string> profiles;  // profile names from secrets.yaml, list order (Wi-Fi cycling)
+  std::string connected;              // name of the connected profile, "" = not connected
+  LinkState link = LinkState::Unknown;
+  bool profileDecides = false;        // the connected profile fixes the link (ha_url != auto)
+  bool demo = false;                  // saved demo mode: no network in use
+};
+
+// ---- text ----
+const char* rowLabel(RowId r);
+// "Portrait", "Button", "Off" / "15 min", "20 s", Wi-Fi "Auto" / profile name, "Internal", "On".
+std::string rowValueText(RowId r, const settings::Settings& s, const NetworkInfo& n);
+// Index of the current value in its allowed-values array (-1 if not allowed / not a pip row).
+int rowValueIndex(RowId r, const settings::Settings& s);
+int pipCount(RowId r);  // 2, 3, 6, 4 for pip rows, else 0
+// Next allowed value, wrapping last -> first. An unknown value goes to the first. Wi-Fi: Auto -> 1..N -> Auto.
+settings::Settings cycleRow(RowId r, const settings::Settings& s, const NetworkInfo& n);
+
+// Hints of the Network rows (live snapshot): "Connected: Home", "Not connected", "Link: external (profile)",
+// "Link: none (offline)", "Not used (demo mode)".
+std::string wifiHint(const NetworkInfo& n);
+std::string haLinkHint(const settings::Settings& edit, const NetworkInfo& n);
+
+// Overview summaries from the edit buffer (spec 3.0): "Portrait", "Touch, 60 min, 20 s",
+// "Wi-Fi Auto, HA Auto", "Demo Off, Log Off". shortWake: "Touch & Button" -> "Both" (when it does not fit).
+std::string categorySummary(int category, const settings::Settings& s, const NetworkInfo& n, bool shortWake = false);
+
+// Note slot of a page (spec 8): visible? and its two lines.
+struct NoteText {
+  const char* line1;
+  const char* line2;
+};
+bool pageShowsNote(Page p, const settings::Settings& s);
+NoteText pageNote(Page p, bool sdPresent);
+constexpr const char* kNoteLine1 = "Touch wake shortens battery life.";
+constexpr const char* kNoteLine2 = "Button wake is recommended.";
+constexpr const char* kNetNoteLine1 = "Forced profile: other Wi-Fi";
+constexpr const char* kNetNoteLine2 = "networks are not tried.";
 constexpr const char* kToolsNoteLine1 = "Writes /debug.log (max 1 MB).";
 constexpr const char* kToolsNoteLine2 = "Uses more battery.";
 constexpr const char* kToolsNoCardLine1 = "No SD card: nothing is logged.";
 constexpr const char* kToolsNoCardLine2 = "Insert a card to log.";
-// True: the Tools note slot is drawn (Debug log = On).
-bool toolsShowsNote(const settings::Settings& s);
-
-// ---- text ----
-const char* rowLabel(int rowIndex);
-// "Portrait", "Button", "Off" / "15 min", "20 s".
-std::string rowValueText(int rowIndex, const settings::Settings& s);
-// Index of the current value in its allowed-values array (-1 if not allowed).
-int rowValueIndex(int rowIndex, const settings::Settings& s);
-// Next allowed value, wrapping last -> first. An unknown value goes to the first.
-settings::Settings cycleRow(int rowIndex, const settings::Settings& s);
-
-constexpr const char* kNoteLine1 = "Touch wake shortens battery life.";
-constexpr const char* kNoteLine2 = "Button wake is recommended.";
-// True: the hint line shows warn icon + text instead of the pips.
-// True: the note slot is drawn (wake mode = Touch).
-bool showsNote(const settings::Settings& s);
 
 // Text fit rule: F24, then F18, then an ellipsis. measure(text, fontPx) gives the width.
 struct FittedText {
@@ -155,7 +186,7 @@ struct BatteryInfo {
   bool charging = false;
 };
 struct HaInfo {
-  enum class Link { None, Local, Remote };
+  enum class Link { None, Local, Remote };  // Local = internal URL, Remote = external URL (shown so)
   bool sessionDone = false;  // false before the first session: "-"
   Link lastLink = Link::None;
   bool lastAttemptOk = false;
@@ -195,12 +226,11 @@ constexpr const char* kDemoConfigText = "built-in demo";
 constexpr uint32_t kIdleLeaveMs = 60000;  // fixed while Settings is open (rule 5, OPEN-S1)
 
 enum class RefreshState { Idle, Running, Failed };
-enum class Page { Main, Tools };
 
 enum class Action {
   None,
   Leave,         // caller calls leave()
-  PageChange,    // main <-> Tools: the caller draws the new page with a full (GC16) refresh
+  PageChange,    // overview <-> category page: the caller draws the new page with a full (GC16) refresh
   StartRefresh,  // caller starts the state fetch, later calls refreshDone()
 };
 
@@ -214,6 +244,7 @@ struct LeaveResult {
   bool orientationChanged = false;  // rotate, recompute layout, one full refresh
   bool demoChanged = false;         // config source changes: reload the config, full redraw
   bool debugLogChanged = false;     // SD logging starts/stops (used from the moment Settings is left)
+  bool networkChanged = false;      // Wi-Fi profile or HA connection changed: net::configure + new session
   settings::Settings settings;      // the edit buffer
   bool fullRefresh = true;          // leaving is always a full refresh
 };
@@ -230,15 +261,18 @@ class SettingsScreen {
   bool dirty() const { return edit_ != saved_; }
   const SettingsLayout& layout() const { return layout_; }
   Page page() const { return page_; }
-  const ToolsLayout& toolsLayout() const { return tools_; }
+  const PageLayout& pageLayout() const { return pages_[static_cast<int>(page_)]; }
+  // Snapshot for the Network page (profile names, hints). Set once when Settings opens.
+  void setNetwork(const NetworkInfo& n) { net_ = n; }
+  const NetworkInfo& network() const { return net_; }
   // The SD card state, set by the caller when the Tools page opens (drives the Debug log note).
   void setSdPresent(bool present) { sdPresent_ = present; }
   bool sdPresent() const { return sdPresent_; }
-  int focus() const { return page_ == Page::Main ? focus_ : toolsFocus_; }  // 0-based stop of the current page
-  int stopCount() const { return page_ == Page::Main ? kFocusStops : kToolsFocusStops; }
+  int focus() const { return focus_[static_cast<int>(page_)]; }  // 0-based stop of the current page
+  int stopCount() const { return page_ == Page::Main ? kOverviewStops : pageLayout().stopCount; }
   bool ringVisible() const { return ringVisible_; }
   RefreshState refreshState() const { return refresh_; }
-  Rect focusRect() const { return page_ == Page::Main ? layout_.stops[focus_] : tools_.stops[toolsFocus_]; }
+  Rect focusRect() const { return page_ == Page::Main ? layout_.stops[focus()] : pageLayout().stops[focus()]; }
 
   Update onTouch(Point p);
   Update onKey(ui::LogicalKey key);
@@ -248,15 +282,16 @@ class SettingsScreen {
   LeaveResult leave() const;
 
  private:
-  Update activate(int stop);
-  Update activateTools(int stop);
-  Update toolsBack();
+  Update activateOverview(int stop);
+  Update activatePage(int stop);
+  Update up();  // category page -> overview (no save, no apply)
 
   settings::Settings saved_, edit_;
   SettingsLayout layout_;
-  ToolsLayout tools_;
+  PageLayout pages_[5];  // indexed by Page (Main unused)
+  NetworkInfo net_;
   Page page_ = Page::Main;
-  int focus_ = 0, toolsFocus_ = 0;
+  int focus_[5] = {0, 0, 0, 0, 0};
   bool sdPresent_ = true;
   bool ringVisible_ = false;
   RefreshState refresh_ = RefreshState::Idle;

@@ -27,3 +27,5 @@ get a brightness popup:
 - [ ] On device: long press opens, steps and presets change the real light quickly.
 
 ## Notes
+UI part done (PC, optimistic): lib/ui_state/src/brightness_layout.*, AppState popup wiring, src/render/brightness_screen.*,
+input LongTouch/TouchRelease, main.cpp hooks, `close` icon. Next: device check (docs/device-checks.md).

@@ -28,4 +28,22 @@ Side sideToStore(const UrlPlan &plan, Side answered, Side stored) {
   return answered;
 }
 
+bool learnedStale(const Learned &l, int64_t nowEpoch, uint32_t sessionNo) {
+  if (l.side != Side::External) return false;
+  if (plausibleEpoch(nowEpoch) && plausibleEpoch(l.epoch)) {
+    const int64_t age = nowEpoch - l.epoch;
+    return age < 0 || age >= kReprobeSeconds;  // a clock that went backwards: re-probe, not trust
+  }
+  return sessionNo - l.session >= kReprobeSessions;  // unsigned: a reset counter also counts as old
+}
+
+Side effectiveRemembered(const Learned &l, int64_t nowEpoch, uint32_t sessionNo) {
+  return learnedStale(l, nowEpoch, sessionNo) ? Side::None : l.side;
+}
+
+bool shouldStoreLearned(const UrlPlan &plan, Side answered, const Learned &stored, bool stale) {
+  if (!plan.learn || answered == Side::None) return false;
+  return answered != stored.side || (answered == Side::External && stale);
+}
+
 }  // namespace app_logic
