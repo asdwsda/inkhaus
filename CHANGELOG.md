@@ -2,6 +2,10 @@
 
 ## 1.0.1 (unreleased)
 
+- Brightness popup for dimmable lights: long press (or rocker long-push), tap-to-set bar, -/+10 %, presets, Off.
+- Wi-Fi profiles in `secrets.yaml` (up to 4), chosen automatically or forced in Settings; HA connection Auto / Internal / External, learned per network.
+- Settings reorganised into Display, Sleep & wake, Network and Tools pages.
+- Landscape: a rule line between the tabs and the widgets.
 - The splash now shows on every cold boot (reset button, power loss, flashing), followed by a full redraw; a deep-sleep wake never shows it.
 
 ## 1.0.0 - 2026-10-29
