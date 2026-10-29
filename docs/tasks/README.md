@@ -43,3 +43,5 @@
 | 040 | [`unknown` is not `unavailable`](040-unknown-state.md) | in-progress | 028, 036 |
 | 041 | [Debug-log setting, Advanced page, splash](041-debug-log-and-splash.md) | in-progress | 029, 034, 038 |
 | 042 | [v1.0 release](042-release-1-0.md) | todo | 041 |
+| 043 | [Per-tab landscape columns](043-per-tab-columns.md) | in-progress | 009, 011 |
+| 044 | [Inkling branding (logo, splash, Tools)](044-inkling-branding.md) | in-progress | 041 |
