@@ -44,7 +44,7 @@ never DIM or OFF: state texts (`Closed`, `Opening 40%`, `On`, `Open`), values an
 temperatures, the weather condition, vacuum status, humidity, Settings values,
 the refresh label. On INK fills (toggle "on") it is PAPER. Stale, loading and
 unavailable values are therefore also INK/PAPER (`-`, `n/a`); the stale state is
-carried by the status-bar chip, the unavailable state by the dotted frame and
+carried by the status-bar clock icon, the unavailable state by the dotted frame and
 warn badge. Greys stay only for static decoration: dividers and hairlines,
 never-changing captions (sensor/weather names, info labels), unavailable widget
 titles and icons, badges. Reason: black text keeps nearly every update on the
@@ -280,36 +280,44 @@ No rule line. Centre line of single-line elements: **cy = 32**.
 | Battery percent | right edge x = 944, cy = 32, rect (892, 4, 52, 56) | `78%` |
 | Settings hit area | (832, 4, 112, 56) | invisible; battery icon + percent |
 
-### 5.3 Connection icon and refresh label
+### 5.3 Link states, icons and refresh label (revised 2026-10-29, task 038)
 
-Shape, not grey: wifi arcs (online and HA reachable); single dot (connecting,
-also shown while a manual refresh runs); arcs with a slash (Wi-Fi down or HA
-unreachable).
+The status bar is never blank: it always shows the link phase. Mockup sheet:
+`docs/ui/status-states.svg` (PNG in docs/ui/png/). Icon (S, 24x24, shape not grey) at the
+connection-icon rect of 5.1/5.2, label in the label rect. No rect changes.
 
-Label content = time of the last successful state fetch from the RTC.
+| State | Icon | Portrait label (one line) | Landscape (two lines) |
+|-------|------|---------------------------|-----------------------|
+| Connecting Wi-Fi | `wifi-join`: dot + one arc | `connecting Wi-Fi` | `Wi-Fi` / `joining` |
+| Fetching states | `cloud-down`: cloud with arrow | `fetching states` | `fetching` / `states` |
+| Online | `wifi`: three arcs | `updated 14:05` | `updated` / `14:05` |
+| Outdated | link icon as is + `clock` after the label | `updated 14:05` | `updated` / `14:05` |
+| Offline (Wi-Fi down or HA unreachable) | `wifi-off`: arcs with a slash (+ clock if values exist) | `offline, last 14:05` | `offline` / `14:05` |
+| Auth error | `lock` (+ clock) | `token rejected` | `token` / `rejected` |
+| Demo | `demo`: filled circle with play triangle | `demo mode` | `demo` / `mode` |
+| Never fetched, cache empty | `wifi` (or the state above) | `not updated yet` | `updated` / `never` |
 
-| Case | Portrait (one line) | Landscape (two lines) |
-|------|---------------------|-----------------------|
-| Same day | `updated 14:05` | `updated` / `14:05` |
-| Earlier day | `updated 26.10. 14:05` | `26.10.` / `14:05` |
-| Never fetched (cache empty) | `not updated yet` | `updated` / `never` |
+Earlier day: `updated 26.10. 14:05` (landscape `26.10.` / `14:05`); if the portrait text is wider than
+206 px drop the word `updated`. Time = last successful fetch from the RTC. Manual refresh and
+every wake show `fetching states` until the fetch ends (then online, outdated, offline or auth
+error). Values in widgets are never blanked or greyed because of staleness.
+
+**Outdated marker** replaces the old black stale chip: a small `clock` icon (S, INK, no chip).
+Shown when the last good fetch is older than 2 x refresh_interval (3 h when refresh is off) or the
+last fetch failed, and always together with offline / auth error when cached values are shown.
+Position: portrait (260, 15, 24, 24) (right edge x = 284, label text max 206 wide, ends at most
+x = 254); landscape (136, 20, 24, 24) (inside the refresh hit area, ends x = 160; label lines end
+at most x = 130; the tab strip starts x = 172).
+
+**Redraw:** each phase change repaints only the connection icon + label + clock region (portrait
+(0, 0, 288, 54), landscape (16, 4, 144, 56)) with the fast partial mode, so a phase change is a
+small update. Battery and sleep regions are separate. A full refresh is never needed for it.
+
+**The label is a button: a tap refreshes now.** Feedback: icon and label switch to `fetching
+states` until the fetch ends; further taps while a fetch runs are ignored. Rocker has no
+equivalent (long push opens Settings).
 
 OPEN: date/time format (24 h, d.m.) as a setting later.
-
-**The label is a button: a tap refreshes now** (state fetch). Feedback: the
-connection icon switches to the single dot until the fetch ends; further taps
-while a fetch is running are ignored. Partial refresh of the icon and label only.
-Rocker has no equivalent (long push opens Settings).
-
-Stale: age > 2 x refresh_interval (or > 3 h when refresh is off), or the last
-fetch failed. The label is then drawn as a filled INK chip with PAPER text:
-- Portrait: chip (44, 11, w, 32) (cy = 27), `w = 42 + text width`, at most 240
-  (right edge at most x = 284, the sleep indicator region starts at 292); clock
-  icon (S) at (48, 15, 24, 24); text starts at x = 78.
-- Landscape: chip (48, 8, 112, 48), no clock icon (no room); text unchanged at
-  x = 56.
-
-Widget values stay INK (section 1: dynamic text is black); the chip is the stale marker.
 
 ### 5.4 Battery icon
 
@@ -344,30 +352,27 @@ wake it. Chosen by the sleep plan:
 
 | Variant | Used for | Icons |
 |---------|----------|-------|
-| Button | wake mode Button, and low battery in any mode (touch wake is off then) | `moon` (M) + `sidebtn` (M): a bar at the device edge with an arrow pointing at it |
-| Touch | wake mode Touch | `moon` (M) + `finger` (M): a fingertip with two tap marks |
+| Button | wake mode Button, and low battery in any mode (touch wake is off then) | moon + `Zz` + `sidebtn`: a bar at the device edge with an arrow pointing at it |
+| Touch | wake mode Touch | moon + `Zz` + `finger`: a fingertip with two tap marks |
 
-Look (both orientations): INK-filled rect, radius 8, icons PAPER. Two icons of
-40 x 40, 16 px apart.
+Look (both orientations, revised task 038): a calm **outline pill**, no fill (PAPER inside, 2 px
+INK border, fully rounded), with a small moon, a bold `Zz` and the wake glyph, all INK, centre-line
+aligned. No heavy black block; the pill is lighter to draw and to clear.
 
-**Portrait.** Region (292, 3, 112, 48) (cy = 27). It sits in the free space between
-the refresh label (chip capped at x = 284) and the battery cluster (starts 412),
-so it **replaces nothing**; it only needs the label chip cap above. Icons:
-`moon` at (300, 7, 40, 40), glyph (`sidebtn` or `finger`) at (356, 7, 40, 40); both
-cy = 27. Icon only, no text (112 px is all that is free).
+**Portrait.** Pill (293, 4, 110, 46), radius 23 (inside the region (292, 3, 112, 48), cy = 27). It sits
+in the free space between the label (clock icon ends x = 284) and the battery cluster (starts 412),
+so it replaces nothing. Contents: `moon` at (304, 13, 28, 28); `Zz` bold F18 at x = 337, cy = 27;
+wake glyph (`sidebtn` for Button, `finger` for Touch) S at (368, 15, 24, 24). Icons only (the
+glyph tells the variant).
 
-**Landscape.** Region (172, 4, 648, 56) (cy = 32): the top bar has no free space,
-so the indicator **replaces the whole tab strip** while shown (the five tab slots
-are hidden; the content area still shows the active tab). It is a banner:
-`moon` (40), 12 px, glyph (40), 20 px, then text F24 PAPER, the whole group
-centred in the banner:
+**Landscape.** Pill (173, 5, 646, 54), radius 27 (region (172, 4, 648, 56), cy = 32). It replaces
+the tab strip while shown. Contents, the group centred in the pill: `moon` 32 x 32 at y = 16; 8 px;
+`Zz` bold F24 (31 wide); 16 px; text F24 INK; 12 px; wake glyph 32 x 32 at y = 16.
 
-| Variant | Text | Group width (est.) | Group left x | moon | glyph | text starts |
-|---------|------|--------------------|--------------|------|-------|-------------|
-| Button | `Press the side button to wake` | 40+12+40+20+357 = 469 | 172 + 89 = 261 | (261, 12) | (313, 12) | x = 373 |
-| Touch | `Tap the screen to wake` | 40+12+40+20+282 = 394 | 172 + 127 = 299 | (299, 12) | (351, 12) | x = 411 |
-
-(Icons are 40 x 40 at y = 12, cy = 32; text cy = 32.)
+| Variant | Text | Group width | Group left x | text starts |
+|---------|------|-------------|--------------|-------------|
+| Button | `Press the side button to wake` | 488 | 252 | x = 339 |
+| Touch | `Tap the screen to wake` | 413 | 289 | x = 376 |
 
 Rules:
 - Drawn **last**, after any ghost-clearing full refresh that is due before sleep
@@ -493,7 +498,7 @@ Applies to every widget; widget-specific details are in widgets.md.
 | Failed (send failed or state not confirmed after the next fetch) | pending is dropped, the real state is drawn, alert (S) badge stays until the next successful fetch | active |
 | Unavailable (`unavailable`, `unknown`, missing entity) | PAPER fill, **2 px dotted** (2 on / 4 off) OFF border, static title and icons in OFF grey, dynamic text (`n/a` or `-`) INK, warn (S) badge, buttons dotted | none (taps ignored, no redraw) |
 | Loading (no cached value yet) | normal frame, values `-` in INK, no badge | controls active |
-| Stale (global: status-bar chip is shown) | no change to the widget (values stay INK); only the status-bar chip marks staleness | active |
+| Stale (global: status-bar clock icon is shown) | no change to the widget (values stay INK); only the status-bar clock icon marks staleness | active |
 | Focused (rocker) | 3 px INK ring 3..6 px outside the rect; inside a multi-button widget the active button also gets a 4 px solid border. **Tab slots:** inner frame instead (section 6) | n/a |
 | Read-only widgets (sensor, binary_sensor, weather) | no pending state, never focusable | no feedback |
 
@@ -526,7 +531,7 @@ The firmware owns the mechanics; the UI requires the following (ARCHITECTURE.md
   (merged into the widget rect if the changed rects cover more than 60 % of it);
   focus ring moves = old and new element rects, each inflated by 6 px; status
   elements = the changed element only (a tap on the refresh label redraws the
-  connection icon and, when the fetch ends, the label chip); rocker tab
+  connection icon and, when the fetch ends, the label); rocker tab
   highlight = the bar rect; **sleep indicator: draw and clear touch only its
   region (section 5.5).**
 - Regions are rounded out to 4 px by the driver; the 12 px gaps absorb that

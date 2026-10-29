@@ -29,6 +29,10 @@ Output `Layout`:
   cellX, cellY, cellW, cellH, clamped}`;
 - `clampReports[]`: widgets whose requested size was changed.
 
+Note (task 038): no rect changes. The stale chip is gone (clock icon instead, STYLE.md 5.3); the
+status label redraw region equals `refreshHit`; the sleep indicator is an outline pill inside the
+same `sleepIndicator` rect.
+
 ## 2. Grid geometry
 
 | | Portrait | Landscape |
