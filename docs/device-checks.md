@@ -20,6 +20,7 @@ tagged `UNVERIFIED` in code comments and task notes.
 - [ ] "-" after the first fetch (once seen, never reproduced): watch `APP: fetch_applied`. Task 023.
 - [ ] Settings value fit ("Touch & Button" in landscape). Fixed 85120f7.
 - [ ] Landscape 4-column tabs match docs/ui/png/proposal-landscape-4col.png. Task 043.
+- [ ] Landscape: 2 px rule between the tabs and the widgets (y=65..66), survives status/tab partial updates.
 - [ ] New state wording icons (door, motion, …) look right. Task 028.
 
 ## Home Assistant

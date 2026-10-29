@@ -63,7 +63,7 @@ Arithmetic (all exact):
 | Portrait height | 56 + 12 + (7*104 + 6*12 = 728 + 72 = 800) + 12 + 80 = 960 (grid 68..868, tab bar 880..960) |
 | Landscape width | 16 + (5*176 + 4*12 = 880 + 48 = 928) + 16 = 960 |
 | Landscape height | 72 + (4*104 + 3*12 = 416 + 36 = 452) = 524; + 16 = 540 |
-| Landscape top bar | 4 + 56 (slots) + 4 = 64; slots end y=60; 60 + 12 = 72 = first row |
+| Landscape top bar | 4 + 56 (slots) + 4 = 64; slots end y=60; rule (0,65,960,2); 60 + 12 = 72 = first row |
 | Landscape top bar, horizontal | 16 + 144 + 12 + 648 + 12 + 112 + 16 = 960 |
 | Portrait tab slots | 16 + 4*118 + 3*12 + 16 = 540 |
 | Portrait gaps to targets | status bar ends y=56, grid starts y=68: 12; grid ends y=868, tab bar rule y=880: 12 |

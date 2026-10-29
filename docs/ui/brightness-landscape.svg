@@ -6,6 +6,7 @@
 <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
 </defs>
 <rect width="960" height="540" fill="#fff"/>
+<rect id="bar-rule" x="0" y="65" width="960" height="2" fill="#000"/>
 <text id="bg-l1" x="56" y="27" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">updated</text>
 <text id="bg-l2" x="56" y="49" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">14:05</text>
 <text id="bg-batt" x="944" y="38" font-size="18" text-anchor="end" dominant-baseline="alphabetic" fill="#000">78%</text>

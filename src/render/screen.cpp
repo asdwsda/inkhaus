@@ -61,7 +61,7 @@ void drawStatusBar(M5Canvas &c, const uistate::AppState &app, const StatusInfo &
   c.fillRect(bx + 2, by + 2, fw, 16, INK);
   c.fillRect(bx + 36, by + 5, 4, 10, INK);
   drawTextCy(c, Font::F18, pctText, pctRight, cy, Align::Right, INK);
-  if (!land) c.fillRect(0, 54, 540, 2, INK);
+  c.fillRect(0, land ? 65 : 54, land ? 960 : 540, 2, INK);  // landscape rule y=65..66, below the 64 px bar
 }
 
 void drawTabBar(M5Canvas &c, const uistate::AppState &app) {

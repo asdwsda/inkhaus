@@ -269,7 +269,7 @@ every element: **cy = 27** (the 54 px above the rule).
 
 ### 5.2 Landscape: status part of the top bar (0, 0, 960, 64)
 
-No rule line. Centre line of single-line elements: **cy = 32**.
+**Rule** (architect decision): full-width 2 px black line (0, 65, 960, 2), centred in the gap between the slots (end y=60) and the grid (start y=72), like the portrait status-bar rule. Static; drawn on every landscape tab frame, only on full redraws (partial updates of the top bar regions, y<=63, never touch it). Centre line of single-line elements: **cy = 32**.
 
 | Element | Rect | Notes |
 |---------|------|-------|
