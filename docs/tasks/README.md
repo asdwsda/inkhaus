@@ -36,3 +36,6 @@
 | 033 | [Built-in demo showcase](033-demo-showcase.md) | done | 017, 028, 030 |
 | 034 | ["Demo mode" setting](034-demo-mode-setting.md) | in-progress | 002, 007, 022, 033 |
 | 035 | [Button mode: deep sleep with power hold](035-safe-button-sleep.md) | in-progress | 024 |
+| 036 | [Fast taps: optimistic UI, keep-alive](036-fast-actions.md) | in-progress | 019, 023 |
+| 037 | [Persist last known states](037-state-cache.md) | in-progress | 023, 025 |
+| 038 | [Status bar states, sleep indicator redesign](038-status-bar-and-sleep-indicator.md) | in-progress | 024 |
