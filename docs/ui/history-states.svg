@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
+<!-- History popup states sheet. Each cell = plot area + footer note of the popup (illustrative height). Spec: docs/ui/history.md -->
+<defs>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
+<symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3 H18 M6 21 H18 M7 3 C7 9 11 10 12 12 C13 14 17 15 17 21 M17 3 C17 9 13 10 12 12 C11 14 7 15 7 21" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7 V13" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="16.5" r="1.6" fill="currentColor"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.6 5.6 L18.4 18.4" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7 V12 L16 14" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol>
+</defs>
+
+<rect x="0" y="0" width="960" height="540" fill="#fff"/>
+<text id="cap0" x="16" y="28" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">1  Loading (no cache)</text>
+<g id="w-1">
+<rect id="w-1-frame" x="16" y="38" width="456" height="216" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
+<line x1="75" y1="54" x2="75" y2="195" stroke="#000" stroke-width="2"/>
+<line x1="75" y1="195" x2="456" y2="195" stroke="#000" stroke-width="2"/>
+<use id="w-1-ic" xlink:href="#i-hourglass" x="246.0" y="70.0" width="40" height="40" color="#000"/>
+<text id="w-1-msg" x="266.0" y="142" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Loading</text>
+<text id="w-1-sub" x="266.0" y="168" font-size="18" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Fetching 24 h of history</text>
+<use id="w-1-nic" xlink:href="#i-hourglass" x="32.0" y="214.0" width="24" height="24" color="#000"/>
+<text id="w-1-note" x="72" y="232" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">fetching</text>
+</g>
+<text id="cap1" x="488" y="28" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">2  No data</text>
+<g id="w-2">
+<rect id="w-2-frame" x="488" y="38" width="456" height="216" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
+<line x1="547" y1="54" x2="547" y2="195" stroke="#000" stroke-width="2"/>
+<line x1="547" y1="195" x2="928" y2="195" stroke="#000" stroke-width="2"/>
+<use id="w-2-ic" xlink:href="#i-minus" x="718.0" y="70.0" width="40" height="40" color="#000"/>
+<text id="w-2-msg" x="738.0" y="142" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">No data</text>
+<text id="w-2-sub" x="738.0" y="168" font-size="18" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">No readings in the last 24 h</text>
+<text id="w-2-note" x="504" y="232" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">updated 14:05</text>
+</g>
+<text id="cap2" x="16" y="296" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">3  Too many points</text>
+<g id="w-3">
+<rect id="w-3-frame" x="16" y="306" width="456" height="216" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
+<line x1="75" y1="322" x2="75" y2="463" stroke="#000" stroke-width="2"/>
+<line x1="75" y1="463" x2="456" y2="463" stroke="#000" stroke-width="2"/>
+<use id="w-3-ic" xlink:href="#i-alert" x="246.0" y="338.0" width="40" height="40" color="#000"/>
+<text id="w-3-msg" x="266.0" y="410" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Too many points</text>
+<text id="w-3-sub" x="266.0" y="436" font-size="18" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Set source: statistics</text>
+<use id="w-3-nic" xlink:href="#i-alert" x="32.0" y="482.0" width="24" height="24" color="#000"/>
+<text id="w-3-note" x="72" y="500" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">stopped at 512 KB</text>
+</g>
+<text id="cap3" x="488" y="296" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">4  Not available</text>
+<g id="w-4">
+<rect id="w-4-frame" x="488" y="306" width="456" height="216" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
+<line x1="547" y1="322" x2="547" y2="463" stroke="#000" stroke-width="2"/>
+<line x1="547" y1="463" x2="928" y2="463" stroke="#000" stroke-width="2"/>
+<use id="w-4-ic" xlink:href="#i-warn" x="718.0" y="338.0" width="40" height="40" color="#000"/>
+<text id="w-4-msg" x="738.0" y="410" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Not available</text>
+<text id="w-4-sub" x="738.0" y="436" font-size="18" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Bar needs source: statistics</text>
+<text id="w-4-note" x="504" y="500" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">not fetched</text>
+</g>
+</svg>

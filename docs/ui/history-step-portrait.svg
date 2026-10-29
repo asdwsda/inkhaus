@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans">
+<!-- History popup, step lane, portrait. Spec: docs/ui/history.md. Landscape shows the stale note. -->
+<defs>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
+<symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3 H18 M6 21 H18 M7 3 C7 9 11 10 12 12 C13 14 17 15 17 21 M17 3 C17 9 13 10 12 12 C11 14 7 15 7 21" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7 V13" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="16.5" r="1.6" fill="currentColor"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.6 5.6 L18.4 18.4" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7 V12 L16 14" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol>
+</defs>
+
+<rect x="0" y="0" width="540" height="960" fill="#fff"/>
+<rect x="0" y="54" width="540" height="2" fill="#000"/>
+<text id="bg-label" x="48" y="33" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">updated 14:05</text>
+<text id="bg-batt" x="524" y="33" font-size="18" text-anchor="end" dominant-baseline="alphabetic" fill="#000">78%</text>
+<rect x="0" y="880" width="540" height="2" fill="#000"/>
+<rect x="16" y="892" width="118" height="56" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text x="75" y="920" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#fff">Living</text>
+<rect x="146" y="892" width="118" height="56" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text x="205" y="920" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#000">Kitchen</text>
+<rect x="276" y="892" width="118" height="56" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text x="335" y="920" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#000">Bedroom</text>
+<rect x="406" y="892" width="118" height="56" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text x="465" y="920" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#000">Garden</text>
+<rect x="16" y="68" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n0" x="28" y="103" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Living temp.</text>
+<text id="bg-v0" x="28" y="152" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">21.4</text>
+<rect x="276" y="68" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n1" x="288" y="103" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Kitchen temp.</text>
+<text id="bg-v1" x="288" y="152" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">20.8</text>
+<rect x="16" y="184" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n2" x="28" y="219" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Outside</text>
+<text id="bg-v2" x="28" y="268" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">9.1</text>
+<rect x="276" y="184" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n3" x="288" y="219" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Humidity</text>
+<text id="bg-v3" x="288" y="268" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">46</text>
+<rect x="16" y="300" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n4" x="28" y="335" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Bedroom temp.</text>
+<text id="bg-v4" x="28" y="384" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">19.5</text>
+<rect x="276" y="300" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n5" x="288" y="335" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Energy today</text>
+<text id="bg-v5" x="288" y="384" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">5.9</text>
+<rect x="16" y="416" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n6" x="28" y="451" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Front door</text>
+<text id="bg-v6" x="28" y="500" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Closed</text>
+<rect x="276" y="416" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n7" x="288" y="451" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Garage</text>
+<text id="bg-v7" x="288" y="500" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Closed</text>
+<rect x="16" y="532" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n8" x="28" y="567" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Cellar temp.</text>
+<text id="bg-v8" x="28" y="616" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">14.2</text>
+<rect x="276" y="532" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n9" x="288" y="567" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Pressure</text>
+<text id="bg-v9" x="288" y="616" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">1013</text>
+<rect x="16" y="648" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n10" x="28" y="683" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Office temp.</text>
+<text id="bg-v10" x="28" y="732" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">22.0</text>
+<rect x="276" y="648" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n11" x="288" y="683" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">CO2</text>
+<text id="bg-v11" x="288" y="732" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">640</text>
+<rect x="16" y="764" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n12" x="28" y="799" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Hall temp.</text>
+<text id="bg-v12" x="28" y="848" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">20.1</text>
+<rect x="276" y="764" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n13" x="288" y="799" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#444444">Boiler</text>
+<text id="bg-v13" x="288" y="848" font-size="40" text-anchor="start" dominant-baseline="alphabetic" fill="#000">55</text>
+<rect id="popup-shadow" x="22" y="218" width="508" height="512" rx="8" fill="#000"/>
+<g id="w-1">
+<rect id="w-1-frame" x="16" y="212" width="508" height="512" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
+<text id="w-1-name" x="32" y="268" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Front door</text>
+<rect id="w-1-close-btn" x="444" y="228" width="64" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-close-icon" xlink:href="#i-close" x="456.0" y="240.0" width="40" height="40" color="#000"/>
+<text id="w-1-value" x="32" y="342" font-size="40" text-anchor="start" fill="#000">Closed<tspan font-size="24" dx="2"></tspan></text>
+<text id="w-1-range" x="508" y="321" font-size="18" text-anchor="end" dominant-baseline="alphabetic" fill="#000">Last 24 h</text>
+<text id="w-1-range2" x="508" y="347" font-size="18" text-anchor="end" dominant-baseline="alphabetic" fill="#000">4x open, 38 min total</text>
+<g id="g-chart">
+<line x1="106" y1="372" x2="106" y2="468" stroke="#d0d0d0" stroke-width="1"/>
+<line x1="219" y1="372" x2="219" y2="468" stroke="#d0d0d0" stroke-width="1"/>
+<line x1="332" y1="372" x2="332" y2="468" stroke="#d0d0d0" stroke-width="1"/>
+<line x1="445" y1="372" x2="445" y2="468" stroke="#d0d0d0" stroke-width="1"/>
+<rect id="g-on" x="99.5" y="373" width="3.8" height="94" fill="#000"/>
+<rect id="g-on" x="353.7" y="373" width="3.0" height="94" fill="#000"/>
+<rect id="g-on" x="454.2" y="373" width="3.4" height="94" fill="#000"/>
+<rect id="g-on" x="476.5" y="373" width="6.6" height="94" fill="#000"/>
+<rect id="g-lane" x="32" y="372" width="452" height="96" fill="none" stroke="#000" stroke-width="2"/>
+<line x1="106" y1="469" x2="106" y2="475" stroke="#808080" stroke-width="2"/>
+<line x1="219" y1="469" x2="219" y2="475" stroke="#808080" stroke-width="2"/>
+<line x1="332" y1="469" x2="332" y2="475" stroke="#808080" stroke-width="2"/>
+<line x1="445" y1="469" x2="445" y2="475" stroke="#808080" stroke-width="2"/>
+</g>
+<text id="w-1-xl0" x="106" y="496" font-size="18" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">18:00</text>
+<text id="w-1-xl1" x="219" y="496" font-size="18" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">00:00</text>
+<text id="w-1-xl2" x="332" y="496" font-size="18" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">06:00</text>
+<text id="w-1-xl3" x="445" y="496" font-size="18" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">12:00</text>
+<line id="g-sep" x1="32" y1="508" x2="508" y2="508" stroke="#808080" stroke-width="1"/>
+<text id="w-1-r0t" x="32" y="536" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">14:02</text>
+<text id="w-1-r0s" x="132" y="536" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Closed</text>
+<text id="w-1-r1t" x="32" y="572" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">13:41</text>
+<text id="w-1-r1s" x="132" y="572" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Open</text>
+<text id="w-1-r2t" x="32" y="608" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">12:41</text>
+<text id="w-1-r2s" x="132" y="608" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Closed</text>
+<text id="w-1-r3t" x="32" y="644" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">12:30</text>
+<text id="w-1-r3s" x="132" y="644" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Open</text>
+<text id="w-1-note" x="32" y="704" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">updated 14:05</text>
+<rect id="w-1-leg-sw1" x="338" y="692" width="16" height="12" fill="#000"/>
+<text id="w-1-leg1" x="360" y="704" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">open</text>
+<rect id="w-1-leg-sw2" x="418" y="692" width="16" height="12" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-leg2" x="508" y="704" font-size="18" text-anchor="end" dominant-baseline="alphabetic" fill="#000">closed</text>
+</g></svg>

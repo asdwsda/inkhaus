@@ -1,6 +1,6 @@
 # 048: History popup spec
 
-Status: todo
+Status: done
 Depends on: 046
 UI spec: docs/ui/history.md (this task)
 Needs device: no
