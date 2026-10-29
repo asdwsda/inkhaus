@@ -118,7 +118,7 @@ power::WakeReason detect() {
   // The first frame only keeps the indicator of the previous sleep for a scheduled wake that
   // follows a sleep of ours; every other start clears it.
   g_stored = (r == power::WakeReason::RtcAlarm) ? app_logic::indicatorFromByte(ind) : app_logic::Indicator::None;
-  Serial.printf("WAKE: reason=%s reset=%s pin=%s rtc_flag=%d marker=%d indicator_on_panel=%s\n", app_logic::wakeName(r),
+  wakelog::logf("WAKE: reason=%s reset=%s pin=%s rtc_flag=%d marker=%d indicator_on_panel=%s\n", app_logic::wakeName(r),
                 resetName(in.reset), pinName(in.pin), in.rtc_alarm_flag ? 1 : 0, in.slept_marker ? 1 : 0,
                 app_logic::indicatorName(g_stored));
   return r;
@@ -134,12 +134,12 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
   if (sp.wake_rocker) add("rocker");
   if (sp.wake_touch) add("touch");
   if (sp.arm_rtc_alarm) add("rtc");
-  Serial.printf("SLEEP: mode=%s alarm_at=%lld indicator=%s wake=%s battery_mv=%d awake_ms=%u low_battery=%d\n",
+  wakelog::logf("SLEEP: mode=%s alarm_at=%lld indicator=%s wake=%s battery_mv=%d awake_ms=%u low_battery=%d\n",
                 app_logic::methodName(sp.first), (long long)(sp.arm_rtc_alarm ? *plan.rtc_alarm_at : 0),
                 app_logic::indicatorName(sp.indicator), wake.empty() ? "none" : wake.c_str(), (int)batteryMv,
                 (unsigned)millis(), sp.low_battery ? 1 : 0);
 
-  wakelog::append(session, nowEpoch, batteryMv);  // no-op unless -DWAKE_LOG_SD
+  wakelog::append(session, nowEpoch, batteryMv);  // no-op unless the debug_log setting is on
 
   Preferences p;
   if (p.begin(kNs, false)) {

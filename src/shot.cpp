@@ -96,7 +96,7 @@ void dumpMem(int x, int y, int w, int h) {
 
 bool handle(const std::string &line, const Hooks &hk) {
   if (provision::handleLine(line)) return true;  // putfile / reboot (blocks while receiving)
-  if (wakelog::handleLine(line)) return true;    // wakelog (only with -DWAKE_LOG_SD)
+  if (wakelog::handleLine(line)) return true;    // wakelog / debuglog (read-only)
 #ifdef DEBUG_SERIAL
   if (line == "shot" || line == "shotz") {
     if (hk.frame) dump(*hk.frame, line == "shotz");

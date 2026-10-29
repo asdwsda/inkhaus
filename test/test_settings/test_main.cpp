@@ -26,6 +26,21 @@ struct FakeStore : KeyValueStore {
 };
 }  // namespace
 
+void test_debug_log_default_old_store_invalid_roundtrip() {
+    FakeStore st;
+    TEST_ASSERT_FALSE(load(st).debug_log);
+    st.data[kKeySchemaVersion] = kSchemaVersion;  // an old store without "dbglog"
+    TEST_ASSERT_FALSE(load(st).debug_log);
+    st.data[kKeyDebugLog] = 7;
+    TEST_ASSERT_FALSE(load(st).debug_log);
+    Settings s;
+    s.debug_log = true;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT32(1, st.data[kKeyDebugLog]);
+    TEST_ASSERT_TRUE(load(st).debug_log);
+    TEST_ASSERT_TRUE(s != Settings());
+}
+
 void test_demo_mode_default_old_store_invalid_roundtrip() {
     FakeStore st;
     TEST_ASSERT_FALSE(load(st).demo_mode);
@@ -302,6 +317,7 @@ void test_keys_fit_nvs_limit_and_lists_are_valid() {
 int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_demo_mode_default_old_store_invalid_roundtrip);
+    RUN_TEST(test_debug_log_default_old_store_invalid_roundtrip);
     RUN_TEST(test_defaults_with_empty_store);
     RUN_TEST(test_orientation_default_on_pre_orientation_store);
     RUN_TEST(test_orientation_invalid_defaults_only_that_field);

@@ -41,7 +41,7 @@ namespace tls_check { void run(); }
 //   -DTEST_SETTINGS       open the Settings screen right after boot (screenshots, task 022/023)
 //   -DTLS_CHECK -DTLS_CHECK_URL=\"https://...\"  task 008 TLS check after boot (src/tls_check.cpp)
 
-// present::show with the wake log's refresh count and time (task 029; no-op without WAKE_LOG_SD).
+// present::show with the wake log's refresh count and time (task 029; no-op unless the debug log is on).
 static bool timedShow(present::Mode mode, uint32_t now) {
   const uint32_t t0 = millis();
   const bool did = present::show(mode, now);
@@ -228,7 +228,7 @@ static void logFetchApplied() {
           Serial.printf("APP: unavailable id=%s state=%s pos=-\n", m->id.c_str(), st);
       }
   }
-  Serial.printf("APP: fetch_applied store=%u changed=%u missing_members=%d\n",
+  wakelog::logf("APP: fetch_applied store=%u changed=%u missing_members=%d\n",
                 (unsigned)g_app.store().size(), (unsigned)g_drv->lastChanged(), missing);
 }
 
@@ -338,9 +338,10 @@ static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
       settings::save(store, r.settings);
       store.end();
     }
-    Serial.println("APP: settings saved");
+    wakelog::logf("APP: settings saved\n");
   }
   g_settings = r.settings;
+  wakelog::setEnabled(r.settings.debug_log);
   if (r.demoChanged) {
     reloadConfigSource(r.settings.orientation);
     composeFrame();
@@ -360,7 +361,7 @@ static void openSettings(bool ring, uint32_t now) {
   snapshotInfo();
   settings_flow::open(g_settings, g_app.orientation(), ring, now);
   drawSettingsFrame(present::Mode::Full, now);
-  Serial.println("APP: settings opened");
+  wakelog::logf("APP: settings opened\n");
 }
 
 static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
@@ -433,9 +434,6 @@ void setup() {
   g_wake = sleepwake::detect();
   const power::Session kind = power::decide_session(g_wake, batteryMv());
   g_scheduled = kind == power::Session::ScheduledRefresh;
-  wakelog::begin(app_logic::wakeName(g_wake), kind);
-  if (g_scheduled) g_status.sleepIndicator = toRender(sleepwake::storedIndicator());
-
   settings::Settings &s = g_settings;
   {
     NvsSettingsStore store;
@@ -444,6 +442,10 @@ void setup() {
       store.end();
     }
   }
+  wakelog::setEnabled(s.debug_log);
+  wakelog::begin(app_logic::wakeName(g_wake), kind);
+  if (g_scheduled) g_status.sleepIndicator = toRender(sleepwake::storedIndicator());
+
 #ifdef DEMO_LANDSCAPE
   s.orientation = settings::Orientation::Landscape;
 #endif
@@ -465,7 +467,7 @@ void setup() {
   if (cfg.error) {
     g_app.initError(cfg.errors, s.orientation);
     const auto &e = cfg.errors[0];
-    Serial.printf("BOOT: config_error path=%s line=%d msg=%s\n", e.path.c_str(), e.line, e.message.c_str());
+    wakelog::logf("BOOT: config_error path=%s line=%d msg=%s\n", e.path.c_str(), e.line, e.message.c_str());
   } else {
     // Demo (fake states, local fake actions) unless the config has a connection section.
     g_demoMode = app_logic::isDemoRun(s, cfg.demo, cfg.cfg.hasConnection);

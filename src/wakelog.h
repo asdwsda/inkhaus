@@ -1,7 +1,7 @@
 #pragma once
-// Wake log on the SD card (task 029, battery test build only: -DWAKE_LOG_SD, env m5paper-batterytest).
-// One CSV line per wake in /wakelog.csv, appended at boot (session=boot) and at sleep entry. Without the flag every function is
-// an empty inline, and nothing touches the SD card on the wake path.
+// Wake log + debug log on the SD card (task 029, 041). Compiled into every build, runs only when the debug_log setting is on
+// (setEnabled); -DWAKE_LOG_SD (env m5paper-batterytest) forces it on. One CSV line per wake in /wakelog.csv (boot and sleep
+// entry) and the filtered key log lines in /debug.log (1 MB, then rotated to /debug.old). Disabled: no SD access at all.
 #include <stdint.h>
 
 #include <string>
@@ -10,7 +10,12 @@
 
 namespace wakelog {
 
-#ifdef WAKE_LOG_SD
+// Runtime switch (debug_log setting). Ignored (stays on) in a -DWAKE_LOG_SD build. Turning it off drops pending lines.
+void setEnabled(bool on);
+// A serial log line: kept (RAM, flushed at the next boot/sleep append) if it passes the key-line filter.
+void note(const char *line);
+// printf to Serial (as before) and note() of the same line (without its newline).
+void logf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 // Call right after boot::begin() and the wake detection: remembers the wake reason and the start.
 void begin(const char *wakeName, power::Session session);
 // Phase marks (millis() values). Only the first Wi-Fi/fetch of a wake counts.
@@ -22,17 +27,8 @@ void refreshed(uint32_t durationMs);  // one display refresh took this long
 void setSleptPath(const char *path);
 // At sleep entry: appends the line (mount, append, unmount). Logs "WAKELOG: ..." (no secrets).
 void append(power::Session session, int64_t epoch, int32_t batteryMv);
-// Serial command `wakelog`: streams the file framed WAKELOG-BEGIN <n> / bytes / WAKELOG-END.
+// Serial commands `wakelog` / `debuglog` (read-only, every build): stream the file framed
+// WAKELOG-BEGIN <n> / bytes / WAKELOG-END (WAKELOG-ERR <why>).
 bool handleLine(const std::string &line);
-#else
-inline void begin(const char *, power::Session) {}
-inline void sessionStarted(uint32_t) {}
-inline void wifiUp(uint32_t) {}
-inline void fetchDone(uint32_t, bool) {}
-inline void refreshed(uint32_t) {}
-inline void setSleptPath(const char *) {}
-inline void append(power::Session, int64_t, int32_t) {}
-inline bool handleLine(const std::string &) { return false; }
-#endif
 
 }  // namespace wakelog

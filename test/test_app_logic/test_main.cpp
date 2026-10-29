@@ -11,6 +11,7 @@
 #include "tap_intent.h"
 #include "wall_time.h"
 #include "wakelog_csv.h"
+#include "debuglog.h"
 #include "app_state.h"
 #include "config_model.h"
 
@@ -686,6 +687,27 @@ static void test_wakelog_csv() {
   TEST_ASSERT_EQUAL_STRING("0,a_b_c,low_battery,0,0,,,,,none,0,,,,0,\n", wakeLogLine(q).c_str());
 }
 
+static void test_debuglog_filter_format_rotation() {
+  using namespace app_logic;
+  TEST_ASSERT_TRUE(isDebugLogLine("APP: settings saved"));
+  TEST_ASSERT_TRUE(isDebugLogLine("NET: phase=connected connect_ms=900 rssi=-60 ch=6"));
+  TEST_ASSERT_TRUE(isDebugLogLine("SLEEP: mode=x battery_mv=4000"));
+  TEST_ASSERT_TRUE(isDebugLogLine("WAKE: reason=rocker reset=POWERON"));
+  TEST_ASSERT_TRUE(isDebugLogLine("BOOT: config_error path=/config.yaml line=3 msg=bad"));
+  TEST_ASSERT_FALSE(isDebugLogLine("BOOT: t_display_ms=120"));
+  TEST_ASSERT_FALSE(isDebugLogLine("HTTP: ms=10"));
+  TEST_ASSERT_FALSE(isDebugLogLine("NET: phase=attempt ssid_len=5 ssid_pre=ab"));
+  TEST_ASSERT_FALSE(isDebugLogLine("APP: Authorization Bearer abc"));
+  TEST_ASSERT_FALSE(isDebugLogLine("APP: ha_token=abc"));
+  TEST_ASSERT_FALSE(isDebugLogLine("APP: url=https://ha.local:8123"));
+  TEST_ASSERT_FALSE(isDebugLogLine("NET: password=x"));
+  TEST_ASSERT_EQUAL_STRING("12 APP: a?b\n", formatDebugLogLine(12, "APP: a\tb").c_str());
+  TEST_ASSERT_EQUAL(kDebugLogMaxLine + 3 + 1, formatDebugLogLine(12, std::string(500, 'x')).size());
+  TEST_ASSERT_FALSE(debugLogNeedsRotation(kDebugLogMaxBytes - 10, 10));
+  TEST_ASSERT_TRUE(debugLogNeedsRotation(kDebugLogMaxBytes - 10, 11));
+  TEST_ASSERT_FALSE(debugLogNeedsRotation(0, 100));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_demo_mode_decisions);
@@ -721,5 +743,6 @@ int main() {
   RUN_TEST(test_call_response_empty_falls_back_to_fetch);
   RUN_TEST(test_fetch_reaches_widget_data);
   RUN_TEST(test_wakelog_csv);
+  RUN_TEST(test_debuglog_filter_format_rotation);
   return UNITY_END();
 }

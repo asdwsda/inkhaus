@@ -1,16 +1,17 @@
 #include "wakelog.h"
 
-#ifdef WAKE_LOG_SD
-
 #include <Arduino.h>
 #include <M5Unified.h>
 #include <SD.h>
 #include <esp_sleep.h>
 #include <esp_system.h>
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "config_sd.h"
+#include "debuglog.h"
 #include "wakelog_csv.h"
 
 namespace wakelog {
@@ -18,6 +19,17 @@ namespace wakelog {
 namespace {
 
 constexpr const char *kPath = "/wakelog.csv";
+constexpr const char *kDebugPath = "/debug.log";
+constexpr const char *kDebugOld = "/debug.old";
+constexpr size_t kPendingMax = 4096;  // RAM buffer for lines not yet on the SD card
+
+#ifdef WAKE_LOG_SD
+constexpr bool kForced = true;
+#else
+constexpr bool kForced = false;
+#endif
+bool g_enabled = kForced;
+std::string g_pending;
 
 app_logic::WakeRecord g_rec;
 uint32_t g_sessionStartMs = 0, g_wifiMs = 0;
@@ -67,6 +79,29 @@ const char *causeName(esp_sleep_wakeup_cause_t c) {
   }
 }
 
+// Inside a mounted card: appends the pending debug lines to /debug.log, rotating at 1 MB.
+void flushDebug() {
+  if (g_pending.empty()) return;
+  size_t size = 0;
+  if (SD.exists(kDebugPath)) {
+    File f = SD.open(kDebugPath, FILE_READ);
+    if (f) {
+      size = f.size();
+      f.close();
+    }
+  }
+  if (app_logic::debugLogNeedsRotation(size, g_pending.size())) {
+    SD.remove(kDebugOld);
+    SD.rename(kDebugPath, kDebugOld);
+  }
+  File f = SD.open(kDebugPath, SD.exists(kDebugPath) ? FILE_APPEND : FILE_WRITE);
+  if (f) {
+    f.print(g_pending.c_str());
+    f.close();
+  }
+  g_pending.clear();
+}
+
 void appendLine(const std::string &line) {
   const uint32_t t0 = millis();
   if (!config_sd::mount()) {
@@ -89,11 +124,37 @@ void appendLine(const std::string &line) {
     }
     if (f) f.close();
   }
+  flushDebug();
   config_sd::unmount();
   Serial.printf("WAKELOG: result=%s wrote=%d sd_ms=%u\n", note, wrote ? 1 : 0, (unsigned)(millis() - t0));
 }
 
 }  // namespace
+
+void setEnabled(bool on) {
+  g_enabled = on || kForced;
+  if (!g_enabled) g_pending.clear();
+}
+
+void note(const char *line) {
+  if (!line) return;
+  const std::string l(line);
+  if (!app_logic::isDebugLogLine(l)) return;
+  const std::string f = app_logic::formatDebugLogLine(millis(), l);
+  if (g_pending.size() + f.size() <= kPendingMax) g_pending += f;
+}
+
+void logf(const char *fmt, ...) {
+  char buf[256];
+  va_list ap;
+  va_start(ap, fmt);
+  vsnprintf(buf, sizeof buf, fmt, ap);
+  va_end(ap);
+  Serial.print(buf);
+  size_t n = strlen(buf);
+  while (n && (buf[n - 1] == '\n' || buf[n - 1] == '\r')) buf[--n] = 0;
+  note(buf);
+}
 
 void setSleptPath(const char *path) {
   strncpy(g_rtcSleptPath, path ? path : "", sizeof g_rtcSleptPath - 1);
@@ -101,6 +162,7 @@ void setSleptPath(const char *path) {
 }
 
 void begin(const char *wakeName, power::Session session) {
+  if (!g_enabled) return;
   g_rec = app_logic::WakeRecord();
   g_rec.wake = wakeName;
   g_rec.session = sessionName(session);
@@ -128,12 +190,14 @@ void begin(const char *wakeName, power::Session session) {
 }
 
 void sessionStarted(uint32_t nowMs) {
+  if (!g_enabled) return;
   if (g_sessionSeen) return;
   g_sessionSeen = true;
   g_sessionStartMs = nowMs;
 }
 
 void wifiUp(uint32_t nowMs) {
+  if (!g_enabled) return;
   if (!g_sessionSeen || g_wifiSeen) return;
   g_wifiSeen = true;
   g_wifiMs = nowMs;
@@ -141,6 +205,7 @@ void wifiUp(uint32_t nowMs) {
 }
 
 void fetchDone(uint32_t nowMs, bool ok) {
+  if (!g_enabled) return;
   if (g_fetchSeen) return;
   g_fetchSeen = true;
   g_rec.fetch_result = ok ? "ok" : "fail";
@@ -148,11 +213,13 @@ void fetchDone(uint32_t nowMs, bool ok) {
 }
 
 void refreshed(uint32_t durationMs) {
+  if (!g_enabled) return;
   ++g_refreshes;
   g_refreshMs += durationMs;
 }
 
 void append(power::Session session, int64_t epoch, int32_t batteryMv) {
+  if (!g_enabled) return;
   g_rec.session = sessionName(session);
   g_rec.epoch = epoch;
   g_rec.battery_mv = batteryMv;
@@ -165,13 +232,14 @@ void append(power::Session session, int64_t epoch, int32_t batteryMv) {
 }
 
 bool handleLine(const std::string &line) {
-  if (line != "wakelog") return false;
+  const char *path = line == "wakelog" ? kPath : line == "debuglog" ? kDebugPath : nullptr;
+  if (!path) return false;
   if (!config_sd::mount()) {
     Serial.print("WAKELOG-ERR no_card\n");
     return true;
   }
   {
-    File f = SD.open(kPath, FILE_READ);
+    File f = SD.open(path, FILE_READ);
     if (!f) {
       Serial.print("WAKELOG-ERR no_file\n");
     } else {
@@ -188,5 +256,3 @@ bool handleLine(const std::string &line) {
 }
 
 }  // namespace wakelog
-
-#endif  // WAKE_LOG_SD
