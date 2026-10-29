@@ -18,6 +18,11 @@ void showError(const char *msg);
 // Forgets the stored screen record (the panel no longer shows the app) and forces the next frame to
 // be a full redraw. Works without frames.
 void showNotice(const char *title, const char *hint);
+// Identifies the running firmware build. Call before anything that reads or writes the screen record:
+// a record written by another build is treated as missing (full redraw, splash on a cold boot).
+void setFirmwareId(uint32_t id);
+// True if the stored screen record is valid for the current geometry and firmware (needs the rotation set).
+bool hasValidRecord();
 // The frame to draw into.
 M5Canvas &canvas();
 const M5Canvas &previous();

@@ -1,6 +1,6 @@
 # 041: Debug-log setting, Advanced settings page, cold-boot splash
 
-Status: in-progress
+Status: done
 Depends on: 029, 034, 038
 UI spec: docs/ui/settings.md (Advanced page), docs/ui/splash.md (new) — ui-designer
 Needs device: yes (later)
@@ -27,3 +27,4 @@ Needs device: yes (later)
 
 ## Notes
 - Logic part done (2026-10-29): debug_log setting (NVS dbglog), lib/app_logic debuglog filter (no secrets) + rotation, wakelog compiled in every build and gated at runtime, /debug.log buffered and appended at the existing SD mounts, debuglog/wakelog serial commands, tools/wakelog.py --file. Open for the UI step: Advanced page row; route net.cpp/boot.cpp key lines through wakelog::logf.
+- UI part done (2026-10-29, PC only, not flashed): settings_ui main page (4 rows + Tools row) and Tools page, render of both, splash (logo via gen_icons), net/boot lines through wakelog::logf. Next: device check (splash on cold boot only, Tools page, debug log toggle).

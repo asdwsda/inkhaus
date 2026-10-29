@@ -11,6 +11,7 @@
 #include <driver/gpio.h>
 #include <driver/rtc_io.h>
 
+#include "wakelog.h"
 #include "lgfx/v1/panel/Panel_IT8951.hpp"
 #include "lgfx/v1/touch/Touch_GT911.hpp"
 
@@ -296,12 +297,12 @@ bool ensureControllerReady(const char* where) {
     return false;
 }
 
-void log(const char* key, const char* value) { Serial.printf("BOOT: %s=%s\n", key, value); }
-void log(const char* key, long value) { Serial.printf("BOOT: %s=%ld\n", key, value); }
+void log(const char* key, const char* value) { wakelog::logf("BOOT: %s=%s\n", key, value); }
+void log(const char* key, long value) { wakelog::logf("BOOT: %s=%ld\n", key, value); }
 
 void mark(const char* stage) {
     feed();
-    Serial.printf("BOOT: t_%s_ms=%u\n", stage, (unsigned)elapsedMs());
+    wakelog::logf("BOOT: t_%s_ms=%u\n", stage, (unsigned)elapsedMs());
 }
 
 void setupDone() {
@@ -322,8 +323,8 @@ void begin() {
     // 4 KB receive buffer: the putfile transfer (task 020) lets the host send 1 KB between ACKs.
     const size_t rxSize = Serial.setRxBufferSize(4096);  // must precede begin()
     Serial.begin(115200);
-    Serial.printf("BOOT: serial_rx_buffer=%u\n", (unsigned)rxSize);
-    Serial.println("BOOT: hold_released=1");
+    wakelog::logf("BOOT: serial_rx_buffer=%u\n", (unsigned)rxSize);
+    wakelog::logf("BOOT: hold_released=1" "\n");
     g_t0Us = micros();
     // Crash counter first: decides between the normal and the fallback start-up, and whether to
     // give up. A watchdog reset or a panic counts; anything else (power-on, button, software
@@ -390,7 +391,7 @@ void begin() {
 #ifndef BOOT_FORCE_STOCK
     if (g_bootMode == screen_track::BootMode::Normal) noReset = attachNoResetDisplay();
 #else
-    Serial.println("BOOT: forced_stock=1");
+    wakelog::logf("BOOT: forced_stock=1" "\n");
 #endif
     if (!noReset) {
         // Fallback: drop the half-built parts, then the stock autodetect runs with the IT8951
@@ -411,9 +412,9 @@ void begin() {
         log("controller", controllerWasCold() ? "cold" : "warm");
         log("controller_ready_wait_ms", (long)g_readyWaitMs);
     }
-    Serial.printf("BOOT: display_start_ms=%u\n", (unsigned)((d1 - d0) / 1000));
-    Serial.printf("BOOT: m5_begin_rest_ms=%u\n", (unsigned)((d2 - d1) / 1000));
-    Serial.printf("BOOT: m5_begin_total_ms=%u\n", (unsigned)((d2 - d0) / 1000));
+    wakelog::logf("BOOT: display_start_ms=%u\n", (unsigned)((d1 - d0) / 1000));
+    wakelog::logf("BOOT: m5_begin_rest_ms=%u\n", (unsigned)((d2 - d1) / 1000));
+    wakelog::logf("BOOT: m5_begin_total_ms=%u\n", (unsigned)((d2 - d0) / 1000));
     mark("post_begin");
 }
 

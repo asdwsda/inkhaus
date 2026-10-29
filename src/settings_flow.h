@@ -8,6 +8,8 @@ namespace settings_flow {
 struct Result {
   bool redraw = false;   // something visible changed
   bool refresh = false;  // "Refresh now": the caller starts a state fetch, then calls refreshDone()
+  bool pageChanged = false;  // main <-> Tools: draw the new page with a full refresh
+  bool toolsOpened = false;  // ... and it is the Tools page (probe the SD card, setSdPresent(), then draw)
   bool left = false;     // the screen closed; `leave` says what to save and apply
   settings_ui::LeaveResult leave;
 };
@@ -15,6 +17,8 @@ struct Result {
 bool active();
 void open(const settings::Settings &saved, settings::Orientation current, bool ringVisible, uint32_t now);
 const settings_ui::SettingsScreen &screen();
+
+void setSdPresent(bool present);  // when the Tools page opens (Debug log note variant)
 
 Result onTouch(ui::Point p, uint32_t now);
 Result onKey(ui::LogicalKey key, uint32_t now);

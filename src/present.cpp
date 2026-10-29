@@ -47,6 +47,8 @@ long g_partialArea = 0;
 const char *kNs = "diag";
 const char *kKeyScr = "scr", *kKeyHash = "chash", *kKeySig = "psig", *kKeyTiles = "tiles";
 
+uint32_t g_fwId = 0;  // identifies the running firmware build; a record written by another one is not trusted
+
 uint32_t screenId() { return kScreenApp + (uint32_t)M5.Display.getRotation(); }
 
 // ---- record in NVS ---------------------------------------------------------------------------
@@ -87,7 +89,7 @@ bool saveRecord(const std::vector<uint16_t> &tiles) {
   const uint32_t hash = screen_track::hashOfTiles(tiles);
   const size_t a = p.putBytes(kKeyTiles, tiles.data(), tiles.size() * sizeof(uint16_t));
   const size_t b = p.putUInt(kKeyScr, screenId());
-  const size_t c = p.putUInt(kKeySig, 0);
+  const size_t c = p.putUInt(kKeySig, g_fwId);
   const size_t d = p.putUInt(kKeyHash, hash);  // last: the record only counts once the hash is in
   const bool ok = a == tiles.size() * sizeof(uint16_t) && b && c && d && p.getUInt(kKeyHash, ~hash) == hash;
   p.end();
@@ -99,7 +101,8 @@ bool loadRecord(std::vector<uint16_t> &tiles) {
   Preferences p;
   if (!p.begin(kNs, true)) return false;
   bool ok = false;
-  if (p.isKey(kKeyScr) && p.isKey(kKeyHash) && p.isKey(kKeyTiles) && p.getUInt(kKeyScr, 0) == screenId()) {
+  if (p.isKey(kKeyScr) && p.isKey(kKeyHash) && p.isKey(kKeyTiles) && p.getUInt(kKeyScr, 0) == screenId() &&
+      p.getUInt(kKeySig, 0) == g_fwId) {
     const size_t want = screen_track::tileGridFor(g_w, g_h).count();
     const size_t have = p.getBytesLength(kKeyTiles);
     if (have == want * sizeof(uint16_t)) {
@@ -346,6 +349,13 @@ void showNotice(const char *title, const char *hint) {
 }
 
 bool framesOk() { return g_framesOk; }
+
+void setFirmwareId(uint32_t id) { g_fwId = id; }
+
+bool hasValidRecord() {
+  std::vector<uint16_t> tiles;
+  return loadRecord(tiles);
+}
 
 M5Canvas &canvas() { return g_cur; }
 const M5Canvas &previous() { return g_panel; }

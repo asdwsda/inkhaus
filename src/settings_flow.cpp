@@ -14,6 +14,10 @@ Result fromUpdate(const settings_ui::Update &u) {
   if (u.action == settings_ui::Action::StartRefresh) {
     r.refresh = true;
     r.redraw = true;
+  } else if (u.action == settings_ui::Action::PageChange) {
+    r.pageChanged = true;
+    r.redraw = true;
+    r.toolsOpened = g_screen->page() == settings_ui::Page::Tools;
   } else if (u.action == settings_ui::Action::Leave) {
     r.left = true;
     r.leave = g_screen->leave();
@@ -29,6 +33,10 @@ const settings_ui::SettingsScreen &screen() { return *g_screen; }
 void open(const settings::Settings &saved, settings::Orientation current, bool ringVisible, uint32_t now) {
   g_screen.emplace(saved, current, ringVisible);
   g_lastInput = now;
+}
+
+void setSdPresent(bool present) {
+  if (g_screen) g_screen->setSdPresent(present);
 }
 
 Result onTouch(ui::Point p, uint32_t now) {

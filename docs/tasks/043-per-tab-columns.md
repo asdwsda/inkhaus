@@ -1,6 +1,6 @@
 # 043: Per-tab landscape columns (4 or 5)
 
-Status: in-progress
+Status: done
 Depends on: 011, 009
 UI spec: docs/ui/layout.md (4-column landscape grid, from docs/ui/proposal-landscape-4col.svg)
 Needs device: yes (later)

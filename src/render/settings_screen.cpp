@@ -20,6 +20,8 @@ Icon mapIcon(sui::Icon i) {
   return Icon::Unknown;
 }
 
+void drawButtonBox(M5Canvas &c, const Rect &b, Icon glyph, const char *label, bool pending);
+
 void drawChip(M5Canvas &c, const Rect &r) {
   c.fillRoundRect(r.x, r.y, r.w, r.h, 8, INK);
   drawTextCy(c, Font::F18, "unsaved", r.x + r.w / 2, r.y + r.h / 2, Align::Center, PAPER);
@@ -53,12 +55,33 @@ void drawRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
   }
 }
 
-void drawNote(M5Canvas &c, const Rect &n) {
+void drawNote(M5Canvas &c, const Rect &n, const char *line1 = sui::kNoteLine1, const char *line2 = sui::kNoteLine2) {
   drawBox(c, n, PAPER, INK);
   const Rect ic = sui::noteIconRect(n);
   drawIcon(c, Icon::Alert, 40, ic.x, ic.y, INK);
-  drawTextCy(c, Font::F18, sui::kNoteLine1, sui::noteTextX(n), sui::noteLineCy(n, 0), Align::Left, INK);
-  drawTextCy(c, Font::F18, sui::kNoteLine2, sui::noteTextX(n), sui::noteLineCy(n, 1), Align::Left, INK);
+  drawTextCy(c, Font::F18, line1, sui::noteTextX(n), sui::noteLineCy(n, 0), Align::Left, INK);
+  drawTextCy(c, Font::F18, line2, sui::noteTextX(n), sui::noteLineCy(n, 1), Align::Left, INK);
+}
+
+// Navigation row of the main page (spec 3.5): label, summary of the Tools values, chevron.
+void drawToolsRow(M5Canvas &c, const sui::SettingsScreen &s) {
+  const Rect &r = s.layout().toolsRow;
+  drawBox(c, r, PAPER, INK);
+  const int cy = sui::toolsRowCy(r);
+  drawTextCy(c, Font::F24, "Tools", sui::toolsRowLabelX(r), cy, Align::Left, INK);
+  drawTextCy(c, Font::F18, sui::toolsSummary(s.edit()), sui::toolsRowSummaryRightX(r), cy, Align::Right, INK);
+  const Rect ch = sui::toolsRowChevronRect(r);
+  drawIcon(c, Icon::ChevR, 40, ch.x, ch.y, INK);
+}
+
+// Toggle row of the Tools page (spec 8.1): label, hint, big On/Off value.
+void drawToolsToggle(M5Canvas &c, const sui::SettingsScreen &s, int i) {
+  const Rect &r = s.toolsLayout().rows[i];
+  drawBox(c, r, PAPER, INK);
+  drawTextCy(c, Font::F24, sui::toolsRowLabel(i), r.x + 16, sui::toolsRowLabelCy(r), Align::Left, INK);
+  drawTextCy(c, Font::F18, sui::toolsRowHint(i), r.x + 16, sui::toolsRowHintCy(r), Align::Left, INK);
+  drawTextCy(c, Font::F40, sui::toolsRowValueText(i, s.edit()), sui::toolsRowValueRightX(r),
+             sui::toolsRowValueCy(r), Align::Right, INK);
 }
 
 // Fit rule of the spec: F24, then F18, then an ellipsis (own measure on the canvas).
@@ -114,25 +137,47 @@ void drawButtonBox(M5Canvas &c, const Rect &b, Icon glyph, const char *label, bo
   drawTextCy(c, Font::F24, label, lr.x, lr.y + lr.h / 2, Align::Left, INK);
 }
 
+void drawFocusRing(M5Canvas &c, const sui::SettingsScreen &s) {
+  // The ring lies in the gaps, 3..6 px outside the focused rect (screen.cpp's recipe); drawn first.
+  if (!s.ringVisible()) return;
+  const Rect f = s.focusRect();
+  drawRing(c, ui::inflate(f, sui::kRingInflate), 3, 15, INK);
+  c.fillRoundRect(f.x - 3, f.y - 3, f.w + 6, f.h + 6, 12, PAPER);
+}
+
+void drawHeader(M5Canvas &c, const sui::SettingsScreen &s, const char *title, const Rect &titleR, const Rect &chip,
+                const Rect &rule) {
+  drawTextCy(c, Font::F40, title, titleR.x, titleR.y + titleR.h / 2, Align::Left, INK);
+  if (s.dirty()) drawChip(c, chip);
+  c.fillRect(rule.x, rule.y, rule.w, rule.h, INK);
+}
+
+void drawToolsPage(M5Canvas &c, const sui::SettingsScreen &s) {
+  const sui::ToolsLayout &T = s.toolsLayout();
+  drawFocusRing(c, s);
+  drawHeader(c, s, "Tools", T.title, T.unsavedChip, T.headerRule);
+  for (int i = 0; i < sui::kToolsRowCount; ++i) drawToolsToggle(c, s, i);
+  if (sui::toolsShowsNote(s.edit())) {
+    if (s.sdPresent()) drawNote(c, T.note, sui::kToolsNoteLine1, sui::kToolsNoteLine2);
+    else drawNote(c, T.note, sui::kToolsNoCardLine1, sui::kToolsNoCardLine2);
+  }
+  drawButtonBox(c, T.backButton, Icon::ChevL, "Back", false);
+}
+
 }  // namespace
 
 void drawSettings(M5Canvas &c, const sui::SettingsScreen &s, const SettingsInfo &info) {
   const sui::SettingsLayout &L = s.layout();
   c.fillScreen(PAPER);
-
-  // Focus ring first: it lies in the gaps, 3..6 px outside the focused rect (screen.cpp's recipe).
-  if (s.ringVisible()) {
-    const Rect f = s.focusRect();
-    drawRing(c, ui::inflate(f, sui::kRingInflate), 3, 15, INK);
-    c.fillRoundRect(f.x - 3, f.y - 3, f.w + 6, f.h + 6, 12, PAPER);
+  if (s.page() == sui::Page::Tools) {
+    drawToolsPage(c, s);
+    return;
   }
-
-  // Header.
-  drawTextCy(c, Font::F40, "Settings", L.title.x, L.title.y + L.title.h / 2, Align::Left, INK);
-  if (s.dirty()) drawChip(c, L.unsavedChip);
-  c.fillRect(L.headerRule.x, L.headerRule.y, L.headerRule.w, L.headerRule.h, INK);
+  drawFocusRing(c, s);
+  drawHeader(c, s, "Settings", L.title, L.unsavedChip, L.headerRule);
 
   for (int i = 0; i < sui::kRowCount; ++i) drawRow(c, s, i);
+  drawToolsRow(c, s);
   if (sui::showsNote(s.edit())) drawNote(c, L.note);
 
   // Info block.

@@ -9,6 +9,7 @@
 #include "app_config.h"
 #include "demo_mode.h"
 #include "app_state.h"
+#include "config_sd.h"
 #include "boot.h"
 #include "input.h"
 #include "net.h"
@@ -16,6 +17,7 @@
 #include "present.h"
 #include "render/screen.h"
 #include "render/settings_screen.h"
+#include "render/splash_screen.h"
 #include "session_driver.h"
 #include "session_glue.h"
 #include "settings.h"
@@ -26,6 +28,7 @@
 #include "sleep_logic.h"
 #include "shot.h"
 #include "tap_intent.h"
+#include "version.h"
 #include "wakelog.h"
 #include "wall_time.h"
 
@@ -173,7 +176,7 @@ static settings_ui::WallTime wallTime(int64_t epoch) {
 
 static void snapshotInfo() {
   render::SettingsInfo &i = g_info;
-  i.firmware = "v0.23";
+  i.firmware = "v" FW_VERSION;
   i.battery.percent = batteryPercent();
   i.battery.millivolts = batteryMv();
   i.battery.charging = M5.Power.isCharging() == m5::Power_Class::is_charging;
@@ -383,6 +386,15 @@ static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
     closeSettings(r.leave, now);
     return;
   }
+  if (r.pageChanged) {  // main <-> Tools: GC16 full refresh (spec section 5, "Refreshes")
+    if (r.toolsOpened) {  // is a card present? (the Debug log note says so); mount is paired with unmount
+      const bool sd = config_sd::mount();
+      if (sd) config_sd::unmount();
+      settings_flow::setSdPresent(sd);
+    }
+    drawSettingsFrame(present::Mode::Full, now);
+    return;
+  }
   if (r.redraw) drawSettingsFrame(present::Mode::Partial, now);
 }
 
@@ -429,8 +441,16 @@ static void lowBatterySleep() {
   goToSleep(power::plan_sleep(g_settings, power::Session::LowBattery, epoch, 0), power::Session::LowBattery);
 }
 
+// Identifies this firmware build for the screen record (a record of another build is not trusted).
+static uint32_t firmwareId() {
+  uint32_t h = 2166136261u;
+  for (const char *p = FW_VERSION " " __DATE__ " " __TIME__; *p; ++p) h = (h ^ uint8_t(*p)) * 16777619u;
+  return h ? h : 1u;
+}
+
 void setup() {
   boot::begin();
+  present::setFirmwareId(firmwareId());
   g_wake = sleepwake::detect();
   const power::Session kind = power::decide_session(g_wake, batteryMv());
   g_scheduled = kind == power::Session::ScheduledRefresh;
@@ -459,6 +479,24 @@ void setup() {
   d.setRotation(rotation);
   if (kind == power::Session::LowBattery) lowBatterySleep();  // returns only if sleeping failed
   if (!g_scheduled) input::begin();  // a scheduled refresh never initialises touch input
+
+  // Cold boot splash (docs/ui/splash.md): power-on or reset button, and the panel does not hold our last
+  // frame (no valid record, or another firmware build). One GC16 refresh, then the rest of setup runs.
+  bool framesReady = false, splashed = false;
+  uint32_t splashMs = 0;
+  {
+    const esp_reset_reason_t rr = esp_reset_reason();
+    if (!boot::fallbackActive() && (rr == ESP_RST_POWERON || rr == ESP_RST_EXT) && present::begin()) {
+      framesReady = true;
+      if (!present::hasValidRecord()) {
+        render::drawSplash(present::canvas(), "v" FW_VERSION);
+        present::bootFrame(true);
+        splashMs = millis();
+        splashed = true;
+        wakelog::logf("BOOT: splash=1\n");
+      }
+    }
+  }
 
   g_cfg = app_config::load(app_logic::chooseConfigSource(s));
   const app_config::Loaded &cfg = g_cfg;
@@ -491,7 +529,7 @@ void setup() {
 #endif
   boot::mark("config");
 
-  if (!present::begin()) {
+  if (!framesReady && !present::begin()) {
     boot::log("fatal", "frame_alloc_failed");
     present::showError("Out of memory");
     boot::log("version", "017");
@@ -508,7 +546,12 @@ void setup() {
     while (true) delay(100);
   }
 #endif
-  present::bootFrame(boot::fallbackActive());
+  // The splash holds for at least 1.5 s (the config/clock start-up above counts towards it).
+  while (splashed && millis() - splashMs < 1500) {
+    boot::feed();
+    delay(10);
+  }
+  present::bootFrame(boot::fallbackActive() || splashed);  // after the splash: ghost-free full redraw
   boot::mark("first_draw");
 
   boot::log("version", "017");

@@ -1,6 +1,6 @@
 # 044: Inkling branding: logo variants, splash, "Tools" page
 
-Status: in-progress
+Status: done
 Depends on: 041
 UI spec: docs/ui/splash.md, settings.md
 Needs device: no (spec)

@@ -24,6 +24,7 @@ void fillCommon(SettingsLayout& L, int infoX, int infoW, const int* infoY, const
     r.valueWidth = infoW - 158;
   }
   for (int i = 0; i < kRowCount; ++i) L.stops[i] = L.rows[i];
+  L.stops[kStopTools] = L.toolsRow;
   L.stops[kStopRefresh] = L.refreshButton;
   L.stops[kStopBack] = L.backButton;
 }
@@ -39,11 +40,12 @@ SettingsLayout computeSettingsLayout(settings::Orientation o) {
     L.title = {16, 0, 200, 54};
     L.unsavedChip = {404, 11, 120, 32};
     L.headerRule = {0, 54, 540, 2};
-    for (int i = 0; i < kRowCount; ++i) L.rows[i] = {16, 68 + 80 * i, 508, 68};
-    L.note = {16, 468, 508, 64};
+    for (int i = 0; i < kRowCount; ++i) L.rows[i] = {16, 68 + 84 * i, 508, 72};
+    L.toolsRow = {16, 404, 508, 64};
+    L.note = {16, 480, 508, 64};
     L.refreshButton = {16, 880, 248, 64};
     L.backButton = {276, 880, 248, 64};
-    const int ys[kInfoRowCount] = {548, 596, 644, 692, 740, 804};
+    const int ys[kInfoRowCount] = {560, 608, 656, 704, 752, 816};
     const int hs[kInfoRowCount] = {48, 48, 48, 48, 64, 48};
     fillCommon(L, 16, 508, ys, hs);
   } else {
@@ -53,7 +55,8 @@ SettingsLayout computeSettingsLayout(settings::Orientation o) {
     L.unsavedChip = {824, 9, 120, 32};
     L.headerRule = {0, 50, 960, 2};
     for (int i = 0; i < kRowCount; ++i) L.rows[i] = {16, 64 + 80 * i, 456, 68};
-    L.note = {16, 464, 456, 64};
+    L.toolsRow = {16, 384, 456, 64};
+    L.note = {16, 460, 456, 64};
     L.refreshButton = {488, 464, 222, 64};
     L.backButton = {722, 464, 222, 64};
     const int ys[kInfoRowCount] = {64, 120, 176, 232, 288, 360};
@@ -63,24 +66,80 @@ SettingsLayout computeSettingsLayout(settings::Orientation o) {
   return L;
 }
 
-Rect rowLabelRect(const Rect& r) { return {r.x + 16, r.y + 12, 220, 24}; }
-Rect rowHintRect(const Rect& r) { return {r.x + 16, r.y + 38, 220, 18}; }
+ToolsLayout computeToolsLayout(settings::Orientation o) {
+  ToolsLayout L;
+  L.orientation = o;
+  if (o == settings::Orientation::Portrait) {
+    L.screenW = 540;
+    L.screenH = 960;
+    L.title = {16, 0, 200, 54};
+    L.unsavedChip = {404, 11, 120, 32};
+    L.headerRule = {0, 54, 540, 2};
+    L.rows[0] = {16, 68, 508, 88};
+    L.rows[1] = {16, 168, 508, 88};
+    L.note = {16, 268, 508, 64};
+    L.backButton = {276, 880, 248, 64};
+  } else {
+    L.screenW = 960;
+    L.screenH = 540;
+    L.title = {16, 0, 200, 50};
+    L.unsavedChip = {824, 9, 120, 32};
+    L.headerRule = {0, 50, 960, 2};
+    L.rows[0] = {16, 64, 456, 88};
+    L.rows[1] = {488, 64, 456, 88};
+    L.note = {488, 164, 456, 64};
+    L.backButton = {722, 464, 222, 64};
+  }
+  L.stops[0] = L.rows[0];
+  L.stops[1] = L.rows[1];
+  L.stops[kToolsStopBack] = L.backButton;
+  return L;
+}
+
+Rect rowLabelRect(const Rect& r) { return {r.x + 16, r.y + r.h / 2 - 24, 220, 28}; }
+Rect rowHintRect(const Rect& r) { return {r.x + 16, r.y + r.h / 2 + 4, 220, 18}; }
 Rect rowValueRect(const Rect& r) { return {r.x + 240, r.y, r.w - 256, r.h}; }
 int rowValueRightX(const Rect& r) { return r.x + r.w - 16; }
-int rowLabelCy(const Rect& r) { return r.y + 24; }
-int rowHintCy(const Rect& r) { return r.y + 47; }
-int rowValueCy(const Rect& r) { return r.y + 34; }
+int rowLabelCy(const Rect& r) { return r.y + r.h / 2 - 10; }
+int rowHintCy(const Rect& r) { return r.y + r.h / 2 + 13; }
+int rowValueCy(const Rect& r) { return r.y + r.h / 2; }
+int toolsRowLabelX(const Rect& r) { return r.x + 16; }
+int toolsRowCy(const Rect& r) { return r.y + 32; }
+int toolsRowSummaryRightX(const Rect& r) { return r.x + r.w - 64; }
+Rect toolsRowChevronRect(const Rect& r) { return {r.x + r.w - 52, r.y + 12, 40, 40}; }
+std::string toolsSummary(const Settings& s) {
+  return std::string("Demo ") + (s.demo_mode ? "On" : "Off") + ", Log " + (s.debug_log ? "On" : "Off");
+}
+int toolsRowLabelCy(const Rect& r) { return r.y + 32; }
+int toolsRowHintCy(const Rect& r) { return r.y + 62; }
+int toolsRowValueCy(const Rect& r) { return r.y + 44; }
+int toolsRowValueRightX(const Rect& r) { return r.x + r.w - 16; }
+Rect toolsRowValueRect(const Rect& r) { return {r.x + r.w - 156, r.y, 156, r.h}; }
+const char* toolsRowLabel(int i) { return i == kToolsDemoRow ? "Demo mode" : i == kToolsDebugRow ? "Debug log" : ""; }
+const char* toolsRowHint(int i) {
+  return i == kToolsDemoRow ? "Sample dashboard, offline" : i == kToolsDebugRow ? "Log lines to SD card" : "";
+}
+std::string toolsRowValueText(int i, const Settings& s) {
+  const bool on = i == kToolsDemoRow ? s.demo_mode : i == kToolsDebugRow ? s.debug_log : false;
+  return on ? "On" : "Off";
+}
+Settings toggleToolsRow(int i, const Settings& s) {
+  Settings r = s;
+  if (i == kToolsDemoRow) r.demo_mode = !s.demo_mode;
+  else if (i == kToolsDebugRow) r.debug_log = !s.debug_log;
+  return r;
+}
+bool toolsShowsNote(const Settings& s) { return s.debug_log; }
 int pipCount(int i) {
   switch (i) {
     case 0: return static_cast<int>(settings::kOrientationValues.size());
     case 1: return static_cast<int>(settings::kWakeModeValues.size());
     case 2: return static_cast<int>(settings::kRefreshIntervalMinValues.size());
     case 3: return static_cast<int>(settings::kIdleTimeoutSValues.size());
-    case kDemoRow: return 2;
   }
   return 0;
 }
-Point pipCentre(const Rect& r, int k) { return {r.x + 22 + 20 * k, r.y + 47}; }
+Point pipCentre(const Rect& r, int k) { return {r.x + 22 + 20 * k, rowHintCy(r)}; }
 Rect noteIconRect(const Rect& n) { return {n.x + 12, n.y + 12, 40, 40}; }
 int noteTextX(const Rect& n) { return n.x + 64; }
 int noteLineCy(const Rect& n, int line) { return n.y + (line == 0 ? 21 : 43); }
@@ -95,7 +154,6 @@ const char* rowLabel(int i) {
     case 1: return "Wake mode";
     case 2: return "Refresh every";
     case 3: return "Idle timeout";
-    case kDemoRow: return "Demo mode";
   }
   return "";
 }
@@ -119,7 +177,6 @@ int rowValueIndex(int i, const Settings& s) {
     case 1: return indexOf(settings::kWakeModeValues, s.wake_mode);
     case 2: return indexOf(settings::kRefreshIntervalMinValues, s.refresh_interval_min);
     case 3: return indexOf(settings::kIdleTimeoutSValues, s.idle_timeout_s);
-    case kDemoRow: return s.demo_mode ? 1 : 0;
   }
   return -1;
 }
@@ -139,7 +196,6 @@ std::string rowValueText(int i, const Settings& s) {
     case 3:
       std::snprintf(buf, sizeof buf, "%d s", static_cast<int>(s.idle_timeout_s));
       return buf;
-    case kDemoRow: return s.demo_mode ? "On" : "Off";
   }
   return "";
 }
@@ -157,7 +213,6 @@ Settings cycleRow(int i, const Settings& s) {
     case 3:
       r.idle_timeout_s = settings::kIdleTimeoutSValues[nextIndex(settings::kIdleTimeoutSValues, cur)];
       break;
-    case kDemoRow: r.demo_mode = !s.demo_mode; break;
   }
   return r;
 }
@@ -257,12 +312,17 @@ SettingsScreen::SettingsScreen(const Settings& saved, settings::Orientation curr
     : saved_(saved),
       edit_(saved),
       layout_(computeSettingsLayout(current)),
+      tools_(computeToolsLayout(current)),
       ringVisible_(ringVisible) {}
 
 Update SettingsScreen::activate(int stop) {
   Update u;
   if (stop == kStopBack) {
     u.action = Action::Leave;
+  } else if (stop == kStopTools) {
+    page_ = Page::Tools;
+    toolsFocus_ = 0;
+    u.action = Action::PageChange;
   } else if (stop == kStopRefresh) {
     if (refresh_ == RefreshState::Running) return u;
     refresh_ = RefreshState::Running;
@@ -278,11 +338,38 @@ Update SettingsScreen::activate(int stop) {
     u.dirty.push_back(rowHintRect(row));
     if (hadNote != showsNote(edit_)) u.dirty.push_back(layout_.note);
     if (wasDirty != dirty()) u.dirty.push_back(layout_.unsavedChip);
+    // The Tools row summary does not change here (it shows demo/log only).
   }
   return u;
 }
 
+Update SettingsScreen::toolsBack() {
+  Update u;
+  page_ = Page::Main;
+  focus_ = kStopTools;  // the main page focus returns to the Tools row
+  u.action = Action::PageChange;
+  return u;
+}
+
+Update SettingsScreen::activateTools(int stop) {
+  Update u;
+  if (stop == kToolsStopBack) return toolsBack();
+  if (stop < 0 || stop >= kToolsRowCount) return u;
+  const bool wasDirty = dirty();
+  const bool hadNote = toolsShowsNote(edit_);
+  edit_ = toggleToolsRow(stop, edit_);
+  u.dirty.push_back(toolsRowValueRect(tools_.rows[stop]));
+  if (hadNote != toolsShowsNote(edit_)) u.dirty.push_back(tools_.note);
+  if (wasDirty != dirty()) u.dirty.push_back(tools_.unsavedChip);
+  return u;
+}
+
 Update SettingsScreen::onTouch(Point p) {
+  if (page_ == Page::Tools) {
+    for (int i = 0; i < kToolsFocusStops; ++i)
+      if (tools_.stops[i].contains(p)) return activateTools(i);
+    return {};
+  }
   for (int i = 0; i < kFocusStops; ++i)
     if (layout_.stops[i].contains(p)) return activate(i);
   return {};
@@ -290,22 +377,26 @@ Update SettingsScreen::onTouch(Point p) {
 
 Update SettingsScreen::onKey(ui::LogicalKey key) {
   Update u;
+  const bool tools = page_ == Page::Tools;
+  const int n = stopCount();
   switch (key) {
     case ui::LogicalKey::Prev:
     case ui::LogicalKey::Next: {
-      const int old = focus_;
-      focus_ = key == ui::LogicalKey::Next ? (focus_ + 1) % kFocusStops
-                                           : (focus_ + kFocusStops - 1) % kFocusStops;
-      if (ringVisible_) u.dirty.push_back(ui::inflate(layout_.stops[old], kRingInflate));
-      u.dirty.push_back(ui::inflate(layout_.stops[focus_], kRingInflate));
+      int& f = tools ? toolsFocus_ : focus_;
+      const Rect* stops = tools ? tools_.stops : layout_.stops;
+      const int old = f;
+      f = key == ui::LogicalKey::Next ? (f + 1) % n : (f + n - 1) % n;
+      if (ringVisible_) u.dirty.push_back(ui::inflate(stops[old], kRingInflate));
+      u.dirty.push_back(ui::inflate(stops[f], kRingInflate));
       ringVisible_ = true;
       break;
     }
     case ui::LogicalKey::Push:
-      u = activate(focus_);
+      u = tools ? activateTools(toolsFocus_) : activate(focus_);
       break;
     case ui::LogicalKey::LongPush:
-      u.action = Action::Leave;
+      if (tools) u = toolsBack();  // one level up, not out of Settings
+      else u.action = Action::Leave;
       break;
   }
   return u;
@@ -326,6 +417,7 @@ LeaveResult SettingsScreen::leave() const {
   r.save = edit_ != saved_;
   r.orientationChanged = edit_.orientation != saved_.orientation;
   r.demoChanged = edit_.demo_mode != saved_.demo_mode;
+  r.debugLogChanged = edit_.debug_log != saved_.debug_log;
   r.settings = edit_;
   return r;
 }

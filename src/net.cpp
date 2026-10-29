@@ -9,6 +9,7 @@
 #include <ctime>
 
 #include "net_policy.h"
+#include "wakelog.h"
 
 using namespace netpolicy;
 
@@ -35,7 +36,7 @@ void logSsid(const char *phase) {
     // SSID only as length + first 2 chars; never the password.
     char pre[3] = {0, 0, 0};
     for (int i = 0; i < 2 && i < (int)g_cfg.ssid.size(); ++i) pre[i] = g_cfg.ssid[i];
-    Serial.printf("NET: phase=%s ssid_len=%u ssid_pre=%s\n", phase, (unsigned)g_cfg.ssid.size(), pre);
+    wakelog::logf("NET: phase=%s ssid_len=%u ssid_pre=%s\n", phase, (unsigned)g_cfg.ssid.size(), pre);
 }
 
 bool nvsLoad(CacheRecord &r) {
@@ -79,7 +80,7 @@ void loadCache() {
         g_cache = n;
     }
     CacheRecord aged = applyLeaseAge(g_cache, nowEpoch());
-    if (!sameRecord(aged, g_cache)) Serial.println("NET: lease=expired");
+    if (!sameRecord(aged, g_cache)) wakelog::logf("NET: lease=expired" "\n");
     g_cache = aged;
     g_cacheLoaded = true;
 }
@@ -111,15 +112,15 @@ bool startAttempt(Attempt a) {
     if (a == Attempt::Cached) {
         applyIpConfig(true);
         st = WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str(), g_cache.channel, g_cache.bssid);
-        Serial.printf("NET: phase=attempt_cached ch=%u lease=%d\n", g_cache.channel,
+        wakelog::logf("NET: phase=attempt_cached ch=%u lease=%d\n", g_cache.channel,
                       hasLease(g_cache) ? 1 : 0);
     } else {
         applyIpConfig(false);
         st = WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str());
-        Serial.println("NET: phase=attempt_scan");
+        wakelog::logf("NET: phase=attempt_scan" "\n");
     }
     if (st == WL_CONNECT_FAILED) {
-        Serial.printf("NET: begin_failed attempt=%s\n", a == Attempt::Cached ? "cached" : "scan");
+        wakelog::logf("NET: begin_failed attempt=%s\n", a == Attempt::Cached ? "cached" : "scan");
         return false;
     }
     return true;
@@ -170,7 +171,7 @@ void begin(const config::WifiConfig &wifi) {
     g_cfg = wifi;
     g_connectMs = 0;
     if (g_cfg.ssid.empty()) {
-        Serial.println("NET: phase=failed reason=no_ssid");
+        wakelog::logf("NET: phase=failed reason=no_ssid" "\n");
         g_state = State::Failed;
         return;
     }
@@ -190,12 +191,12 @@ void begin(const config::WifiConfig &wifi) {
     loadCache();
     bool use = cacheUsable(g_cache, g_cfg.ssid, lanIsStatic());
     g_usingCache = use;
-    Serial.printf("NET: cache=%s failures=%u\n", use ? "hit" : (g_cache.magic ? "invalid" : "miss"),
+    wakelog::logf("NET: cache=%s failures=%u\n", use ? "hit" : (g_cache.magic ? "invalid" : "miss"),
                   (unsigned)g_cache.failures);
     g_startMs = millis();
     g_state = State::Connecting;
     if (launch(g_conn.start(g_startMs, use)) == Phase::Failed) {
-        Serial.println("NET: phase=failed reason=begin");
+        wakelog::logf("NET: phase=failed reason=begin" "\n");
         g_state = State::Failed;
     }
 }
@@ -203,7 +204,7 @@ void begin(const config::WifiConfig &wifi) {
 State poll() {
     if (g_state == State::Connected) {
         if (WiFi.status() != WL_CONNECTED) {
-            Serial.println("NET: phase=link_lost");
+            wakelog::logf("NET: phase=link_lost" "\n");
             g_state = State::Failed;
         }
         return g_state;
@@ -214,33 +215,33 @@ State poll() {
     Attempt next = Attempt::None;
     Phase ph = g_conn.step(now, linkStatus(), next);
     if (next != Attempt::None) {
-        Serial.println("NET: phase=cache_failed_fallback_scan");
+        wakelog::logf("NET: phase=cache_failed_fallback_scan" "\n");
         if (launch(next) == Phase::Failed) ph = Phase::Failed;
     }
     if (ph == Phase::Connected) {
         g_connectMs = now - g_startMs;
         g_state = State::Connected;
-        if (g_usingCache && g_conn.cachedFailed()) Serial.println("NET: cache=stale_rescanned");
+        if (g_usingCache && g_conn.cachedFailed()) wakelog::logf("NET: cache=stale_rescanned" "\n");
         remember();
-        Serial.printf("NET: phase=connected connect_ms=%u rssi=%d ch=%d\n", (unsigned)g_connectMs,
+        wakelog::logf("NET: phase=connected connect_ms=%u rssi=%d ch=%d\n", (unsigned)g_connectMs,
                       WiFi.RSSI(), WiFi.channel());
     } else if (ph == Phase::Failed) {
         g_state = State::Failed;
         if (g_conn.authFailed()) {
-            Serial.println("NET: auth_failed");  // wrong password: says nothing about the cache
+            wakelog::logf("NET: auth_failed" "\n");  // wrong password: says nothing about the cache
         } else if (g_conn.cachedFailed() && g_usingCache) {
             CacheRecord r = afterCachedFailure(g_cache);
             g_cache = r;
             g_rtc = r;
             if (!cacheUsable(r, g_cfg.ssid, lanIsStatic())) {
-                Serial.println("NET: cache=invalid");
+                wakelog::logf("NET: cache=invalid" "\n");
                 g_rtc = CacheRecord{};
                 nvsClear();
             } else {
                 nvsSave(r);  // keep the failure count across a power cycle
             }
         }
-        Serial.printf("NET: phase=failed connect_ms=%u\n", (unsigned)(now - g_startMs));
+        wakelog::logf("NET: phase=failed connect_ms=%u\n", (unsigned)(now - g_startMs));
         WiFi.disconnect(false, false);
     }
     return g_state;
@@ -252,7 +253,7 @@ void invalidateLease() {
     g_cache = r;
     if (cacheValid(g_rtc, g_cfg.ssid, lanIsStatic())) g_rtc = r;
     nvsSave(r);
-    Serial.println("NET: lease=invalidated");
+    wakelog::logf("NET: lease=invalidated" "\n");
 }
 
 void stop() {
@@ -265,7 +266,7 @@ void powerDown() {
     WiFi.setSleep(false);  // release modem sleep before the radio is switched off
     WiFi.mode(WIFI_OFF);
     g_state = State::Idle;
-    Serial.println("NET: phase=power_down");
+    wakelog::logf("NET: phase=power_down" "\n");
 }
 
 int rssi() { return g_state == State::Connected ? WiFi.RSSI() : 0; }

@@ -23,29 +23,29 @@ void test_portrait_layout() {
   auto L = computeSettingsLayout(Orientation::Portrait);
   expectRect(404, 11, 120, 32, L.unsavedChip);
   expectRect(0, 54, 540, 2, L.headerRule);
-  expectRect(16, 68, 508, 68, L.rows[0]);
-  expectRect(16, 148, 508, 68, L.rows[1]);
-  expectRect(16, 228, 508, 68, L.rows[2]);
-  expectRect(16, 308, 508, 68, L.rows[3]);
-  expectRect(16, 388, 508, 68, L.rows[4]);
-  expectRect(16, 468, 508, 64, L.note);
+  expectRect(16, 68, 508, 72, L.rows[0]);
+  expectRect(16, 152, 508, 72, L.rows[1]);
+  expectRect(16, 236, 508, 72, L.rows[2]);
+  expectRect(16, 320, 508, 72, L.rows[3]);
+  expectRect(16, 404, 508, 64, L.toolsRow);
+  expectRect(16, 480, 508, 64, L.note);
   expectRect(16, 880, 248, 64, L.refreshButton);
   expectRect(276, 880, 248, 64, L.backButton);
-  expectRect(16, 548, 508, 48, L.info[0].rect);
-  expectRect(16, 596, 508, 48, L.info[1].rect);
-  expectRect(16, 644, 508, 48, L.info[2].rect);
-  expectRect(16, 692, 508, 48, L.info[3].rect);
-  expectRect(16, 740, 508, 64, L.info[4].rect);
-  expectRect(16, 804, 508, 48, L.info[5].rect);
-  expectRect(16, 740, 508, 1, L.info[4].hairline);
-  TEST_ASSERT_EQUAL_INT(572, L.info[0].cy);
-  TEST_ASSERT_EQUAL_INT(620, L.info[1].cy);
-  TEST_ASSERT_EQUAL_INT(668, L.info[2].cy);
-  TEST_ASSERT_EQUAL_INT(716, L.info[3].cy);
-  TEST_ASSERT_EQUAL_INT(772, L.info[4].cy);
-  TEST_ASSERT_EQUAL_INT(758, L.info[4].cyLine1);
-  TEST_ASSERT_EQUAL_INT(786, L.info[4].cyLine2);
-  TEST_ASSERT_EQUAL_INT(828, L.info[5].cy);
+  expectRect(16, 560, 508, 48, L.info[0].rect);
+  expectRect(16, 608, 508, 48, L.info[1].rect);
+  expectRect(16, 656, 508, 48, L.info[2].rect);
+  expectRect(16, 704, 508, 48, L.info[3].rect);
+  expectRect(16, 752, 508, 64, L.info[4].rect);
+  expectRect(16, 816, 508, 48, L.info[5].rect);
+  expectRect(16, 752, 508, 1, L.info[4].hairline);
+  TEST_ASSERT_EQUAL_INT(584, L.info[0].cy);
+  TEST_ASSERT_EQUAL_INT(632, L.info[1].cy);
+  TEST_ASSERT_EQUAL_INT(680, L.info[2].cy);
+  TEST_ASSERT_EQUAL_INT(728, L.info[3].cy);
+  TEST_ASSERT_EQUAL_INT(784, L.info[4].cy);
+  TEST_ASSERT_EQUAL_INT(770, L.info[4].cyLine1);
+  TEST_ASSERT_EQUAL_INT(798, L.info[4].cyLine2);
+  TEST_ASSERT_EQUAL_INT(840, L.info[5].cy);
   TEST_ASSERT_EQUAL_INT(16 + 158, L.info[0].valueX);
 }
 
@@ -57,8 +57,8 @@ void test_landscape_layout() {
   expectRect(16, 144, 456, 68, L.rows[1]);
   expectRect(16, 224, 456, 68, L.rows[2]);
   expectRect(16, 304, 456, 68, L.rows[3]);
-  expectRect(16, 384, 456, 68, L.rows[4]);
-  expectRect(16, 464, 456, 64, L.note);
+  expectRect(16, 384, 456, 64, L.toolsRow);
+  expectRect(16, 460, 456, 64, L.note);
   expectRect(488, 464, 222, 64, L.refreshButton);
   expectRect(722, 464, 222, 64, L.backButton);
   expectRect(488, 64, 456, 56, L.info[0].rect);
@@ -97,27 +97,35 @@ void test_targets_size_gaps_and_bounds() {
 }
 
 void test_row_internals() {
-  ui::Rect row{16, 68, 508, 68};
-  expectRect(32, 80, 220, 24, rowLabelRect(row));
-  expectRect(32, 106, 220, 18, rowHintRect(row));
-  TEST_ASSERT_EQUAL_INT(92, rowLabelCy(row));
-  TEST_ASSERT_EQUAL_INT(115, rowHintCy(row));
-  TEST_ASSERT_EQUAL_INT(102, rowValueCy(row));
+  ui::Rect row{16, 68, 508, 72};
+  expectRect(32, 80, 220, 28, rowLabelRect(row));
+  expectRect(32, 108, 220, 18, rowHintRect(row));
+  TEST_ASSERT_EQUAL_INT(68 + 26, rowLabelCy(row));
+  TEST_ASSERT_EQUAL_INT(68 + 49, rowHintCy(row));
+  TEST_ASSERT_EQUAL_INT(68 + 36, rowValueCy(row));
   TEST_ASSERT_EQUAL_INT(16 + 492, rowValueRightX(row));
   ui::Rect land{16, 64, 456, 68};
   TEST_ASSERT_EQUAL_INT(16 + 440, rowValueRightX(land));
+  TEST_ASSERT_EQUAL_INT(64 + 24, rowLabelCy(land));
+  TEST_ASSERT_EQUAL_INT(64 + 47, rowHintCy(land));
+  TEST_ASSERT_EQUAL_INT(64 + 34, rowValueCy(land));
   TEST_ASSERT_EQUAL_INT(16 + 22, pipCentre(row, 0).x);
   TEST_ASSERT_EQUAL_INT(16 + 22 + 100, pipCentre(row, 5).x);
-  TEST_ASSERT_EQUAL_INT(68 + 47, pipCentre(row, 0).y);
+  TEST_ASSERT_EQUAL_INT(68 + 49, pipCentre(row, 0).y);
   TEST_ASSERT_EQUAL_INT(2, pipCount(0));
   TEST_ASSERT_EQUAL_INT(3, pipCount(1));
   TEST_ASSERT_EQUAL_INT(6, pipCount(2));
   TEST_ASSERT_EQUAL_INT(4, pipCount(3));
-  ui::Rect note{16, 468, 508, 64};
-  expectRect(28, 480, 40, 40, noteIconRect(note));
+  ui::Rect note{16, 480, 508, 64};
+  expectRect(28, 492, 40, 40, noteIconRect(note));
   TEST_ASSERT_EQUAL_INT(80, noteTextX(note));
-  TEST_ASSERT_EQUAL_INT(489, noteLineCy(note, 0));
-  TEST_ASSERT_EQUAL_INT(511, noteLineCy(note, 1));
+  TEST_ASSERT_EQUAL_INT(501, noteLineCy(note, 0));
+  TEST_ASSERT_EQUAL_INT(523, noteLineCy(note, 1));
+  ui::Rect tr{16, 404, 508, 64};
+  TEST_ASSERT_EQUAL_INT(32, toolsRowLabelX(tr));
+  TEST_ASSERT_EQUAL_INT(436, toolsRowCy(tr));
+  TEST_ASSERT_EQUAL_INT(444 + 16, toolsRowSummaryRightX(tr));
+  expectRect(16 + 508 - 52, 416, 40, 40, toolsRowChevronRect(tr));
   ui::Rect btn{16, 880, 248, 64};
   expectRect(28, 892, 40, 40, buttonIconRect(btn));
   expectRect(76, 880, 180, 64, buttonLabelRect(btn));
@@ -199,7 +207,7 @@ void test_touch_cycles_buffer_only() {
 void test_touch_outside_does_nothing() {
   Settings saved;
   SettingsScreen sc(saved, Orientation::Portrait, false);
-  auto u = sc.onTouch({270, 462});  // between row 4 and note slot
+  auto u = sc.onTouch({270, 474});  // between the Tools row and note slot
   TEST_ASSERT_TRUE(u.action == Action::None);
   TEST_ASSERT_TRUE(u.dirty.empty());
   u = sc.onTouch({10, 100});  // left margin
@@ -259,7 +267,7 @@ void test_leave_saves_once_and_flags_orientation() {
   TEST_ASSERT_TRUE(l.fullRefresh);
   // other change only: save but no rotation
   SettingsScreen sc2(saved, Orientation::Portrait, false);
-  sc2.onTouch({100, 312});
+  sc2.onTouch({100, 340});
   l = sc2.leave();
   TEST_ASSERT_TRUE(l.save);
   TEST_ASSERT_FALSE(l.orientationChanged);
@@ -294,8 +302,8 @@ void test_ring_dirty_is_old_and_new_inflated_by_6() {
   SettingsScreen sc(saved, Orientation::Portrait, true);
   auto u = sc.onKey(LogicalKey::Next);
   TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));
-  expectRect(10, 62, 520, 80, u.dirty[0]);  // row 1 inflated by 6
-  expectRect(10, 142, 520, 80, u.dirty[1]);  // row 2 inflated by 6
+  expectRect(10, 62, 520, 84, u.dirty[0]);  // row 1 inflated by 6
+  expectRect(10, 146, 520, 84, u.dirty[1]);  // row 2 inflated by 6
   // hidden ring: only the new position is drawn
   SettingsScreen hidden(saved, Orientation::Portrait, false);
   u = hidden.onKey(LogicalKey::Next);
@@ -429,7 +437,7 @@ void test_fit_text() {
 void test_title_and_all_hairlines() {
   auto P = computeSettingsLayout(Orientation::Portrait);
   expectRect(16, 0, 200, 54, P.title);
-  const int py[] = {548, 596, 644, 692, 740, 804};
+  const int py[] = {560, 608, 656, 704, 752, 816};
   for (int i = 0; i < kInfoRowCount; ++i) expectRect(16, py[i], 508, 1, P.info[i].hairline);
   auto L = computeSettingsLayout(Orientation::Landscape);
   expectRect(16, 0, 200, 50, L.title);
@@ -437,6 +445,7 @@ void test_title_and_all_hairlines() {
   for (int i = 0; i < kInfoRowCount; ++i) expectRect(488, ly[i], 456, 1, L.info[i].hairline);
   // stops mirror rows + buttons
   for (int i = 0; i < kRowCount; ++i) TEST_ASSERT_TRUE(L.stops[i] == L.rows[i]);
+  TEST_ASSERT_TRUE(L.stops[kStopTools] == L.toolsRow);
   TEST_ASSERT_TRUE(L.stops[kStopRefresh] == L.refreshButton);
   TEST_ASSERT_TRUE(L.stops[kStopBack] == L.backButton);
 }
@@ -475,11 +484,11 @@ void test_touch_hits_each_target_both_orientations() {
 }
 
 void test_every_row_cycles_full_circle_and_chip_tracks_dirty() {
-  const int sizes[] = {2, 3, 6, 4, 2};
+  const int sizes[] = {2, 3, 6, 4};
   for (int row = 0; row < kRowCount; ++row) {
     Settings saved;
     SettingsScreen sc(saved, Orientation::Portrait, false);
-    Point p{100, sc.layout().rows[row].y + 44};
+    Point p{100, sc.layout().rows[row].y + 36};
     for (int k = 1; k <= sizes[row]; ++k) {
       auto u = sc.onTouch(p);
       bool chip = false;
@@ -503,7 +512,7 @@ void test_every_row_cycles_full_circle_and_chip_tracks_dirty() {
 void test_all_rows_changed_and_restored_is_write_free() {
   Settings saved;
   SettingsScreen sc(saved, Orientation::Portrait, true);
-  const int sizes[] = {2, 3, 6, 4, 2};
+  const int sizes[] = {2, 3, 6, 4};
   for (int row = 0; row < kRowCount; ++row) {
     for (int k = 0; k < sizes[row]; ++k) sc.onKey(LogicalKey::Push);
     sc.onKey(LogicalKey::Next);
@@ -667,56 +676,154 @@ void test_fit_text_exact_boundaries() {
   TEST_ASSERT_TRUE(fakeMeasure(f.text, 18) <= 100 + 9);  // ellipsis is 3 bytes but 1 char in measure
 }
 
-static void test_demo_row_model() {
+static void test_tools_row_model() {
   settings::Settings s;
-  TEST_ASSERT_EQUAL_STRING("Demo mode", rowLabel(kDemoRow));
-  TEST_ASSERT_EQUAL_STRING("Off", rowValueText(kDemoRow, s).c_str());
-  TEST_ASSERT_EQUAL_INT(0, rowValueIndex(kDemoRow, s));
-  TEST_ASSERT_EQUAL_INT(2, pipCount(kDemoRow));
-  s = cycleRow(kDemoRow, s);
-  TEST_ASSERT_TRUE(s.demo_mode);
-  TEST_ASSERT_EQUAL_STRING("On", rowValueText(kDemoRow, s).c_str());
-  TEST_ASSERT_EQUAL_INT(1, rowValueIndex(kDemoRow, s));
-  s = cycleRow(kDemoRow, s);
+  TEST_ASSERT_EQUAL_STRING("Demo mode", toolsRowLabel(kToolsDemoRow));
+  TEST_ASSERT_EQUAL_STRING("Debug log", toolsRowLabel(kToolsDebugRow));
+  TEST_ASSERT_EQUAL_STRING("Sample dashboard, offline", toolsRowHint(kToolsDemoRow));
+  TEST_ASSERT_EQUAL_STRING("Log lines to SD card", toolsRowHint(kToolsDebugRow));
+  TEST_ASSERT_EQUAL_STRING("Off", toolsRowValueText(kToolsDemoRow, s).c_str());
+  TEST_ASSERT_EQUAL_STRING("Demo Off, Log Off", toolsSummary(s).c_str());
+  TEST_ASSERT_FALSE(toolsShowsNote(s));
+  s = toggleToolsRow(kToolsDebugRow, s);
+  TEST_ASSERT_TRUE(s.debug_log);
   TEST_ASSERT_FALSE(s.demo_mode);
+  TEST_ASSERT_EQUAL_STRING("On", toolsRowValueText(kToolsDebugRow, s).c_str());
+  TEST_ASSERT_TRUE(toolsShowsNote(s));
+  s = toggleToolsRow(kToolsDemoRow, s);
+  TEST_ASSERT_EQUAL_STRING("Demo On, Log On", toolsSummary(s).c_str());
+  s = toggleToolsRow(kToolsDebugRow, toggleToolsRow(kToolsDemoRow, s));
+  TEST_ASSERT_TRUE(s == settings::Settings());
 }
 
-static void test_demo_row_layout_touch_and_leave() {
-  auto P = computeSettingsLayout(Orientation::Portrait);
-  auto L = computeSettingsLayout(Orientation::Landscape);
-  TEST_ASSERT_EQUAL_INT(5, kRowCount);
-  TEST_ASSERT_EQUAL_INT(7, kFocusStops);
-  expectRect(16, 880, 248, 64, P.stops[kStopRefresh]);
-  expectRect(722, 464, 222, 64, L.stops[kStopBack]);
-  TEST_ASSERT_EQUAL_INT(422, P.rows[kDemoRow].y + 34);
-  TEST_ASSERT_EQUAL_INT(418, L.rows[kDemoRow].y + 34);
-  // touch cycles the buffer, chip flips, no demoChanged until leave
+static void test_tools_layout() {
+  auto P = computeToolsLayout(Orientation::Portrait);
+  expectRect(16, 68, 508, 88, P.rows[0]);
+  expectRect(16, 168, 508, 88, P.rows[1]);
+  expectRect(16, 268, 508, 64, P.note);
+  expectRect(276, 880, 248, 64, P.backButton);
+  expectRect(404, 11, 120, 32, P.unsavedChip);
+  TEST_ASSERT_EQUAL_INT(68 + 32, toolsRowLabelCy(P.rows[0]));
+  TEST_ASSERT_EQUAL_INT(68 + 62, toolsRowHintCy(P.rows[0]));
+  TEST_ASSERT_EQUAL_INT(68 + 44, toolsRowValueCy(P.rows[0]));
+  TEST_ASSERT_EQUAL_INT(16 + 492, toolsRowValueRightX(P.rows[0]));
+  auto L = computeToolsLayout(Orientation::Landscape);
+  expectRect(16, 64, 456, 88, L.rows[0]);
+  expectRect(488, 64, 456, 88, L.rows[1]);
+  expectRect(488, 164, 456, 64, L.note);
+  expectRect(722, 464, 222, 64, L.backButton);
+  TEST_ASSERT_EQUAL_INT(488 + 440, toolsRowValueRightX(L.rows[1]));
+  for (auto o : {Orientation::Portrait, Orientation::Landscape}) {
+    auto T = computeToolsLayout(o);
+    ui::Rect screen{0, 0, T.screenW, T.screenH};
+    for (int i = 0; i < kToolsFocusStops; ++i) {
+      TEST_ASSERT_TRUE(T.stops[i].h >= 64);
+      TEST_ASSERT_TRUE(ui::rectInside(T.stops[i], screen));
+      for (int j = i + 1; j < kToolsFocusStops; ++j)
+        TEST_ASSERT_FALSE(ui::rectsOverlap(ui::inflate(T.stops[i], 5), ui::inflate(T.stops[j], 5)));
+    }
+    TEST_ASSERT_FALSE(ui::rectsOverlap(ui::inflate(T.note, 5), ui::inflate(T.backButton, 5)));
+  }
+}
+
+static void test_tools_page_navigation_and_shared_buffer() {
   Settings saved;
   SettingsScreen sc(saved, Orientation::Portrait, false);
-  auto u = sc.onTouch({100, 422});
+  // touch the Tools row: page changes, nothing saved or applied
+  auto u = sc.onTouch({100, 436});
+  TEST_ASSERT_TRUE(u.action == Action::PageChange);
+  TEST_ASSERT_TRUE(sc.page() == Page::Tools);
+  TEST_ASSERT_EQUAL_INT(0, sc.focus());
+  TEST_ASSERT_FALSE(sc.dirty());
+  // toggle Debug log by touch: value + note + chip; the main page behind is unchanged
+  u = sc.onTouch({100, 212});
+  TEST_ASSERT_TRUE(sc.edit().debug_log);
+  TEST_ASSERT_TRUE(sc.dirty());
+  TEST_ASSERT_EQUAL_INT(3, static_cast<int>(u.dirty.size()));  // value, note, chip
+  const auto& TL = sc.toolsLayout();
+  TEST_ASSERT_TRUE(u.dirty[1] == TL.note);
+  TEST_ASSERT_TRUE(u.dirty[2] == TL.unsavedChip);
+  // toggle again: note clears, chip clears
+  u = sc.onTouch({100, 212});
+  TEST_ASSERT_FALSE(sc.dirty());
+  TEST_ASSERT_EQUAL_INT(3, static_cast<int>(u.dirty.size()));
+  // Demo mode row: value + chip only
+  u = sc.onTouch({100, 112});
+  TEST_ASSERT_TRUE(sc.edit().demo_mode);
+  TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));
+  // anything else does nothing (the main page's Refresh position is not a target here)
+  u = sc.onTouch({100, 600});
+  TEST_ASSERT_TRUE(u.action == Action::None && u.dirty.empty());
+  // Back returns to the main page, no leave, edits kept, focus = Tools row
+  u = sc.onTouch({400, 912});
+  TEST_ASSERT_TRUE(u.action == Action::PageChange);
+  TEST_ASSERT_TRUE(sc.page() == Page::Main);
+  TEST_ASSERT_EQUAL_INT(kStopTools, sc.focus());
   TEST_ASSERT_TRUE(sc.edit().demo_mode);
   TEST_ASSERT_TRUE(sc.dirty());
-  TEST_ASSERT_EQUAL_INT(3, static_cast<int>(u.dirty.size()));  // value, hint, chip
-  expectRect(16, 388, 508, 68, P.rows[kDemoRow]);
   auto l = sc.leave();
-  TEST_ASSERT_TRUE(l.demoChanged);
   TEST_ASSERT_TRUE(l.save);
+  TEST_ASSERT_TRUE(l.demoChanged);
+  TEST_ASSERT_FALSE(l.debugLogChanged);
   TEST_ASSERT_FALSE(l.orientationChanged);
-  TEST_ASSERT_TRUE(l.settings.demo_mode);
-  // cycled back: no change
-  sc.onTouch({100, 422});
-  l = sc.leave();
-  TEST_ASSERT_FALSE(l.demoChanged);
-  TEST_ASSERT_FALSE(l.save);
-  // other rows do not set demoChanged
-  SettingsScreen sc2(saved, Orientation::Portrait, false);
-  sc2.onTouch({100, 100});
-  TEST_ASSERT_FALSE(sc2.leave().demoChanged);
-  // rocker: stop 5 (index 4) pushes the demo row
-  SettingsScreen sc3(saved, Orientation::Landscape, true);
-  for (int i = 0; i < kDemoRow; ++i) sc3.onKey(LogicalKey::Next);
-  sc3.onKey(LogicalKey::Push);
-  TEST_ASSERT_TRUE(sc3.edit().demo_mode);
+}
+
+static void test_tools_page_rocker() {
+  Settings saved;
+  SettingsScreen sc(saved, Orientation::Landscape, true);
+  for (int i = 0; i < kStopTools; ++i) sc.onKey(LogicalKey::Next);
+  TEST_ASSERT_EQUAL_INT(kStopTools, sc.focus());
+  auto u = sc.onKey(LogicalKey::Push);
+  TEST_ASSERT_TRUE(u.action == Action::PageChange);
+  TEST_ASSERT_TRUE(sc.page() == Page::Tools);
+  TEST_ASSERT_EQUAL_INT(0, sc.focus());
+  TEST_ASSERT_EQUAL_INT(3, sc.stopCount());
+  TEST_ASSERT_TRUE(sc.focusRect() == sc.toolsLayout().rows[0]);
+  // order Demo, Debug, Back; wraps both ways
+  u = sc.onKey(LogicalKey::Next);
+  TEST_ASSERT_EQUAL_INT(1, sc.focus());
+  TEST_ASSERT_EQUAL_INT(2, static_cast<int>(u.dirty.size()));
+  TEST_ASSERT_TRUE(u.dirty[1] == ui::inflate(sc.toolsLayout().rows[1], kRingInflate));
+  sc.onKey(LogicalKey::Next);
+  TEST_ASSERT_EQUAL_INT(kToolsStopBack, sc.focus());
+  sc.onKey(LogicalKey::Next);
+  TEST_ASSERT_EQUAL_INT(0, sc.focus());
+  sc.onKey(LogicalKey::Prev);
+  TEST_ASSERT_EQUAL_INT(kToolsStopBack, sc.focus());
+  // push on a row toggles, on Back returns
+  sc.onKey(LogicalKey::Prev);
+  sc.onKey(LogicalKey::Push);
+  TEST_ASSERT_TRUE(sc.edit().debug_log);
+  sc.onKey(LogicalKey::Next);
+  u = sc.onKey(LogicalKey::Push);
+  TEST_ASSERT_TRUE(u.action == Action::PageChange);
+  TEST_ASSERT_TRUE(sc.page() == Page::Main);
+  TEST_ASSERT_EQUAL_INT(kStopTools, sc.focus());
+  TEST_ASSERT_TRUE(sc.leave().debugLogChanged);
+  // LONG_PUSH on the Tools page = back one level, not out of Settings
+  sc.onKey(LogicalKey::Push);
+  TEST_ASSERT_TRUE(sc.page() == Page::Tools);
+  sc.onKey(LogicalKey::Next);
+  u = sc.onKey(LogicalKey::LongPush);
+  TEST_ASSERT_TRUE(u.action == Action::PageChange);
+  TEST_ASSERT_TRUE(sc.page() == Page::Main);
+  // LONG_PUSH on the main page leaves
+  TEST_ASSERT_TRUE(sc.onKey(LogicalKey::LongPush).action == Action::Leave);
+}
+
+static void test_tools_sd_flag_and_main_page_still_leaves() {
+  Settings saved;
+  SettingsScreen sc(saved, Orientation::Portrait, false);
+  TEST_ASSERT_TRUE(sc.sdPresent());
+  sc.setSdPresent(false);
+  TEST_ASSERT_FALSE(sc.sdPresent());
+  // idle auto-leave is the caller's: leave() works from the Tools page too and saves the buffer
+  sc.onTouch({100, 436});
+  sc.onTouch({100, 212});
+  auto l = sc.leave();
+  TEST_ASSERT_TRUE(l.save);
+  TEST_ASSERT_TRUE(l.settings.debug_log);
+  TEST_ASSERT_TRUE(l.debugLogChanged);
   TEST_ASSERT_EQUAL_STRING("built-in demo", kDemoConfigText);
 }
 
@@ -729,8 +836,11 @@ static void test_value_fit_level() {
 
 int main() {
   UNITY_BEGIN();
-  RUN_TEST(test_demo_row_model);
-  RUN_TEST(test_demo_row_layout_touch_and_leave);
+  RUN_TEST(test_tools_row_model);
+  RUN_TEST(test_tools_layout);
+  RUN_TEST(test_tools_page_navigation_and_shared_buffer);
+  RUN_TEST(test_tools_page_rocker);
+  RUN_TEST(test_tools_sd_flag_and_main_page_still_leaves);
   RUN_TEST(test_portrait_layout);
   RUN_TEST(test_landscape_layout);
   RUN_TEST(test_targets_size_gaps_and_bounds);
