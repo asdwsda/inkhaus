@@ -173,6 +173,7 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
 #endif
   );
   if (ex.gpio2_low) {
+    wakelog::setSleptPath("poweroff");
     Serial.println("SLEEP: path=poweroff (GPIO2 low)");
     Serial.flush();
     gpio_hold_dis(kPinMainPower);
@@ -182,10 +183,12 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
     // Still running: USB supplies the board. Take the power hold back and sleep with the same wake
     // sources instead (rocker, and the timer in place of the RTC alarm).
     digitalWrite(kPinMainPower, HIGH);
+    wakelog::setSleptPath("deepsleep_fallback");
     Serial.println("SLEEP: path=deepsleep_fallback (still powered: USB)");
   } else {
     // Task 035: GPIO2 stays high through deep sleep. IT8951 in STANDBY (image memory kept). The GT911
     // stays awake: its wake needs INT driven by the host and GPIO36 is input-only (see SleepExec).
+    wakelog::setSleptPath("deepsleep_hold");
     const bool epdOk = ex.epd_standby && boot::controllerStandby();
     Serial.printf("SLEEP: path=deepsleep_hold epd=%s touch=awake\n", epdOk ? "standby" : "active");
   }

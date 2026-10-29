@@ -10,7 +10,7 @@ namespace app_logic {
 struct WakeRecord {
   int64_t epoch = 0;            // wall clock at sleep entry; 0 = clock not set
   std::string wake;             // wake reason name
-  std::string session;          // interactive / scheduled / low_battery
+  std::string session;          // boot / interactive / scheduled / low_battery
   int32_t battery_mv = 0;
   int32_t awake_ms = 0;         // total, boot to sleep entry
   int32_t display_ms = -1;      // boot until the display is up
@@ -19,6 +19,11 @@ struct WakeRecord {
   int32_t refresh_ms = -1;      // time spent in display refreshes
   std::string fetch_result;     // ok / fail / none
   int32_t refreshes = 0;        // number of refreshes
+  std::string reset_reason;     // esp_reset_reason() name
+  std::string wake_cause;       // esp_sleep_get_wakeup_cause() name
+  std::string ext1_mask;        // hex of esp_sleep_get_ext1_wakeup_status()
+  int32_t rtc_boot_count = 0;   // RTC counter, +1 per boot; 1 after a power loss
+  std::string slept_path;       // sleep path used before this boot (RTC memory)
 };
 
 constexpr size_t kWakeLogMaxBytes = 1024 * 1024;

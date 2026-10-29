@@ -613,7 +613,7 @@ void test_fetch_reaches_widget_data() {
 
 static void test_wakelog_csv() {
   TEST_ASSERT_EQUAL_STRING(
-      "epoch,wake,session,battery_mv,awake_ms,display_ms,wifi_ms,fetch_ms,refresh_ms,fetch_result,refreshes\n",
+      "epoch,wake,session,battery_mv,awake_ms,display_ms,wifi_ms,fetch_ms,refresh_ms,fetch_result,refreshes,reset_reason,wake_cause,ext1_mask,rtc_boot_count,slept_path\n",
       wakeLogHeader().c_str());
   WakeRecord r;
   r.epoch = 1760000000;
@@ -627,14 +627,19 @@ static void test_wakelog_csv() {
   r.refresh_ms = 950;
   r.fetch_result = "ok";
   r.refreshes = 2;
-  TEST_ASSERT_EQUAL_STRING("1760000000,rtc_alarm,scheduled,3987,7210,1100,2400,1900,950,ok,2\n",
+  r.reset_reason = "DEEPSLEEP";
+  r.wake_cause = "EXT1";
+  r.ext1_mask = "0x4000000000";
+  r.rtc_boot_count = 5;
+  r.slept_path = "deepsleep_hold";
+  TEST_ASSERT_EQUAL_STRING("1760000000,rtc_alarm,scheduled,3987,7210,1100,2400,1900,950,ok,2,DEEPSLEEP,EXT1,0x4000000000,5,deepsleep_hold\n",
                            wakeLogLine(r).c_str());
   // Phases that did not happen are empty; text cannot break the columns.
   WakeRecord q;
   q.wake = "a,b\nc";
   q.session = "low_battery";
   q.fetch_result = "none";
-  TEST_ASSERT_EQUAL_STRING("0,a_b_c,low_battery,0,0,,,,,none,0\n", wakeLogLine(q).c_str());
+  TEST_ASSERT_EQUAL_STRING("0,a_b_c,low_battery,0,0,,,,,none,0,,,,0,\n", wakeLogLine(q).c_str());
 }
 
 int main() {
