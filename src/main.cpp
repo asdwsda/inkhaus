@@ -22,6 +22,7 @@
 #include "settings_flow.h"
 #include "settings_nvs.h"
 #include "sleep.h"
+#include "state_cache.h"
 #include "sleep_logic.h"
 #include "shot.h"
 #include "tap_intent.h"
@@ -68,6 +69,7 @@ static bool g_settingsRefreshing = false;
 static uint32_t g_refreshSeq = 0;  // fetchSeq() when the Settings refresh was issued
 static bool g_stackLogged = false;
 static bool g_firstSession = true;
+static int64_t g_restoredEpoch = 0;  // task 037: when the restored values were last confirmed (0 = none)
 static power::WakeReason g_wake = power::WakeReason::ColdBoot;  // why this run started (sleepwake::detect)
 static bool g_scheduled = false;                                // scheduled refresh: no touch/rocker input
 static app_logic::WakeInputGuard g_wakeGuard;                   // swallows the press that woke the device
@@ -375,6 +377,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     timedShow(present::Mode::Partial, now);
     present::prepareSleep();  // saves the record of the frame with the indicator, closes the read state
   }
+  if (g_real) state_cache::save(g_app.store(), g_drv ? g_drv->lastOkEpoch() : 0);
   net::powerDown();
   boot::endBurstRead();
   boot::setupDone();
@@ -439,6 +442,7 @@ void setup() {
     g_app.setActionSink(onAppAction);
     g_app.setMarksDriven(g_real);
     boot::log("mode", g_real ? "real" : "demo");
+    if (g_real) g_restoredEpoch = state_cache::restore(cfg.cfg.entityIds, g_app.store());
   }
 #ifdef TEST_CONFIG_MOCKUP
   g_status.mockLabel = true;

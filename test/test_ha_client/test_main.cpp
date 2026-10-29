@@ -4,6 +4,7 @@
 #include <deque>
 
 #include "body_limit.h"
+#include "keep_alive.h"
 #include "ha_client.h"
 #include "service_call.h"
 #include "state_parser.h"
@@ -542,6 +543,131 @@ void test_client_sends_extra_attrs() {
   TEST_ASSERT_TRUE(t.calls[0].body.find("dew_point") != std::string::npos);
 }
 
+// ---- task 036: service response, keep-alive ----
+
+static const char* kSvcResp =
+    "[{\"entity_id\": \"light.l\", \"state\": \"on\", \"attributes\": {\"friendly_name\": \"Lamp\", "
+    "\"brightness\": 204, \"color_mode\": \"brightness\", \"supported_features\": 4}, "
+    "\"last_changed\": \"2023-11-14T22:13:20.123456+00:00\", \"last_updated\": \"x\"},"
+    "{\"entity_id\": \"switch.other\", \"state\": \"on\", \"attributes\": {}, \"last_changed\": \"\"},"
+    "{\"entity_id\": \"cover.c\", \"state\": \"opening\", \"attributes\": {\"current_position\": 40}, "
+    "\"last_changed\": \"2023-11-14T23:13:20+01:00\"}]";
+
+void test_parse_service_response() {
+  ParseResult p = parse_service_response(kSvcResp, {"light.l", "cover.c", "sensor.none"});
+  TEST_ASSERT_TRUE(p.ok);
+  TEST_ASSERT_EQUAL(2, (int)p.states.size());  // switch.other not wanted, sensor.none absent
+  const EntityState& l = p.states[0];
+  TEST_ASSERT_EQUAL_STRING("light.l", l.id.c_str());
+  TEST_ASSERT_EQUAL_STRING("on", l.state.c_str());
+  TEST_ASSERT_TRUE(l.available);
+  TEST_ASSERT_EQUAL_INT64(1700000000, l.last_changed);
+  TEST_ASSERT_EQUAL_STRING("Lamp", l.friendly_name.c_str());
+  TEST_ASSERT_EQUAL(204, *l.brightness);
+  // same attribute set as the template parser: friendly_name + brightness, nothing else
+  TEST_ASSERT_EQUAL(2, (int)l.attrs.size());
+  TEST_ASSERT_NULL(l.attr("color_mode"));
+  TEST_ASSERT_EQUAL_STRING("opening", p.states[1].state.c_str());
+  TEST_ASSERT_EQUAL(40, *p.states[1].current_position);
+  TEST_ASSERT_EQUAL_INT64(1700000000, p.states[1].last_changed);  // +01:00 offset applied
+  // widget-requested attributes are kept
+  ParseResult q = parse_service_response(kSvcResp, {"light.l"}, {{"light.l", {"color_mode"}}});
+  TEST_ASSERT_EQUAL_STRING("brightness", q.states[0].attr("color_mode")->c_str());
+}
+
+void test_parse_service_response_edge() {
+  TEST_ASSERT_TRUE(parse_service_response("[]", {"light.l"}).states.empty());
+  TEST_ASSERT_TRUE(parse_service_response("[]", {"light.l"}).ok);
+  TEST_ASSERT_FALSE(parse_service_response("", {"light.l"}).ok);
+  TEST_ASSERT_FALSE(parse_service_response("{}", {"light.l"}).ok);
+  ParseResult p = parse_service_response("[1, {\"entity_id\": 3}, {\"entity_id\": \"light.l\"}]", {"light.l"});
+  TEST_ASSERT_TRUE(p.ok);
+  TEST_ASSERT_TRUE(p.states.empty());
+}
+
+void test_client_call_service_returns_states() {
+  FakeTransport t;
+  t.queue = {ok(kSvcResp)};
+  HaClient c(t, kInt, "", "T");
+  ServiceCall call;
+  build_service_call(Action::LightTurnOn, {"light.l"}, call);
+  std::vector<std::string> wanted = {"light.l"};
+  std::vector<EntityState> st;
+  TEST_ASSERT_TRUE(c.call_service(call, &wanted, &st).ok());
+  TEST_ASSERT_EQUAL(1, (int)st.size());
+  // unparsable body: the call still succeeded, no states
+  t.queue = {ok("not json")};
+  st.clear();
+  TEST_ASSERT_TRUE(c.call_service(call, &wanted, &st).ok());
+  TEST_ASSERT_TRUE(st.empty());
+  // a too large response to a call is not a failed call
+  HttpResponse big;
+  big.too_large = true;
+  big.error = "x";
+  t.queue = {big};
+  TEST_ASSERT_TRUE(c.call_service(call, &wanted, &st).ok());
+}
+
+struct FakeRaw : RawHttp {
+  bool open = false;
+  int connects = 0, drops = 0;
+  int fail_next_reused = 0;  // the server closed the idle connection: the reused send fails (stale)
+  std::vector<std::string> urls;
+  HttpResponse send(const std::string&, const std::string& url, const HttpHeaders&,
+                    const std::string&) override {
+    urls.push_back(url);
+    HttpResponse r;
+    r.reused = open;
+    if (open && fail_next_reused > 0) {
+      --fail_next_reused;
+      open = false;
+      r.stale = true;
+      r.error = "send failed";
+      return r;
+    }
+    if (!open) {
+      open = true;
+      ++connects;
+    }
+    r.status = 200;
+    return r;
+  }
+  void drop() override {
+    if (open) ++drops;
+    open = false;
+  }
+};
+
+void test_keep_alive_reuses_one_connection() {
+  FakeRaw raw;
+  KeepAliveTransport k(raw);
+  TEST_ASSERT_FALSE(k.request("POST", "http://ha.local:8123/api/template", {}, "").reused);
+  TEST_ASSERT_TRUE(k.request("POST", "http://ha.local:8123/api/services/light/turn_on", {}, "").reused);
+  TEST_ASSERT_TRUE(k.request("POST", "http://ha.local:8123/api/template", {}, "").reused);
+  TEST_ASSERT_EQUAL(1, raw.connects);
+  // another origin: old connection dropped, new one opened
+  k.request("POST", "https://x.ui.nabu.casa/api/template", {}, "");
+  TEST_ASSERT_EQUAL(2, raw.connects);
+  TEST_ASSERT_EQUAL(1, raw.drops);
+  // close() before sleep, then a request connects again
+  k.close();
+  TEST_ASSERT_FALSE(raw.open);
+  TEST_ASSERT_FALSE(k.request("POST", "https://x.ui.nabu.casa/api/template", {}, "").reused);
+  TEST_ASSERT_EQUAL(3, raw.connects);
+}
+
+void test_keep_alive_stale_connection_retried_once() {
+  FakeRaw raw;
+  KeepAliveTransport k(raw);
+  k.request("POST", "http://h/api/a", {}, "");
+  raw.fail_next_reused = 1;
+  HttpResponse r = k.request("POST", "http://h/api/b", {}, "");
+  TEST_ASSERT_EQUAL(200, r.status);  // transparent reconnect
+  TEST_ASSERT_FALSE(r.reused);
+  TEST_ASSERT_EQUAL(2, raw.connects);
+  TEST_ASSERT_EQUAL(3, (int)raw.urls.size());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_template_golden);
@@ -575,5 +701,10 @@ int main() {
   RUN_TEST(test_template_extra_attrs_rejects_bad_names);
   RUN_TEST(test_parser_generic_attributes);
   RUN_TEST(test_client_sends_extra_attrs);
+  RUN_TEST(test_parse_service_response);
+  RUN_TEST(test_parse_service_response_edge);
+  RUN_TEST(test_client_call_service_returns_states);
+  RUN_TEST(test_keep_alive_reuses_one_connection);
+  RUN_TEST(test_keep_alive_stale_connection_retried_once);
   return UNITY_END();
 }

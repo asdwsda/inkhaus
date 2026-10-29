@@ -105,14 +105,14 @@ WidgetData AppState::widgetData(int idx) const {
   }
   for (const Pending &p : pending_) {
     if (p.tab != shownTab_ || p.widget != idx) continue;
-    d.pending = true;
+    // Optimistic (task 036): the requested result shows at once for every widget type, with no
+    // hourglass / dashed ring (`pending` stays false). The entry ends with the driver's mark: the
+    // store then holds the confirmed state, or a Failed mark reverts to the last real one.
+    d.optimistic = true;
     d.pendingSub = p.sub;
-    // Toggles and climate show the requested result at once; cover and vacuum keep the real state.
-    if (w->type != WidgetType::Cover && w->type != WidgetType::Vacuum) {
-      for (size_t i = 0; i < d.members.size(); ++i) {
-        for (const EntityState &s : p.states) {
-          if (d.members[i] && s.id == d.members[i]->id) d.members[i] = &s;
-        }
+    for (size_t i = 0; i < d.members.size(); ++i) {
+      for (const EntityState &s : p.states) {
+        if (d.members[i] && s.id == d.members[i]->id) d.members[i] = &s;
       }
     }
   }

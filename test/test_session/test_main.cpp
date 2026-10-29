@@ -98,8 +98,8 @@ void test_happy_path_interactive() {
 
   d.now += 200;
   c = d.send(Event::service_done(ticket, HaError::None));
-  TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));  // 500 ms delay first
-  c = d.advance(499);
+  TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));  // 300 ms delay first
+  c = d.advance(299);
   TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));
   c = d.advance(1);
   TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
@@ -120,6 +120,53 @@ void test_happy_path_interactive() {
   TEST_ASSERT_TRUE(sl->plan.rtc_alarm_at.has_value());
   TEST_ASSERT_TRUE(d.m.sleeping());
   TEST_ASSERT_EQUAL(0, (int)d.advance(1000).size());
+}
+
+// Task 036: the call's response carries the entity -> confirmed at once, no confirmation fetch.
+void test_response_with_entity_confirms_without_fetch() {
+  Driver d;
+  online(d);
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  int ticket = find(c, C::CallService)->ticket;
+  d.now += 150;
+  c = d.send(Event::service_done(ticket, HaError::None, {"light.a"}, {es("light.a", "on")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
+  TEST_ASSERT_EQUAL(1, count(c, C::Render));  // the store changed
+  TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));
+  c = d.advance(2000);
+  TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));
+  TEST_ASSERT_EQUAL(0, (int)d.m.queued());
+}
+
+// Task 036: entity missing from the response -> one confirmation fetch after 300 ms.
+void test_response_without_entity_falls_back_to_fetch() {
+  Driver d;
+  online(d);
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  int ticket = find(c, C::CallService)->ticket;
+  c = d.send(Event::service_done(ticket, HaError::None, {}, {es("light.b", "on")}));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Confirmed, "light.a"));
+  c = d.advance(299);
+  TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));
+  c = d.advance(1);
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "on")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
+}
+
+// Task 036: a tap queued before Wi-Fi is up goes out first; the full fetch follows its response.
+void test_queued_tap_call_before_initial_fetch() {
+  Driver d;
+  d.start();
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));  // not online yet
+  c = d.send(Event::wifi(true));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
+  TEST_ASSERT_EQUAL(0, count(c, C::FetchStates));
+  int ticket = find(c, C::CallService)->ticket;
+  c = d.send(Event::service_done(ticket, HaError::None, {"light.a"}, {es("light.a", "on")}));
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
+  TEST_ASSERT_TRUE(find(c, C::FetchStates)->ids.empty());  // the initial full fetch
 }
 
 void test_input_postpones_sleep() {
@@ -897,6 +944,9 @@ void test_fuzz_invariants() {
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_happy_path_interactive);
+  RUN_TEST(test_response_with_entity_confirms_without_fetch);
+  RUN_TEST(test_response_without_entity_falls_back_to_fetch);
+  RUN_TEST(test_queued_tap_call_before_initial_fetch);
   RUN_TEST(test_input_postpones_sleep);
   RUN_TEST(test_taps_before_wifi_are_queued);
   RUN_TEST(test_toggle_twice_sends_nothing);

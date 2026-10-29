@@ -46,6 +46,7 @@ struct FakeHa : HttpTransport {
   std::vector<std::string> urls;
   std::vector<std::string> bodies;
   bool callsChangeState = true;
+  bool respondStates = false;  // service calls answer with the changed states, like HA
   std::string errorBody;  // body of non-200 answers
 
   HttpResponse request(const std::string &, const std::string &url, const HttpHeaders &,
@@ -72,6 +73,16 @@ struct FakeHa : HttpTransport {
           if (body.find(kv.first) != std::string::npos) kv.second = on ? "on" : "off";
       }
       r.body = "[]";
+      if (respondStates && callsChangeState) {
+        const bool on = url.find("turn_on") != std::string::npos;
+        r.body = "[";
+        for (auto &kv : states)
+          if (body.find(kv.first) != std::string::npos)
+            r.body += std::string(r.body.size() > 1 ? "," : "") + "{\"entity_id\": \"" + kv.first +
+                      "\", \"state\": \"" + (on ? "on" : "off") +
+                      "\", \"attributes\": {}, \"last_changed\": \"2023-11-14T22:13:20+00:00\"}";
+        r.body += "]";
+      }
     }
     return r;
   }
@@ -432,6 +443,33 @@ void test_remembered_external_tried_first() {
   TEST_ASSERT_TRUE(ha.urls[0].find("x.example.org") != std::string::npos);
 }
 
+// Task 036: the call's response confirms; no confirmation fetch, store updated from the response.
+void test_call_response_confirms_without_fetch() {
+  Rig r;
+  r.ha.respondStates = true;
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  r.drv.userAction(session::Event::user_action({"light.a"}, Action::LightTurnOn, "on"), r.now);
+  TEST_ASSERT_TRUE(r.until([&] { return r.ha.serviceCalls == 1 && r.drv.marks().empty(); }));
+  TEST_ASSERT_EQUAL_STRING("on", r.store.get("light.a")->state.c_str());
+  r.until([] { return false; }, 3000);
+  TEST_ASSERT_EQUAL(1, r.ha.templateCalls);  // only the initial fetch
+  TEST_ASSERT_TRUE(r.logHas("timing tap_to_call_ms="));
+  TEST_ASSERT_TRUE(r.logHas("timing call_to_response_ms="));
+  TEST_ASSERT_TRUE(r.drv.takeRender());
+  TEST_ASSERT_TRUE(r.logHas("timing response_to_render_ms="));
+}
+
+// Without the entity in the response, the confirmation fetch still runs (fallback).
+void test_call_response_empty_falls_back_to_fetch() {
+  Rig r;
+  r.start();
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  r.drv.userAction(session::Event::user_action({"light.a"}, Action::LightTurnOn, "on"), r.now);
+  TEST_ASSERT_TRUE(r.until([&] { return r.ha.templateCalls == 2 && r.drv.marks().empty(); }));
+  TEST_ASSERT_EQUAL_STRING("on", r.store.get("light.a")->state.c_str());
+}
+
 void test_empty_fetch_is_ok() {
   FakeHa ha;
   HaWorker w(ha, "http://ha.local:8123", "", "T");
@@ -629,6 +667,8 @@ int main() {
   RUN_TEST(test_mailbox);
   RUN_TEST(test_remembered_external_tried_first);
   RUN_TEST(test_empty_fetch_is_ok);
+  RUN_TEST(test_call_response_confirms_without_fetch);
+  RUN_TEST(test_call_response_empty_falls_back_to_fetch);
   RUN_TEST(test_fetch_reaches_widget_data);
   RUN_TEST(test_wakelog_csv);
   return UNITY_END();

@@ -32,6 +32,7 @@ void SessionDriver::start(power::WakeReason reason, int32_t mv, const settings::
 }
 
 void SessionDriver::userAction(const Event &e, int64_t nowMs) {
+  if (tapMs_ < 0) tapMs_ = nowMs;
   if (log_) log_("APP: user_action ids=" + std::to_string(e.ids.size()) + (e.custom ? " custom" : ""));
   send(e, nowMs);
 }
@@ -45,6 +46,7 @@ bool SessionDriver::refresh(int64_t nowMs) {
 }
 
 void SessionDriver::send(const Event &e, int64_t now) {
+  lastNowMs_ = now;
   execute(machine_.handle(e, now), now);
 }
 
@@ -75,6 +77,7 @@ void SessionDriver::tick(int64_t now) {
 }
 
 void SessionDriver::onNet(const NetEvent &ev, int64_t now) {
+  if (ev.type == NetEvent::Type::Closed) return;
   if (ev.type == NetEvent::Type::FetchDone) {
     std::vector<std::string> changed;
     if (ev.error == HaError::None) changed = store_.update(ev.states);
@@ -98,10 +101,20 @@ void SessionDriver::onNet(const NetEvent &ev, int64_t now) {
                    std::to_string(ev.http_status) + " states=" + std::to_string(ev.states.size()) +
                    " changed=" + std::to_string(changed.size()) + (ev.external ? " link=remote" : " link=local"));
     send(Event::fetch_done(ev.error, std::move(changed), ev.states), now);
-  } else {
-    if (log_) log_("APP: call_done ticket=" + std::to_string(ev.ticket) + " err=" +
-                   std::to_string(int(ev.error)) + " http=" + std::to_string(ev.http_status));
-    send(Event::service_done(ev.ticket, ev.error), now);
+  } else if (ev.type == NetEvent::Type::ServiceDone) {
+    std::vector<std::string> changed;
+    if (ev.error == HaError::None) changed = store_.update(ev.states);
+    if (log_) {
+      log_("APP: call_done ticket=" + std::to_string(ev.ticket) + " err=" + std::to_string(int(ev.error)) +
+           " http=" + std::to_string(ev.http_status) + " states=" + std::to_string(ev.states.size()) +
+           " changed=" + std::to_string(changed.size()));
+      if (callSentMs_ >= 0)
+        log_("APP: timing call_to_response_ms=" + std::to_string(now - callSentMs_) + " http_ms=" +
+             std::to_string(ev.ms));
+    }
+    callSentMs_ = -1;
+    respMs_ = now;
+    send(Event::service_done(ev.ticket, ev.error, std::move(changed), ev.states), now);
   }
 }
 
@@ -142,6 +155,10 @@ void SessionDriver::execute(const std::vector<Command> &cmds, int64_t now) {
           log_("APP: cmd call ticket=" + std::to_string(c.ticket) + " service=" + n.call.domain + "." +
                n.call.service + " ids=" + ids);
         }
+        n.ids = entityIds_;  // every layout entity the response mentions updates the store
+        if (log_ && tapMs_ >= 0) log_("APP: timing tap_to_call_ms=" + std::to_string(now - tapMs_));
+        tapMs_ = -1;
+        callSentMs_ = now;
         net_.post(n);
         break;
       }
@@ -165,6 +182,11 @@ void SessionDriver::execute(const std::vector<Command> &cmds, int64_t now) {
         sleep_.plan = c.plan;
         sleep_.session = c.session;
         sleepDue_ = true;
+        {
+          NetCommand close;  // the kept-alive HTTPS connection goes before Wi-Fi does
+          close.type = NetCommand::Type::Close;
+          net_.post(close);
+        }
         wifi_.powerDown();
         wifiUp_ = false;
         break;
@@ -176,6 +198,10 @@ void SessionDriver::execute(const std::vector<Command> &cmds, int64_t now) {
 bool SessionDriver::takeRender() {
   const bool r = render_;
   render_ = false;
+  if (r && respMs_ >= 0 && log_) {
+    log_("APP: timing response_to_render_ms=" + std::to_string(lastNowMs_ - respMs_));
+  }
+  if (r) respMs_ = -1;
   return r;
 }
 

@@ -31,11 +31,14 @@ Event Event::fetch_done(HaError err, std::vector<std::string> changed,
   e.states = std::move(states);
   return e;
 }
-Event Event::service_done(int ticket, HaError err) {
+Event Event::service_done(int ticket, HaError err, std::vector<std::string> changed,
+                          std::vector<EntityState> states) {
   Event e;
   e.type = Type::ServiceDone;
   e.ticket = ticket;
   e.error = err;
+  e.changed_ids = std::move(changed);
+  e.states = std::move(states);
   return e;
 }
 Event Event::user_action(std::vector<std::string> ids, Action a, std::string expected) {
@@ -273,6 +276,8 @@ void SessionMachine::on_service_done(const Event& e, int64_t now, std::vector<Co
   if (flight_ != Flight::Call || e.ticket != ticket_) return;
   flight_ = Flight::None;
   if (e.error == HaError::None) {
+    if (!e.changed_ids.empty()) render_ = true;  // the response already changed the store
+    std::vector<std::string> confirmed;
     for (Item& it : calling_) {
       // A newer action for the same id is already queued: its expectation wins.
       bool newer = false;
@@ -282,11 +287,19 @@ void SessionMachine::on_service_done(const Event& e, int64_t now, std::vector<Co
                                     [&](const Item& c) { return c.id == it.id; }),
                      confirm_.end());
       if (newer) continue;
+      // The call's response carries the entity: that is the confirmation, no fetch needed.
+      bool answered = false;
+      for (const EntityState& s : e.states) answered |= s.id == it.id;
+      if (answered) {
+        confirmed.push_back(it.id);
+        continue;
+      }
       it.attempts = 0;
       it.due_ms = now + kConfirmDelayMs;
       confirm_.push_back(it);
     }
     calling_.clear();
+    mark(confirmed, Mark::Confirmed, out);
     return;
   }
   if (e.error == HaError::Auth || e.error == HaError::Network) {

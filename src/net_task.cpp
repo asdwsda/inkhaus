@@ -75,6 +75,9 @@ void NetTask::loop() {
     Evt e;
     e.epoch = c.epoch;
     e.ev = worker.run(c.cmd);
+    if (e.ev.type != app_logic::NetEvent::Type::Closed && e.ev.http_status != 0)
+      Serial.printf("HTTP: ms=%u reused=%d link=%s\n", (unsigned)e.ev.ms, e.ev.reused ? 1 : 0,
+                    e.ev.external ? "remote" : "local");
     if (worker.remembered() != lastSaved) {
       lastSaved = worker.remembered();
       saveRemembered(lastSaved);

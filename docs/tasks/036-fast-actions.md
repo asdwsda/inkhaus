@@ -33,3 +33,7 @@ Needs device: yes (timing check)
 - [ ] On device: tap → widget flips immediately; HA state switches clearly faster than before (log timings).
 
 ## Notes
+- PC part done (firmware-dev): optimistic view (WidgetData.optimistic, pending stays false), service-response
+  confirm (parse_service_response, Event::service_done states, kConfirmDelayMs 300), KeepAliveTransport +
+  ArduinoHttpTransport::Raw, NetCommand::Close at Sleep, `HTTP:` and `APP: timing ...` logs. Next: device timing
+  check (flash m5paper-debug, tap a light, read `APP: timing`/`HTTP:` lines); not flashed yet.

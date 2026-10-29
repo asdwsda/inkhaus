@@ -49,6 +49,8 @@ HaResult HaClient::post(const std::string& path, const std::string& body, std::s
     }
     r.http_status = resp.status;
     r.base_url = base;
+    r.ms = resp.ms;
+    r.reused = resp.reused;
     if (resp.status == 401) {
       r.error = HaError::Auth;
       r.message = "unauthorized";
@@ -87,7 +89,18 @@ FetchResult HaClient::fetch_states(const std::vector<std::string>& ids) {
   return f;
 }
 
-HaResult HaClient::call_service(const ServiceCall& call) {
+HaResult HaClient::call_service(const ServiceCall& call, const std::vector<std::string>* wanted,
+                                std::vector<EntityState>* states) {
   std::string resp;
-  return post("/api/services/" + call.domain + "/" + call.service, call.body, resp);
+  HaResult r = post("/api/services/" + call.domain + "/" + call.service, call.body, resp);
+  if (r.error == HaError::TooLarge) {  // the call went out and answered 2xx-or-not unknown; body only too big
+    r.error = HaError::None;           // to read: HA executes the call, the confirmation fetch checks it
+    r.message.clear();
+    return r;
+  }
+  if (r.ok() && wanted && states) {
+    ParseResult p = parse_service_response(resp, *wanted, extra_);
+    if (p.ok) *states = std::move(p.states);
+  }
+  return r;
 }

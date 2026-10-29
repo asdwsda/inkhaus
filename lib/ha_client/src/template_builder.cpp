@@ -44,6 +44,34 @@ bool is_valid_attr_name(const std::string& n) {
   return true;
 }
 
+bool state_attribute_names_checked(const std::string& id, const ExtraAttrs& extra,
+                                   std::vector<std::string>& names) {
+  names.clear();
+  std::string attrs = domain_attrs(entity_domain(id));
+  size_t pos = 0;
+  while (!attrs.empty() && pos <= attrs.size()) {
+    size_t comma = attrs.find(',', pos);
+    names.push_back(attrs.substr(pos, comma == std::string::npos ? comma : comma - pos));
+    if (comma == std::string::npos) break;
+    pos = comma + 1;
+  }
+  auto it = extra.find(id);
+  if (it != extra.end())
+    for (const std::string& n : it->second) {
+      if (!is_valid_attr_name(n)) return false;
+      if (n != "friendly_name" && std::find(names.begin(), names.end(), n) == names.end())
+        names.push_back(n);
+    }
+  return true;
+}
+
+std::vector<std::string> state_attribute_names(const std::string& id, const ExtraAttrs& extra) {
+  std::vector<std::string> names;
+  if (!state_attribute_names_checked(id, extra, names)) names.clear();
+  names.insert(names.begin(), "friendly_name");
+  return names;
+}
+
 bool build_state_template(const std::vector<std::string>& ids, std::string& out,
                           std::string& error, const ExtraAttrs& extra) {
   if (ids.empty()) {
@@ -68,24 +96,10 @@ bool build_state_template(const std::vector<std::string>& ids, std::string& out,
     out += "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
            "s.attributes.get('friendly_name')";
     std::vector<std::string> names;
-    std::string attrs = domain_attrs(entity_domain(id));
-    size_t pos = 0;
-    while (!attrs.empty() && pos <= attrs.size()) {
-      size_t comma = attrs.find(',', pos);
-      names.push_back(attrs.substr(pos, comma == std::string::npos ? comma : comma - pos));
-      if (comma == std::string::npos) break;
-      pos = comma + 1;
+    if (!state_attribute_names_checked(id, extra, names)) {
+      error = "invalid attribute name for " + id;
+      return false;
     }
-    auto it = extra.find(id);
-    if (it != extra.end())
-      for (const std::string& n : it->second) {
-        if (!is_valid_attr_name(n)) {
-          error = "invalid attribute name for " + id;
-          return false;
-        }
-        if (n != "friendly_name" && std::find(names.begin(), names.end(), n) == names.end())
-          names.push_back(n);
-      }
     for (const std::string& name : names)
       out += ", '" + name + "': s.attributes.get('" + name + "')";
     out += "}}|tojson }}{% else %}{\"s\": null}{% endif %}";

@@ -21,6 +21,8 @@ struct HaResult {
   int http_status = 0;
   std::string message;
   std::string base_url;  // base URL that answered
+  uint32_t ms = 0;       // duration of the last request
+  bool reused = false;   // it went over a kept-alive connection
   bool ok() const { return error == HaError::None; }
 };
 
@@ -43,7 +45,10 @@ class HaClient {
   void set_extra_attributes(ExtraAttrs extra) { extra_ = std::move(extra); }
 
   FetchResult fetch_states(const std::vector<std::string>& ids);
-  HaResult call_service(const ServiceCall& call);
+  // wanted/states: if both are given, the changed states HA returns for entities in `wanted` are
+  // parsed into `states` (empty if the body is missing or unparsable; the call still succeeded).
+  HaResult call_service(const ServiceCall& call, const std::vector<std::string>* wanted = nullptr,
+                        std::vector<EntityState>* states = nullptr);
 
  private:
   HaResult post(const std::string& path, const std::string& body, std::string& response);

@@ -12,7 +12,7 @@ class HaWorker {
  public:
   HaWorker(HttpTransport &transport, std::string internalUrl, std::string externalUrl,
            std::string token)
-      : internal_(internalUrl), client_(transport, std::move(internalUrl), std::move(externalUrl), std::move(token)) {}
+      : transport_(transport), internal_(internalUrl), client_(transport, std::move(internalUrl), std::move(externalUrl), std::move(token)) {}
 
   NetEvent run(const NetCommand &cmd);
   const std::string &remembered() const { return client_.remembered_base(); }
@@ -20,6 +20,7 @@ class HaWorker {
 
  private:
   bool isExternal(const std::string &base) const;
+  HttpTransport &transport_;
   std::string internal_;
   HaClient client_;
 };

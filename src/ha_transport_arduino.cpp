@@ -1,10 +1,5 @@
 #include "ha_transport_arduino.h"
 
-#include <Arduino.h>
-#include <HTTPClient.h>
-#include <WiFiClient.h>
-#include <WiFiClientSecure.h>
-
 #include "body_limit.h"
 
 // Arduino-ESP32 2.0.x does not ship a ready CA bundle: the app must embed a
@@ -38,43 +33,49 @@ class CappedStream : public Stream {
 };
 }  // namespace
 
-HttpResponse ArduinoHttpTransport::request(const std::string& method, const std::string& url,
-                                           const HttpHeaders& headers, const std::string& body) {
+HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const std::string& url,
+                                             const HttpHeaders& headers, const std::string& body) {
   const uint32_t start = millis();
   HttpResponse out;
   const bool https = url.rfind("https://", 0) == 0;
-
-  WiFiClient plain;
-  WiFiClientSecure secure;
+  WiFiClient* client = &plain_;
   if (https) {
     if (!ca_bundle_start) {
       out.error = "https: CA bundle not embedded";
       return out;
     }
-    secure.setCACertBundle(ca_bundle_start);
+    if (!ca_set_) {
+      secure_.setCACertBundle(ca_bundle_start);
+      ca_set_ = true;
+    }
+    client = &secure_;
   }
+  // An open socket is reused by HTTPClient (HTTPClient.cpp:1128 connect() "already connected,
+  // reusing"; "Connection: keep-alive" at :1209 because setReuse(true)); WiFiClientSecure::connected()
+  // probes the socket, so a connection the server closed meanwhile reads as not connected here.
+  out.reused = client->connected();
 
-  HTTPClient http;
-  http.setConnectTimeout(connect_timeout_ms_);
-  http.setTimeout(read_timeout_ms_);
-  http.setReuse(false);
-  bool begun = https ? http.begin(secure, url.c_str()) : http.begin(plain, url.c_str());
-  if (!begun) {
+  http_.setConnectTimeout(connect_timeout_ms_);
+  http_.setTimeout(read_timeout_ms_);
+  http_.setReuse(true);
+  if (!http_.begin(*client, url.c_str())) {
+    out.reused = false;
     out.error = "begin failed";
     return out;
   }
-  for (const auto& h : headers) http.addHeader(h.first.c_str(), h.second.c_str());
+  for (const auto& h : headers) http_.addHeader(h.first.c_str(), h.second.c_str());
 
-  int code = http.sendRequest(method.c_str(), (uint8_t*)body.data(), body.size());
+  bool keep = false;  // false: the connection state is unclear, drop it
+  int code = http_.sendRequest(method.c_str(), (uint8_t*)body.data(), body.size());
   if (code > 0) {
-    if (content_length_too_large(http.getSize())) {  // -1 when unknown/chunked
+    if (content_length_too_large(http_.getSize())) {  // -1 when unknown/chunked
       out.too_large = true;
       out.error = "response too large";
     } else {
       CappedStream capped(start);
       // writeToStream decodes chunked and identity bodies; with no body
       // (204 / Content-Length 0) it returns 0 without touching the stream.
-      int ret = http.writeToStream(&capped);
+      int ret = http_.writeToStream(&capped);
       if (capped.sink.too_large) {
         out.too_large = true;
         out.error = "response too large";
@@ -85,11 +86,24 @@ HttpResponse ArduinoHttpTransport::request(const std::string& method, const std:
       } else {
         out.status = code;
         out.body = std::move(capped.sink.data);
+        keep = true;
       }
     }
   } else {
     out.error = HTTPClient::errorToString(code).c_str();
+    // Failed while sending or before any response byte on a reused socket: the server most
+    // likely closed it while idle (HTTPC_ERROR_CONNECTION_REFUSED..CONNECTION_LOST = -1..-5).
+    out.stale = out.reused && code <= -1 && code >= -5;
   }
-  http.end();
+  // end() keeps the socket open when keep-alive is on and the server did not say "close"
+  // (HTTPClient.cpp:384 disconnect(): "tcp keep open for reuse").
+  http_.end();
+  if (!keep) drop();
+  out.ms = millis() - start;
   return out;
+}
+
+void ArduinoHttpTransport::Raw::drop() {
+  plain_.stop();
+  secure_.stop();
 }

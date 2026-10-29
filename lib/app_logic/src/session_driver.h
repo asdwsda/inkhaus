@@ -82,6 +82,7 @@ class SessionDriver {
   bool lastOkPending_ = false;  // lastOkEpoch_ to be derived from lastOkMs_ once the clock is known
   uint32_t fetchSeq_ = 0;
   size_t lastChanged_ = 0;
+  int64_t tapMs_ = -1, callSentMs_ = -1, respMs_ = -1, lastNowMs_ = 0;  // timing logs
   bool refreshIssued_ = false;
   SleepRequest sleep_;
   std::map<std::string, session::Mark> marks_;

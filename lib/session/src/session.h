@@ -23,7 +23,7 @@ enum class Status { Connecting, Online, Offline, AuthError };
 // Confirmed also means "clear the pending mark" (e.g. two toggles cancelled out).
 enum class Mark { Pending, Confirmed, Failed };
 
-constexpr int64_t kConfirmDelayMs = 500;  // first confirmation fetch after a successful call
+constexpr int64_t kConfirmDelayMs = 300;  // confirmation fetch after a successful call whose response lacked the entity
 constexpr int64_t kRetryDelayMs = 1000;   // between confirmation retries
 constexpr int kConfirmRetries = 2;        // extra fetches after the first one
 
@@ -33,7 +33,7 @@ struct Event {
     WifiConnected,
     WifiFailed,
     FetchDone,     // error, changed_ids, states
-    ServiceDone,   // ticket, error
+    ServiceDone,   // ticket, error, changed_ids, states (the states HA returned for the call)
     UserAction,    // ids, action (or custom_call), expected_state
     Input,         // any touch/rocker activity (UserAction counts as input too)
     Refresh,       // manual refresh now (status bar tap, Settings "Refresh now"); also retries after an error
@@ -66,7 +66,8 @@ struct Event {
   static Event wifi(bool ok);
   static Event fetch_done(HaError e, std::vector<std::string> changed = {},
                           std::vector<EntityState> states = {});
-  static Event service_done(int ticket, HaError e);
+  static Event service_done(int ticket, HaError e, std::vector<std::string> changed = {},
+                            std::vector<EntityState> states = {});
   static Event user_action(std::vector<std::string> ids, Action a, std::string expected = "");
   static Event user_custom(std::vector<std::string> ids, ServiceCall call,
                            std::string expected = "");

@@ -41,7 +41,8 @@ struct WidgetData {
   config::WidgetType type = config::WidgetType::Sensor;
   bool group = false;
   std::vector<const EntityState *> members;
-  bool pending = false;
+  bool pending = false;     // the hourglass state; no longer set (taps are optimistic, task 036)
+  bool optimistic = false;  // members show the requested result of a tap that is still unconfirmed
   int pendingSub = 0;
   bool failed = false;  // the last action on this widget failed: real state plus alert badge
 };

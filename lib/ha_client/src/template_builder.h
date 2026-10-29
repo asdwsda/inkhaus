@@ -10,11 +10,19 @@ bool is_valid_entity_id(const std::string& id);
 // Domain part of an entity id ("" if there is no dot).
 std::string entity_domain(const std::string& id);
 
+// Attributes fetched for an entity: "friendly_name", the domain's fixed ones, then `extra`.
+// Fixed + extra names only (without friendly_name) via the _checked variant, which returns false
+// for an invalid extra name.
+using ExtraAttrs = std::map<std::string, std::vector<std::string>>;
+bool state_attribute_names_checked(const std::string& id, const ExtraAttrs& extra,
+                                   std::vector<std::string>& names);
+std::vector<std::string> state_attribute_names(const std::string& id,
+                                               const ExtraAttrs& extra = ExtraAttrs());
+
 // Renders the Jinja template for the given ids. Returns false (and sets error)
 // if the list is empty or any id is invalid.
 // extra: widget-requested attribute names per entity id (task 030), fetched in addition to the
 // domain's fixed attributes. Names must match [a-z0-9_]+ (<= 40 chars) or the build fails.
-using ExtraAttrs = std::map<std::string, std::vector<std::string>>;
 bool build_state_template(const std::vector<std::string>& ids, std::string& out,
                           std::string& error, const ExtraAttrs& extra = ExtraAttrs());
 

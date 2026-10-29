@@ -340,9 +340,9 @@ void test_demo_fails_entity_ends_failed() {
   ui::Rect r;
   for (auto &pl : a.layout().widgets) if (pl.index == idx) r = pl.rect;
   TEST_ASSERT_TRUE(a.touch({r.x + r.w / 2, r.y + r.h / 2}, 0));
-  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.widgetData(idx).optimistic);
   TEST_ASSERT_TRUE(a.tick(kPendingMs * 10));
-  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_FALSE(a.widgetData(idx).optimistic);
   TEST_ASSERT_TRUE(a.widgetData(idx).failed);
 }
 
@@ -367,12 +367,13 @@ void test_app_toggle_pending_then_confirmed() {
   TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());
   TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, 1000));
   WidgetData d = a.widgetData(idx);
-  TEST_ASSERT_TRUE(d.pending);
+  TEST_ASSERT_TRUE(d.optimistic);
+  TEST_ASSERT_FALSE(d.pending);  // no hourglass any more
   TEST_ASSERT_EQUAL_STRING("off", d.members[0]->state.c_str());  // requested state shown at once
   TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());
   TEST_ASSERT_FALSE(a.tick(1000 + kPendingMs - 1));
   TEST_ASSERT_TRUE(a.tick(1000 + kPendingMs));
-  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_FALSE(a.widgetData(idx).optimistic);
   TEST_ASSERT_EQUAL_STRING("off", a.store().get(id)->state.c_str());
 }
 
@@ -386,9 +387,10 @@ void test_app_cover_button_pending_keeps_state() {
   const ui::Rect stop = subs[1].rect;
   TEST_ASSERT_TRUE(a.touch({stop.x + 5, stop.y + 5}, 0));
   WidgetData d = a.widgetData(idx);
-  TEST_ASSERT_TRUE(d.pending);
+  TEST_ASSERT_TRUE(d.optimistic);
   TEST_ASSERT_EQUAL(2, d.pendingSub);
-  TEST_ASSERT_EQUAL_STRING("opening", d.members[0]->state.c_str());  // unchanged while pending
+  TEST_ASSERT_EQUAL_STRING("open", d.members[0]->state.c_str());  // requested result (stop) shown at once
+  TEST_ASSERT_EQUAL_STRING("opening", a.store().get(a.config().tabs[0].widgets[size_t(idx)].entity)->state.c_str());
   // the body of a multi-button widget does nothing
   TEST_ASSERT_FALSE(a.touch({r.x + 5, r.y + 5}, 10));
   TEST_ASSERT_TRUE(a.tick(kPendingMs));
@@ -447,7 +449,7 @@ void test_app_rocker_toggle_action() {
   TEST_ASSERT_TRUE(a.rocker(ui::PhysicalKey::Push, 10));  // multi-button: enter INNER
   TEST_ASSERT_EQUAL(ui::FocusMode::Inner, a.focus().mode);
   TEST_ASSERT_TRUE(a.rocker(ui::PhysicalKey::Push, 20));  // entry = stop
-  TEST_ASSERT_TRUE(a.widgetData(0).pending);
+  TEST_ASSERT_TRUE(a.widgetData(0).optimistic);
   TEST_ASSERT_EQUAL(2, a.widgetData(0).pendingSub);
 }
 
@@ -472,9 +474,9 @@ void test_t_tick_survives_millis_wraparound() {
   const uint32_t t0 = 0xFFFFFF00u;  // commit time wraps past 2^32
   TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, t0));
   TEST_ASSERT_FALSE(a.tick(t0 + 100));
-  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.widgetData(idx).optimistic);
   TEST_ASSERT_TRUE(a.tick(t0 + kPendingMs));  // wrapped value
-  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_FALSE(a.widgetData(idx).optimistic);
 }
 
 void test_t_tab_touch_cancels_rocker_debounce() {
@@ -741,16 +743,44 @@ void test_marks_pending_until_confirmed() {
   const ui::Rect r = widgetRect(a, idx);
   TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, 0));
   TEST_ASSERT_FALSE(a.tick(kPendingMs * 10));  // the demo timer does not apply
-  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.widgetData(idx).optimistic);
   TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());  // never committed locally
   // before the driver reports anything the entry stays; Pending keeps it
   a.setMarks({});
-  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.widgetData(idx).optimistic);
   a.setMarks({{id, Mark::Pending}});
-  TEST_ASSERT_TRUE(a.widgetData(idx).pending);
+  TEST_ASSERT_TRUE(a.widgetData(idx).optimistic);
   TEST_ASSERT_TRUE(a.setMarks({}));  // confirmed
-  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_FALSE(a.widgetData(idx).optimistic);
   TEST_ASSERT_FALSE(a.widgetData(idx).failed);
+}
+
+void test_optimistic_cover_direction_and_vacuum() {
+  AppState a;
+  a.init(exampleConfig(), P, false);
+  a.setMarksDriven(true);
+  int idx = findWidget(a, WidgetType::Cover);
+  const std::string id = a.config().tabs[0].widgets[size_t(idx)].entity;
+  EntityState cs{id, "closed", true};
+  cs.current_position = 0;
+  a.store().update({cs});
+  const ui::Rect r = widgetRect(a, idx);
+  auto subs = ui::subRegions(WidgetType::Cover, config::WidgetSize{2, 1}, r);
+  const ui::Rect up = subs[0].rect;
+  TEST_ASSERT_TRUE(a.touch({up.x + 5, up.y + 5}, 0));
+  WidgetData d = a.widgetData(idx);
+  TEST_ASSERT_TRUE(d.optimistic);
+  TEST_ASSERT_FALSE(d.pending);
+  TEST_ASSERT_EQUAL_STRING("opening", d.members[0]->state.c_str());
+  TEST_ASSERT_TRUE(coverView(d.members, false).upFilled);  // moving direction shown at once
+  TEST_ASSERT_EQUAL_STRING("closed", a.store().get(id)->state.c_str());
+  // Failed mark: back to the last real state, with the failed badge, no optimistic view
+  TEST_ASSERT_TRUE(a.setMarks({{id, Mark::Failed}}));
+  d = a.widgetData(idx);
+  TEST_ASSERT_FALSE(d.optimistic);
+  TEST_ASSERT_TRUE(d.failed);
+  TEST_ASSERT_EQUAL_STRING("closed", d.members[0]->state.c_str());
+  TEST_ASSERT_FALSE(coverView(d.members, false).upFilled);
 }
 
 void test_marks_failed_reverts_and_shows_failed() {
@@ -765,7 +795,7 @@ void test_marks_failed_reverts_and_shows_failed() {
   a.setMarks({{id, Mark::Pending}});
   TEST_ASSERT_TRUE(a.setMarks({{id, Mark::Failed}}));
   WidgetData d = a.widgetData(idx);
-  TEST_ASSERT_FALSE(d.pending);
+  TEST_ASSERT_FALSE(d.optimistic);
   TEST_ASSERT_TRUE(d.failed);
   TEST_ASSERT_EQUAL_STRING("on", d.members[0]->state.c_str());  // last real state
   TEST_ASSERT_TRUE(a.setMarks({}));
@@ -783,7 +813,7 @@ void test_marks_unmarked_pending_times_out() {
   a.touch({r.x + 10, r.y + 10}, 0);
   TEST_ASSERT_FALSE(a.tick(4999));
   TEST_ASSERT_TRUE(a.tick(5000));
-  TEST_ASSERT_FALSE(a.widgetData(idx).pending);
+  TEST_ASSERT_FALSE(a.widgetData(idx).optimistic);
   TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());
 }
 
@@ -963,6 +993,7 @@ int main() {
   RUN_TEST(test_marks_pending_until_confirmed);
   RUN_TEST(test_marks_failed_reverts_and_shows_failed);
   RUN_TEST(test_marks_unmarked_pending_times_out);
+  RUN_TEST(test_optimistic_cover_direction_and_vacuum);
   RUN_TEST(test_sink_fast_double_taps);
   RUN_TEST(test_sink_also_in_demo_mode);
   RUN_TEST(test_sensor_attribute_main_value);
