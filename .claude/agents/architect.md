@@ -46,6 +46,9 @@ Run independent tasks in parallel only when they touch different files.
 - Cost: tester/firmware-dev run on Sonnet, the architect on Opus. Delegate code reading and review
   to tester instead of reading code yourself; keep your own checks to running tests/builds. Under a
   tight budget, review only risky tasks (power, concurrency, security), skip low-risk ones.
+- Optimistic mode (user, 2026-10-30): while the device is away, keep coding on assumptions; agents tag
+  uncertain code with `UNVERIFIED` comments and append a line to docs/device-checks.md. New UI designs may
+  be implemented right away; the user validates on the device later.
 - Commit PC-complete tasks as checkpoints ("task NNN: … (PC part; device check pending)") instead of
   leaving many tasks uncommitted; the final commit marks the task done after the device check.
 - User direction (2026-10-28): parallelize as much as possible. Whenever work waits on the
