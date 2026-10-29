@@ -6,9 +6,9 @@
 <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="1.5" fill="currentColor"/><path d="M8 11 V8 a4 4 0 0 1 8 0 V11" fill="none" stroke="currentColor" stroke-width="2.5"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 6.5 V12 L16 14.5" fill="none" stroke="currentColor" stroke-width="2.5"/></symbol>
 <symbol id="i-demo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><polygon points="9.5,7 17,12 9.5,17" fill="#fff"/></symbol>
-<symbol id="i-moon" viewBox="0 0 24 24"><path d="M16.5 4.2 A9 9 0 1 0 20.46 15.08 A7 7 0 0 1 16.5 4.2 Z" fill="currentColor"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.00 19.11 A10 10 0 1 1 6.29 3.96 A10 10 0 0 0 19.00 19.11 Z" fill="currentColor"/></symbol>
 <symbol id="i-sidebtn" viewBox="0 0 24 24"><line x1="2" y1="12" x2="13" y2="12" stroke="currentColor" stroke-width="2.5"/><polygon points="12,6 18,12 12,18" fill="currentColor"/><rect x="20" y="5" width="3" height="14" rx="1.5" fill="currentColor"/></symbol>
-<symbol id="i-finger" viewBox="0 0 24 24"><rect x="9.5" y="3" width="5" height="12" rx="2.5" fill="currentColor"/><rect x="6" y="12" width="12" height="10" rx="3" fill="currentColor"/><path d="M5 4 Q3 7.5 5 11 M19 4 Q21 7.5 19 11" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-finger" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="10.8" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
 </defs><rect width="960" height="1688" fill="#fff"/>
 <!-- Status states sheet (task 038). Strips are drawn 1:1; spec in STYLE.md 5.3 / 5.5. Greys only. -->
 <text x="16" y="30" font-size="24" font-weight="bold">Status bar states, portrait (540 x 56 strips)</text>

@@ -353,7 +353,7 @@ wake it. Chosen by the sleep plan:
 | Variant | Used for | Icons |
 |---------|----------|-------|
 | Button | wake mode Button, and low battery in any mode (touch wake is off then) | moon + `Zz` + `sidebtn`: a bar at the device edge with an arrow pointing at it |
-| Touch | wake mode Touch | moon + `Zz` + `finger`: a fingertip with two tap marks |
+| Touch | wake mode Touch | moon + `Zz` + `finger`: a tap symbol, a filled dot with two concentric ripple rings |
 
 Look (both orientations, revised task 038): a calm **outline pill**, no fill (PAPER inside, 2 px
 INK border, fully rounded), with a small moon, a bold `Zz` and the wake glyph, all INK, centre-line
@@ -473,7 +473,7 @@ for the temperature and humidity on one row.
 | Vacuum | play (start), pause, dock (house with down arrow) |
 | Controls | minus, plus, chevron_left, chevron_right, dots (overflow, three dots), refresh (open circular arrow with a head) |
 | System | wifi, wifi_dot, wifi_off, battery, clock, hourglass, warn (circle with slash = unavailable), alert (circle with "!" = failed) |
-| Sleep | moon (crescent), sidebtn (bar with an arrow pointing at it), finger (fingertip with two tap marks) |
+| Sleep | moon (crescent), sidebtn (bar with an arrow pointing at it), finger (tap symbol: filled dot with two concentric ripple rings), moon is a thin stroke-like crescent |
 | Weather (XL / L) | sunny, clear_night, partlycloudy, cloudy, rainy, pouring, snowy, fog, windy, lightning, unknown |
 
 Climate icon use: the hvac action icon on the climate line 2 is `flame` for heating,

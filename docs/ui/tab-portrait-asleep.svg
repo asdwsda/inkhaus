@@ -21,7 +21,7 @@
     <symbol id="i-wifi" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="1.8" fill="currentColor"/></symbol>
     <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3 H17 V8 L12 12 L17 16 V21 H7 V16 L12 12 L7 8 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
     <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="4.5" cy="12" r="2.5" fill="currentColor"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><circle cx="19.5" cy="12" r="2.5" fill="currentColor"/></symbol>
-    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M16.5 4.2 A9 9 0 1 0 20.46 15.08 A7 7 0 0 1 16.5 4.2 Z" fill="currentColor"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.00 19.11 A10 10 0 1 1 6.29 3.96 A10 10 0 0 0 19.00 19.11 Z" fill="currentColor"/></symbol>
     <symbol id="i-sidebtn" viewBox="0 0 24 24"><line x1="2" y1="12" x2="13" y2="12" stroke="currentColor" stroke-width="2.5"/><polygon points="12,6 18,12 12,18" fill="currentColor"/><rect x="20" y="5" width="3" height="14" rx="1.5" fill="currentColor"/></symbol>
   </defs>
 
