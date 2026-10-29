@@ -40,6 +40,8 @@ class BrightnessPopup {
   // Tap on the bar at fraction 0..1 of its length -> percent (rounded, clamped).
   bool tapBar(double fraction, uint32_t now);
 
+  void poke(uint32_t now) { if (open_) touchInput(now); }  // input that changes nothing (panel tap)
+  void cancel() { open_ = false; dirty_ = false; unconfirmed_ = false; }  // closes without sending
   void done(uint32_t now);  // flushes an unsent value, closes
   // Sends a due value, closes after the idle time. Returns true if the popup closed.
   bool tick(uint32_t now);

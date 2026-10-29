@@ -41,7 +41,8 @@ Event poll() {
     e.kind = Event::LongTouch;
     e.point = {t.x, t.y};
     push(e);
-  } else if (t.wasReleased()) {
+  }
+  if (t.wasReleased()) {
     Event e;
     e.kind = Event::TouchRelease;
     e.point = {t.x, t.y};

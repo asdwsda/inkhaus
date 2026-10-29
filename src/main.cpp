@@ -12,6 +12,7 @@
 #include "config_sd.h"
 #include "boot.h"
 #include "brightness_intent.h"
+#include "deferred_tap.h"
 #include "input.h"
 #include "net.h"
 #include "net_task.h"
@@ -306,9 +307,7 @@ static void onBrightnessSend(const std::string &id, int pct) {
 }
 
 // A tap on a dimmable light waits for the release or the long press (task 045).
-static bool g_tapDeferred = false;
-static ui::Point g_tapPoint;
-static uint32_t g_tapAt = 0;
+static uistate::DeferredTap g_defer;
 
 // Driver marks (pending/failed by entity id) -> widget visuals. True if something visible changed.
 static bool syncMarks() {
@@ -407,6 +406,7 @@ static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
 }
 
 static void openSettings(bool ring, uint32_t now) {
+  g_defer.cancel();
   snapshotInfo();
   settings_flow::open(g_settings, g_app.orientation(), ring, now);
   settings_flow::setNetwork(networkInfo());
@@ -454,13 +454,13 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   const bool low = session == power::Session::LowBattery;
   session_glue::ntpAbort();
   if (!low) {
+    g_app.closeBrightness(now);  // flush the unsent value; the frozen screen never shows the popup (brightness.md rule 5)
     // Settings auto-leave before sleeping (settings.md rule 5). Whether or not Settings was open now,
     // the plan is made again from the settings in effect now: the session machine's plan was made
     // from the copy taken when the session started (task 039 bug).
     if (settings_flow::active()) handleSettingsResult(settings_flow::tick(now + 3600u * 1000u), now);
     const int64_t epoch = session_glue::wallClock();
     plan = app_logic::planForSleep(g_settings, session, epoch, utcOffsetAt(epoch), localIdle);
-    g_app.closeBrightness(now);  // the frozen screen never shows the popup (brightness.md rule 5)
   }
   if (!low && present::framesOk()) {
     present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
@@ -651,13 +651,14 @@ void loop() {
         (e.kind == input::Event::Touch && g_wakeGuard.blocksTouch()))
       e = input::Event();  // the press that woke the device
   }
-  if (e.kind != input::Event::None && g_real && g_drv) {
+  const bool popupOpen = g_app.brightnessOpen();  // no idle sleep while open: its own 10 s close comes first
+  if ((e.kind != input::Event::None || popupOpen) && g_real && g_drv) {
     if (g_sessionOver) startSession(now);  // a new interactive session (real sleep comes later)
     else g_drv->input(now);
   }
   if (app_logic::localIdleSleepWanted(g_real && g_drv)) {  // demo / config error: no session machine
     if (!g_localIdleOn) { g_localIdle = power::IdleTimer(g_settings.idle_timeout_s); g_localIdle.start(now / 1000); g_localIdleOn = true; }
-    if (e.kind != input::Event::None || settings_flow::active()) g_localIdle.on_input(now / 1000);
+    if (e.kind != input::Event::None || settings_flow::active() || popupOpen) g_localIdle.on_input(now / 1000);
     if (g_localIdle.should_sleep(now / 1000)) {
       const int64_t epoch = session_glue::wallClock();
       goToSleep(app_logic::localIdlePlan(g_settings, epoch, utcOffsetAt(epoch)), power::Session::Interactive, true);
@@ -670,24 +671,20 @@ void loop() {
       handleSettingsResult(settings_flow::onKey(ui::mapRocker(e.key, g_app.orientation(), false), now), now);
     handleSettingsResult(settings_flow::tick(now), now);
   } else if (e.kind == input::Event::LongTouch) {
-    if (g_tapDeferred) {
-      g_tapDeferred = false;
-      changed |= g_app.longPress(g_tapPoint, now);
-    }
+    const auto d = g_defer.longPress();
+    if (d.kind == uistate::DeferredTap::Result::LongPress) changed |= g_app.longPress(d.point, now);
   } else if (e.kind == input::Event::TouchRelease) {
-    if (g_tapDeferred) {  // a short tap on a dimmable light: on/off as usual, now that it is not a long press
-      g_tapDeferred = false;
+    const auto d = g_defer.release();  // a short tap on a dimmable light: on/off as usual
+    if (d.kind == uistate::DeferredTap::Result::Tap) {
       g_tapNow = now;
-      changed |= g_app.touch(g_tapPoint, now);
+      changed |= g_app.touch(d.point, now);
     }
   } else if (e.kind == input::Event::Touch && g_app.brightnessOpen()) {
     g_tapNow = now;
     changed |= g_app.touch(e.point, now);  // modal: outside closes, controls act
   } else if (e.kind == input::Event::Touch && g_app.screen() == uistate::Screen::Tabs &&
              g_app.dimmableLightAt(e.point)) {
-    g_tapDeferred = true;
-    g_tapPoint = e.point;
-    g_tapAt = now;
+    g_defer.press(e.point, now);
   } else if (e.kind == input::Event::Touch) {
     const ui::Hit hit = g_app.screen() == uistate::Screen::Tabs ? ui::hitTest(g_app.layout(), e.point) : ui::Hit();
     if (hit.kind == ui::HitKind::Settings) {
@@ -706,6 +703,7 @@ void loop() {
         g_app.focus().mode == ui::FocusMode::Tab) {
       openSettings(true, now);
     } else if (e.key == ui::PhysicalKey::LongPush && !g_app.brightnessOpen() && g_app.openBrightnessFocused(now)) {
+      g_defer.cancel();
       changed = true;
     } else {
       g_tapNow = now;
@@ -761,10 +759,10 @@ void loop() {
   hooks.setPendingMs = [](uint32_t ms) { g_app.setPendingMs(ms); };
   shot::poll(hooks);
 
-  if (g_tapDeferred && now - g_tapAt > 1500) {  // neither release nor hold seen: treat as a tap
-    g_tapDeferred = false;
+  const auto late = g_defer.tick(now);  // neither release nor hold seen: treat as a tap
+  if (late.kind == uistate::DeferredTap::Result::Tap) {
     g_tapNow = now;
-    changed |= g_app.touch(g_tapPoint, now);
+    changed |= g_app.touch(late.point, now);
   }
   changed |= g_app.tick(now);
   if (changed) showFrame(now);

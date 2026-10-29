@@ -112,7 +112,7 @@ Landscape 16 + 624 + 16 = 656; 3 * 200 + 2 * 12 = 624; 4 * 147 + 3 * 12 = 624; v
 | Rocker long push | close | as Done |
 
 Rocker order note: task 045 wrote "up/down = -/+10 %"; this spec uses UP = +10 (brighter), which is the
-natural reading and matches the cover widget. Architect to confirm.
+natural reading and matches the cover widget. Decided: portrait UP = brighter; landscape the key pointing right (BtnC) = brighter.
 
 ## 6. Refresh
 

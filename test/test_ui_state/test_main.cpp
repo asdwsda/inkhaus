@@ -1,5 +1,6 @@
 #include "brightness_layout.h"
 #include "brightness_popup.h"
+#include "deferred_tap.h"
 #include <cstring>
 #include <fstream>
 #include <sstream>
@@ -1159,6 +1160,127 @@ void test_app_brightness_not_for_plain_lights_and_demo_store() {
   TEST_ASSERT_FALSE(a.brightnessAwaiting());
 }
 
+void test_popup_idle_close_flushes_and_poke_restarts_idle() {
+  BrightnessPopup p;
+  std::vector<int> sent;
+  p.setSink([&](const std::string &, int v) { sent.push_back(v); });
+  p.open("light.a", 0, 0, 50, 0);
+  p.step(+1, 100);
+  p.poke(9000);  // panel tap: idle restarts
+  TEST_ASSERT_FALSE(p.tick(9400));
+  TEST_ASSERT_EQUAL(1, (int)sent.size());  // debounce sent 60
+  p.step(+1, 9400);
+  TEST_ASSERT_FALSE(p.tick(19399));
+  TEST_ASSERT_TRUE(p.tick(19400));  // 10 s after the last input; unsent value is flushed (a fresh step)
+  TEST_ASSERT_FALSE(p.isOpen());
+  TEST_ASSERT_EQUAL(2, (int)sent.size());
+  TEST_ASSERT_EQUAL(70, sent[1]);
+}
+
+void test_popup_cancel_sends_nothing() {
+  BrightnessPopup p;
+  int n = 0;
+  p.setSink([&](const std::string &, int) { ++n; });
+  p.open("light.a", 0, 0, 50, 0);
+  p.step(+1, 10);
+  p.cancel();
+  TEST_ASSERT_FALSE(p.isOpen());
+  TEST_ASSERT_EQUAL(-1, p.optimisticPct());
+  p.done(20);
+  p.tick(1000);
+  TEST_ASSERT_EQUAL(0, n);
+}
+
+void test_app_brightness_rocker_landscape_down_is_brighter() {
+  AppState a;
+  a.init(exampleConfig(), settings::Orientation::Landscape, false);
+  a.setMarksDriven(true, 5000);
+  const int li = findWidget(a, WidgetType::Light);
+  const std::string id = a.config().tabs[0].widgets[size_t(li)].entity;
+  EntityState l = E(id.c_str(), "on");
+  l.brightness = 153;
+  a.store().update({l});
+  a.setBrightnessSink([](const std::string &, int) {});
+  const ui::Rect r = widgetRect(a, li);
+  TEST_ASSERT_TRUE(a.longPress({r.x + 10, r.y + 10}, 0));
+  a.rocker(ui::PhysicalKey::Down, 10);
+  TEST_ASSERT_EQUAL(70, a.brightness().value());
+  a.rocker(ui::PhysicalKey::Up, 20);
+  a.rocker(ui::PhysicalKey::Up, 30);
+  TEST_ASSERT_EQUAL(50, a.brightness().value());
+}
+
+void test_app_brightness_panel_tap_restarts_idle() {
+  int li; std::string id;
+  AppState a = dimApp(true, &li, &id);
+  a.setBrightnessSink([](const std::string &, int) {});
+  const ui::Rect r = widgetRect(a, li);
+  a.longPress({r.x + 10, r.y + 10}, 0);
+  const auto l = brightnessLayout(P);
+  TEST_ASSERT_FALSE(a.touch({l.panel.x + 2, l.panel.y + 2}, 8000));
+  TEST_ASSERT_FALSE(a.tick(12000));
+  TEST_ASSERT_TRUE(a.brightnessOpen());
+  TEST_ASSERT_TRUE(a.tick(18000));
+  TEST_ASSERT_FALSE(a.brightnessOpen());
+}
+
+void test_app_brightness_unavailable_closes_without_sending() {
+  int li; std::string id;
+  AppState a = dimApp(true, &li, &id);
+  int n = 0;
+  a.setBrightnessSink([&](const std::string &, int) { ++n; });
+  const ui::Rect r = widgetRect(a, li);
+  a.longPress({r.x + 10, r.y + 10}, 0);
+  a.rocker(ui::PhysicalKey::Up, 10);
+  EntityState u = E(id.c_str(), "unavailable");
+  u.available = false;
+  a.store().update({u});
+  TEST_ASSERT_TRUE(a.tick(20));
+  TEST_ASSERT_FALSE(a.brightnessOpen());
+  a.tick(1000);
+  TEST_ASSERT_EQUAL(0, n);
+}
+
+void test_app_close_before_sleep_flushes() {
+  int li; std::string id;
+  AppState a = dimApp(true, &li, &id);
+  std::vector<int> sent;
+  a.setBrightnessSink([&](const std::string &, int v) { sent.push_back(v); });
+  const ui::Rect r = widgetRect(a, li);
+  a.longPress({r.x + 10, r.y + 10}, 0);
+  a.rocker(ui::PhysicalKey::Up, 10);
+  TEST_ASSERT_TRUE(a.closeBrightness(50));  // what goToSleep does
+  TEST_ASSERT_EQUAL(1, (int)sent.size());
+  TEST_ASSERT_EQUAL(70, sent[0]);
+  TEST_ASSERT_FALSE(a.closeBrightness(60));
+}
+
+void test_deferred_tap_machine() {
+  DeferredTap d;
+  using R = DeferredTap::Result;
+  TEST_ASSERT_EQUAL(R::None, d.release().kind);
+  d.press({10, 20}, 100);
+  TEST_ASSERT_TRUE(d.armed());
+  R r = d.release();
+  TEST_ASSERT_EQUAL(R::Tap, r.kind);
+  TEST_ASSERT_EQUAL(10, r.point.x);
+  TEST_ASSERT_FALSE(d.armed());
+  TEST_ASSERT_EQUAL(R::None, d.release().kind);  // release after the long press / tap: nothing
+  d.press({5, 6}, 200);
+  r = d.longPress();
+  TEST_ASSERT_EQUAL(R::LongPress, r.kind);
+  TEST_ASSERT_EQUAL(6, r.point.y);
+  TEST_ASSERT_EQUAL(R::None, d.release().kind);  // the release after a long press is swallowed
+  d.press({1, 1}, 1000);
+  TEST_ASSERT_EQUAL(R::None, d.tick(2500).kind);  // exactly 1500 ms: not yet
+  TEST_ASSERT_EQUAL(R::Tap, d.tick(2501).kind);
+  TEST_ASSERT_EQUAL(R::None, d.tick(9000).kind);
+  d.press({1, 1}, 0);
+  d.cancel();
+  TEST_ASSERT_EQUAL(R::None, d.release().kind);
+  TEST_ASSERT_EQUAL(R::None, d.longPress().kind);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_fmt_number);
@@ -1219,5 +1341,12 @@ int main() {
   RUN_TEST(test_app_brightness_open_modal_and_send);
   RUN_TEST(test_app_brightness_failed_and_idle_close);
   RUN_TEST(test_app_brightness_not_for_plain_lights_and_demo_store);
+  RUN_TEST(test_popup_idle_close_flushes_and_poke_restarts_idle);
+  RUN_TEST(test_popup_cancel_sends_nothing);
+  RUN_TEST(test_app_brightness_rocker_landscape_down_is_brighter);
+  RUN_TEST(test_app_brightness_panel_tap_restarts_idle);
+  RUN_TEST(test_app_brightness_unavailable_closes_without_sending);
+  RUN_TEST(test_app_close_before_sleep_flushes);
+  RUN_TEST(test_deferred_tap_machine);
   return UNITY_END();
 }

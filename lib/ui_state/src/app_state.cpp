@@ -234,10 +234,12 @@ bool AppState::tick(uint32_t now) {
   lastNow_ = now;
   if (popup_.isOpen()) {
     const EntityState *s = store_.get(popup_.entityId());
-    bool closed = popup_.tick(now);
-    if (!closed && s && !s->available) {  // the light became unavailable: close
-      popup_.done(now);
+    bool closed = false;
+    if (s && !s->available) {  // the light became unavailable: close without sending
+      popup_.cancel();
       closed = true;
+    } else {
+      closed = popup_.tick(now);
     }
     if (closed) {
       closeBrightness(now);  // already closed: clears the flags
@@ -403,7 +405,7 @@ bool AppState::popupTouch(ui::Point p, uint32_t now) {
     case BrightnessHit::Close:
     case BrightnessHit::Done:
       return closeBrightness(now);
-    case BrightnessHit::Panel: return false;
+    case BrightnessHit::Panel: popup_.poke(now); return false;
     case BrightnessHit::Bar: {
       const int pct = std::max(1, int(std::lround(brightnessBarFraction(l, p.x) * 100.0)));
       changed = popup_.setPct(pct, now);
@@ -425,7 +427,10 @@ bool AppState::popupRocker(ui::PhysicalKey key, uint32_t now) {
   switch (key) {
     case ui::PhysicalKey::Up:
     case ui::PhysicalKey::Down: {
-      const bool changed = popup_.step(key == ui::PhysicalKey::Up ? +1 : -1, now);
+      // Portrait: Up = brighter. Landscape: BtnA points left, so the key pointing right (Down) = brighter.
+      const bool prev = ui::mapRocker(key, orientation_, false) == ui::LogicalKey::Prev;
+      const bool brighter = orientation_ == settings::Orientation::Landscape ? !prev : prev;
+      const bool changed = popup_.step(brighter ? +1 : -1, now);
       if (changed) { bpUnknown_ = false; bpFailed_ = false; }
       return changed;
     }
