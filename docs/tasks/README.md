@@ -47,4 +47,4 @@
 | 044 | [Inkling branding (logo, splash, Tools)](044-inkling-branding.md) | done | 041 |
 | 045 | [Brightness popup for dimmable lights](045-brightness-popup.md) | todo | 017, 036 |
 | 046 | [History popup for sensors (research)](046-history-research.md) | todo | 030 |
-| 047 | [Wi-Fi profiles and HA URL mode](047-wifi-profiles-and-url-mode.md) | todo | 021, 032, 026 |
+| 047 | [Wi-Fi profiles, HA URL mode, Settings categories](047-wifi-profiles-and-url-mode.md) | todo | 021, 032, 026 |
