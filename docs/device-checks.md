@@ -35,3 +35,4 @@ tagged `UNVERIFIED` in code comments and task notes.
 
 ## Added by later tasks
 <!-- agents append here: "- [ ] <what> (task NNN, UNVERIFIED: <assumption>)" -->
+- [ ] Splash on every reset-button/power-loss boot, then full redraw; none after deep-sleep wake (1.0.1, UNVERIFIED: ESP_RST_EXT/POWERON cover all cold boots)

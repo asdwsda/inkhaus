@@ -480,21 +480,20 @@ void setup() {
   if (kind == power::Session::LowBattery) lowBatterySleep();  // returns only if sleeping failed
   if (!g_scheduled) input::begin();  // a scheduled refresh never initialises touch input
 
-  // Cold boot splash (docs/ui/splash.md): power-on or reset button, and the panel does not hold our last
-  // frame (no valid record, or another firmware build). One GC16 refresh, then the rest of setup runs.
+  // Cold boot splash (docs/ui/splash.md): power-on, reset button or flashing. One GC16 refresh, then the rest of setup runs.
   bool framesReady = false, splashed = false;
   uint32_t splashMs = 0;
   {
     const esp_reset_reason_t rr = esp_reset_reason();
     if (!boot::fallbackActive() && (rr == ESP_RST_POWERON || rr == ESP_RST_EXT) && present::begin()) {
       framesReady = true;
-      if (!present::hasValidRecord()) {
-        render::drawSplash(present::canvas(), "v" FW_VERSION);
-        present::bootFrame(true);
-        splashMs = millis();
-        splashed = true;
-        wakelog::logf("BOOT: splash=1\n");
-      }
+      // Every POWERON/EXT reset shows the splash (deep-sleep wakes never get here); the app then follows
+      // with a full redraw (bootFrame(... || splashed) below).
+      render::drawSplash(present::canvas(), "v" FW_VERSION);
+      present::bootFrame(true);
+      splashMs = millis();
+      splashed = true;
+      wakelog::logf("BOOT: splash=1\n");
     }
   }
 

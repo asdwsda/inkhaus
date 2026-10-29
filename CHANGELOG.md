@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 (unreleased)
+
+- The splash now shows on every cold boot (reset button, power loss, flashing), followed by a full redraw; a deep-sleep wake never shows it.
+
 ## 1.0.0 - 2026-10-29
 
 First release of Inkling, an e-ink Home Assistant remote for the M5Stack M5Paper.
