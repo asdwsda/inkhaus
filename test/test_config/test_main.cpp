@@ -24,7 +24,7 @@ std::string readFile(const char *path) {
 
 // Minimal valid config; tests append or replace parts.
 const char *kMinimal =
-    "version: 1\n"
+    "version: \"1\"\n"
     "tabs:\n"
     "  - title: P\n"
     "    widgets:\n"
@@ -51,6 +51,28 @@ void assertSyntaxError(const std::string &yaml) {
 }
 
 }  // namespace
+
+static const char *kColsYaml =
+    "version: \"1\"\ntabs:\n  - title: A\n    landscape_columns: 4\n    widgets:\n      - entity: light.a\n"
+    "  - title: B\n    widgets:\n      - entity: light.a\n";
+void test_landscape_columns() {
+  ParseResult r = parseConfig(std::string(kColsYaml));
+  std::string all;
+  for (const auto &e : r.errors) all += e.path + ": " + e.message + "\n";
+  TEST_ASSERT_TRUE_MESSAGE(r.ok(), all.c_str());
+  TEST_ASSERT_EQUAL_INT(4, r.config.tabs[0].landscapeColumns);
+  TEST_ASSERT_EQUAL_INT(5, r.config.tabs[1].landscapeColumns);
+}
+void test_landscape_columns_errors() {
+  for (const char *bad : {"3", "6", "[4]", "4.5", "0"}) {
+    std::string y = std::string("version: \"1\"\ntabs:\n  - title: A\n    landscape_columns: ") + bad +
+                    "\n    widgets: []\n";
+    ParseResult r = parseConfig(y);
+    const ConfigError *e = findError(r, "tabs[0].landscape_columns");
+    TEST_ASSERT_NOT_NULL(e);
+    TEST_ASSERT_GREATER_THAN_INT(0, e->line);
+  }
+}
 
 void test_example_parses_clean() {
   std::string text = readFile("config.example.yaml");
@@ -107,7 +129,7 @@ const char *kSecrets =
     "wifi:\n  ssid: SECRETssid\n  password: SECRETpw\n"
     "home_assistant:\n  internal_url: http://10.0.0.2:8123\n  token: SECRETtoken\n";
 const char *kConnCfg =
-    "version: 1\nconnection:\n  wifi:\n    ssid: cfgssid\n  home_assistant:\n"
+    "version: \"1\"\nconnection:\n  wifi:\n    ssid: cfgssid\n  home_assistant:\n"
     "    internal_url: http://10.0.0.3:8123\n    token: cfgtoken\n"
     "tabs:\n  - title: P\n    widgets:\n      - entity: light.a\n";
 
@@ -196,7 +218,7 @@ void test_merge_without_secrets_keeps_connection_with_warning() {
 
 void test_merge_config_errors_kept() {
   SecretsResult s = parseSecrets(kSecrets);
-  MergeOutcome m = mergeSecrets(parseConfig("version: 1\n"), &s);
+  MergeOutcome m = mergeSecrets(parseConfig("version: \"1\"\n"), &s);
   TEST_ASSERT_FALSE(m.parse.ok());
   TEST_ASSERT_NOT_NULL(findError(m.parse, "tabs"));
 }
@@ -225,10 +247,10 @@ void test_timezone_invalid() {
   }
 }
 
-void test_error_missing_tabs() { assertErrorAt("version: 1\n", "tabs"); }
+void test_error_missing_tabs() { assertErrorAt("version: \"1\"\n", "tabs"); }
 
 void test_pages_key_is_unknown() {
-  ParseResult r = parseConfig(std::string("version: 1\npages:\n  - title: P\n"
+  ParseResult r = parseConfig(std::string("version: \"1\"\npages:\n  - title: P\n"
                                           "    widgets:\n      - entity: light.a\n"));
   TEST_ASSERT_FALSE(r.ok());
   const ConfigError *e = findError(r, "tabs");
@@ -237,7 +259,7 @@ void test_pages_key_is_unknown() {
 }
 
 void test_size_valid() {
-  std::string y = "version: 1\ntabs:\n  - title: P\n    widgets:\n"
+  std::string y = "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n"
                   "      - entity: light.a\n        size: 2x1\n"
                   "      - entity: light.b\n        size: 4x4\n"
                   "      - entity: light.c\n        size: 1x3\n"
@@ -256,7 +278,7 @@ void test_size_valid() {
 void test_size_invalid() {
   const char *bad[] = {"0x1", "5x1", "2x", "abc", "1x0", "1x5", "x2", "2X1", "2x1x1", "22x1", "2"};
   for (const char *b : bad) {
-    std::string y = std::string("version: 1\ntabs:\n  - title: P\n    widgets:\n"
+    std::string y = std::string("version: \"1\"\ntabs:\n  - title: P\n    widgets:\n"
                                 "      - entity: light.a\n      - entity: light.b\n"
                                 "        size: \"") + b + "\"\n";
     ParseResult r = parseConfig(y);
@@ -267,45 +289,45 @@ void test_size_invalid() {
 }
 
 void test_error_group_name_charset() {
-  assertErrorAt("version: 1\ngroups:\n  a.b: [light.a]\ntabs:\n  - title: P\n"
+  assertErrorAt("version: \"1\"\ngroups:\n  a.b: [light.a]\ntabs:\n  - title: P\n"
                 "    widgets:\n      - entity: light.a\n",
                 "groups.a.b");
-  assertErrorAt("version: 1\ngroups:\n  Upstairs: [light.a]\ntabs:\n  - title: P\n"
+  assertErrorAt("version: \"1\"\ngroups:\n  Upstairs: [light.a]\ntabs:\n  - title: P\n"
                 "    widgets:\n      - entity: light.a\n",
                 "groups.Upstairs");
-  assertErrorAt("version: 1\ngroups:\n  my-group: [light.a]\ntabs:\n  - title: P\n"
+  assertErrorAt("version: \"1\"\ngroups:\n  my-group: [light.a]\ntabs:\n  - title: P\n"
                 "    widgets:\n      - entity: light.a\n",
                 "groups.my-group");
-  TEST_ASSERT_TRUE(parseConfig(std::string("version: 1\ngroups:\n  g_1: [light.a]\ntabs:\n"
+  TEST_ASSERT_TRUE(parseConfig(std::string("version: \"1\"\ngroups:\n  g_1: [light.a]\ntabs:\n"
                                            "  - title: P\n    widgets:\n      - entity: light.a\n"))
                        .ok());
 }
 
 void test_error_entity_and_group() {
-  assertErrorAt(std::string("version: 1\ngroups:\n  g: [light.a]\ntabs:\n  - title: P\n"
+  assertErrorAt(std::string("version: \"1\"\ngroups:\n  g: [light.a]\ntabs:\n  - title: P\n"
                             "    widgets:\n      - entity: light.a\n        group: g\n"
                             "        name: n\n"),
                 "tabs[0].widgets[0]");
 }
 
 void test_error_unknown_group() {
-  assertErrorAt(std::string("version: 1\ntabs:\n  - title: P\n    widgets:\n"
+  assertErrorAt(std::string("version: \"1\"\ntabs:\n  - title: P\n    widgets:\n"
                             "      - group: nope\n        name: n\n"),
                 "tabs[0].widgets[0].group");
 }
 
 void test_error_group_mixed_domains() {
-  assertErrorAt(std::string("version: 1\ngroups:\n  g: [light.a, cover.b]\ntabs:\n"
+  assertErrorAt(std::string("version: \"1\"\ngroups:\n  g: [light.a, cover.b]\ntabs:\n"
                             "  - title: P\n    widgets:\n      - group: g\n        name: n\n"),
                 "groups.g");
 }
 
 void test_error_unsupported_domain() {
-  assertErrorAt(std::string("version: 1\ntabs:\n  - title: P\n    widgets:\n"
+  assertErrorAt(std::string("version: \"1\"\ntabs:\n  - title: P\n    widgets:\n"
                             "      - entity: person.bob\n"),
                 "tabs[0].widgets[0].entity");
   // With explicit type it is accepted.
-  ParseResult r = parseConfig(std::string("version: 1\ntabs:\n  - title: P\n    widgets:\n"
+  ParseResult r = parseConfig(std::string("version: \"1\"\ntabs:\n  - title: P\n    widgets:\n"
                                           "      - entity: person.bob\n        type: sensor\n"));
   TEST_ASSERT_TRUE(r.ok());
 }
@@ -314,12 +336,12 @@ void test_error_unsupported_domain() {
 void test_error_messages_do_not_echo_values() {
   const char *yamls[] = {
       "version: SECRETv\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n",
-      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n        size: SECRETs\n",
-      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n        type: SECRETt\n",
-      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: secretd.x\n",
-      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - group: secretg\n        name: n\n",
-      "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: SECRETe\n",
-      "version: 1\nconnection:\n  wifi:\n    ssid: SECRETssid\n  home_assistant:\n"
+      "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n        size: SECRETs\n",
+      "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n        type: SECRETt\n",
+      "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - entity: secretd.x\n",
+      "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - group: secretg\n        name: n\n",
+      "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - entity: SECRETe\n",
+      "version: \"1\"\nconnection:\n  wifi:\n    ssid: SECRETssid\n  home_assistant:\n"
       "    internal_url: SECRETurl\n    external_url: http://SECREText\n    token: SECRETtok\n"
       "tabs:\n  - title: P\n    widgets:\n      - entity: light.a\n",
   };
@@ -336,7 +358,7 @@ void test_error_messages_do_not_echo_values() {
 
 void test_error_external_url_not_https() {
   std::string y =
-      "version: 1\nconnection:\n  wifi:\n    ssid: a\n  home_assistant:\n"
+      "version: \"1\"\nconnection:\n  wifi:\n    ssid: a\n  home_assistant:\n"
       "    internal_url: http://x:8123\n    external_url: http://y\n    token: t\n"
       "tabs:\n  - title: P\n    widgets:\n      - entity: light.a\n";
   assertErrorAt(y, "connection.home_assistant.external_url");
@@ -344,7 +366,7 @@ void test_error_external_url_not_https() {
 
 void test_error_partial_static_ip() {
   std::string y =
-      "version: 1\nconnection:\n  wifi:\n    ssid: a\n    static_ip:\n      ip: 192.168.1.5\n"
+      "version: \"1\"\nconnection:\n  wifi:\n    ssid: a\n    static_ip:\n      ip: 192.168.1.5\n"
       "      gateway: 192.168.1.1\n  home_assistant:\n    internal_url: http://x\n    token: t\n"
       "tabs:\n  - title: P\n    widgets:\n      - entity: light.a\n";
   ParseResult r = parseConfig(y);
@@ -361,13 +383,13 @@ void test_error_wrong_version() {
 }
 
 void test_error_group_widget_needs_name() {
-  assertErrorAt(std::string("version: 1\ngroups:\n  g: [light.a]\ntabs:\n  - title: P\n"
+  assertErrorAt(std::string("version: \"1\"\ngroups:\n  g: [light.a]\ntabs:\n  - title: P\n"
                             "    widgets:\n      - group: g\n"),
                 "tabs[0].widgets[0].name");
 }
 
 void test_error_line_number_of_validation() {
-  ParseResult r = parseConfig(std::string("version: 1\ntabs:\n  - title: P\n    widgets:\n"
+  ParseResult r = parseConfig(std::string("version: \"1\"\ntabs:\n  - title: P\n    widgets:\n"
                                           "      - entity: light.a\n      - entity: person.x\n"));
   const ConfigError *e = findError(r, "tabs[0].widgets[1].entity");
   TEST_ASSERT_NOT_NULL(e);
@@ -375,18 +397,18 @@ void test_error_line_number_of_validation() {
 }
 
 void test_syntax_bad_indentation() {
-  assertSyntaxError("version: 1\ntabs:\n  - title: P\n   widgets: []\n");
+  assertSyntaxError("version: \"1\"\ntabs:\n  - title: P\n   widgets: []\n");
 }
 
 void test_syntax_tabs() {
-  ParseResult r = parseConfig(std::string("version: 1\ntabs:\n\t- title: P\n"));
+  ParseResult r = parseConfig(std::string("version: \"1\"\ntabs:\n\t- title: P\n"));
   TEST_ASSERT_FALSE(r.ok());
   TEST_ASSERT_EQUAL_INT(3, r.errors[0].line);
 }
 
 void test_syntax_truncated() {
-  assertSyntaxError("version: 1\ntabs:\n  - title: \"Living ro");
-  assertSyntaxError("version: 1\ngroups:\n  g: [light.a, light.b\n");
+  assertSyntaxError("version: \"1\"\ntabs:\n  - title: \"Living ro");
+  assertSyntaxError("version: \"1\"\ngroups:\n  g: [light.a, light.b\n");
 }
 
 void test_empty_and_garbage() {
@@ -398,16 +420,16 @@ void test_empty_and_garbage() {
 }
 
 void test_limit_tabs() {
-  std::string y = "version: 1\ntabs:\n";
+  std::string y = "version: \"1\"\ntabs:\n";
   for (int i = 0; i < 17; ++i) y += "  - title: P\n    widgets:\n      - entity: light.a\n";
   TEST_ASSERT_NOT_NULL(findError(parseConfig(y), "tabs"));
-  y = "version: 1\ntabs:\n";
+  y = "version: \"1\"\ntabs:\n";
   for (int i = 0; i < 16; ++i) y += "  - title: P\n    widgets:\n      - entity: light.a\n";
   TEST_ASSERT_TRUE(parseConfig(y).ok());
 }
 
 void test_limit_widgets() {
-  std::string head = "version: 1\ntabs:\n  - title: P\n    widgets:\n";
+  std::string head = "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n";
   std::string y = head;
   for (int i = 0; i < 25; ++i) y += "      - entity: light.a" + std::to_string(i) + "\n";
   TEST_ASSERT_NOT_NULL(findError(parseConfig(y), "tabs[0].widgets"));
@@ -417,7 +439,7 @@ void test_limit_widgets() {
 }
 
 void test_limit_group_entities() {
-  std::string y = "version: 1\ngroups:\n  g: [";
+  std::string y = "version: \"1\"\ngroups:\n  g: [";
   for (int i = 0; i < 17; ++i) y += std::string(i ? "," : "") + "cover.c" + std::to_string(i);
   y += "]\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n";
   TEST_ASSERT_NOT_NULL(findError(parseConfig(y), "groups.g"));
@@ -432,7 +454,7 @@ void test_limit_file_size() {
 }
 
 void test_limit_nesting_depth() {
-  std::string y = "version: 1\nx: ";
+  std::string y = "version: \"1\"\nx: ";
   for (int i = 0; i < 100; ++i) y += "[";
   for (int i = 0; i < 100; ++i) y += "]";
   y += "\n";
@@ -442,7 +464,7 @@ void test_limit_nesting_depth() {
 
 void test_entity_list_deduplicated_with_group_members() {
   std::string y =
-      "version: 1\ngroups:\n  g: [cover.a, cover.b]\n  unused: [light.zzz]\ntabs:\n"
+      "version: \"1\"\ngroups:\n  g: [cover.a, cover.b]\n  unused: [light.zzz]\ntabs:\n"
       "  - title: P1\n    widgets:\n      - entity: cover.a\n"
       "      - group: g\n        name: G\n"
       "  - title: P2\n    widgets:\n      - entity: light.x\n      - entity: cover.b\n"
@@ -458,7 +480,7 @@ void test_entity_list_deduplicated_with_group_members() {
 
 // ---- Hostile input (tester) ----
 void test_hostile_billion_laughs() {
-  std::string y = "version: 1\na: &a [x,x,x,x,x,x,x,x,x]\n";
+  std::string y = "version: \"1\"\na: &a [x,x,x,x,x,x,x,x,x]\n";
   const char *n = "bcdefghi";
   std::string prev = "a";
   for (const char *c = n; *c; ++c) {
@@ -473,7 +495,7 @@ void test_hostile_billion_laughs() {
 }
 
 void test_hostile_duplicate_keys() {
-  ParseResult r = parseConfig(std::string("version: 1\nversion: 1\ntabs:\n  - title: P\n"
+  ParseResult r = parseConfig(std::string("version: \"1\"\nversion: 1\ntabs:\n  - title: P\n"
                                           "    widgets:\n      - entity: light.a\n"));
   TEST_ASSERT_FALSE(r.ok());
   TEST_ASSERT_NOT_NULL(findError(r, "version"));
@@ -481,10 +503,10 @@ void test_hostile_duplicate_keys() {
 }
 
 void test_hostile_non_utf8() {
-  std::string y = "version: 1\ntabs:\n  - title: \xff\xfe\x80" "bad\n    widgets: []\n";
+  std::string y = "version: \"1\"\ntabs:\n  - title: \xff\xfe\x80" "bad\n    widgets: []\n";
   ParseResult r = parseConfig(y);
   TEST_ASSERT_FALSE(r.ok());
-  y = "version: 1\ntabs:\n  - title: \xc3\x28\n    widgets: []\n";
+  y = "version: \"1\"\ntabs:\n  - title: \xc3\x28\n    widgets: []\n";
   TEST_ASSERT_FALSE(parseConfig(y).ok());
 }
 
@@ -502,26 +524,26 @@ void test_hostile_nul_in_middle() {
 }
 
 void test_hostile_deep_nesting_block_and_flow() {
-  std::string y = "version: 1\n";
+  std::string y = "version: \"1\"\n";
   for (int i = 0; i < 300; ++i) y += std::string(i * 2, ' ') + "k" + std::to_string(i) + ":\n";
   TEST_ASSERT_FALSE(parseConfig(y).ok());
-  std::string f = "version: 1\nx: ";
+  std::string f = "version: \"1\"\nx: ";
   for (int i = 0; i < 20000; ++i) f += "[";
   TEST_ASSERT_FALSE(parseConfig(f).ok());
-  std::string m = "version: 1\nx: ";
+  std::string m = "version: \"1\"\nx: ";
   for (int i = 0; i < 5000; ++i) m += "{a: ";
   TEST_ASSERT_FALSE(parseConfig(m).ok());
 }
 
 void test_hostile_huge_scalar() {
-  std::string y = "version: 1\ntabs:\n  - title: " + std::string(60000, 'A') +
+  std::string y = "version: \"1\"\ntabs:\n  - title: " + std::string(60000, 'A') +
                   "\n    widgets:\n      - entity: light.a\n";
   ParseResult r = parseConfig(y);  // under 64 KB: accepted or rejected, but no crash
   (void)r;
-  std::string z = "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: light." +
+  std::string z = "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - entity: light." +
                   std::string(60000, 'a') + "\n";
   (void)parseConfig(z);
-  std::string many = "version: 1\ngroups:\n";
+  std::string many = "version: \"1\"\ngroups:\n";
   for (int i = 0; i < 3000; ++i) many += "  g" + std::to_string(i) + ": [light.a]\n";
   (void)parseConfig(many);
   TEST_PASS();
@@ -530,15 +552,15 @@ void test_hostile_huge_scalar() {
 void test_hostile_misc_types() {
   TEST_ASSERT_FALSE(parseConfig(std::string("version: [1]\ntabs: 3\n")).ok());
   TEST_ASSERT_FALSE(parseConfig(std::string("? [a, b]\n: c\n")).ok());
-  (void)parseConfig(std::string("version: 1\n---\nversion: 1\n"));  // multi-doc: no crash
+  (void)parseConfig(std::string("version: \"1\"\n---\nversion: 1\n"));  // multi-doc: no crash
   TEST_ASSERT_FALSE(parseConfig(std::string("version: !!binary x\ntabs: []\n")).ok());
-  TEST_ASSERT_FALSE(parseConfig(std::string("version: 1\ntabs:\n  - null\n  - ~\n  - 5\n")).ok());
+  TEST_ASSERT_FALSE(parseConfig(std::string("version: \"1\"\ntabs:\n  - null\n  - ~\n  - 5\n")).ok());
   TEST_ASSERT_FALSE(parseConfig(nullptr, 5).ok());
   TEST_ASSERT_FALSE(parseConfig("", 0).ok());
 }
 
 void test_size_hostile() {
-  const char *head = "version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n        size: ";
+  const char *head = "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - entity: light.a\n        size: ";
   const char *vals[] = {"\" 2x1\"", "\"2x1 \"", "\"2\xc3\x97" "1\"", "\"-1x2\"", "\"2x1x3\"", "21",
                         "[2, 1]", "{w: 2, h: 1}", "\"\"", "true", "2.5", "\"+2x1\"", "\"2x\\n1\""};
   for (const char *v : vals) {
@@ -550,22 +572,22 @@ void test_size_hostile() {
 
 void test_group_name_edge_cases() {
   const std::string tail = "tabs:\n  - title: P\n    widgets:\n      - entity: light.a\n";
-  ParseResult r = parseConfig("version: 1\ngroups:\n  \"\": [light.a]\n" + tail);
+  ParseResult r = parseConfig("version: \"1\"\ngroups:\n  \"\": [light.a]\n" + tail);
   TEST_ASSERT_FALSE(r.ok());
   TEST_ASSERT_NOT_NULL(findError(r, "groups."));
   // Over libyaml's 1024-char simple-key limit: rejected cleanly, no crash.
-  (void)parseConfig("version: 1\ngroups:\n  " + std::string(5000, 'a') + ": [light.a]\n" + tail);
+  (void)parseConfig("version: \"1\"\ngroups:\n  " + std::string(5000, 'a') + ": [light.a]\n" + tail);
   std::string longName(500, 'a');
-  r = parseConfig("version: 1\ngroups:\n  " + longName + ": [light.a]\n" + tail);
+  r = parseConfig("version: \"1\"\ngroups:\n  " + longName + ": [light.a]\n" + tail);
   TEST_ASSERT_TRUE(r.ok());
-  r = parseConfig("version: 1\ngroups:\n  " + longName + "B: [light.a]\n" + tail);
+  r = parseConfig("version: \"1\"\ngroups:\n  " + longName + "B: [light.a]\n" + tail);
   TEST_ASSERT_FALSE(r.ok());
   TEST_ASSERT_NOT_NULL(findError(r, "groups." + longName + "B"));
 }
 
 
 static std::string withWidget(const std::string &extra) {
-  return std::string("version: 1\ntabs:\n  - title: P\n    widgets:\n      - entity: sensor.a\n") +
+  return std::string("version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - entity: sensor.a\n") +
          extra;
 }
 
@@ -670,6 +692,8 @@ int main(int, char **) {
   RUN_TEST(test_hostile_misc_types);
   RUN_TEST(test_error_messages_do_not_echo_values);
   RUN_TEST(test_attr_options_parse);
+  RUN_TEST(test_landscape_columns);
+  RUN_TEST(test_landscape_columns_errors);
   RUN_TEST(test_attr_options_absent_by_default);
   RUN_TEST(test_attr_options_errors);
   RUN_TEST(test_attr_errors_do_not_echo_values);

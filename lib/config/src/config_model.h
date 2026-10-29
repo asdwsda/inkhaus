@@ -86,9 +86,12 @@ struct Widget {
   std::vector<std::string> entities;
 };
 
+constexpr int kDefaultLandscapeColumns = 5;
+
 struct Tab {
   std::string title;
   std::vector<Widget> widgets;
+  int landscapeColumns = kDefaultLandscapeColumns;  // 4 or 5 (landscape grid only)
 };
 
 struct Config {

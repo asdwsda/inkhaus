@@ -43,7 +43,8 @@ struct Grid {
   Rect slotRect[kMaxTabSlots];  // first tabSlots entries are valid
   int tabSlots;
 };
-const Grid &gridFor(settings::Orientation o);
+// `columns` (4 or 5) only matters in landscape; anything else gives the 5-column grid.
+const Grid &gridFor(settings::Orientation o, int columns = 5);
 
 // Pixel rect of a w x h cell block with top-left cell (c, r).
 Rect cellRect(const Grid &g, int c, int r, int w, int h);
@@ -52,8 +53,10 @@ Rect cellRect(const Grid &g, int c, int r, int w, int h);
 struct SizeLimits {
   config::WidgetSize def, min, max;
 };
-// Per orientation (layout.md section 3): wide types are 2 cells portrait, 3 landscape.
-SizeLimits sizeLimits(config::WidgetType type, settings::Orientation o);
+// Per grid (layout.md section 3): wide types are 2 cells in portrait and landscape 4 columns, 3 in
+// landscape 5 columns.
+SizeLimits sizeLimits(config::WidgetType type, const Grid &g);
+SizeLimits sizeLimits(config::WidgetType type, settings::Orientation o, int columns = 5);
 
 enum ClampReason : unsigned {
   kClampTypeMin = 1,   // raised to the type minimum
@@ -94,7 +97,8 @@ struct Flow {
   bool pagerVisible = false;
 };
 
-Flow computeFlow(settings::Orientation o, const std::vector<config::Widget> &widgets);
+Flow computeFlow(settings::Orientation o, const std::vector<config::Widget> &widgets,
+                 int columns = 5);
 
 // ---- tab bar groups (section 5) ----
 int tabsPerGroup(settings::Orientation o, int tabCount);  // slots if no overflow, else slots-1

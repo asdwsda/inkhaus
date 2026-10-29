@@ -1087,6 +1087,98 @@ void test_mockup_buttons() {
   auto s = subRegions(l.widgets[0].type, {3, 1}, l.widgets[0].rect);
   eqRect({16 + 324, 72 + 20, 64, 64}, s[0].rect);
 }
+static void checkLayoutInvariants(const Layout &l);
+// ---- landscape 4 columns (docs/ui/proposal-landscape-4col.svg) ----
+void test_grid_landscape4() {
+  const Grid &g = gridFor(L, 4);
+  TEST_ASSERT_EQUAL_INT(4, g.cols);
+  TEST_ASSERT_EQUAL_INT(223, g.cellW);
+  const int xs[4] = {16, 251, 486, 721};
+  for (int i = 0; i < 4; ++i) TEST_ASSERT_EQUAL_INT(xs[i], g.colX[i]);
+  TEST_ASSERT_EQUAL_INT(960, 16 + 4 * 223 + 3 * kGap + 16);
+  TEST_ASSERT_EQUAL_INT(5, gridFor(L).cols);
+  TEST_ASSERT_EQUAL_INT(5, gridFor(L, 7).cols);
+  TEST_ASSERT_EQUAL_INT(2, gridFor(P, 4).cols);  // portrait ignores the option
+  eqRect({16, 72, 458, 104}, cellRect(g, 0, 0, 2, 1));
+  eqRect({486, 72, 458, 104}, cellRect(g, 2, 0, 2, 1));
+  eqRect({721, 304, 223, 104}, cellRect(g, 3, 2, 1, 1));
+}
+void test_sizes_landscape4() {
+  for (WidgetType t : {WidgetType::Cover, WidgetType::Climate, WidgetType::Vacuum}) {
+    TEST_ASSERT_EQUAL_INT(2, sizeLimits(t, L, 4).def.w);
+    TEST_ASSERT_EQUAL_INT(3, sizeLimits(t, L, 5).def.w);
+    TEST_ASSERT_EQUAL_INT(3, sizeLimits(t, L).def.w);
+    TEST_ASSERT_EQUAL_INT(2, sizeLimits(t, P, 4).def.w);
+  }
+}
+// Proposal tab: 2 covers (row 0), 2 climates (row 1), 4 toggles (row 2), row 3 free.
+void test_flow_landscape4_proposal() {
+  std::vector<Widget> w = {W(WidgetType::Cover), W(WidgetType::Cover), W(WidgetType::Climate),
+                           W(WidgetType::Climate)};
+  for (int i = 0; i < 4; ++i) w.push_back(W(WidgetType::Light));
+  Flow f = computeFlow(L, w, 4);
+  TEST_ASSERT_EQUAL_INT(0, (int)f.clampReports.size());
+  TEST_ASSERT_FALSE(f.pagerVisible);
+  eqRect({16, 72, 458, 104}, f.placements[0].rect);
+  eqRect({486, 72, 458, 104}, f.placements[1].rect);
+  eqRect({16, 188, 458, 104}, f.placements[2].rect);
+  eqRect({486, 188, 458, 104}, f.placements[3].rect);
+  const int xs[4] = {16, 251, 486, 721};
+  for (int i = 0; i < 4; ++i) eqRect({xs[i], 304, 223, 104}, f.placements[4 + i].rect);
+  // sub-regions in the 458 px widgets: cover buttons W-228.., climate minus W-276, plus W-76
+  auto cs = subRegions(WidgetType::Cover, {2, 1}, f.placements[0].rect);
+  eqRect({16 + 230, 92, 64, 64}, cs[0].rect);
+  eqRect({16 + 382, 92, 64, 64}, cs[2].rect);
+  auto ks = subRegions(WidgetType::Climate, {2, 1}, f.placements[3].rect);
+  eqRect({486 + 182, 208, 64, 64}, ks[0].rect);
+  eqRect({486 + 382, 208, 64, 64}, ks[1].rect);
+}
+void test_layout_uses_tab_columns() {
+  std::vector<Tab> t = tabsOf(2);
+  t[0].landscapeColumns = 4;
+  t[0].widgets = {W(WidgetType::Cover), W(WidgetType::Cover)};
+  t[1].widgets = {W(WidgetType::Cover), W(WidgetType::Cover)};
+  Layout a = computeLayout(L, t, 0, 0);
+  eqRect({486, 72, 458, 104}, a.widgets[1].rect);
+  Layout b = computeLayout(L, t, 1, 0);
+  eqRect({16, 188, 552, 104}, b.widgets[1].rect);  // 3 + 3 > 5: second cover on row 1
+  Layout p = computeLayout(P, t, 0, 0);
+  eqRect({16, 68, 508, 104}, p.widgets[0].rect);
+  Hit h = hitTest(a, {486 + 382 + 10, 92 + 10});
+  TEST_ASSERT_TRUE(h.kind == HitKind::Widget && h.index == 1 && h.sub == 3);
+}
+void test_pager_landscape4() {
+  std::vector<Widget> w(13, W(WidgetType::Light));  // 4 x 4 = 16 cells fit, 4 rows; 17th pages
+  w.resize(17, W(WidgetType::Light));
+  Flow f = computeFlow(L, w, 4);
+  TEST_ASSERT_TRUE(f.pagerVisible);
+  TEST_ASSERT_EQUAL_INT(2, f.pageCount);  // 12 cells per page with the pager row
+  for (const auto &p : f.placements) TEST_ASSERT_TRUE(p.rect.y + p.rect.h <= 420);
+}
+void test_property_both_landscape_grids() {
+  std::mt19937 rng(43);
+  const WidgetType ts[] = {WidgetType::Cover, WidgetType::Light, WidgetType::Climate, WidgetType::Sensor,
+                           WidgetType::Weather, WidgetType::Vacuum, WidgetType::Switch};
+  for (int it = 0; it < 300; ++it) {
+    for (int cols : {4, 5}) {
+      std::vector<Tab> t = tabsOf(1);
+      t[0].landscapeColumns = cols;
+      int n = 1 + int(rng() % 24);
+      for (int i = 0; i < n; ++i) {
+        Widget w = W(ts[rng() % 7]);
+        if (rng() % 3 == 0) w.size = config::WidgetSize{1 + int(rng() % 4), 1 + int(rng() % 4)};
+        t[0].widgets.push_back(w);
+      }
+      Layout probe = computeLayout(L, t, 0, 0);
+      for (int sp = 0; sp < probe.pager.subPageCount; ++sp) {
+        Layout l = computeLayout(L, t, 0, sp);
+        checkLayoutInvariants(l);
+        for (const auto &pl : l.widgets) TEST_ASSERT_TRUE(pl.cellX + pl.cellW <= cols);
+      }
+    }
+  }
+}
+
 // config.example.yaml parses with no errors and no clamp reports in both orientations.
 void test_example_config_no_clamps() {
   std::ifstream f("config.example.yaml");
@@ -1706,6 +1798,12 @@ int main(int, char **) {
   RUN_TEST(test_focus_invert_flow);
   RUN_TEST(test_mockup_portrait);
   RUN_TEST(test_mockup_landscape);
+  RUN_TEST(test_grid_landscape4);
+  RUN_TEST(test_sizes_landscape4);
+  RUN_TEST(test_flow_landscape4_proposal);
+  RUN_TEST(test_layout_uses_tab_columns);
+  RUN_TEST(test_pager_landscape4);
+  RUN_TEST(test_property_both_landscape_grids);
   RUN_TEST(test_mockup_buttons);
   RUN_TEST(test_example_config_no_clamps);
   RUN_TEST(test_robust_zero_tabs);

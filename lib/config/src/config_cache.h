@@ -11,7 +11,7 @@
 namespace config {
 
 // Bump when Config changes, so old caches are rejected.
-constexpr uint8_t kCacheFormat = 3;
+constexpr uint8_t kCacheFormat = 4;
 
 std::string serializeConfig(const Config &cfg);
 // False for any corrupted, truncated, oversized or wrong-format blob; `out` is then unspecified.

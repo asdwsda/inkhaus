@@ -209,18 +209,26 @@ void drawClimate(Ctx &x, const uistate::WidgetData &d, const std::string &title)
   drawFrame(x, PAPER, una);
   const int W = x.W();
   const int Lx = W - 288;
-  drawText(x.c, Font::F24, fitText(x.c, Font::F24, title, W - 328), x.X(12), x.Y(44), Align::Left, una ? OFFGREY : INK);
+  // Narrow variant (landscape 4 columns, W = 458): the action icon sits at the end of the name line
+  // (proposal-landscape-4col.svg: flame at 146,16), the humidity run starts at 84.
+  const bool narrow = W < 500;
+  const Icon ai = v.look == Look::Normal ? actionIcon(v.act) : Icon::Count;
+  const int nameW = narrow ? (ai != Icon::Count ? Lx - 12 - 28 : Lx - 12) : W - 328;
+  drawText(x.c, Font::F24, fitText(x.c, Font::F24, title, nameW), x.X(12), x.Y(44), Align::Left, una ? OFFGREY : INK);
   const uint32_t dataColor = INK;
   drawText(x.c, Font::F24, v.temp, x.X(12), x.Y(77), Align::Left, dataColor);
   if (v.look == Look::Normal) {
     if (!v.hum.empty()) {
-      const int humEnd = 120 + textWidth(x.c, Font::F24, v.hum);
+      const int dropX = narrow ? 84 : 92, humX = narrow ? 112 : 120;
+      const int humEnd = humX + textWidth(x.c, Font::F24, v.hum);
       // The drop icon is dropped (text stays) if the run would pass Lx, so the action icon keeps its place.
-      if (humEnd + 12 + 24 <= Lx) drawIcon(x.c, Icon::Drop, 24, x.X(92), x.Y(57), INK);
-      drawText(x.c, Font::F24, v.hum, x.X(120), x.Y(77), Align::Left, INK);
+      if (narrow ? humEnd <= Lx : humEnd + 12 + 24 <= Lx) drawIcon(x.c, Icon::Drop, 24, x.X(dropX), x.Y(57), INK);
+      drawText(x.c, Font::F24, v.hum, x.X(humX), x.Y(77), Align::Left, INK);
     }
-    const Icon ai = actionIcon(v.act);
-    if (ai != Icon::Count) drawIcon(x.c, ai, 24, x.X(186), x.Y(57), INK);
+    if (ai != Icon::Count) {
+      if (narrow) drawIcon(x.c, ai, 24, x.X(Lx - 24), x.Y(16), INK);
+      else drawIcon(x.c, ai, 24, x.X(186), x.Y(57), INK);
+    }
   }
   if (una) drawBadge(x, W - 312, 24, Icon::Warn, OFFGREY);
   else if (d.failed) drawBadge(x, W - 312, 24, Icon::Alert, INK);

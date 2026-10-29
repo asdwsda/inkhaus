@@ -16,7 +16,7 @@ bool rectInside(const Rect &i, const Rect &o) {
 }
 Rect inflate(const Rect &r, int by) { return {r.x - by, r.y - by, r.w + 2 * by, r.h + 2 * by}; }
 
-const Grid &gridFor(Orientation o) {
+const Grid &gridFor(Orientation o, int columns) {
   static const Grid portrait = {
       Orientation::Portrait, 540, 960, 2, 7, 248,
       {16, 276, 0, 0, 0},
@@ -33,7 +33,16 @@ const Grid &gridFor(Orientation o) {
       {16, 4, 144, 56}, {832, 4, 112, 56}, {172, 4, 648, 56},
       {{172, 4, 120, 56}, {304, 4, 120, 56}, {436, 4, 120, 56}, {568, 4, 120, 56}, {700, 4, 120, 56}},
       5};
-  return o == Orientation::Landscape ? landscape : portrait;
+  static const Grid landscape4 = {
+      Orientation::Landscape, 960, 540, 4, 4, 223,
+      {16, 251, 486, 721, 0},
+      {72, 188, 304, 420, 0, 0, 0},
+      {0, 0, 960, 64}, {172, 0, 648, 64}, {16, 72, 928, 452},
+      {16, 4, 144, 56}, {832, 4, 112, 56}, {172, 4, 648, 56},
+      {{172, 4, 120, 56}, {304, 4, 120, 56}, {436, 4, 120, 56}, {568, 4, 120, 56}, {700, 4, 120, 56}},
+      5};
+  if (o == Orientation::Portrait) return portrait;
+  return columns == 4 ? landscape4 : landscape;
 }
 
 Rect sleepIndicatorRect(Orientation o) { return gridFor(o).sleepIndicator; }
@@ -42,8 +51,12 @@ Rect cellRect(const Grid &g, int c, int r, int w, int h) {
   return {g.colX[c], g.rowY[r], w * g.cellW + (w - 1) * kGap, h * kCellH + (h - 1) * kGap};
 }
 
-SizeLimits sizeLimits(WidgetType t, Orientation o) {
-  const int wide = o == Orientation::Landscape ? 3 : 2;
+SizeLimits sizeLimits(WidgetType t, Orientation o, int columns) {
+  return sizeLimits(t, gridFor(o, columns));
+}
+
+SizeLimits sizeLimits(WidgetType t, const Grid &g) {
+  const int wide = g.cols == 5 ? 3 : 2;
   switch (t) {
     case WidgetType::Cover:
     case WidgetType::Climate:
@@ -75,7 +88,7 @@ WidgetSize clampSize(const SizeLimits &lim, WidgetSize req, const Grid &g, unsig
 
 WidgetSize resolveSize(WidgetType type, const config::Widget &w, const Grid &g,
                        unsigned *reasons, WidgetSize *requested) {
-  SizeLimits lim = sizeLimits(type, g.orientation);
+  SizeLimits lim = sizeLimits(type, g);
   WidgetSize req = w.size ? *w.size : lim.def;
   if (requested) *requested = req;
   return clampSize(lim, req, g, reasons);
@@ -120,8 +133,8 @@ int place(const std::vector<WidgetSize> &sizes, int cols, int rows, std::vector<
 
 }  // namespace
 
-Flow computeFlow(Orientation o, const std::vector<config::Widget> &widgets) {
-  const Grid &g = gridFor(o);
+Flow computeFlow(Orientation o, const std::vector<config::Widget> &widgets, int columns) {
+  const Grid &g = gridFor(o, columns);
   Flow f;
   std::vector<WidgetSize> sizes;
   std::vector<unsigned> reasons;
@@ -176,7 +189,9 @@ int nextGroup(Orientation o, int tabCount, int group) {
 
 Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int activeTab,
                      int subPage, int group) {
-  const Grid &g = gridFor(o);
+  const int T = (int)tabs.size();
+  const int at = T > 0 ? std::min(std::max(activeTab, 0), T - 1) : 0;
+  const Grid &g = gridFor(o, T > 0 ? tabs[at].landscapeColumns : 5);
   Layout L;
   L.orientation = o;
   L.statusBar = g.statusBar;
@@ -185,7 +200,6 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
   L.refreshHit = g.refreshHit;
   L.settingsHit = g.settingsHit;
   L.sleepIndicator = g.sleepIndicator;
-  int T = (int)tabs.size();
   if (T > 0) activeTab = std::min(std::max(activeTab, 0), T - 1);
   else activeTab = 0;
   L.activeTab = activeTab;
@@ -206,7 +220,7 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
     L.tabSlots.push_back(s);
   }
 
-  if (T > 0) L.flow = computeFlow(o, tabs[activeTab].widgets);
+  if (T > 0) L.flow = computeFlow(o, tabs[activeTab].widgets, tabs[activeTab].landscapeColumns);
   L.pager.subPageCount = L.flow.pageCount;
   L.pager.subPage = std::min(std::max(subPage, 0), L.flow.pageCount - 1);
   L.pager.visible = L.flow.pagerVisible;

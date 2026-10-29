@@ -132,6 +132,14 @@ void test_pack_unpack_fingerprint() {
 }
 
 
+void test_roundtrip_landscape_columns() {
+  Config c = fullConfig(), out;
+  c.tabs[0].landscapeColumns = 4;
+  TEST_ASSERT_TRUE(deserializeConfig(serializeConfig(c), out));
+  TEST_ASSERT_EQUAL_INT(4, out.tabs[0].landscapeColumns);
+  TEST_ASSERT_EQUAL_INT(5, out.tabs[1].landscapeColumns);
+}
+
 void test_roundtrip_attribute_options() {
   Config c = fullConfig(), out;
   Widget &w = c.tabs[0].widgets[1];
@@ -156,6 +164,7 @@ void test_roundtrip_attribute_options() {
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_roundtrip_all_fields);
+  RUN_TEST(test_roundtrip_landscape_columns);
   RUN_TEST(test_roundtrip_example_yaml);
   RUN_TEST(test_roundtrip_default_config);
   RUN_TEST(test_truncated_rejected);

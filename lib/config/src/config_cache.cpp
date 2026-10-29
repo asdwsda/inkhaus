@@ -108,6 +108,7 @@ std::string serializeConfig(const Config &cfg) {
   w.u32(uint32_t(cfg.tabs.size()));
   for (const Tab &t : cfg.tabs) {
     w.str(t.title);
+    w.u8(uint32_t(t.landscapeColumns));
     w.u32(uint32_t(t.widgets.size()));
     for (const Widget &wd : t.widgets) {
       w.u8(uint32_t(wd.type));
@@ -168,6 +169,10 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
   c.tabs.resize(nt);
   for (Tab &t : c.tabs) {
     r.str(t.title);
+    uint32_t lcols = 0;
+    r.u8(lcols);
+    if (!r.ok || (lcols != 4 && lcols != 5)) return false;
+    t.landscapeColumns = int(lcols);
     uint32_t nw = 0;
     if (!r.count(nw, kMaxWidgetsPerTab)) return false;
     t.widgets.resize(nw);

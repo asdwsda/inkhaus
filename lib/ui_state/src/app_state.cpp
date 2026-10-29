@@ -42,7 +42,7 @@ void AppState::relayout() {
 
 void AppState::refreshFocusFlow() {
   const int t = std::clamp(focus_.tab, 0, std::max(0, int(cfg_.tabs.size()) - 1));
-  focusFlow_ = cfg_.tabs.empty() ? ui::Flow() : ui::computeFlow(orientation_, cfg_.tabs[size_t(t)].widgets);
+  focusFlow_ = cfg_.tabs.empty() ? ui::Flow() : ui::computeFlow(orientation_, cfg_.tabs[size_t(t)].widgets, cfg_.tabs[size_t(t)].landscapeColumns);
 }
 
 const config::Widget *AppState::widgetAt(int tab, int idx) const {

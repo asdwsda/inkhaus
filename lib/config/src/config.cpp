@@ -387,6 +387,13 @@ class Validator {
     JsonObjectConst o = v.as<JsonObjectConst>();
     Tab tb;
     str(o, "title", path, true, tb.title);
+    {
+      std::string lc;  // scalars arrive as strings (yaml_json)
+      if (str(o, "landscape_columns", path, false, lc)) {
+        if (lc == "4" || lc == "5") tb.landscapeColumns = lc[0] - '0';
+        else err(path + ".landscape_columns", "must be 4 or 5");
+      }
+    }
     JsonVariantConst w = o["widgets"];
     const std::string wpath = path + ".widgets";
     if (w.isNull()) {
