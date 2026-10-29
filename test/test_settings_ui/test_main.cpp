@@ -720,6 +720,13 @@ static void test_demo_row_layout_touch_and_leave() {
   TEST_ASSERT_EQUAL_STRING("built-in demo", kDemoConfigText);
 }
 
+static void test_value_fit_level() {
+  TEST_ASSERT_EQUAL(0, settings_ui::valueFitLevel(100, 60, 100));
+  TEST_ASSERT_EQUAL(1, settings_ui::valueFitLevel(101, 60, 100));
+  TEST_ASSERT_EQUAL(1, settings_ui::valueFitLevel(300, 100, 100));
+  TEST_ASSERT_EQUAL(2, settings_ui::valueFitLevel(300, 101, 100));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_demo_row_model);
@@ -757,5 +764,6 @@ int main() {
   RUN_TEST(test_rocker_wake_row_note_dirty);
   RUN_TEST(test_info_edge_cases);
   RUN_TEST(test_fit_text_exact_boundaries);
+  RUN_TEST(test_value_fit_level);
   return UNITY_END();
 }

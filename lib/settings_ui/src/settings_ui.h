@@ -59,6 +59,9 @@ int rowValueRightX(const Rect& row);  // row.x + row.w - 16
 int rowLabelCy(const Rect& row);
 int rowHintCy(const Rect& row);
 int rowValueCy(const Rect& row);
+// Value font decision: 0 = F40 fits, 1 = F24 fits, 2 = neither (truncate F24 with "...").
+constexpr int kValueGap = 16;
+inline int valueFitLevel(int w40, int w24, int freeW) { return w40 <= freeW ? 0 : (w24 <= freeW ? 1 : 2); }
 int pipCount(int rowIndex);  // 2, 2, 6, 4, 2
 Point pipCentre(const Rect& row, int k);  // (row.x + 22 + 20k, row.y + 47)
 constexpr int kPipDiameter = 12;

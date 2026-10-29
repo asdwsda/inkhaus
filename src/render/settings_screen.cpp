@@ -37,7 +37,15 @@ void drawRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
   drawBox(c, r, PAPER, INK);
   const Rect lab = sui::rowLabelRect(r);
   drawTextCy(c, Font::F24, sui::rowLabel(i), lab.x, sui::rowLabelCy(r), Align::Left, INK);
-  drawTextCy(c, Font::F40, sui::rowValueText(i, e), sui::rowValueRightX(r), sui::rowValueCy(r), Align::Right, INK);
+  const std::string val = sui::rowValueText(i, e);
+  const int rightX = sui::rowValueRightX(r);
+  const int freeW = rightX - (lab.x + textWidth(c, Font::F24, sui::rowLabel(i)) + sui::kValueGap);
+  const int lvl = sui::valueFitLevel(textWidth(c, Font::F40, val), textWidth(c, Font::F24, val), freeW);
+  if (lvl == 0) {
+    drawTextCy(c, Font::F40, val, rightX, sui::rowValueCy(r), Align::Right, INK);
+  } else {
+    drawTextCy(c, Font::F24, lvl == 1 ? val : fitText(c, Font::F24, val, freeW), rightX, sui::rowValueCy(r), Align::Right, INK);
+  }
   const int cur = sui::rowValueIndex(i, e);
   for (int k = 0; k < sui::pipCount(i); ++k) {
     const ui::Point p = sui::pipCentre(r, k);
