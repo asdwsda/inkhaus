@@ -46,3 +46,4 @@
 | 043 | [Per-tab landscape columns](043-per-tab-columns.md) | done | 009, 011 |
 | 044 | [Inkling branding (logo, splash, Tools)](044-inkling-branding.md) | done | 041 |
 | 045 | [Brightness popup for dimmable lights](045-brightness-popup.md) | todo | 017, 036 |
+| 046 | [History popup for sensors (research)](046-history-research.md) | todo | 030 |
