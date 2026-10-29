@@ -1,6 +1,6 @@
 # 046: History popup for sensors (research)
 
-Status: done (research; recommendation: REST history first, WS statistics later; build tasks after the user picks it up)
+Status: done (research; design accepted by the user 2026-10-29; build tasks 048-054)
 Depends on: 030
 UI spec: later (after the research)
 Needs device: no for the research
