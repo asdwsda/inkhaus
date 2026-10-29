@@ -45,3 +45,4 @@
 | 042 | [v1.0 release](042-release-1-0.md) | done | 041 |
 | 043 | [Per-tab landscape columns](043-per-tab-columns.md) | done | 009, 011 |
 | 044 | [Inkling branding (logo, splash, Tools)](044-inkling-branding.md) | done | 041 |
+| 045 | [Brightness popup for dimmable lights](045-brightness-popup.md) | todo | 017, 036 |
