@@ -1,6 +1,6 @@
 # 052: History graph renderer
 
-Status: todo
+Status: PC done; device check pending
 Depends on: 048, 050
 UI spec: docs/ui/history.md
 Needs device: no (screenshot later)
@@ -19,3 +19,4 @@ Research and design: 046-history-research.md (accepted by the user 2026-10-29).
 
 ## Notes
 - Includes time-axis ticks (not in 050).
+- 2026-10-29: PC done. Follow-ups: time ticks should not jump between 3 h and 6 h with the window position (pick the step from the range only); unavailable spans need a Series change to draw the MID marker.
