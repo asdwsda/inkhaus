@@ -39,3 +39,4 @@
 | 036 | [Fast taps: optimistic UI, keep-alive](036-fast-actions.md) | in-progress | 019, 023 |
 | 037 | [Persist last known states](037-state-cache.md) | in-progress | 023, 025 |
 | 038 | [Status bar states, sleep indicator redesign](038-status-bar-and-sleep-indicator.md) | in-progress | 024 |
+| 039 | [Three wake modes, wake-mode fixes](039-wake-modes.md) | in-progress | 034, 035 |
