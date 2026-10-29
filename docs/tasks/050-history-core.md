@@ -1,6 +1,6 @@
 # 050: History data core (lib/history)
 
-Status: todo
+Status: done
 Depends on: 046
 UI spec: none
 Needs device: no
@@ -18,3 +18,4 @@ Research and design: 046-history-research.md (accepted by the user 2026-10-29).
 - [ ] RAM use bounded (no full-body buffer); documented in the header.
 
 ## Notes
+- 2026-10-29: done. Scanner/Collector/axis/cache in lib/history; time-axis ticks left for 052.

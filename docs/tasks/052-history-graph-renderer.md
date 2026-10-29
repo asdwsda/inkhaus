@@ -18,3 +18,4 @@ Research and design: 046-history-research.md (accepted by the user 2026-10-29).
 - [ ] Builds; device screenshot vs mockup listed in docs/device-checks.md.
 
 ## Notes
+- Includes time-axis ticks (not in 050).

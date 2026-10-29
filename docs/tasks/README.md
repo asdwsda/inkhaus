@@ -50,7 +50,7 @@
 | 047 | [Wi-Fi profiles, HA URL mode, Settings categories](047-wifi-profiles-and-url-mode.md) | PC done; device check pending | 021, 032, 026 |
 | 048 | [History popup spec](048-history-popup-spec.md) | todo | 046 |
 | 049 | [History config keys](049-history-config.md) | done | 046 |
-| 050 | [History data core (lib/history)](050-history-core.md) | todo | 046 |
+| 050 | [History data core (lib/history)](050-history-core.md) | done | 046 |
 | 051 | [Streaming HTTP for history fetches](051-history-streaming-transport.md) | PC done; device check pending | 046 |
 | 052 | [History graph renderer](052-history-graph-renderer.md) | todo | 048, 050 |
 | 053 | [History popup (input, cache, refresh)](053-history-popup.md) | todo | 049, 050, 051, 052 |
