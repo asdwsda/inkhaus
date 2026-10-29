@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans">
+<!-- Brightness popup, portrait. Spec: docs/ui/brightness.md. Tab underneath unchanged (no dimming). Panel (16,240,508,456) + 6 px shadow. State: light at 60 %. -->
+<defs>
+<symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/><rect x="10.5" y="4" width="3" height="16" fill="currentColor"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" fill="none" stroke="currentColor" stroke-width="3"/></symbol>
+</defs>
+<rect width="540" height="960" fill="#fff"/>
+<rect x="0" y="54" width="540" height="2" fill="#000"/>
+<text id="bg-label" x="48" y="33" font-size="18" text-anchor="start" dominant-baseline="alphabetic" fill="#000">updated 14:05</text>
+<text id="bg-batt" x="524" y="33" font-size="18" text-anchor="end" dominant-baseline="alphabetic" fill="#000">78%</text>
+<rect x="16" y="68" width="248" height="104" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="bg-n1" x="28" y="106" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">Ceiling light</text>
+<text id="bg-s1" x="28" y="145" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">On 60%</text>
+<rect x="276" y="68" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n2" x="288" y="106" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Desk lamp</text>
+<text id="bg-s2" x="288" y="145" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="16" y="184" width="248" height="104" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="bg-n3" x="28" y="222" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">Hall light</text>
+<text id="bg-s3" x="28" y="261" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">On</text>
+<rect x="276" y="184" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n4" x="288" y="222" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Shutter</text>
+<text id="bg-s4" x="288" y="261" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="16" y="300" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n5" x="28" y="338" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Sofa lamp</text>
+<text id="bg-s5" x="28" y="377" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="276" y="300" width="248" height="104" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="bg-n6" x="288" y="338" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">Socket</text>
+<text id="bg-s6" x="288" y="377" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">On</text>
+<rect x="16" y="416" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n7" x="28" y="454" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Thermostat</text>
+<text id="bg-s7" x="28" y="493" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="276" y="416" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n8" x="288" y="454" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Vacuum</text>
+<text id="bg-s8" x="288" y="493" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="16" y="532" width="248" height="104" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="bg-n9" x="28" y="570" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">Door</text>
+<text id="bg-s9" x="28" y="609" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">On</text>
+<rect x="276" y="532" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n10" x="288" y="570" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Humidity</text>
+<text id="bg-s10" x="288" y="609" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="16" y="648" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n11" x="28" y="686" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Garden</text>
+<text id="bg-s11" x="28" y="725" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="276" y="648" width="248" height="104" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="bg-n12" x="288" y="686" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">Fan</text>
+<text id="bg-s12" x="288" y="725" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#fff">On</text>
+<rect x="16" y="764" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n13" x="28" y="802" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Ceiling light</text>
+<text id="bg-s13" x="28" y="841" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="276" y="764" width="248" height="104" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="bg-n14" x="288" y="802" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Desk lamp</text>
+<text id="bg-s14" x="288" y="841" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect x="0" y="880" width="540" height="2" fill="#000"/>
+<rect x="16" y="892" width="118" height="56" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text x="75" y="920" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#fff">Living</text>
+<rect x="146" y="892" width="118" height="56" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text x="205" y="920" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#000">Kitchen</text>
+<rect x="276" y="892" width="118" height="56" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text x="335" y="920" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#000">Bedroom</text>
+<rect x="406" y="892" width="118" height="56" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text x="465" y="920" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#000">1/2</text>
+<rect id="popup-shadow" x="22" y="246" width="508" height="456" rx="8" fill="#000"/>
+<g id="w-1">
+<rect id="w-1-frame" x="16" y="240" width="508" height="456" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
+<text id="w-1-name" x="32" y="296" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Ceiling light</text>
+<rect id="w-1-close-btn" x="444" y="256" width="64" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-close-icon" xlink:href="#i-close" x="456.0" y="268.0" width="40" height="40" color="#000"/>
+<text id="w-1-pct" x="270.0" y="366" font-size="40" text-anchor="middle" fill="#000">60<tspan font-size="24" dx="2">%</tspan></text>
+<rect id="w-1-bar-btn" x="32" y="388" width="476" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="w-1-bar-fill" x="36" y="392" width="281" height="56" rx="4" fill="#000"/>
+<rect id="w-1-minus-btn" x="32" y="464" width="232" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-minus-icon" xlink:href="#i-minus" x="93.5" y="476.0" width="40" height="40" color="#000"/>
+<text id="w-1-minus-label" x="141.5" y="504.0" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">10 %</text>
+<rect id="w-1-plus-btn" x="276" y="464" width="232" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-plus-icon" xlink:href="#i-plus" x="337.5" y="476.0" width="40" height="40" color="#000"/>
+<text id="w-1-plus-label" x="385.5" y="504.0" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">10 %</text>
+<rect id="w-1-p25-btn" x="32" y="540" width="110" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-p25-label" x="87.0" y="580.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">25%</text>
+<rect id="w-1-p50-btn" x="154" y="540" width="110" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-p50-label" x="209.0" y="580.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">50%</text>
+<rect id="w-1-p75-btn" x="276" y="540" width="110" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-p75-label" x="331.0" y="580.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">75%</text>
+<rect id="w-1-p100-btn" x="398" y="540" width="110" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-p100-label" x="453.0" y="580.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">100%</text>
+<rect id="w-1-off-btn" x="32" y="616" width="232" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-off-label" x="148.0" y="656.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect id="w-1-done-btn" x="276" y="616" width="232" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-done-label" x="392.0" y="656.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Done</text>
+</g>
+</svg>
