@@ -718,6 +718,124 @@ void test_keep_alive_stale_connection_retried_once() {
   TEST_ASSERT_EQUAL(3, (int)raw.urls.size());
 }
 
+// ---- streaming history (task 051) ----
+struct StreamFake : HttpTransport {
+  std::vector<std::string> urls;
+  std::deque<StreamResult> results;
+  std::deque<std::vector<std::string>> chunks;
+  HttpHeaders last_headers;
+  HttpResponse request(const std::string&, const std::string&, const HttpHeaders&, const std::string&) override { return {}; }
+  StreamResult stream(const std::string&, const std::string& u, const HttpHeaders& h, const std::string&,
+                      const StreamLimits& lim, const ChunkFn& sink) override {
+    urls.push_back(u);
+    last_headers = h;
+    StreamResult r = results.front(); results.pop_front();
+    std::vector<std::string> cs = chunks.front(); chunks.pop_front();
+    StreamGate gate(lim, sink);
+    for (auto& c : cs) if (gate.accept(c.data(), c.size(), 0, r) == 0) break;
+    return r;
+  }
+};
+static StreamResult sok() { StreamResult r; r.status = 200; return r; }
+
+void test_history_path() {
+  std::string p;
+  TEST_ASSERT_TRUE(build_history_path("sensor.living_temperature", 1761724800, 1761811200, p));
+  TEST_ASSERT_EQUAL_STRING(
+      "/api/history/period/2025-10-29T08%3A00%3A00%2B00%3A00?filter_entity_id=sensor.living_temperature"
+      "&end_time=2025-10-30T08%3A00%3A00%2B00%3A00&minimal_response&no_attributes&significant_changes_only",
+      p.c_str());
+  TEST_ASSERT_FALSE(build_history_path("sensor.a&b", 1, 100, p));
+  TEST_ASSERT_FALSE(build_history_path("nodot", 1, 100, p));
+  TEST_ASSERT_FALSE(build_history_path("sensor.a", 100, 100, p));
+  TEST_ASSERT_EQUAL_STRING("1970-01-01T00:00:00+00:00", iso_utc(0).c_str());
+  TEST_ASSERT_EQUAL_STRING("2024-02-29T23:59:59+00:00", iso_utc(1709251199).c_str());
+}
+
+void test_history_stream_chunks_and_auth() {
+  StreamFake t;
+  t.results = {sok()};
+  t.chunks = {{"[[{\"s\"", ":\"1\"}]]"}};
+  HaClient c(t, kInt, kExt, "TOKEN");
+  std::string got;
+  size_t bytes = 0;
+  HaResult r = c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, [&](const char* p, size_t n) { got.append(p, n); return true; }, &bytes);
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL_STRING("[[{\"s\":\"1\"}]]", got.c_str());
+  TEST_ASSERT_EQUAL(got.size(), bytes);
+  TEST_ASSERT_EQUAL_STRING("Bearer TOKEN", t.last_headers[0].second.c_str());
+  TEST_ASSERT_TRUE(t.urls[0].rfind("http://ha.local:8123/api/history/period/", 0) == 0);
+  TEST_ASSERT_EQUAL_STRING(kInt, c.remembered_base().c_str());
+}
+
+void test_history_stream_byte_limit() {
+  StreamFake t;
+  t.results = {sok()};
+  t.chunks = {{"aaaa", "bbbb", "cccc"}};
+  HaClient c(t, kInt, kExt, "T");
+  StreamLimits lim; lim.max_bytes = 10;
+  std::string got;
+  HaResult r = c.stream_history("sensor.a", 1000, 2000, lim, [&](const char* p, size_t n) { got.append(p, n); return true; });
+  TEST_ASSERT_EQUAL(HaError::TooLarge, r.error);
+  TEST_ASSERT_EQUAL_STRING("aaaabbbb", got.c_str());  // the chunk that would exceed is not delivered
+  TEST_ASSERT_EQUAL(1, t.urls.size());                 // no fallback
+}
+
+void test_history_stream_cancel_flag_and_sink() {
+  StreamFake t;
+  t.results = {sok(), sok()};
+  t.chunks = {{"aa", "bb", "cc"}, {"aa", "bb"}};
+  HaClient c(t, kInt, kExt, "T");
+  volatile bool cancel = false;
+  StreamLimits lim; lim.cancel = &cancel;
+  int n = 0;
+  HaResult r = c.stream_history("sensor.a", 1000, 2000, lim, [&](const char*, size_t) { if (++n == 2) cancel = true; return true; });
+  TEST_ASSERT_EQUAL(HaError::Cancelled, r.error);
+  TEST_ASSERT_EQUAL(2, n);
+  HaResult r2 = c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, [&](const char*, size_t) { return false; });
+  TEST_ASSERT_EQUAL(HaError::Cancelled, r2.error);
+}
+
+void test_history_stream_deadline_gate() {
+  StreamLimits lim; lim.deadline_ms = 100;
+  StreamGate g(lim, [](const char*, size_t) { return true; });
+  StreamResult r;
+  TEST_ASSERT_EQUAL(3, g.accept("abc", 3, 50, r));
+  TEST_ASSERT_EQUAL(0, g.accept("abc", 3, 101, r));
+  TEST_ASSERT_TRUE(r.deadline);
+  TEST_ASSERT_EQUAL(3, r.bytes);
+  TEST_ASSERT_FALSE(r.completed());
+}
+
+void test_history_stream_fallback_and_errors() {
+  StreamFake t;
+  StreamResult fail; fail.error = "timeout";
+  StreamResult unauth; unauth.status = 401;
+  t.results = {fail, sok(), unauth};
+  t.chunks = {{}, {"x"}, {}};
+  HaClient c(t, kInt, kExt, "T");
+  auto sink = [](const char*, size_t) { return true; };
+  HaResult r = c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink);
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL_STRING(kExt, c.remembered_base().c_str());
+  TEST_ASSERT_TRUE(t.urls[1].rfind("https://x.ui.nabu.casa/api/history/", 0) == 0);
+  HaResult r2 = c.stream_history("sensor.a", 1000, 2000, StreamLimits{}, sink);
+  TEST_ASSERT_EQUAL(HaError::Auth, r2.error);
+  HaResult r3 = c.stream_history("bad", 1000, 2000, StreamLimits{}, sink);
+  TEST_ASSERT_EQUAL(HaError::Parse, r3.error);
+}
+
+void test_history_default_stream_and_normal_cap_unchanged() {
+  FakeTransport t;  // does not override stream(): buffered fallback
+  t.queue = {ok(std::string(3000, 'x').c_str())};
+  size_t total = 0;
+  StreamResult r = t.stream("GET", "http://h/api", {}, "", StreamLimits{}, [&](const char*, size_t n) { total += n; return true; });
+  TEST_ASSERT_TRUE(r.completed());
+  TEST_ASSERT_EQUAL(3000, total);
+  TEST_ASSERT_EQUAL(64 * 1024, kMaxResponseBody);
+  TEST_ASSERT_EQUAL(512 * 1024, kStreamMaxBytes);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_unknown_cover_without_position);
@@ -759,5 +877,12 @@ int main() {
   RUN_TEST(test_keep_alive_stale_connection_retried_once);
   RUN_TEST(test_light_color_modes_and_dimmable);
   RUN_TEST(test_light_brightness_call);
+  RUN_TEST(test_history_path);
+  RUN_TEST(test_history_stream_chunks_and_auth);
+  RUN_TEST(test_history_stream_byte_limit);
+  RUN_TEST(test_history_stream_cancel_flag_and_sink);
+  RUN_TEST(test_history_stream_deadline_gate);
+  RUN_TEST(test_history_stream_fallback_and_errors);
+  RUN_TEST(test_history_default_stream_and_normal_cap_unchanged);
   return UNITY_END();
 }

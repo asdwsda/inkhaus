@@ -104,3 +104,46 @@ HaResult HaClient::call_service(const ServiceCall& call, const std::vector<std::
   }
   return r;
 }
+
+HaResult HaClient::stream_history(const std::string& entity_id, int64_t start_epoch,
+                                  int64_t end_epoch, const StreamLimits& lim, const ChunkFn& sink,
+                                  size_t* bytes_out) {
+  if (bytes_out) *bytes_out = 0;
+  HaResult r;
+  std::string path;
+  if (!build_history_path(entity_id, start_epoch, end_epoch, path)) {
+    r.error = HaError::Parse;
+    r.message = "bad history request";
+    return r;
+  }
+  std::vector<std::string> bases;
+  for (const std::string& b : {remembered_, internal_, external_}) {
+    if (b.empty() || std::find(bases.begin(), bases.end(), b) != bases.end()) continue;
+    bases.push_back(b);
+  }
+  HttpHeaders headers = {{"Authorization", "Bearer " + token_}, {"Accept", "application/json"}};
+  r.error = HaError::Network;
+  r.message = "no base URL configured";
+  for (const std::string& base : bases) {
+    StreamResult s = transport_.stream("GET", base + path, headers, "", lim, sink);
+    if (bytes_out) *bytes_out = s.bytes;
+    r.ms = s.ms;
+    r.reused = s.reused;
+    if (s.cancelled) { r.error = HaError::Cancelled; r.message = "cancelled"; return r; }
+    if (s.too_large) { r.error = HaError::TooLarge; r.message = "response too large"; r.base_url = base; return r; }
+    if (s.deadline) { r.error = HaError::Timeout; r.message = "deadline exceeded"; return r; }
+    if (s.status == 0) {  // connect failure or transport error
+      r.error = HaError::Network;
+      r.message = s.error;
+      if (s.bytes > 0) return r;  // partial data already delivered: no fallback
+      continue;
+    }
+    r.http_status = s.status;
+    r.base_url = base;
+    if (s.status == 401) { r.error = HaError::Auth; r.message = "unauthorized"; }
+    else if (s.status < 200 || s.status >= 300) { r.error = HaError::Http; r.message = "HTTP " + std::to_string(s.status); }
+    else { r.error = HaError::None; r.message.clear(); remembered_ = base; }
+    return r;
+  }
+  return r;
+}

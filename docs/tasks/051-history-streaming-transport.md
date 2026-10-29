@@ -1,6 +1,6 @@
 # 051: Streaming HTTP for history fetches
 
-Status: todo
+Status: PC done; device check pending
 Depends on: 046
 UI spec: none
 Needs device: yes (final check)
@@ -18,3 +18,4 @@ Research and design: 046-history-research.md (accepted by the user 2026-10-29).
 - [ ] Device (later): `HIST: fetch_ms bytes` logged for a 24 h fetch over LAN and remote.
 
 ## Notes
+- 2026-10-29: PC part done (stream API, request builder, Arduino streaming UNVERIFIED). The net task "history fetch" job moves to task 053 (needs lib/history).

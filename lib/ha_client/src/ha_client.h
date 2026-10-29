@@ -5,6 +5,8 @@
 #include "entity_state.h"
 #include "http_transport.h"
 #include "service_call.h"
+#include "history_request.h"
+#include "stream.h"
 #include "template_builder.h"
 
 enum class HaError {
@@ -14,6 +16,8 @@ enum class HaError {
   Http,     // other non-2xx status
   Parse,    // bad response body or bad request input
   TooLarge, // response body over the size cap, never triggers fallback
+  Cancelled,// streaming request aborted by the cancel flag or the sink (task 051)
+  Timeout,  // streaming request over its deadline (task 051)
 };
 
 struct HaResult {
@@ -47,6 +51,11 @@ class HaClient {
   FetchResult fetch_states(const std::vector<std::string>& ids);
   // wanted/states: if both are given, the changed states HA returns for entities in `wanted` are
   // parsed into `states` (empty if the body is missing or unparsable; the call still succeeded).
+  // Streams the REST history of one entity to `sink` (task 051). Tries remembered/internal/
+  // external like post() but only falls back while nothing was delivered. `bytes_out`: bytes given
+  // to the sink. Never logs the URL or the token.
+  HaResult stream_history(const std::string& entity_id, int64_t start_epoch, int64_t end_epoch,
+                          const StreamLimits& lim, const ChunkFn& sink, size_t* bytes_out = nullptr);
   HaResult call_service(const ServiceCall& call, const std::vector<std::string>* wanted = nullptr,
                         std::vector<EntityState>* states = nullptr);
 

@@ -19,6 +19,13 @@ class ArduinoHttpTransport : public HttpTransport {
                        const HttpHeaders& headers, const std::string& body) override {
     return keep_.request(method, url, headers, body);
   }
+  // Streaming (task 051): own request on the shared sockets, no 64 KB cap. Drops the kept
+  // connection first and again afterwards unless the body completed.
+  StreamResult stream(const std::string& method, const std::string& url, const HttpHeaders& headers,
+                      const std::string& body, const StreamLimits& lim, const ChunkFn& sink) override {
+    keep_.close();
+    return raw_.stream(method, url, headers, body, lim, sink);
+  }
   void close() override { keep_.close(); }
 
  private:
@@ -31,6 +38,8 @@ class ArduinoHttpTransport : public HttpTransport {
     HttpResponse send(const std::string& method, const std::string& url, const HttpHeaders& headers,
                       const std::string& body) override;
     void drop() override;
+    StreamResult stream(const std::string& method, const std::string& url, const HttpHeaders& headers,
+                        const std::string& body, const StreamLimits& lim, const ChunkFn& sink);
 
    private:
     uint32_t connect_timeout_ms_, read_timeout_ms_;

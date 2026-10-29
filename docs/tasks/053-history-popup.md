@@ -4,6 +4,7 @@ Status: todo
 Depends on: 049, 050, 051, 052
 UI spec: docs/ui/history.md
 Needs device: yes
+Also includes (from 051): the net task "history fetch" job type.
 
 ## Scope
 Per 046 task split item 6: long press / rocker long-push on a sensor or binary widget opens the popup (lights keep the brightness popup); popup state machine; PSRAM + SD cache (show stale, then refresh, changed-only redraw); Loading frame fast, graph one quality refresh; close restores the screen.
