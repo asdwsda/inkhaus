@@ -110,12 +110,9 @@ void test_row_internals() {
   TEST_ASSERT_EQUAL_INT(16 + 22 + 100, pipCentre(row, 5).x);
   TEST_ASSERT_EQUAL_INT(68 + 47, pipCentre(row, 0).y);
   TEST_ASSERT_EQUAL_INT(2, pipCount(0));
-  TEST_ASSERT_EQUAL_INT(2, pipCount(1));
+  TEST_ASSERT_EQUAL_INT(3, pipCount(1));
   TEST_ASSERT_EQUAL_INT(6, pipCount(2));
   TEST_ASSERT_EQUAL_INT(4, pipCount(3));
-  expectRect(16 + 356, 90, 24, 24, rowWarnIconRect(row));
-  expectRect(16 + 304, 86, 24, 24, rowWarnIconRect(land));
-  TEST_ASSERT_EQUAL_INT(16 + 16, rowWarnTextX(row));
   ui::Rect note{16, 468, 508, 64};
   expectRect(28, 480, 40, 40, noteIconRect(note));
   TEST_ASSERT_EQUAL_INT(80, noteTextX(note));
@@ -173,14 +170,13 @@ void test_cycle_wraps_in_array_order() {
 void test_wake_warning_flags() {
   Settings s;
   TEST_ASSERT_FALSE(showsNote(s));
-  TEST_ASSERT_FALSE(showsWakeWarning(1, s));
   s.wake_mode = WakeMode::Touch;
   TEST_ASSERT_TRUE(showsNote(s));
-  TEST_ASSERT_TRUE(showsWakeWarning(1, s));
-  TEST_ASSERT_FALSE(showsWakeWarning(0, s));
+  s.wake_mode = WakeMode::TouchAndButton;
+  TEST_ASSERT_TRUE(showsNote(s));
+  TEST_ASSERT_EQUAL_STRING("Touch & Button", rowValueText(1, s).c_str());
   TEST_ASSERT_EQUAL_STRING("Touch wake shortens battery life.", kNoteLine1);
   TEST_ASSERT_EQUAL_STRING("Button wake is recommended.", kNoteLine2);
-  TEST_ASSERT_EQUAL_STRING("drains battery", kWarnHint);
 }
 
 void test_touch_cycles_buffer_only() {
@@ -240,7 +236,8 @@ void test_cycle_back_removes_unsaved_and_leave_is_write_free() {
   SettingsScreen sc(saved, Orientation::Portrait, false);
   sc.onTouch({100, 212});
   TEST_ASSERT_TRUE(sc.dirty());
-  auto u = sc.onTouch({100, 212});  // Button again (2 values)
+  sc.onTouch({100, 212});
+  auto u = sc.onTouch({100, 212});  // Button again (3 values)
   TEST_ASSERT_FALSE(sc.dirty());
   bool chip = false;
   for (auto& r : u.dirty) chip |= (r == sc.layout().unsavedChip);
@@ -478,7 +475,7 @@ void test_touch_hits_each_target_both_orientations() {
 }
 
 void test_every_row_cycles_full_circle_and_chip_tracks_dirty() {
-  const int sizes[] = {2, 2, 6, 4, 2};
+  const int sizes[] = {2, 3, 6, 4, 2};
   for (int row = 0; row < kRowCount; ++row) {
     Settings saved;
     SettingsScreen sc(saved, Orientation::Portrait, false);
@@ -506,7 +503,7 @@ void test_every_row_cycles_full_circle_and_chip_tracks_dirty() {
 void test_all_rows_changed_and_restored_is_write_free() {
   Settings saved;
   SettingsScreen sc(saved, Orientation::Portrait, true);
-  const int sizes[] = {2, 2, 6, 4, 2};
+  const int sizes[] = {2, 3, 6, 4, 2};
   for (int row = 0; row < kRowCount; ++row) {
     for (int k = 0; k < sizes[row]; ++k) sc.onKey(LogicalKey::Push);
     sc.onKey(LogicalKey::Next);
@@ -615,7 +612,6 @@ void test_rocker_wake_row_note_dirty() {
   for (auto& r : u.dirty) note |= (r == sc.layout().note);
   TEST_ASSERT_TRUE(note);
   TEST_ASSERT_TRUE(showsNote(sc.edit()));
-  TEST_ASSERT_TRUE(showsWakeWarning(1, sc.edit()));
 }
 
 void test_info_edge_cases() {
@@ -683,7 +679,6 @@ static void test_demo_row_model() {
   TEST_ASSERT_EQUAL_INT(1, rowValueIndex(kDemoRow, s));
   s = cycleRow(kDemoRow, s);
   TEST_ASSERT_FALSE(s.demo_mode);
-  TEST_ASSERT_FALSE(showsWakeWarning(kDemoRow, s));
 }
 
 static void test_demo_row_layout_touch_and_leave() {

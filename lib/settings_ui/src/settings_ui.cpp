@@ -81,8 +81,6 @@ int pipCount(int i) {
   return 0;
 }
 Point pipCentre(const Rect& r, int k) { return {r.x + 22 + 20 * k, r.y + 47}; }
-Rect rowWarnIconRect(const Rect& r) { return {r.x + r.w - 152, r.y + 22, 24, 24}; }
-int rowWarnTextX(const Rect& r) { return r.x + 16; }
 Rect noteIconRect(const Rect& n) { return {n.x + 12, n.y + 12, 40, 40}; }
 int noteTextX(const Rect& n) { return n.x + 64; }
 int noteLineCy(const Rect& n, int line) { return n.y + (line == 0 ? 21 : 43); }
@@ -130,7 +128,10 @@ std::string rowValueText(int i, const Settings& s) {
   char buf[24];
   switch (i) {
     case 0: return s.orientation == settings::Orientation::Landscape ? "Landscape" : "Portrait";
-    case 1: return s.wake_mode == settings::WakeMode::Touch ? "Touch" : "Button";
+    case 1:
+      return s.wake_mode == settings::WakeMode::Touch            ? "Touch"
+             : s.wake_mode == settings::WakeMode::TouchAndButton ? "Touch & Button"
+                                                                 : "Button";
     case 2:
       if (s.refresh_interval_min == 0) return "Off";
       std::snprintf(buf, sizeof buf, "%d min", static_cast<int>(s.refresh_interval_min));
@@ -161,10 +162,7 @@ Settings cycleRow(int i, const Settings& s) {
   return r;
 }
 
-bool showsWakeWarning(int i, const Settings& s) {
-  return i == 1 && s.wake_mode == settings::WakeMode::Touch;
-}
-bool showsNote(const Settings& s) { return s.wake_mode == settings::WakeMode::Touch; }
+bool showsNote(const Settings& s) { return s.wake_mode != settings::WakeMode::Button; }
 
 FittedText fitText(const std::string& text, int maxWidth,
                    const std::function<int(const std::string&, int)>& measure) {

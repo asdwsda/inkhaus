@@ -84,7 +84,7 @@ void test_orientation_invalid_defaults_only_that_field() {
         st.data[kKeyOrientation] = b;
         Settings s = load(st);
         TEST_ASSERT_TRUE(s.orientation == Orientation::Portrait);
-        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Touch);
+        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::TouchAndButton);
         TEST_ASSERT_EQUAL_INT32(15, s.refresh_interval_min);
         TEST_ASSERT_EQUAL_INT32(10, s.idle_timeout_s);
     }
@@ -101,7 +101,7 @@ void test_invalid_value_defaults_only_that_field() {
     Settings s = load(st);
     TEST_ASSERT_EQUAL_INT32(60, s.refresh_interval_min);
     TEST_ASSERT_EQUAL_INT32(30, s.idle_timeout_s);
-    TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Touch);
+    TEST_ASSERT_TRUE(s.wake_mode == WakeMode::TouchAndButton);
 
     st.data[kKeyWakeMode] = 99;
     TEST_ASSERT_TRUE(load(st).wake_mode == WakeMode::Button);
@@ -142,6 +142,34 @@ void test_save_skips_unchanged_fields() {
     TEST_ASSERT_EQUAL_INT32(1, st.data[kKeyOrientation]);
 }
 
+void test_wake_mode_migration_and_roundtrip() {
+    FakeStore st;
+    st.data[kKeySchemaVersion] = 1;  // legacy: 1 = old Touch (touch and button)
+    st.data[kKeyWakeMode] = 1;
+    TEST_ASSERT_TRUE(load(st).wake_mode == WakeMode::TouchAndButton);
+    st.data[kKeyWakeMode] = 0;
+    TEST_ASSERT_TRUE(load(st).wake_mode == WakeMode::Button);
+    st.data[kKeyWakeMode] = 2;  // not valid in schema 1 stores, but harmless
+    FakeStore n;  // current schema: 1 = Touch only, 2 = Touch & Button
+    n.data[kKeySchemaVersion] = kSchemaVersion;
+    n.data[kKeyWakeMode] = 1;
+    TEST_ASSERT_TRUE(load(n).wake_mode == WakeMode::Touch);
+    n.data[kKeyWakeMode] = 2;
+    TEST_ASSERT_TRUE(load(n).wake_mode == WakeMode::TouchAndButton);
+    // After the migration is saved, the value 2 means Touch & Button and a reload keeps it.
+    Settings m = load(st);
+    FakeStore out;
+    save(out, m);
+    TEST_ASSERT_EQUAL_INT32(2, out.data[kKeyWakeMode]);
+    TEST_ASSERT_TRUE(load(out).wake_mode == WakeMode::TouchAndButton);
+    Settings t;
+    t.wake_mode = WakeMode::Touch;
+    save(out, t);
+    TEST_ASSERT_TRUE(load(out).wake_mode == WakeMode::Touch);
+    TEST_ASSERT_EQUAL_INT(3, (int)kWakeModeValues.size());
+    TEST_ASSERT_FALSE(isValidWakeMode(3));
+}
+
 void test_unknown_schema_version_loads_defaults() {
     FakeStore st;
     Settings in;
@@ -176,14 +204,14 @@ void test_each_field_invalid_keeps_others() {
         st.data[kKeyWakeMode] = 1;
         st.data[kKeyRefreshMin] = b;
         s = load(st);
-        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Touch);
+        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::TouchAndButton);
         TEST_ASSERT_EQUAL_INT32(60, s.refresh_interval_min);
         TEST_ASSERT_EQUAL_INT32(10, s.idle_timeout_s);
 
         st.data[kKeyRefreshMin] = 15;
         st.data[kKeyIdleTimeoutS] = b;
         s = load(st);
-        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Touch);
+        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::TouchAndButton);
         TEST_ASSERT_EQUAL_INT32(15, s.refresh_interval_min);
         TEST_ASSERT_EQUAL_INT32(20, s.idle_timeout_s);
     }
@@ -288,5 +316,6 @@ int main(int, char**) {
     RUN_TEST(test_save_writes_only_changed_field_and_repairs_invalid);
     RUN_TEST(test_save_into_future_schema_store_stamps_current_version);
     RUN_TEST(test_keys_fit_nvs_limit_and_lists_are_valid);
+    RUN_TEST(test_wake_mode_migration_and_roundtrip);
     return UNITY_END();
 }

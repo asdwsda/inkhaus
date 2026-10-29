@@ -29,3 +29,4 @@ Needs device: yes (later)
 - [ ] On device: each mode wakes only on its sources; the indicator matches.
 
 ## Notes
+- PC part done (2026-10-29): cause of the current-settings bug: goToSleep used the session-start plan (session.cpp:132/363); now always app_logic::planForSleep from g_settings. Schema v2 with legacy 1 → TouchAndButton. EXT1 always Rocker. Warn icon removed. 522 tests. Check on device: "Touch & Button" F40 width in the landscape row.

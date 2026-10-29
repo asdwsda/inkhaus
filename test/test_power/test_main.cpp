@@ -85,11 +85,22 @@ void test_plan_button_mode() {
 }
 
 void test_plan_touch_mode() {
-    auto p = plan_sleep(mk(WakeMode::Touch, 60), Session::Interactive, kMidnight + 100, 0);
+    auto p = plan_sleep(mk(WakeMode::TouchAndButton, 60), Session::Interactive, kMidnight + 100, 0);
     TEST_ASSERT_EQUAL(SleepMode::DeepSleep, p.mode);
     TEST_ASSERT_TRUE(p.button_wake);
     TEST_ASSERT_TRUE(p.touch_wake);
     TEST_ASSERT_TRUE(p.rtc_alarm_at.has_value());
+}
+
+void test_plan_touch_only_and_both() {
+    auto t = plan_sleep(mk(WakeMode::Touch, 60), Session::Interactive, kMidnight + 100, 0);
+    TEST_ASSERT_EQUAL(SleepMode::DeepSleep, t.mode);
+    TEST_ASSERT_TRUE(t.touch_wake);
+    TEST_ASSERT_FALSE(t.button_wake);
+    auto b = plan_sleep(mk(WakeMode::TouchAndButton, 60), Session::Interactive, kMidnight + 100, 0);
+    TEST_ASSERT_EQUAL(SleepMode::DeepSleep, b.mode);
+    TEST_ASSERT_TRUE(b.touch_wake);
+    TEST_ASSERT_TRUE(b.button_wake);
 }
 
 void test_plan_refresh_off_and_low_battery() {
@@ -245,6 +256,7 @@ int main() {
     RUN_TEST(test_idle_cap_not_below_timeout);
     RUN_TEST(test_plan_button_mode);
     RUN_TEST(test_plan_touch_mode);
+    RUN_TEST(test_plan_touch_only_and_both);
     RUN_TEST(test_plan_refresh_off_and_low_battery);
     RUN_TEST(test_alarm_boundaries);
     RUN_TEST(test_alarm_min_lead);

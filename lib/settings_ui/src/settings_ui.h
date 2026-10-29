@@ -62,8 +62,6 @@ int rowValueCy(const Rect& row);
 int pipCount(int rowIndex);  // 2, 2, 6, 4, 2
 Point pipCentre(const Rect& row, int k);  // (row.x + 22 + 20k, row.y + 47)
 constexpr int kPipDiameter = 12;
-Rect rowWarnIconRect(const Rect& row);  // 24x24 left of the value, row-relative x = w-152, cy 34
-int rowWarnTextX(const Rect& row);      // row.x + 16 (cy = rowHintCy)
 Rect noteIconRect(const Rect& note);    // (12,12,40,40) slot-relative
 int noteTextX(const Rect& note);        // note.x + 64
 int noteLineCy(const Rect& note, int line);  // line 0: +21, line 1: +43
@@ -81,9 +79,7 @@ settings::Settings cycleRow(int rowIndex, const settings::Settings& s);
 
 constexpr const char* kNoteLine1 = "Touch wake shortens battery life.";
 constexpr const char* kNoteLine2 = "Button wake is recommended.";
-constexpr const char* kWarnHint = "drains battery";
 // True: the hint line shows warn icon + text instead of the pips.
-bool showsWakeWarning(int rowIndex, const settings::Settings& s);
 // True: the note slot is drawn (wake mode = Touch).
 bool showsNote(const settings::Settings& s);
 

@@ -23,6 +23,8 @@ power::WakeReason classifyWake(const WakeInput &in) {
   }
 }
 
+WakePin pinForExt1(uint64_t) { return WakePin::Rocker; }
+
 const char *wakeName(power::WakeReason r) {
   switch (r) {
     case power::WakeReason::ColdBoot: return "cold_boot";
@@ -100,6 +102,12 @@ power::SleepPlan localIdlePlan(const settings::Settings &s, int64_t now_epoch, i
   power::SleepPlan p = power::plan_sleep(s, power::Session::Interactive, now_epoch, utc_offset_s);
   p.rtc_alarm_at.reset();
   return p;
+}
+
+power::SleepPlan planForSleep(const settings::Settings &s, power::Session session, int64_t now_epoch,
+                              int32_t utc_offset_s, bool local_idle) {
+  return local_idle ? localIdlePlan(s, now_epoch, utc_offset_s)
+                    : power::plan_sleep(s, session, now_epoch, utc_offset_s);
 }
 
 void WakeInputGuard::arm(power::WakeReason r, int64_t now_ms) {

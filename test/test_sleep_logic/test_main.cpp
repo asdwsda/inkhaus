@@ -352,7 +352,7 @@ void test_local_idle_plan() {
   TEST_ASSERT_FALSE(app_logic::localIdleSleepWanted(true));
   settings::Settings s;
   s.refresh_interval_min = 60;
-  s.wake_mode = settings::WakeMode::Touch;
+  s.wake_mode = settings::WakeMode::TouchAndButton;
   auto p = app_logic::localIdlePlan(s, 1700000000, 3600);
   TEST_ASSERT_FALSE(p.rtc_alarm_at.has_value());
   TEST_ASSERT_TRUE(p.touch_wake);
@@ -364,6 +364,41 @@ void test_local_idle_plan() {
   TEST_ASSERT_TRUE(app_logic::indicatorFor(p, power::Session::Interactive) == app_logic::Indicator::Button);
 }
 
+void test_ext1_empty_mask_is_rocker() {
+  TEST_ASSERT_TRUE(pinForExt1(0) == WakePin::Rocker);
+  TEST_ASSERT_TRUE(pinForExt1(1ULL << 38) == WakePin::Rocker);
+  TEST_ASSERT_EQUAL(int(WakeReason::Button), int(classifyWake(in(ResetKind::DeepSleep, pinForExt1(0)))));
+}
+
+void test_sleep_plan_uses_current_settings_and_per_mode_sources() {
+  settings::Settings boot;  // boot-time copy: Button
+  settings::Settings now = boot;
+  now.wake_mode = settings::WakeMode::Touch;  // changed in Settings during the session
+  auto sess = power::Session::Interactive;
+  auto stale = power::plan_sleep(boot, sess, 1700000000, 0);
+  auto cur = planForSleep(now, sess, 1700000000, 0, false);
+  TEST_ASSERT_FALSE(stale.touch_wake);
+  TEST_ASSERT_TRUE(cur.touch_wake);
+  TEST_ASSERT_FALSE(cur.button_wake);
+  TEST_ASSERT_TRUE(indicatorFor(cur, sess) == Indicator::Touch);
+  auto sp = planSleepPath(cur, sess, 1700000000);
+  TEST_ASSERT_TRUE(sp.wake_touch);
+  TEST_ASSERT_FALSE(sp.wake_rocker);
+  now.wake_mode = settings::WakeMode::Button;
+  cur = planForSleep(now, sess, 1700000000, 0, false);
+  TEST_ASSERT_TRUE(indicatorFor(cur, sess) == Indicator::Button);
+  sp = planSleepPath(cur, sess, 1700000000);
+  TEST_ASSERT_TRUE(sp.wake_rocker);
+  TEST_ASSERT_FALSE(sp.wake_touch);
+  now.wake_mode = settings::WakeMode::TouchAndButton;
+  cur = planForSleep(now, sess, 1700000000, 0, true);
+  TEST_ASSERT_FALSE(cur.rtc_alarm_at.has_value());
+  TEST_ASSERT_TRUE(indicatorFor(cur, sess) == Indicator::Touch);
+  sp = planSleepPath(cur, sess, 1700000000);
+  TEST_ASSERT_TRUE(sp.wake_touch);
+  TEST_ASSERT_TRUE(sp.wake_rocker);
+}
+
 void test_guard_not_armed_blocks_nothing() {
   WakeInputGuard g;
   g.observe(100, true, true);
@@ -373,6 +408,8 @@ void test_guard_not_armed_blocks_nothing() {
 
 int main() {
   UNITY_BEGIN();
+  RUN_TEST(test_ext1_empty_mask_is_rocker);
+  RUN_TEST(test_sleep_plan_uses_current_settings_and_per_mode_sources);
   RUN_TEST(test_wake_power_on);
   RUN_TEST(test_wake_deep_sleep);
   RUN_TEST(test_wake_restarts_are_not_wakes);

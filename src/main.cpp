@@ -384,13 +384,13 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   uint32_t now = millis();
   const bool low = session == power::Session::LowBattery;
   session_glue::ntpAbort();
-  if (!low && settings_flow::active()) {
-    // Settings auto-leave before sleeping (settings.md rule 5); the leave may change wake mode or
-    // refresh interval, so the plan is made again from the settings now in effect.
-    handleSettingsResult(settings_flow::tick(now + 3600u * 1000u), now);
+  if (!low) {
+    // Settings auto-leave before sleeping (settings.md rule 5). Whether or not Settings was open now,
+    // the plan is made again from the settings in effect now: the session machine's plan was made
+    // from the copy taken when the session started (task 039 bug).
+    if (settings_flow::active()) handleSettingsResult(settings_flow::tick(now + 3600u * 1000u), now);
     const int64_t epoch = session_glue::wallClock();
-    plan = localIdle ? app_logic::localIdlePlan(g_settings, epoch, utcOffsetAt(epoch))
-                     : power::plan_sleep(g_settings, session, epoch, utcOffsetAt(epoch));
+    plan = app_logic::planForSleep(g_settings, session, epoch, utcOffsetAt(epoch), localIdle);
   }
   if (!low && present::framesOk()) {
     present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)

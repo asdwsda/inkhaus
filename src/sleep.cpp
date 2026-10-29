@@ -61,8 +61,7 @@ app_logic::WakePin wakePin() {
   switch (esp_sleep_get_wakeup_cause()) {
     case ESP_SLEEP_WAKEUP_EXT0: return app_logic::WakePin::Touch;
     case ESP_SLEEP_WAKEUP_EXT1:
-      return (esp_sleep_get_ext1_wakeup_status() & (1ULL << kPinRockerPush)) ? app_logic::WakePin::Rocker
-                                                                              : app_logic::WakePin::Other;
+      return app_logic::pinForExt1(esp_sleep_get_ext1_wakeup_status());  // empty mask = rocker too
     case ESP_SLEEP_WAKEUP_TIMER: return app_logic::WakePin::Timer;
     case ESP_SLEEP_WAKEUP_UNDEFINED: return app_logic::WakePin::None;
     default: return app_logic::WakePin::Other;

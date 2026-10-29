@@ -38,16 +38,10 @@ void drawRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
   const Rect lab = sui::rowLabelRect(r);
   drawTextCy(c, Font::F24, sui::rowLabel(i), lab.x, sui::rowLabelCy(r), Align::Left, INK);
   drawTextCy(c, Font::F40, sui::rowValueText(i, e), sui::rowValueRightX(r), sui::rowValueCy(r), Align::Right, INK);
-  if (sui::showsWakeWarning(i, e)) {
-    const Rect w = sui::rowWarnIconRect(r);
-    drawIcon(c, Icon::Warn, 24, w.x, w.y, INK);
-    drawTextCy(c, Font::F18, sui::kWarnHint, sui::rowWarnTextX(r), sui::rowHintCy(r), Align::Left, INK);
-  } else {
-    const int cur = sui::rowValueIndex(i, e);
-    for (int k = 0; k < sui::pipCount(i); ++k) {
-      const ui::Point p = sui::pipCentre(r, k);
-      drawPip(c, p.x, p.y, k == cur);
-    }
+  const int cur = sui::rowValueIndex(i, e);
+  for (int k = 0; k < sui::pipCount(i); ++k) {
+    const ui::Point p = sui::pipCentre(r, k);
+    drawPip(c, p.x, p.y, k == cur);
   }
 }
 

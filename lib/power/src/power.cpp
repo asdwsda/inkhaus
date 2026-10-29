@@ -32,10 +32,10 @@ static int64_t floor_div(int64_t a, int64_t b) {
 SleepPlan plan_sleep(const settings::Settings& s, Session session, int64_t now,
                      int32_t utc_offset_s) {
     SleepPlan p;
-    if (s.wake_mode == settings::WakeMode::Touch) {
+    if (s.wake_mode == settings::WakeMode::Touch || s.wake_mode == settings::WakeMode::TouchAndButton) {
         p.mode = SleepMode::DeepSleep;
         p.touch_wake = true;
-        p.button_wake = true;
+        p.button_wake = s.wake_mode == settings::WakeMode::TouchAndButton;
     } else {
         p.mode = SleepMode::PowerOff;
         p.touch_wake = false;

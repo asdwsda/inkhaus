@@ -57,12 +57,11 @@ No Home Assistant entity or service is used except the shared state fetch.
    draws the tab screen with a full refresh) and then sleeps, so the frozen
    image is never a stale Settings page; the sleep indicator is then drawn on
    the tab screen. OPEN-S1.
-6. **Touch Wake warning.** While wake mode = Touch (in the buffer), two
-   warnings are visible at once: the wake row's hint line reads
-   `[warn icon] drains battery` instead of the option pips, and the note slot
-   shows an alert box `Touch wake shortens battery life. / Button wake is
+6. **Touch Wake note.** While wake mode is Touch or Touch & Button (in the
+   buffer), the note slot shows an alert box `Touch wake shortens battery life. / Button wake is
    recommended.` No numbers are quoted (power is still an estimate in
-   ARCHITECTURE.md). With Button the hint shows pips and the note slot is empty.
+   ARCHITECTURE.md). The wake row always shows its pips (no warn icon; task 039).
+   With Button the note slot is empty.
 7. **Value cycling.** Tap or push on a row moves to the next value in the
    `settings.h` array and wraps from the last to the first. There is no
    "previous" (longest cycle is 6 values; Demo mode cycles Off -> On -> Off).
@@ -105,15 +104,11 @@ widget padding the checker uses); the value is centred on cy = 34.
 
 Pips (hint line): one circle of diameter 12 per allowed value, centres at
 row-relative x = 22 + 20*k, cy = 47; the current value's pip is INK-filled,
-the others are 2 px outlines (shape, not grey). 2 pips for orientation, wake
-mode and demo mode, 6 for refresh, 4 for idle. Wake mode with Touch replaces the
-pips by the text `drains battery` (F18 INK) at x = 16, cy = 47, left, and shows
-the warn icon (S, 24 x 24, cy = 34) just left of the value text, 12 px from its
-left edge (`Touch` at F40 is about 113 px wide, so the icon is at row-relative
-x = 356..380 in portrait). The icon moved out of the hint line because a 24 px
-icon under the label no longer fits the 68 px row.
+the others are 2 px outlines (shape, not grey). 2 pips for orientation and
+demo mode, 3 for wake mode, 6 for refresh, 4 for idle. The warn icon next to the
+wake value is removed (task 039).
 
-Value texts: Orientation `Portrait` / `Landscape`; Wake `Button` / `Touch`;
+Value texts: Orientation `Portrait` / `Landscape`; Wake `Button` / `Touch` / `Touch & Button`;
 Refresh `Off`, `15 min`, `30 min`, `60 min`, `120 min`, `240 min`; Idle `10 s`,
 `20 s`, `30 s`, `60 s`; Demo mode `Off` / `On`. Widest: `Landscape` at F40 is about 215 px, fits the
 252 px value rect and leaves room next to the longest label (`Refresh every`, about
@@ -121,7 +116,7 @@ Refresh `Off`, `15 min`, `30 min`, `60 min`, `120 min`, `240 min`; Idle `10 s`,
 
 ### 3.2 Note slot (508 x 64)
 
-Empty (nothing drawn, no border) unless wake mode = Touch. Then: 2 px INK border,
+Empty (nothing drawn, no border) unless wake mode is Touch or Touch & Button. Then: 2 px INK border,
 radius 8; alert icon (M) at slot-relative (12, 12, 40, 40), cy = 32; text lines
 (F18 INK, left) from x = 64 with cy = 21 and cy = 43 (block centred on 32):
 `Touch wake shortens battery life.` / `Button wake is recommended.`
@@ -188,8 +183,7 @@ Footer: 488 + 222 + 12 + 222 = 944.
 
 Landscape row internals (row-relative, width 456, height 68): identical to
 portrait with width 456: label x = 16, cy = 24; pips x = 22 + 20*k, cy = 47; value
-right edge x = 440, cy = 34; wake/Touch hint: text x = 16, cy = 47, warn icon
-(24 x 24, cy = 34) 12 px left of the value text (x = 304..328). Note slot (456 x 64): border 2, radius 8; alert icon (M) at
+right edge x = 440, cy = 34; Note slot (456 x 64): border 2, radius 8; alert icon (M) at
 (12, 12, 40, 40); text from x = 64, cy = 21 and 43 (`Touch wake shortens battery
 life.` is about 313 px, fits the 380 px left).
 

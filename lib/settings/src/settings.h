@@ -6,7 +6,9 @@
 
 namespace settings {
 
-enum class WakeMode : int32_t { Button = 0, Touch = 1 };
+// Button: rocker only; Touch: touch only; TouchAndButton: both (task 039). NVS schema 1 stored 1 = the old
+// "Touch" (which woke on both); load() migrates it to TouchAndButton.
+enum class WakeMode : int32_t { Button = 0, Touch = 1, TouchAndButton = 2 };
 enum class Orientation : int32_t { Portrait = 0, Landscape = 1 };
 
 struct Settings {
@@ -25,13 +27,14 @@ struct Settings {
 };
 
 // Allowed values in display order (the settings screen cycles through them).
-constexpr std::array<WakeMode, 2> kWakeModeValues = {WakeMode::Button, WakeMode::Touch};
+constexpr std::array<WakeMode, 3> kWakeModeValues = {WakeMode::Button, WakeMode::Touch,
+                                                         WakeMode::TouchAndButton};
 constexpr std::array<Orientation, 2> kOrientationValues = {Orientation::Portrait,
                                                            Orientation::Landscape};
 constexpr std::array<int32_t, 6> kRefreshIntervalMinValues = {0, 15, 30, 60, 120, 240};
 constexpr std::array<int32_t, 4> kIdleTimeoutSValues = {10, 20, 30, 60};
 
-constexpr int32_t kSchemaVersion = 1;
+constexpr int32_t kSchemaVersion = 2;  // 2: wake_mode 1 = Touch only, 2 = Touch & Button (1: 1 = both)
 
 // Storage keys (NVS limits keys to 15 chars).
 constexpr const char* kKeySchemaVersion = "schema_version";

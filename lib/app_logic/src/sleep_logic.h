@@ -29,6 +29,10 @@ struct WakeInput {
 power::WakeReason classifyWake(const WakeInput &in);
 const char *wakeName(power::WakeReason r);
 
+// ext1 wake: the rocker push is the only EXT1 source, so the status mask is not needed; an empty mask
+// (seen on the device) is still the rocker. Kept as a function so the rule is tested.
+WakePin pinForExt1(uint64_t status_mask);
+
 // ---- sleep indicator -----------------------------------------------------------------------------
 
 enum class Indicator : uint8_t { None = 0, Button = 1, Touch = 2 };
@@ -85,6 +89,10 @@ SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build);
 // otherwise).
 bool localIdleSleepWanted(bool session_running);
 // Interactive plan from the settings, but never an RTC alarm: nothing to refresh.
+// The plan for the sleep about to happen, always from the settings in effect NOW (g_settings), never
+// from a copy taken when the session started (task 039 bug: the session machine keeps the boot-time copy).
+power::SleepPlan planForSleep(const settings::Settings &s, power::Session session, int64_t now_epoch,
+                              int32_t utc_offset_s, bool local_idle);
 power::SleepPlan localIdlePlan(const settings::Settings &s, int64_t now_epoch, int32_t utc_offset_s);
 
 // ---- swallowing the wake input -------------------------------------------------------------------
