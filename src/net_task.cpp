@@ -45,11 +45,13 @@ void saveLearned(uint32_t ssidHash, const app_logic::Learned &l) {
   p.end();
 }
 
-uint32_t bumpSessionCounter() {
+// The counter only matters without a clock (it ages a learned External then), so it is read always but
+// bumped and written only while the clock is not plausible: no NVS write per session otherwise.
+uint32_t sessionCounter(bool clockValid) {
   Preferences p;
-  if (!p.begin("netbase", false)) return 0;
-  const uint32_t n = p.getUInt("sess", 0) + 1;
-  p.putUInt("sess", n);
+  if (!p.begin("netbase", clockValid)) return 0;
+  uint32_t n = p.getUInt("sess", 0);
+  if (!clockValid) p.putUInt("sess", ++n);
   p.end();
   return n;
 }
@@ -100,11 +102,11 @@ void NetTask::loop() {
     const bool newSession = c.epoch != plannedEpoch;
     if (c.cmd.type != app_logic::NetCommand::Type::Close &&
         (!havePlan || newSession || li.ssidHash != planned.ssidHash || li.haUrl != planned.haUrl || li.haLink != planned.haLink)) {
-      if (newSession) {  // UNVERIFIED: one NVS write per session is acceptable wear
-        sessionNo = bumpSessionCounter();
+      const int64_t nowEpoch = session_glue::wallClock();
+      if (newSession) {  // UNVERIFIED: one NVS write per session, only while the clock is not plausible
+        sessionNo = sessionCounter(nowEpoch != 0);
         plannedEpoch = c.epoch;
       }
-      const int64_t nowEpoch = session_glue::wallClock();
       stored = li.ssidHash ? loadLearned(li.ssidHash) : app_logic::Learned();
       stale = app_logic::learnedStale(stored, nowEpoch, sessionNo);
       plan = app_logic::planUrls(toMode(li.haLink), toMode(li.haUrl),

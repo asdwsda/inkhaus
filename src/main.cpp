@@ -271,19 +271,32 @@ static void showFrame(uint32_t now) {
 
 // ---- session ----
 
-static void startSession(uint32_t now) {
+static power::WakeReason g_sessionWake = power::WakeReason::Button;  // the wake reason the session was planned with
+static bool g_netRestartDue = false;  // task 047: a network change waits for a pending user action
+static uint32_t g_netRestartSince = 0;
+
+// Names of the secrets.yaml Wi-Fi profiles, list order (the forced profile is stored by name).
+static std::vector<std::string> profileNames() {
+  std::vector<std::string> v;
+  for (const auto &p : g_cfg.cfg.connection.wifiProfiles) v.push_back(p.name);
+  return v;
+}
+
+// restart: the same session again (network change): keep its wake reason, so the sleep plan is unchanged.
+static void startSession(uint32_t now, bool restart = false) {
   g_net.reset();
   session_glue::ntpSessionStart();
   g_drv.reset();  // before the Wi-Fi adapter it points to
-  net::configure(g_cfg.cfg.connection.wifiProfiles, g_settings.wifi_profile, (int)g_settings.ha_link);  // task 047
+  net::configure(g_cfg.cfg.connection.wifiProfiles,
+                 settings::wifiProfileIndex(g_settings.wifi_profile, profileNames()), (int)g_settings.ha_link);  // task 047
   g_wifi.reset(new session_glue::ArduinoWifi(g_cfg.cfg.connection.wifi));
   g_drv.reset(new app_logic::SessionDriver(g_cfg.cfg.entityIds, g_app.store(), *g_wifi, g_net,
                                            session_glue::wallClock, appLog));
   g_sessionOver = false;
   wakelog::sessionStarted(now);
   // The offset is taken now (local time at planning time); the machine plans the wake-up from it.
-  g_drv->start(g_firstSession ? g_wake : power::WakeReason::Button, batteryMv(), g_settings,
-               utcOffsetAt(session_glue::wallClock()), now);
+  if (!restart) g_sessionWake = g_firstSession ? g_wake : power::WakeReason::Button;
+  g_drv->start(g_sessionWake, batteryMv(), g_settings, utcOffsetAt(session_glue::wallClock()), now);
   g_firstSession = false;
 }
 
@@ -343,6 +356,7 @@ static void reloadConfigSource(settings::Orientation o) {
   g_net.reset();
   net::powerDown();
   g_sessionOver = false;
+  g_netRestartDue = false;
   g_real = false;
   g_demoMode = true;
   g_cfg = app_config::load(app_logic::chooseConfigSource(g_settings));
@@ -367,6 +381,15 @@ static void reloadConfigSource(settings::Orientation o) {
                 g_cfg.cfg.connection.ha.token);
     startSession(millis());
   }
+}
+
+static constexpr uint32_t kNetRestartWaitMs = 10000;  // above the HTTP timeouts (4 s connect, 8 s total)
+
+static bool actionPending() {
+  if (!g_drv) return false;
+  for (const auto &kv : g_drv->marks())
+    if (kv.second == session::Mark::Pending) return true;
+  return false;
 }
 
 static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
@@ -395,13 +418,11 @@ static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
   }
   g_app.takeFull();
   // Task 047: a changed Wi-Fi profile or HA connection applies at once: a fresh session, after the tab
-  // screen is drawn. (A demo switch already started its own session in reloadConfigSource.)
+  // screen is drawn. (A demo switch already started its own session in reloadConfigSource.) A user action
+  // still in flight finishes first (loop(), up to kNetRestartWaitMs).
   if (r.networkChanged && !r.demoChanged && g_real) {
-    session_glue::ntpAbort();
-    g_drv.reset();  // before the Wi-Fi adapter it points to
-    g_wifi.reset();
-    g_sessionOver = false;
-    startSession(millis());  // net::configure() with the new settings; UNVERIFIED: net::begin restarts a running connect
+    g_netRestartDue = true;
+    g_netRestartSince = now;
   }
 }
 
@@ -546,6 +567,15 @@ void setup() {
   }
 
   g_cfg = app_config::load(app_logic::chooseConfigSource(s));
+  {  // one-time move of the old forced-profile index to the profile name (needs the profile list)
+    if (settings::migrateWifiProfile(s, profileNames())) {
+      NvsSettingsStore store;
+      if (store.begin()) {
+        store.setStr(settings::kKeyWifiProfile, s.wifi_profile);
+        store.end();
+      }
+    }
+  }
   const app_config::Loaded &cfg = g_cfg;
   applyTimezone(cfg.cfg.timezone);
   boot::log("config_source", cfg.source);
@@ -709,6 +739,12 @@ void loop() {
       g_tapNow = now;
       changed |= g_app.rocker(e.key, now);
     }
+  }
+
+  if (g_netRestartDue && g_real && !settings_flow::active() &&
+      (!actionPending() || now - g_netRestartSince > kNetRestartWaitMs)) {
+    g_netRestartDue = false;
+    startSession(now, true);  // UNVERIFIED: net::begin restarts a running connect (disconnects first)
   }
 
   if (g_drv) {

@@ -3,6 +3,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <vector>
 #include <unity.h>
 
 #include "settings.h"
@@ -12,7 +13,18 @@ using namespace settings;
 namespace {
 struct FakeStore : KeyValueStore {
     std::map<std::string, int32_t> data;
+    std::map<std::string, std::string> strs;
     int writes = 0;
+    bool getStr(const char* key, std::string& out) const override {
+        auto it = strs.find(key);
+        if (it == strs.end()) return false;
+        out = it->second;
+        return true;
+    }
+    void setStr(const char* key, const std::string& value) override {
+        strs[key] = value;
+        ++writes;
+    }
     bool getInt(const char* key, int32_t& out) const override {
         auto it = data.find(key);
         if (it == data.end()) return false;
@@ -314,27 +326,69 @@ void test_keys_fit_nvs_limit_and_lists_are_valid() {
     TEST_ASSERT_FALSE(isValidIdleTimeoutS(0));
 }
 
-void test_wifi_profile_and_ha_link() {
+void test_wifi_profile_by_name_and_ha_link() {
     FakeStore st;
     Settings d = load(st);  // old store without the keys
-    TEST_ASSERT_EQUAL_INT32(0, d.wifi_profile);
+    TEST_ASSERT_TRUE(d.wifi_profile.empty());
     TEST_ASSERT_TRUE(d.ha_link == HaLink::Auto);
-    st.data[kKeyWifiProfile] = 9;  // out of range
-    st.data[kKeyHaLink] = 3;
+    st.data[kKeyHaLink] = 3;  // out of range
     d = load(st);
-    TEST_ASSERT_EQUAL_INT32(0, d.wifi_profile);
     TEST_ASSERT_TRUE(d.ha_link == HaLink::Auto);
     Settings s;
-    s.wifi_profile = 2;
+    s.wifi_profile = "Hotspot";
     s.ha_link = HaLink::External;
     save(st, s);
-    TEST_ASSERT_EQUAL_INT32(2, st.data[kKeyWifiProfile]);
+    TEST_ASSERT_EQUAL_STRING("Hotspot", st.strs[kKeyWifiProfile].c_str());
     TEST_ASSERT_EQUAL_INT32(2, st.data[kKeyHaLink]);
     Settings r = load(st);
     TEST_ASSERT_TRUE(r == s);
+    const int w = st.writes;
+    save(st, s);  // unchanged: no write
+    TEST_ASSERT_EQUAL_INT(w, st.writes);
     s.ha_link = HaLink::Internal;
     TEST_ASSERT_FALSE(r == s);
-    TEST_ASSERT_TRUE(strlen(kKeyWifiProfile) <= 15 && strlen(kKeyHaLink) <= 15);
+    s = r;
+    s.wifi_profile = "Home";
+    TEST_ASSERT_FALSE(r == s);
+    TEST_ASSERT_TRUE(strlen(kKeyWifiProfile) <= 15 && strlen(kKeyHaLink) <= 15 && strlen(kKeyWifiProfileLegacy) <= 15);
+}
+
+void test_wifi_profile_index_lookup() {
+    const std::vector<std::string> names = {"Home", "Hotspot"};
+    TEST_ASSERT_EQUAL_INT(0, wifiProfileIndex("", names));
+    TEST_ASSERT_EQUAL_INT(1, wifiProfileIndex("Home", names));
+    TEST_ASSERT_EQUAL_INT(2, wifiProfileIndex("Hotspot", names));
+    TEST_ASSERT_EQUAL_INT(0, wifiProfileIndex("Gone", names));  // unknown = Auto
+}
+
+void test_wifi_profile_legacy_index_migrates_once() {
+    const std::vector<std::string> names = {"Home", "Hotspot"};
+    FakeStore st;
+    st.data[kKeyWifiProfileLegacy] = 2;
+    Settings s = load(st);
+    TEST_ASSERT_EQUAL_INT32(2, s.legacy_wifi_index);
+    TEST_ASSERT_TRUE(s.wifi_profile.empty());
+    TEST_ASSERT_TRUE(migrateWifiProfile(s, names));
+    TEST_ASSERT_EQUAL_STRING("Hotspot", s.wifi_profile.c_str());
+    TEST_ASSERT_EQUAL_INT32(0, s.legacy_wifi_index);
+    TEST_ASSERT_FALSE(migrateWifiProfile(s, names));  // only once
+    st.strs[kKeyWifiProfile] = s.wifi_profile;       // what main stores
+    // the name key wins from now on, the legacy index is not read
+    Settings again = load(st);
+    TEST_ASSERT_EQUAL_INT32(0, again.legacy_wifi_index);
+    TEST_ASSERT_EQUAL_STRING("Hotspot", again.wifi_profile.c_str());
+    // an index beyond the list becomes Auto; 0 and invalid values need no migration
+    FakeStore st2;
+    st2.data[kKeyWifiProfileLegacy] = 4;
+    Settings b = load(st2);
+    TEST_ASSERT_TRUE(migrateWifiProfile(b, names));
+    TEST_ASSERT_TRUE(b.wifi_profile.empty());
+    FakeStore st3;
+    st3.data[kKeyWifiProfileLegacy] = 0;
+    Settings c = load(st3);
+    TEST_ASSERT_FALSE(migrateWifiProfile(c, names));
+    st3.data[kKeyWifiProfileLegacy] = 9;
+    TEST_ASSERT_EQUAL_INT32(0, load(st3).legacy_wifi_index);
 }
 
 int main(int, char**) {
@@ -356,6 +410,8 @@ int main(int, char**) {
     RUN_TEST(test_save_into_future_schema_store_stamps_current_version);
     RUN_TEST(test_keys_fit_nvs_limit_and_lists_are_valid);
     RUN_TEST(test_wake_mode_migration_and_roundtrip);
-    RUN_TEST(test_wifi_profile_and_ha_link);
+    RUN_TEST(test_wifi_profile_by_name_and_ha_link);
+    RUN_TEST(test_wifi_profile_index_lookup);
+    RUN_TEST(test_wifi_profile_legacy_index_migrates_once);
     return UNITY_END();
 }

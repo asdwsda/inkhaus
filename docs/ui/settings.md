@@ -125,12 +125,12 @@ fitting rule: F24, then F18, then `…`.
 
 | Row | Rect | cy | Label | Value |
 |-----|------|----|-------|-------|
-| Firmware | (16, 560, 508, 48) | 584 | `Firmware` | `v0.3.1` |
-| Battery | (16, 608, 508, 48) | 632 | `Battery` | `78%, 3.92 V` (alert icon if <= 15 %, bolt icon if charging) |
-| HA | (16, 656, 508, 48) | 680 | `Home Assistant` | `Demo mode` (demo mode On) / `local, ok 14:05` / `remote, ok 14:05` / alert icon + `offline, last ok 13:05` / alert icon + `offline, never ok` / `-` before the first session |
-| Wi-Fi | (16, 704, 508, 48) | 728 | `Wi-Fi` | `Demo mode` (demo mode On), or SSID, or `SSID (not connected)`, or `-` |
-| Config | (16, 752, 508, 64) | 784 (lines 770 / 798) | `Config` | `OK`; or alert icon (cy 758) + first error up to 2 lines: `tabs[0].widgets[2].entity (line 34)`; or warn icon + `no config.yaml on SD`; `built-in demo` while demo mode is On (the SD config is not read; OPEN-S4) |
-| Errors | (16, 816, 508, 48) | 840 | `Config errors` | count (`0`, `3`), `-` when the config is missing; `0` in demo mode |
+| Firmware | (16, 504, 508, 48) | 528 | `Firmware` | `v0.3.1` |
+| Battery | (16, 552, 508, 48) | 576 | `Battery` | `78%, 3.92 V` (alert icon if <= 15 %, bolt icon if charging) |
+| HA | (16, 600, 508, 48) | 624 | `Home Assistant` | `Demo mode` (demo mode On) / `internal, ok 14:05` / `external, ok 14:05` / alert icon + `offline, last ok 13:05` / alert icon + `offline, never ok` / `-` before the first session |
+| Wi-Fi | (16, 648, 508, 48) | 672 | `Wi-Fi` | `Demo mode` (demo mode On), or SSID, or `SSID (not connected)` (SSID of the connected profile), or `-` |
+| Config | (16, 696, 508, 64) | 728 (lines 714 / 742) | `Config` | `OK`; or alert icon (cy 702) + first error up to 2 lines: `tabs[0].widgets[2].entity (line 34)`; or warn icon + `no config.yaml on SD`; `built-in demo` while demo mode is On (the SD config is not read; OPEN-S4) |
+| Errors | (16, 760, 508, 48) | 784 | `Config errors` | count (`0`, `3`), `-` when the config is missing; `0` in demo mode |
 
 Times: same day `14:05`; earlier day `26.10. 13:05`.
 

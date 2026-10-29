@@ -19,3 +19,13 @@ bool NvsSettingsStore::getInt(const char* key, int32_t& out) const {
 void NvsSettingsStore::setInt(const char* key, int32_t value) {
     if (open_) prefs_.putInt(key, value);
 }
+
+bool NvsSettingsStore::getStr(const char* key, std::string& out) const {
+    if (!open_ || !prefs_.isKey(key)) return false;
+    out = prefs_.getString(key, "").c_str();
+    return true;
+}
+
+void NvsSettingsStore::setStr(const char* key, const std::string& value) {
+    if (open_) prefs_.putString(key, value.c_str());
+}

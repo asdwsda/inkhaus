@@ -27,7 +27,9 @@ Side sideToStore(const UrlPlan &plan, Side answered, Side stored);
 // ---- Re-probe of a learned "external" (task 047) ----
 // In Auto/Auto the side that answered is stored per SSID. A learned External must not stick forever (one
 // internal timeout at home would keep the device on external): once it is older than kReprobeSeconds, or
-// (no clock at learning or now) kReprobeSessions sessions old, internal is tried first again.
+// (no clock now) kReprobeSessions sessions old, internal is tried first again. The session counter only
+// advances while the clock is not plausible (NVS wear); an External learned without a clock, read while the
+// clock is valid, counts as stale at once.
 constexpr int64_t kReprobeSeconds = 24 * 3600;
 constexpr uint32_t kReprobeSessions = 20;
 

@@ -210,10 +210,8 @@ const char* haLinkName(settings::HaLink l) {
   return l == settings::HaLink::Internal ? "Internal" : l == settings::HaLink::External ? "External" : "Auto";
 }
 std::string wifiValue(const Settings& s, const NetworkInfo& n) {
-  const int p = s.wifi_profile;
-  if (p <= 0) return "Auto";
-  if (static_cast<size_t>(p) <= n.profiles.size()) return n.profiles[static_cast<size_t>(p) - 1];
-  return "Profile " + std::to_string(p);  // a profile that is no longer in secrets.yaml
+  // A name that is not in the list (profile removed or renamed) counts as Auto.
+  return settings::wifiProfileIndex(s.wifi_profile, n.profiles) == 0 ? "Auto" : s.wifi_profile;
 }
 }  // namespace
 
@@ -274,8 +272,8 @@ Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n) {
       o.idle_timeout_s = settings::kIdleTimeoutSValues[nextIndex(settings::kIdleTimeoutSValues, cur)];
       break;
     case RowId::Wifi: {
-      const int count = static_cast<int>(n.profiles.size());
-      o.wifi_profile = (s.wifi_profile < 0 || s.wifi_profile >= count) ? 0 : s.wifi_profile + 1;
+      const int cur = settings::wifiProfileIndex(s.wifi_profile, n.profiles);  // 0 = Auto / unknown
+      o.wifi_profile = cur >= static_cast<int>(n.profiles.size()) ? std::string() : n.profiles[static_cast<size_t>(cur)];
       break;
     }
     case RowId::HaLink:
@@ -320,10 +318,10 @@ std::string categorySummary(int category, const Settings& s, const NetworkInfo& 
   return "";
 }
 
-bool pageShowsNote(Page p, const Settings& s) {
+bool pageShowsNote(Page p, const Settings& s, const NetworkInfo& n) {
   switch (p) {
     case Page::Sleep: return s.wake_mode != settings::WakeMode::Button;
-    case Page::Network: return s.wifi_profile != 0;
+    case Page::Network: return settings::wifiProfileIndex(s.wifi_profile, n.profiles) != 0;
     case Page::Tools: return s.debug_log;
     default: return false;
   }
@@ -469,7 +467,7 @@ Update SettingsScreen::activatePage(int stop) {
   const RowId id = P.rowIds[stop];
   const Rect& row = P.rows[stop];
   const bool wasDirty = dirty();
-  const bool hadNote = pageShowsNote(page_, edit_);
+  const bool hadNote = pageShowsNote(page_, edit_, net_);
   edit_ = cycleRow(id, edit_, net_);
   if (isPipRow(id)) {
     u.dirty.push_back(rowValueRect(row));
@@ -477,7 +475,7 @@ Update SettingsScreen::activatePage(int stop) {
   } else {
     u.dirty.push_back(hintRowValueRect(row));
   }
-  if (hadNote != pageShowsNote(page_, edit_)) u.dirty.push_back(P.note);
+  if (hadNote != pageShowsNote(page_, edit_, net_)) u.dirty.push_back(P.note);
   if (wasDirty != dirty()) u.dirty.push_back(P.unsavedChip);
   return u;
 }

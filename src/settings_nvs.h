@@ -10,6 +10,8 @@ public:
     void end();
     bool getInt(const char* key, int32_t& out) const override;
     void setInt(const char* key, int32_t value) override;
+    bool getStr(const char* key, std::string& out) const override;
+    void setStr(const char* key, const std::string& value) override;
 
 private:
     mutable Preferences prefs_;

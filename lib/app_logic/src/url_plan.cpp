@@ -34,6 +34,9 @@ bool learnedStale(const Learned &l, int64_t nowEpoch, uint32_t sessionNo) {
     const int64_t age = nowEpoch - l.epoch;
     return age < 0 || age >= kReprobeSeconds;  // a clock that went backwards: re-probe, not trust
   }
+  // A clock now but none when learned: the age is unknown and the session counter is not advancing
+  // while the clock is valid, so it counts as stale (and renews via shouldStoreLearned).
+  if (plausibleEpoch(nowEpoch)) return true;
   return sessionNo - l.session >= kReprobeSessions;  // unsigned: a reset counter also counts as old
 }
 

@@ -152,7 +152,8 @@ struct NoteText {
   const char* line1;
   const char* line2;
 };
-bool pageShowsNote(Page p, const settings::Settings& s);
+// The Network note shows only for a forced profile that is in the list.
+bool pageShowsNote(Page p, const settings::Settings& s, const NetworkInfo& n);
 NoteText pageNote(Page p, bool sdPresent);
 constexpr const char* kNoteLine1 = "Touch wake shortens battery life.";
 constexpr const char* kNoteLine2 = "Button wake is recommended.";

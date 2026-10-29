@@ -296,6 +296,8 @@ void begin(const config::WifiConfig &wifi) {
         g_profiles.assign(1, wifi);
         g_forced = 0;
     }
+    // UNVERIFIED: a clean disconnect before connecting to a (possibly different) profile while connected.
+    if (g_state == State::Connected || WiFi.status() == WL_CONNECTED) WiFi.disconnect(false, false);
     g_connectMs = 0;
     g_scanning = false;
     publishLink(false);

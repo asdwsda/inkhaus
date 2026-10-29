@@ -638,7 +638,7 @@ struct ClockDevice {
   int64_t now = 1800000000;  // 0 = no clock
   uint32_t sessionNo = 0;
   Side session(ReachTransport &t, const std::string &ssid) {
-    ++sessionNo;
+    if (now == 0) ++sessionNo;  // like net_task: the counter only advances without a clock
     HaWorker w(t, "http://ha.local:8123", "https://x.example.org", "T");
     Learned stored = memory.count(ssid) ? memory[ssid] : Learned();
     const bool stale = learnedStale(stored, now, sessionNo);
@@ -665,10 +665,16 @@ void test_learned_stale_rules() {
   // no clock now: session counter, every 20th
   TEST_ASSERT_FALSE(learnedStale(ext, 0, 5 + 19));
   TEST_ASSERT_TRUE(learnedStale(ext, 0, 5 + 20));
-  // no clock when learned: also sessions
+  // learned without a clock, read while the clock is valid: stale at once (the counter does not advance then)
   Learned noClock{Side::External, 0, 5};
-  TEST_ASSERT_FALSE(learnedStale(noClock, 1800000000, 24));
-  TEST_ASSERT_TRUE(learnedStale(noClock, 1800000000, 25));
+  TEST_ASSERT_TRUE(learnedStale(noClock, 1800000000, 5));
+  TEST_ASSERT_TRUE(effectiveRemembered(noClock, 1800000000, 5) == Side::None);
+  TEST_ASSERT_FALSE(learnedStale(noClock, 0, 24));  // both without a clock: sessions
+  TEST_ASSERT_TRUE(learnedStale(noClock, 0, 25));
+  // ... and external answering again renews it with the real epoch
+  UrlPlan plan = planUrls(LinkMode::Auto, LinkMode::Auto, Side::None, true);
+  TEST_ASSERT_TRUE(shouldStoreLearned(plan, Side::External, noClock, true));
+  TEST_ASSERT_FALSE(shouldStoreLearned(plan, Side::External, Learned{Side::External, 1800000000, 5}, false));
   TEST_ASSERT_TRUE(effectiveRemembered(ext, 1800000000 + 86400, 6) == Side::None);
   TEST_ASSERT_TRUE(effectiveRemembered(ext, 1800000000 + 10, 6) == Side::External);
 }

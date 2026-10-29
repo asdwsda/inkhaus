@@ -166,7 +166,7 @@ void drawCategoryPage(M5Canvas &c, const sui::SettingsScreen &s) {
   for (int i = 0; i < P.rowCount; ++i) drawRow(c, s, i);
   if (P.caption.w > 0)
     drawTextCy(c, Font::F18, sui::kDisplayCaption, P.caption.x, P.caption.y + P.caption.h / 2, Align::Left, DIM);
-  if (P.note.w > 0 && sui::pageShowsNote(P.page, s.edit())) {
+  if (P.note.w > 0 && sui::pageShowsNote(P.page, s.edit(), s.network())) {
     const sui::NoteText t = sui::pageNote(P.page, s.sdPresent());
     drawNote(c, P.note, t.line1, t.line2);
   }
