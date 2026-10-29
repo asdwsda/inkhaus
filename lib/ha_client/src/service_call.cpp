@@ -6,11 +6,13 @@
 
 namespace {
 
-std::string body_for(const std::vector<std::string>& ids, const double* temperature) {
+std::string body_for(const std::vector<std::string>& ids, const double* temperature,
+                     const int* brightness_pct = nullptr) {
   JsonDocument doc;
   JsonArray arr = doc["entity_id"].to<JsonArray>();
   for (const std::string& id : ids) arr.add(id);
   if (temperature) doc["temperature"] = *temperature;
+  if (brightness_pct) doc["brightness_pct"] = *brightness_pct;
   std::string out;
   serializeJson(doc, out);
   return out;
@@ -60,5 +62,19 @@ bool build_climate_set_temperature(const std::vector<std::string>& ids, double t
   out.domain = "climate";
   out.service = "set_temperature";
   out.body = body_for(ids, &t);
+  return true;
+}
+
+bool build_light_brightness(const std::vector<std::string>& ids, int pct, ServiceCall& out) {
+  if (ids.empty()) return false;
+  out.domain = "light";
+  if (pct <= 0) {
+    out.service = "turn_off";
+    out.body = body_for(ids, nullptr);
+  } else {
+    int p = pct > 100 ? 100 : pct;
+    out.service = "turn_on";
+    out.body = body_for(ids, nullptr, &p);
+  }
   return true;
 }

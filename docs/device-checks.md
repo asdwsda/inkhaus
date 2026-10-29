@@ -36,3 +36,5 @@ tagged `UNVERIFIED` in code comments and task notes.
 ## Added by later tasks
 <!-- agents append here: "- [ ] <what> (task NNN, UNVERIFIED: <assumption>)" -->
 - [ ] Splash on every reset-button/power-loss boot, then full redraw; none after deep-sleep wake (1.0.1, UNVERIFIED: ESP_RST_EXT/POWERON cover all cold boots)
+- [ ] Real HA light returns `supported_color_modes` as a list in the template output and `dimmable()` is right for onoff-only vs dimmable lights; the 036 confirmation works for a `light.turn_on` with `brightness_pct` (task 045, UNVERIFIED: attribute arrives as a JSON array; the response carries the light with state "on"; `color_modes` is not in the config/state cache, so a cached boot falls back to the `brightness` attribute)
+- [ ] `brightness_pct: 0` as `light.turn_off` is confirmed with expected state "off"; HA rounding of brightness_pct vs the shown value (task 045, UNVERIFIED)

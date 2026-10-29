@@ -13,6 +13,38 @@
 #include <cmath>
 #define ASSERT_DBL(exp, act) TEST_ASSERT_TRUE_MESSAGE(std::fabs((double)(exp) - (double)(act)) < 1e-9, #act)
 
+void test_light_color_modes_and_dimmable() {
+  std::string json =
+      "{\"light.a\": {\"s\": \"off\", \"lc\": 1, \"a\": {\"supported_color_modes\": [\"color_temp\", \"xy\"]}},"
+      "\"light.b\": {\"s\": \"on\", \"lc\": 1, \"a\": {\"supported_color_modes\": [\"onoff\"]}},"
+      "\"light.c\": {\"s\": \"on\", \"lc\": 1, \"a\": {\"brightness\": 10}},"
+      "\"light.d\": {\"s\": \"on\", \"lc\": 1, \"a\": {\"supported_color_modes\": [\"brightness\"]}}}";
+  ParseResult r = parse_state_response(json, {"light.a", "light.b", "light.c", "light.d"});
+  TEST_ASSERT_TRUE(r.ok);
+  TEST_ASSERT_EQUAL_STRING("color_temp,xy", r.states[0].color_modes.c_str());
+  TEST_ASSERT_TRUE(r.states[0].dimmable());
+  TEST_ASSERT_FALSE(r.states[1].dimmable());
+  TEST_ASSERT_TRUE(r.states[2].dimmable());
+  TEST_ASSERT_TRUE(r.states[3].dimmable());
+  std::string t, err;
+  TEST_ASSERT_TRUE(build_state_template({"light.a"}, t, err));
+  TEST_ASSERT_TRUE(t.find("'supported_color_modes': s.attributes.get('supported_color_modes')") != std::string::npos);
+}
+
+void test_light_brightness_call() {
+  ServiceCall c;
+  TEST_ASSERT_TRUE(build_light_brightness({"light.a"}, 60, c));
+  TEST_ASSERT_EQUAL_STRING("light", c.domain.c_str());
+  TEST_ASSERT_EQUAL_STRING("turn_on", c.service.c_str());
+  TEST_ASSERT_EQUAL_STRING("{\"entity_id\":[\"light.a\"],\"brightness_pct\":60}", c.body.c_str());
+  TEST_ASSERT_TRUE(build_light_brightness({"light.a"}, 250, c));
+  TEST_ASSERT_TRUE(c.body.find("\"brightness_pct\":100") != std::string::npos);
+  TEST_ASSERT_TRUE(build_light_brightness({"light.a"}, 0, c));
+  TEST_ASSERT_EQUAL_STRING("turn_off", c.service.c_str());
+  TEST_ASSERT_EQUAL_STRING("{\"entity_id\":[\"light.a\"]}", c.body.c_str());
+  TEST_ASSERT_FALSE(build_light_brightness({}, 50, c));
+}
+
 void setUp() {}
 void tearDown() {}
 
@@ -725,5 +757,7 @@ int main() {
   RUN_TEST(test_client_call_service_returns_states);
   RUN_TEST(test_keep_alive_reuses_one_connection);
   RUN_TEST(test_keep_alive_stale_connection_retried_once);
+  RUN_TEST(test_light_color_modes_and_dimmable);
+  RUN_TEST(test_light_brightness_call);
   return UNITY_END();
 }

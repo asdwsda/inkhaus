@@ -43,6 +43,13 @@ void fill_attributes(EntityState& e, JsonVariantConst a) {
     e.current_position = int_of(a["current_position"], 0, 100);
     e.supported_features = int_of(a["supported_features"], 0, 1 << 30);
     e.brightness = int_of(a["brightness"], 0, 255);
+    if (a["supported_color_modes"].is<JsonArrayConst>()) {
+      for (JsonVariantConst m : a["supported_color_modes"].as<JsonArrayConst>()) {
+        if (!m.is<const char*>()) continue;
+        if (!e.color_modes.empty()) e.color_modes += ',';
+        e.color_modes += m.as<const char*>();
+      }
+    }
     e.current_temperature = dbl_of(a["current_temperature"]);
     e.temperature = dbl_of(a["temperature"]);
     e.current_humidity = dbl_of(a["current_humidity"], 0, 100);

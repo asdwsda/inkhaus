@@ -1,3 +1,4 @@
+#include "brightness_popup.h"
 #include <cstring>
 #include <fstream>
 #include <sstream>
@@ -12,6 +13,79 @@
 
 using namespace uistate;
 using config::WidgetType;
+
+void test_brightness_popup_steps_and_bar() {
+  uistate::BrightnessPopup p;
+  p.open("light.a", 0, 2, 37, 0);
+  TEST_ASSERT_EQUAL(37, p.value());
+  TEST_ASSERT_TRUE(p.step(+1, 10));
+  TEST_ASSERT_EQUAL(40, p.value());
+  TEST_ASSERT_TRUE(p.step(-1, 20));
+  TEST_ASSERT_EQUAL(30, p.value());
+  p.setPct(95, 30);
+  p.step(+1, 40);
+  TEST_ASSERT_EQUAL(100, p.value());
+  TEST_ASSERT_FALSE(p.step(+1, 50));
+  TEST_ASSERT_TRUE(p.preset(1, 60));
+  TEST_ASSERT_EQUAL(50, p.value());
+  TEST_ASSERT_TRUE(p.tapBar(0.734, 70));
+  TEST_ASSERT_EQUAL(73, p.value());
+  p.tapBar(1.7, 80);
+  TEST_ASSERT_EQUAL(100, p.value());
+  TEST_ASSERT_TRUE(p.off(90));
+  TEST_ASSERT_EQUAL(0, p.value());
+  TEST_ASSERT_FALSE(p.step(-1, 100));
+  TEST_ASSERT_EQUAL(0, uistate::brightnessToPct(0));
+  TEST_ASSERT_EQUAL(60, uistate::brightnessToPct(153));
+  TEST_ASSERT_EQUAL(100, uistate::brightnessToPct(255));
+}
+
+void test_brightness_popup_debounce_sends_last_value() {
+  uistate::BrightnessPopup p;
+  std::vector<int> sent;
+  p.setSink([&](const std::string &id, int pct) {
+    TEST_ASSERT_EQUAL_STRING("light.a", id.c_str());
+    sent.push_back(pct);
+  });
+  p.open("light.a", 0, 0, 50, 1000);
+  p.step(+1, 1000);
+  p.step(+1, 1200);
+  p.step(+1, 1300);
+  p.tick(1600);  // 300 ms after the last input
+  TEST_ASSERT_EQUAL(0, (int)sent.size());
+  TEST_ASSERT_EQUAL(80, p.optimisticPct());
+  p.tick(1700);
+  TEST_ASSERT_EQUAL(1, (int)sent.size());
+  TEST_ASSERT_EQUAL(80, sent[0]);
+  p.tick(2000);
+  TEST_ASSERT_EQUAL(1, (int)sent.size());  // nothing new, nothing sent
+  p.step(-1, 2100);
+  p.done(2150);  // Done flushes at once and closes
+  TEST_ASSERT_EQUAL(2, (int)sent.size());
+  TEST_ASSERT_EQUAL(70, sent[1]);
+  TEST_ASSERT_FALSE(p.isOpen());
+  TEST_ASSERT_EQUAL(70, p.optimisticPct());  // unconfirmed until the driver says so
+  p.clearOptimistic();
+  TEST_ASSERT_EQUAL(-1, p.optimisticPct());
+}
+
+void test_brightness_popup_idle_close_and_off() {
+  uistate::BrightnessPopup p;
+  std::vector<int> sent;
+  p.setSink([&](const std::string &, int pct) { sent.push_back(pct); });
+  p.open("light.a", 1, 1, 30, 0);
+  p.off(5000);
+  TEST_ASSERT_FALSE(p.tick(14000));
+  TEST_ASSERT_EQUAL(1, (int)sent.size());
+  TEST_ASSERT_EQUAL(0, sent[0]);
+  TEST_ASSERT_TRUE(p.isOpen());
+  p.preset(0, 14500);  // input restarts the 10 s timer
+  TEST_ASSERT_FALSE(p.tick(24000));
+  TEST_ASSERT_TRUE(p.tick(24500));
+  TEST_ASSERT_FALSE(p.isOpen());
+  TEST_ASSERT_EQUAL(2, (int)sent.size());
+  TEST_ASSERT_EQUAL(25, sent[1]);
+}
 
 void setUp() {}
 void tearDown() {}
@@ -1022,5 +1096,8 @@ int main() {
   RUN_TEST(test_sensor_details);
   RUN_TEST(test_demo_yaml_showcase);
   RUN_TEST(test_demo_fails_entity_ends_failed);
+  RUN_TEST(test_brightness_popup_steps_and_bar);
+  RUN_TEST(test_brightness_popup_debounce_sends_last_value);
+  RUN_TEST(test_brightness_popup_idle_close_and_off);
   return UNITY_END();
 }

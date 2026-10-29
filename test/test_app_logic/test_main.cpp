@@ -1,3 +1,4 @@
+#include "brightness_intent.h"
 #include <unity.h>
 
 #include <map>
@@ -32,6 +33,46 @@ void test_demo_mode_decisions() {
   settings::Settings other = off;
   other.orientation = settings::Orientation::Landscape;
   TEST_ASSERT_FALSE(needsConfigReload(off, other));
+}
+
+void test_brightness_intent_custom_call_expected_state() {
+  auto e = app_logic::brightnessIntent("light.a", 40);
+  TEST_ASSERT_TRUE(e.has_value());
+  TEST_ASSERT_TRUE(e->custom);
+  TEST_ASSERT_EQUAL_STRING("turn_on", e->custom_call.service.c_str());
+  TEST_ASSERT_EQUAL_STRING("on", e->expected_state.c_str());
+  auto off = app_logic::brightnessIntent("light.a", 0);
+  TEST_ASSERT_EQUAL_STRING("turn_off", off->custom_call.service.c_str());
+  TEST_ASSERT_EQUAL_STRING("off", off->expected_state.c_str());
+  TEST_ASSERT_FALSE(app_logic::brightnessIntent("", 1) && false);
+}
+
+void test_brightness_intent_session_last_value_wins_and_confirms() {
+  using namespace session;
+  SessionMachine m;
+  settings::Settings s;
+  m.handle(Event::start(power::WakeReason::Unknown, 4000, s), 0);
+  m.handle(Event::wifi(true), 10);
+  m.handle(Event::fetch_done(HaError::None), 20);
+  auto c = m.handle(*app_logic::brightnessIntent("light.a", 30), 100);
+  const Command *call = nullptr;
+  for (auto &x : c) if (x.type == Command::Type::CallService) call = &x;
+  TEST_ASSERT_NOT_NULL(call);
+  TEST_ASSERT_TRUE(call->custom);
+  int ticket = call->ticket;
+  // HA's response carries the state: confirmed from the response (036), no extra fetch.
+  EntityState st;
+  st.id = "light.a";
+  st.state = "on";
+  st.available = true;
+  c = m.handle(Event::service_done(ticket, HaError::None, {"light.a"}, {st}), 300);
+  bool confirmed = false, fetched = false;
+  for (auto &x : c) {
+    if (x.type == Command::Type::MarkWidgets && x.mark == Mark::Confirmed) confirmed = true;
+    if (x.type == Command::Type::FetchStates) fetched = true;
+  }
+  TEST_ASSERT_TRUE(confirmed);
+  TEST_ASSERT_FALSE(fetched);
 }
 
 void setUp() {}
@@ -744,5 +785,7 @@ int main() {
   RUN_TEST(test_fetch_reaches_widget_data);
   RUN_TEST(test_wakelog_csv);
   RUN_TEST(test_debuglog_filter_format_rotation);
+  RUN_TEST(test_brightness_intent_custom_call_expected_state);
+  RUN_TEST(test_brightness_intent_session_last_value_wins_and_confirms);
   return UNITY_END();
 }

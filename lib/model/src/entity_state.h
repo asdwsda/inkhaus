@@ -22,6 +22,21 @@ struct EntityState {
     return state != "unknown";
   }  // light
   std::optional<int> brightness;
+  // Comma-joined supported_color_modes (e.g. "color_temp,xy"); empty if absent. Not cached.
+  std::string color_modes;
+  // True if the light takes a brightness: it reports one, or supports any mode but onoff.
+  bool dimmable() const {
+    if (brightness) return true;
+    size_t pos = 0;
+    while (pos < color_modes.size()) {
+      size_t c = color_modes.find(',', pos);
+      std::string m = color_modes.substr(pos, c == std::string::npos ? c : c - pos);
+      if (!m.empty() && m != "onoff" && m != "unknown") return true;
+      if (c == std::string::npos) break;
+      pos = c + 1;
+    }
+    return false;
+  }
   // climate (temperature / humidity are shared with weather)
   std::optional<double> current_temperature;
   std::optional<double> temperature;
@@ -53,7 +68,7 @@ struct EntityState {
   bool operator==(const EntityState& o) const {
     return id == o.id && state == o.state && available == o.available &&
            last_changed == o.last_changed && friendly_name == o.friendly_name &&
-           current_position == o.current_position && supported_features == o.supported_features && brightness == o.brightness &&
+           current_position == o.current_position && supported_features == o.supported_features && brightness == o.brightness && color_modes == o.color_modes &&
            current_temperature == o.current_temperature && temperature == o.temperature &&
            current_humidity == o.current_humidity && humidity == o.humidity &&
            hvac_mode == o.hvac_mode && hvac_action == o.hvac_action &&

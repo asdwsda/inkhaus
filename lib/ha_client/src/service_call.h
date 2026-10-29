@@ -36,3 +36,7 @@ double normalize_target_temperature(double target, double min_temp, double max_t
 bool build_climate_set_temperature(const std::vector<std::string>& ids, double target,
                                    double min_temp, double max_temp, double step,
                                    ServiceCall& out);
+
+// Light brightness in percent: pct <= 0 -> light.turn_off, otherwise light.turn_on with
+// brightness_pct (clamped to 1..100). Returns false if ids is empty.
+bool build_light_brightness(const std::vector<std::string>& ids, int pct, ServiceCall& out);
