@@ -1,6 +1,6 @@
 # 049: History config keys
 
-Status: todo
+Status: done
 Depends on: 046
 UI spec: none
 Needs device: no

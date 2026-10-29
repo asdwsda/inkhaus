@@ -24,6 +24,11 @@ struct Writer {
   void u32(uint32_t v) {
     for (int i = 0; i < 4; ++i) u8(v >> (8 * i));
   }
+  void f32(float f) {
+    uint32_t b;
+    std::memcpy(&b, &f, 4);
+    u32(b);
+  }
   void str(const std::string &v) {
     u32(uint32_t(v.size()));
     s += v;
@@ -49,6 +54,12 @@ struct Reader {
     v = uint32_t(p[0]) | uint32_t(p[1]) << 8 | uint32_t(p[2]) << 16 | uint32_t(p[3]) << 24;
     p += 4;
     n -= 4;
+    return true;
+  }
+  bool f32(float &f) {
+    uint32_t b;
+    if (!u32(b)) return false;
+    std::memcpy(&f, &b, 4);
     return true;
   }
   bool boolean(bool &b) {
@@ -130,6 +141,18 @@ std::string serializeConfig(const Config &cfg) {
       w.str(wd.unit ? *wd.unit : std::string());
       w.u8(wd.decimals.has_value());
       w.u8(wd.decimals ? uint32_t(*wd.decimals) : 0);
+      const HistoryConfig &h = wd.history;
+      w.u8(h.enabled);
+      w.u32(uint32_t(h.hours));
+      w.u8(uint32_t(h.type));
+      w.u8(h.statistic.has_value());
+      w.u8(h.statistic ? uint32_t(*h.statistic) : 0);
+      w.u8(uint32_t(h.period));
+      w.u8(uint32_t(h.source));
+      w.u8(h.min.has_value());
+      w.f32(h.min ? *h.min : 0.f);
+      w.u8(h.max.has_value());
+      w.f32(h.max ? *h.max : 0.f);
     }
   }
   w.strs(cfg.entityIds);
@@ -213,6 +236,33 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       if (!r.ok || hasUnit > 1 || hasDec > 1 || dec > uint32_t(kMaxDecimals)) return false;
       if (hasUnit) wd.unit = unit;
       if (hasDec) wd.decimals = int(dec);
+      HistoryConfig &h = wd.history;
+      uint32_t hHours = 0, hType = 0, hHasStat = 0, hStat = 0, hPeriod = 0, hSource = 0;
+      uint32_t hHasMin = 0, hHasMax = 0;
+      float hMin = 0, hMax = 0;
+      r.boolean(h.enabled);
+      r.u32(hHours);
+      r.u8(hType);
+      r.u8(hHasStat);
+      r.u8(hStat);
+      r.u8(hPeriod);
+      r.u8(hSource);
+      r.u8(hHasMin);
+      r.f32(hMin);
+      r.u8(hHasMax);
+      r.f32(hMax);
+      if (!r.ok || hHours < uint32_t(kMinHistoryHours) || hHours > uint32_t(kMaxHistoryHours) ||
+          hType > uint32_t(HistoryType::Step) || hHasStat > 1 ||
+          hStat > uint32_t(HistoryStatistic::Change) || hPeriod > uint32_t(HistoryPeriod::Day) ||
+          hSource > uint32_t(HistorySource::Statistics) || hHasMin > 1 || hHasMax > 1)
+        return false;
+      h.hours = int(hHours);
+      h.type = HistoryType(hType);
+      if (hHasStat) h.statistic = HistoryStatistic(hStat);
+      h.period = HistoryPeriod(hPeriod);
+      h.source = HistorySource(hSource);
+      if (hHasMin) h.min = hMin;
+      if (hHasMax) h.max = hMax;
       if (!r.ok || type > uint32_t(WidgetType::Vacuum) || hasSize > 1) return false;
       wd.type = WidgetType(type);
       if (hasSize) {

@@ -155,6 +155,7 @@ tabs:
 | `details` | sensor: up to 2 more attributes on a details line (only shown at 2x1 and wider) |
 | `unit` | sensor: unit override for the main value, max 8 characters |
 | `decimals` | sensor: round numbers to 0 to 3 decimals |
+| `history` | graph options: `false` (off), a number of hours (`history: 48`), or a mapping with `hours` (1 to 720, default 24), `type` (`auto`, `line`, `bar`, `step`), `statistic` (`mean`, `min`, `max`, `sum`, `change`), `period` (`auto`, `hour`, `day`), `min` / `max` (fixed y axis, `min` < `max`), `source` (`auto`, `history`, `statistics`). All optional |
 
 Widget types come from the entity domain: `cover`, `light`, `switch`, `automation`, `climate`,
 `sensor`, `binary_sensor`, `weather`, `vacuum`. Cover, climate and vacuum are wide; light, switch,

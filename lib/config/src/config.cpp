@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <cstring>
+#include <initializer_list>
 
 #include "yaml_json.h"
 
@@ -209,6 +211,115 @@ class Validator {
       else
         err(path + ".decimals", "must be a number from 0 to " + std::to_string(kMaxDecimals));
     }
+  }
+
+  template <typename E>
+  static bool pickEnum(const std::string &s, std::initializer_list<std::pair<const char *, E>> names,
+                       E &out) {
+    for (const auto &n : names)
+      if (s == n.first) {
+        out = n.second;
+        return true;
+      }
+    return false;
+  }
+
+  // Strict decimal number: optional sign, digits, optional fraction; no exponent, no junk.
+  static bool parseNumber(const std::string &s, float &out) {
+    if (s.empty() || s.size() > 16) return false;
+    size_t i = (s[0] == '-' || s[0] == '+') ? 1 : 0;
+    bool digits = false, dot = false;
+    for (size_t k = i; k < s.size(); ++k) {
+      if (s[k] >= '0' && s[k] <= '9') digits = true;
+      else if (s[k] == '.' && !dot) dot = true;
+      else return false;
+    }
+    if (!digits) return false;
+    out = std::strtof(s.c_str(), nullptr);
+    return true;
+  }
+
+  static bool parseHours(const std::string &s, int &out) {
+    if (s.empty() || s.size() > 4) return false;
+    int v = 0;
+    for (char c : s) {
+      if (c < '0' || c > '9') return false;
+      v = v * 10 + (c - '0');
+    }
+    if (v < kMinHistoryHours || v > kMaxHistoryHours) return false;
+    out = v;
+    return true;
+  }
+
+  // history: false | <hours> | { hours, type, statistic, period, min, max, source }.
+  // Messages never echo the values.
+  void history(JsonVariantConst v, const std::string &path, Widget &w) {
+    HistoryConfig h;
+    const std::string hoursMsg = "hours must be a whole number from " +
+                                 std::to_string(kMinHistoryHours) + " to " +
+                                 std::to_string(kMaxHistoryHours);
+    if (v.is<const char *>()) {
+      const std::string s = v.as<const char *>();
+      if (s == "false") h.enabled = false;
+      else if (s == "true") {}
+      else if (!parseHours(s, h.hours))
+        err(path, "must be false, a number of hours (" + std::to_string(kMinHistoryHours) + ".." +
+                      std::to_string(kMaxHistoryHours) + ") or a mapping");
+      w.history = h;
+      return;
+    }
+    if (!v.is<JsonObjectConst>()) {
+      err(path, "must be false, a number of hours or a mapping");
+      return;
+    }
+    JsonObjectConst o = v.as<JsonObjectConst>();
+    static const char *const known[] = {"hours", "type", "statistic", "period",
+                                        "min",   "max",  "source"};
+    for (JsonPairConst kv : o) {
+      bool ok = false;
+      for (const char *k : known) ok |= std::strcmp(kv.key().c_str(), k) == 0;
+      if (!ok) err(path + "." + kv.key().c_str(), "unknown key");
+    }
+    std::string s;
+    if (str(o, "hours", path, false, s) && !parseHours(s, h.hours))
+      err(path + ".hours", hoursMsg);
+    if (str(o, "type", path, false, s) &&
+        !pickEnum<HistoryType>(s, {{"auto", HistoryType::Auto}, {"line", HistoryType::Line},
+                                   {"bar", HistoryType::Bar}, {"step", HistoryType::Step}}, h.type))
+      err(path + ".type", "must be auto, line, bar or step");
+    if (str(o, "statistic", path, false, s)) {
+      HistoryStatistic st = HistoryStatistic::Mean;
+      if (pickEnum<HistoryStatistic>(s, {{"mean", HistoryStatistic::Mean},
+                                         {"min", HistoryStatistic::Min},
+                                         {"max", HistoryStatistic::Max},
+                                         {"sum", HistoryStatistic::Sum},
+                                         {"change", HistoryStatistic::Change}}, st))
+        h.statistic = st;
+      else
+        err(path + ".statistic", "must be mean, min, max, sum or change");
+    }
+    if (str(o, "period", path, false, s) &&
+        !pickEnum<HistoryPeriod>(s, {{"auto", HistoryPeriod::Auto}, {"hour", HistoryPeriod::Hour},
+                                     {"day", HistoryPeriod::Day}}, h.period))
+      err(path + ".period", "must be auto, hour or day");
+    if (str(o, "source", path, false, s) &&
+        !pickEnum<HistorySource>(s, {{"auto", HistorySource::Auto},
+                                     {"history", HistorySource::History},
+                                     {"statistics", HistorySource::Statistics}}, h.source))
+      err(path + ".source", "must be auto, history or statistics");
+    bool okMin = true, okMax = true;
+    float f = 0;
+    if (str(o, "min", path, false, s)) {
+      if (parseNumber(s, f)) h.min = f;
+      else { err(path + ".min", "must be a number"); okMin = false; }
+    }
+    if (str(o, "max", path, false, s)) {
+      if (parseNumber(s, f)) h.max = f;
+      else { err(path + ".max", "must be a number"); okMax = false; }
+    }
+    if (okMin && okMax && h.min && h.max && !(*h.min < *h.max))
+      err(path + ".max", "must be greater than min");
+    w.history = h;
   }
 
   void version(JsonObjectConst o) {
@@ -499,6 +610,7 @@ class Validator {
     }
 
     attributeOptions(o, path, w);
+    if (!o["history"].isNull()) history(o["history"], path + ".history", w);
 
     std::string typeName;
     bool hasType = str(o, "type", path, false, typeName);

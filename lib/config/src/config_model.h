@@ -79,6 +79,25 @@ struct WidgetSize {
   int h = 1;
 };
 
+// History popup options (task 049, design: docs/tasks/046-history-research.md section 4).
+constexpr int kMinHistoryHours = 1;
+constexpr int kMaxHistoryHours = 720;
+constexpr int kDefaultHistoryHours = 24;
+enum class HistoryType { Auto, Line, Bar, Step };
+enum class HistoryStatistic { Mean, Min, Max, Sum, Change };
+enum class HistoryPeriod { Auto, Hour, Day };
+enum class HistorySource { Auto, History, Statistics };
+
+struct HistoryConfig {
+  bool enabled = true;  // `history: false` clears it
+  int hours = kDefaultHistoryHours;
+  HistoryType type = HistoryType::Auto;
+  std::optional<HistoryStatistic> statistic;  // absent: mean (sum for energy device_class)
+  HistoryPeriod period = HistoryPeriod::Auto;  // Auto: hour for <= 48 h, else day
+  std::optional<float> min, max;               // fixed y axis bounds; absent: autoscale
+  HistorySource source = HistorySource::Auto;
+};
+
 struct Widget {
   WidgetType type = WidgetType::Sensor;
   std::string entity;  // single-entity widget, empty for groups
@@ -90,6 +109,7 @@ struct Widget {
   std::vector<std::string> details;     // up to kMaxDetails extra attributes for a details line
   std::optional<std::string> unit;      // unit override for the main value (<= kMaxUnitChars chars)
   std::optional<int> decimals;          // 0..3, rounds numeric main/detail values
+  HistoryConfig history;  // defaults when the key is absent
   // Entities this widget acts on: {entity} or the group members.
   std::vector<std::string> entities;
 };

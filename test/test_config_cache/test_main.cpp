@@ -181,6 +181,30 @@ void test_roundtrip_attribute_options() {
   expectEqual(c, out);
 }
 
+void test_roundtrip_history() {
+  Config c = fullConfig(), out;
+  HistoryConfig &h = c.tabs[0].widgets[1].history;
+  h.hours = 168;
+  h.type = HistoryType::Bar;
+  h.statistic = HistoryStatistic::Change;
+  h.period = HistoryPeriod::Day;
+  h.min = -2.5f;
+  h.max = 30.f;
+  h.source = HistorySource::Statistics;
+  c.tabs[0].widgets[0].history.enabled = false;
+  TEST_ASSERT_TRUE(deserializeConfig(serializeConfig(c), out));
+  const HistoryConfig &o = out.tabs[0].widgets[1].history;
+  TEST_ASSERT_EQUAL(168, o.hours);
+  TEST_ASSERT_TRUE(o.type == HistoryType::Bar && o.period == HistoryPeriod::Day &&
+                   o.source == HistorySource::Statistics);
+  TEST_ASSERT_TRUE(o.statistic && *o.statistic == HistoryStatistic::Change);
+  TEST_ASSERT_EQUAL_FLOAT(-2.5f, *o.min);
+  TEST_ASSERT_EQUAL_FLOAT(30.f, *o.max);
+  TEST_ASSERT_FALSE(out.tabs[0].widgets[0].history.enabled);
+  TEST_ASSERT_FALSE(out.tabs[0].widgets[0].history.min.has_value());
+  expectEqual(c, out);
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_roundtrip_all_fields);
@@ -193,5 +217,6 @@ int main(int, char **) {
   RUN_TEST(test_wrong_format_and_garbage_rejected);
   RUN_TEST(test_pack_unpack_fingerprint);
   RUN_TEST(test_roundtrip_attribute_options);
+  RUN_TEST(test_roundtrip_history);
   return UNITY_END();
 }

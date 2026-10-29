@@ -717,6 +717,83 @@ void test_attr_errors_do_not_echo_values() {
                                                   e.message.find("Secret") == std::string::npos);
 }
 
+static const char *kHp = "tabs[0].widgets[0].history";
+
+void test_history_defaults() {
+  ParseResult r = parseConfig(kMinimal);
+  const HistoryConfig &h = r.config.tabs[0].widgets[0].history;
+  TEST_ASSERT_TRUE(h.enabled);
+  TEST_ASSERT_EQUAL(24, h.hours);
+  TEST_ASSERT_TRUE(h.type == HistoryType::Auto && h.period == HistoryPeriod::Auto &&
+                   h.source == HistorySource::Auto);
+  TEST_ASSERT_FALSE(h.statistic.has_value() || h.min.has_value() || h.max.has_value());
+}
+
+void test_history_block() {
+  ParseResult r = parseConfig(withWidget("        history:\n          hours: 168\n          type: bar\n"
+                                         "          statistic: change\n          period: day\n"
+                                         "          min: -2.5\n          max: 30\n          source: statistics\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  const HistoryConfig &h = r.config.tabs[0].widgets[0].history;
+  TEST_ASSERT_TRUE(h.enabled);
+  TEST_ASSERT_EQUAL(168, h.hours);
+  TEST_ASSERT_TRUE(h.type == HistoryType::Bar && h.period == HistoryPeriod::Day &&
+                   h.source == HistorySource::Statistics);
+  TEST_ASSERT_TRUE(h.statistic && *h.statistic == HistoryStatistic::Change);
+  TEST_ASSERT_EQUAL_FLOAT(-2.5f, *h.min);
+  TEST_ASSERT_EQUAL_FLOAT(30.f, *h.max);
+  // flow mapping and partial block
+  r = parseConfig(withWidget("        history: { hours: 720, type: step }\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL(720, r.config.tabs[0].widgets[0].history.hours);
+  TEST_ASSERT_TRUE(r.config.tabs[0].widgets[0].history.type == HistoryType::Step);
+  r = parseConfig(withWidget("        history: {}\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL(24, r.config.tabs[0].widgets[0].history.hours);
+}
+
+void test_history_shorthand_and_false() {
+  ParseResult r = parseConfig(withWidget("        history: 48\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_TRUE(r.config.tabs[0].widgets[0].history.enabled);
+  TEST_ASSERT_EQUAL(48, r.config.tabs[0].widgets[0].history.hours);
+  r = parseConfig(withWidget("        history: false\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_FALSE(r.config.tabs[0].widgets[0].history.enabled);
+  TEST_ASSERT_EQUAL(1, parseConfig(withWidget("        history: 1\n")).config.tabs[0].widgets[0].history.hours);
+  TEST_ASSERT_TRUE(parseConfig(withWidget("        history: 720\n")).ok());
+}
+
+void test_history_errors() {
+  const std::string p = kHp;
+  assertErrorAt(withWidget("        history: 0\n"), p);
+  assertErrorAt(withWidget("        history: 721\n"), p);
+  assertErrorAt(withWidget("        history: x\n"), p);
+  assertErrorAt(withWidget("        history: -5\n"), p);
+  assertErrorAt(withWidget("        history: [1]\n"), p);
+  assertErrorAt(withWidget("        history: { hours: 0 }\n"), p + ".hours");
+  assertErrorAt(withWidget("        history: { hours: 721 }\n"), p + ".hours");
+  assertErrorAt(withWidget("        history: { hours: 1.5 }\n"), p + ".hours");
+  assertErrorAt(withWidget("        history: { hours: abc }\n"), p + ".hours");
+  assertErrorAt(withWidget("        history: { type: pie }\n"), p + ".type");
+  assertErrorAt(withWidget("        history: { statistic: avg }\n"), p + ".statistic");
+  assertErrorAt(withWidget("        history: { period: week }\n"), p + ".period");
+  assertErrorAt(withWidget("        history: { source: db }\n"), p + ".source");
+  assertErrorAt(withWidget("        history: { min: abc }\n"), p + ".min");
+  assertErrorAt(withWidget("        history: { max: 1e3 }\n"), p + ".max");
+  assertErrorAt(withWidget("        history: { min: 5, max: 5 }\n"), p + ".max");
+  assertErrorAt(withWidget("        history: { min: 10, max: 5 }\n"), p + ".max");
+  assertErrorAt(withWidget("        history: { colour: red }\n"), p + ".colour");
+  assertErrorAt(withWidget("        history: { hours: [1] }\n"), p + ".hours");
+  TEST_ASSERT_TRUE(parseConfig(withWidget("        history: { min: 5, max: 5.5 }\n")).ok());
+}
+
+void test_history_errors_do_not_echo_values() {
+  ParseResult r = parseConfig(withWidget("        history: { hours: SECRETH, type: SECRETT, min: SECRETM }\n"));
+  TEST_ASSERT_FALSE(r.ok());
+  for (const auto &e : r.errors) TEST_ASSERT_TRUE(e.message.find("SECRET") == std::string::npos);
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_example_parses_clean);
@@ -776,5 +853,10 @@ int main(int, char **) {
   RUN_TEST(test_secrets_wifi_profile_list);
   RUN_TEST(test_secrets_wifi_list_errors_no_values);
   RUN_TEST(test_secrets_wifi_list_limits_and_external_needs_url);
+  RUN_TEST(test_history_defaults);
+  RUN_TEST(test_history_block);
+  RUN_TEST(test_history_shorthand_and_false);
+  RUN_TEST(test_history_errors);
+  RUN_TEST(test_history_errors_do_not_echo_values);
   return UNITY_END();
 }

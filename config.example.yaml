@@ -31,6 +31,17 @@ groups:
 #   details: [humidity, dew_point]  # details line, max 2
 #   unit: "°C"                      # unit override for the main value, max 8 characters
 #   decimals: 1                     # round numbers to 0..3 decimals
+# Optional per widget: the history graph (long press), see README. All keys optional:
+#   history: false                  # no graph for this widget
+#   history: 48                     # shorthand: hours only
+#   history:
+#     hours: 24                     # 1..720, default 24
+#     type: auto                    # auto | line | bar | step
+#     statistic: mean               # mean | min | max | sum | change (bar / statistics source)
+#     period: auto                  # auto | hour | day (bar bucket)
+#     min: 15                       # fixed y axis bounds, default autoscale (min < max)
+#     max: 30
+#     source: auto                  # auto | history | statistics
 # Example, a climate sensor with temperature, humidity and dew_point attributes:
 #   - entity: sensor.living_room_climate
 #     attribute: temperature
