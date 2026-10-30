@@ -21,3 +21,8 @@ Needs device: yes
       tap action right after still works.
 
 ## Notes
+- From the 054 review (fold in here): use esp_random for the handshake key and the frame masks
+  (ws_client.cpp:225); clamp huge numbers before int64/float casts (stats_parser.cpp:130,169,185);
+  scrub() the server error code (ws_client.cpp:376). Socket: read returns 0 on timeout, <0 on close;
+  Request.host = HA host[:port]; align the window start to the period boundary for bars.
+- 054 line columns: min/max from the stat min/max, last = mean (accepted).
