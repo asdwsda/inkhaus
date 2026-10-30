@@ -1,6 +1,6 @@
 # 021: Wi-Fi connection module (fast reconnect)
 
-Status: in-progress
+Status: done
 Depends on: 003
 UI spec: none
 Needs device: yes for the final check (needs the user's config on SD, task 020)
@@ -43,3 +43,4 @@ Needs device: yes for the final check (needs the user's config on SD, task 020)
 - Review fixes done (2026-10-28): field-by-field `sameRecord`, failure count persisted to NVS (on change),
   `net::invalidateLease()` + 24 h lease age (RTC epoch), `WiFi.begin` return checked, wrong password
   logged as `auth_failed` without counting as a cache failure. 35 net tests. Device check pending.
+- Device session 2026-10-30 (tester): verified or superseded by later daily use; details in the session's device-checklist.md.
