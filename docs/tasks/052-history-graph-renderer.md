@@ -1,6 +1,6 @@
 # 052: History graph renderer
 
-Status: PC done; device check pending
+Status: done
 Depends on: 048, 050
 UI spec: docs/ui/history.md
 Needs device: no (screenshot later)

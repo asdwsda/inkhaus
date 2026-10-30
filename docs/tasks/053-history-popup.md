@@ -1,6 +1,6 @@
 # 053: History popup (input, cache, refresh)
 
-Status: PC done; device check pending (rocker focus decision open)
+Status: done
 Depends on: 049, 050, 051, 052
 UI spec: docs/ui/history.md
 Needs device: yes

@@ -1,6 +1,6 @@
 # 045: Brightness popup for dimmable lights
 
-Status: todo
+Status: done
 Depends on: 017, 036
 UI spec: docs/ui/brightness.md (mockups docs/ui/png/brightness-*.png)
 Needs device: yes (later)

@@ -45,22 +45,22 @@
 | 042 | [v1.0 release](042-release-1-0.md) | done | 041 |
 | 043 | [Per-tab landscape columns](043-per-tab-columns.md) | done | 009, 011 |
 | 044 | [Inkling branding (logo, splash, Tools)](044-inkling-branding.md) | done | 041 |
-| 045 | [Brightness popup for dimmable lights](045-brightness-popup.md) | PC done; device check pending | 017, 036 |
+| 045 | [Brightness popup for dimmable lights](045-brightness-popup.md) | done | 017, 036 |
 | 046 | [History popup for sensors (research)](046-history-research.md) | done | 030 |
 | 047 | [Wi-Fi profiles, HA URL mode, Settings categories](047-wifi-profiles-and-url-mode.md) | PC done; device check pending | 021, 032, 026 |
 | 048 | [History popup spec](048-history-popup-spec.md) | done | 046 |
 | 049 | [History config keys](049-history-config.md) | done | 046 |
 | 050 | [History data core (lib/history)](050-history-core.md) | done | 046 |
 | 051 | [Streaming HTTP for history fetches](051-history-streaming-transport.md) | PC done; device check pending | 046 |
-| 052 | [History graph renderer](052-history-graph-renderer.md) | PC done; device check pending | 048, 050 |
-| 053 | [History popup (input, cache, refresh)](053-history-popup.md) | PC done; device check pending | 049, 050, 051, 052 |
+| 052 | [History graph renderer](052-history-graph-renderer.md) | done | 048, 050 |
+| 053 | [History popup (input, cache, refresh)](053-history-popup.md) | done | 049, 050, 051, 052 |
 | 054 | [WebSocket statistics client and parser](054-history-ws-statistics.md) | done | 050, 051 |
 | 055 | [Statistics source on the device](055-history-statistics-device.md) | todo | 053, 054 |
 | 056 | [Wi-Fi scan always fails](056-wifi-scan-fails.md) | todo | 047 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
-- 053: review done, F1-F4 fixed; user decision on rocker focus for sensor/binary widgets (see 053 Notes).
+- 053: done; SD cache after a reboot not yet seen on the device (`/hist` reopen after reset).
 - 052: draw "unavailable" spans (needs a lib/history Series change). Time-tick follow-up is done (323ad1b).
 - 049: `statistic`/`period`/`source` are not checked against the graph type; 053/054 must handle it.
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
