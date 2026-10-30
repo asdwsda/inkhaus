@@ -15,11 +15,6 @@ Version 1.1.0, see [CHANGELOG.md](CHANGELOG.md).
 
 *Design mockups of the two layouts.*
 
-**UI flow** (wake, tap a light, a shutter and the thermostat, switch tab, Settings, sleep).
-Inverted rectangles mark partial e-ink refreshes; black/white frames are full refreshes:
-
-![UI flow](docs/ui/flow.gif)
-
 ## Features
 
 - Tabs and widgets defined in a YAML file on the SD card; no reflashing to change the layout.
@@ -235,7 +230,7 @@ plan is in [docs/battery-test-plan.md](docs/battery-test-plan.md).
 | `certs/` | Root certificate bundle for HTTPS |
 | `docs/ARCHITECTURE.md` | Architecture and decision log |
 | `docs/tasks/` | One file per task, with acceptance criteria |
-| `docs/ui/` | Style guide, layout and widget specs, SVG mockups; `png/` has the renders, `flow/` the storyboard behind `flow.gif` |
+| `docs/ui/` | Style guide, layout and widget specs, SVG mockups; `png/` has the renders |
 | `docs/battery-test-plan.md` | How to measure battery life |
 | `tools/` | `provision.py`, `wakelog.py`, `serial_capture.py`, `screenshot.py`, `device_lock.sh`, mockup tooling |
 | `probe/`, `epdtest/` | Diagnostic firmwares used to measure the hardware |
