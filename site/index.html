@@ -20,10 +20,8 @@
 <h1>Your smart home on paper.</h1>
 <p>Inkhaus turns an M5Paper e-ink screen into a small remote for Home Assistant. Lights, blinds, heating and sensors on one calm screen that barely uses any battery.</p>
 <p><a class="btn primary" href="#install">Download the installer</a><a class="btn" href="https://github.com/asdwsda/inkhaus">See on GitHub</a></p>
-<div class="shots">
-<figure><img class="shot" src="img/tab-portrait.png" width="540" height="960" alt="Inkhaus on the M5Paper in portrait: a tab with lights, blinds and sensors."></figure>
-<figure><img class="shot" src="img/tab-landscape.png" width="960" height="540" alt="The same screen in landscape."></figure>
-</div>
+<figure class="hero-fig"><img class="shot" src="img/showcase-device.png" width="1600" height="900" alt="Inkhaus on the M5Paper: graph widgets with a line graph and daily bars on a tab, and the 24 hour history popup after a long press."><figcaption class="cap">Graphs right on the tab, 24 h history on a long press (design mockup)</figcaption></figure>
+
 </div></section>
 
 <section><div class="wrap">
@@ -37,9 +35,16 @@
 
 <section id="features"><div class="wrap">
 <h2>Features</h2>
+<h3>See how things changed</h3>
+<p>Put a line or bar graph of any sensor straight on the tab, or long-press a sensor for its history. Add <code>display: graph</code> to a sensor in config.yaml:</p>
+<pre tabindex="0">- entity: sensor.living_room_temperature
+  display: graph
+  history: 24</pre>
+<figure><img class="shot" loading="lazy" src="img/showcase-device-tabs.png" width="1600" height="900" alt="Graph widgets on tabs in portrait and landscape."><figcaption class="cap">Graph widgets on the tab (design mockup)</figcaption></figure>
+<p><a href="https://github.com/asdwsda/inkhaus/blob/main/docs/CONFIG.md">All graph options</a></p>
 <ul class="feat">
 <li>Switches and lights</li><li>Blinds and covers</li><li>Thermostat</li><li>Weather</li><li>Vacuum</li>
-<li>Sensors with history graphs</li><li>Brightness control</li><li>Rotate portrait or landscape</li>
+<li><strong>History graphs</strong> on the tab and on a long press</li><li>Brightness control</li><li>Rotate portrait or landscape</li>
 <li>Settings on the device</li><li>Your own tabs and layout in a text file</li>
 <li>Works on your home network, no cloud needed</li>
 </ul>
@@ -49,7 +54,7 @@
 <h2>Screenshots</h2>
 <div class="gallery">
 <figure><img class="shot" loading="lazy" src="img/sensor-details.png" width="540" height="960" alt="A sensor with its details."><figcaption class="cap">Sensor details</figcaption></figure>
-<figure><img class="shot" loading="lazy" src="img/history-line-portrait.png" width="540" height="960" alt="A line graph of a sensor's history."><figcaption class="cap">History graph</figcaption></figure>
+<figure><img class="shot" loading="lazy" src="img/showcase-popup-portrait.png" width="540" height="960" alt="The history popup with a line graph of a sensor."><figcaption class="cap">History popup (design mockup)</figcaption></figure>
 <figure><img class="shot" loading="lazy" src="img/brightness-portrait.png" width="540" height="960" alt="Brightness control for a light."><figcaption class="cap">Brightness</figcaption></figure>
 <figure><img class="shot" loading="lazy" src="img/settings-portrait.png" width="540" height="960" alt="The settings screen."><figcaption class="cap">Settings</figcaption></figure>
 <figure><img class="shot" loading="lazy" src="img/tab-landscape-asleep.png" width="960" height="540" alt="A tab while the device sleeps, still readable."><figcaption class="cap">Asleep: still readable</figcaption></figure>

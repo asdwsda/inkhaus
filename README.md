@@ -7,11 +7,24 @@ shows the last known state without using power. Version 1.1.0, see [CHANGELOG.md
 
 Website: <https://asdwsda.github.io/inkhaus/>
 
-| Portrait | Landscape |
-|---|---|
-| ![Portrait mockup](docs/ui/png/tab-portrait.png) | ![Landscape mockup](docs/ui/png/tab-landscape.png) |
+![Graph widgets on the tab and the 24 h history popup](docs/ui/png/showcase-device.png)
 
-*Design mockups of the two layouts.*
+*Graphs right on the tab, 24 h history on a long press (design mockup).*
+
+## History graphs
+
+Put a line or bar graph of any sensor straight on a tab with `display: graph`, or long-press a
+sensor for its history popup:
+
+```yaml
+- entity: sensor.living_room_temperature
+  display: graph
+  history: 24
+```
+
+![Wake, tab with graphs, history popup](docs/ui/showcase.gif)
+
+*Wake, tab with graphs, long-press popup (design mockup).* All options: [docs/CONFIG.md](docs/CONFIG.md).
 
 ## Get started in 4 steps
 
