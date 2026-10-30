@@ -1,6 +1,6 @@
 # 037: Persist last known states across sleep; never blank values
 
-Status: in-progress
+Status: done
 Depends on: 023, 025
 UI spec: status bar outdated icon (task 038 spec)
 Needs device: yes (later)
@@ -26,3 +26,4 @@ Needs device: yes (later)
 
 ## Notes
 - PC part done (2026-10-29): lib/model state_codec (MPST + CRC, tests incl. every truncation/corruption), StateStore::all, src/state_cache (RTC 4 KB every save + LittleFS /states.bin on change), hooks in main.cpp (restore before the first frame in real mode, save in goToSleep). main.cpp hooks committed together with task 036. Open: the outdated icon uses g_restoredEpoch (task 038); never-blank behaviour checked on the device.
+- Device session 2026-10-30: user batch 1 all OK (wake shows cached values before the fetch; cover tap shows Opening).
