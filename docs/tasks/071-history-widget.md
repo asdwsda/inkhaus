@@ -11,8 +11,8 @@ history popup (same renderer, graph types, config options and data sources).
 - Config: a widget key selects graph display, reusing the `history` options (hours, type, statistic,
   period, min/max, source). Key: `display: graph`.
 - Size: wide widget, default 2x2 (full width in portrait); smaller sizes clamp as other widgets.
-- Data: fetched on every session that fetches states, i.e. every wake and every scheduled refresh
-  (the existing refresh interval). The last graph data is cached so the first frame after a wake
+- Data: fetched on every wake and every scheduled refresh (the existing refresh interval), only for
+  graph widgets on the visible tab; switching to a tab fetches its graphs (user, 2026-10-30). The last graph data is cached so the first frame after a wake
   shows it before the fetch finishes.
 - Tap: does nothing (no popup, no focus action).
 - Shows the current value in the widget header; empty / loading / error states as in the popup.
@@ -25,7 +25,8 @@ Out of scope: several entities in one graph, new graph types.
 ## Acceptance criteria
 - [ ] Spec with rendered mockups (portrait and landscape) in docs/ui/history-widget.md.
 - [ ] Config parser accepts the new key; native tests cover valid, invalid and clamped sizes.
-- [ ] Native test: a session (wake or scheduled refresh) requests history for each graph widget.
+- [ ] Native test: a session requests history only for graph widgets on the visible tab; a tab switch
+  requests the new tab's graphs.
 - [ ] Demo mode shows a graph widget with the demo history data (068).
 - [ ] Device: a graph widget renders on a tab, survives deep sleep (the image stays), updates on a wake
   and on a scheduled refresh; a tap does nothing.
