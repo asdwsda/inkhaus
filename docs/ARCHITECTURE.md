@@ -186,6 +186,24 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
   anything relies on it.
 - SD: the 32 GB card mounts fine over the shared SPI bus, and the display keeps working after.
 
+## Flasher tool (decided 2026-10-30, tasks 061-064)
+Goal: non-technical users install a pre-built release without PlatformIO.
+- Stack: Rust + `espflash` crate (ESP32 flashing as a library) + `egui`/`eframe` GUI: one native binary per OS,
+  no runtime, no Python. Reason: the only mature ESP flasher that is a library and links into a single static binary.
+- Lives in `tools/flasher/` (own Cargo project); the firmware build is untouched.
+- UI: one window: device status (auto-detected by USB VID:PID 1a86:55d4, CH9102), one big "Install" button,
+  progress bar, plain-language result. Port picker only if 0 or >1 devices are found.
+- Image: bootloader, partition table, boot_app0 and firmware flashed as separate segments, never a merged image from 0x0,
+  so NVS (settings, Wi-Fi state, config cache) survives an update.
+- Firmware source (user): downloaded from GitHub Releases at run time; version picker, latest stable preselected.
+  Each release carries the segment files plus `manifest.json` (version, offsets, sizes, SHA-256); the tool checks hashes.
+- Optional (user): "Upload YAML files" picks config.yaml / secrets.yaml and sends them to the SD card over USB with the
+  task 020 protocol. No setup wizard: creating the files is the user's job.
+- Release: GitHub Actions on a version tag builds firmware + flasher for Windows, macOS (universal) and Linux and attaches
+  them to the release.
+- Risks: Windows may need the CH9102 driver (detect "no device" and link to it); unsigned binaries trigger
+  SmartScreen/Gatekeeper warnings (document the click-through; signing is out of scope).
+
 ## Future ideas (not planned yet)
 - **BLE instead of Wi-Fi for talking to HA** (user idea, 2026-10-28; the home has many Bluetooth-capable
   Shelly devices, which HA can use as Bluetooth proxies). First assessment, to revisit after a working
