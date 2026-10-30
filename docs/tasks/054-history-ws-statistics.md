@@ -1,6 +1,6 @@
 # 054: WebSocket statistics client and parser (PC part of history phase 2)
 
-Status: todo
+Status: done (PC part; reviewed by architect pending)
 Depends on: 050, 051
 UI spec: docs/ui/history.md
 Needs device: no (device wiring is task 055)
