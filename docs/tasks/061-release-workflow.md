@@ -1,6 +1,6 @@
 # 061: Release workflow: firmware assets on GitHub Releases
 
-Status: PC part done; GitHub run pending
+Status: done
 Depends on: none
 UI spec: none
 Needs device: no
@@ -16,7 +16,7 @@ Out of scope: the flasher binaries (063).
 
 ## Acceptance criteria
 - [x] `tools/make_manifest.py` produces a manifest matching the local `pio run` outputs; offsets match default_16MB.csv.
-- [ ] Workflow validated locally (e.g. `act` or actionlint) and on GitHub after the user pushes a test tag.
+- [x] Workflow validated locally (e.g. `act` or actionlint) and on GitHub after the user pushes a test tag.
 - [x] Tag/version mismatch fails the job.
 
 ## Notes
@@ -24,3 +24,4 @@ Out of scope: the flasher binaries (063).
 - PC part done: workflow YAML parses (yaml.safe_load); manifest script dry-run against local `pio run` outputs matches
   default_16MB.csv (0x1000, 0x8000, 0xe000, 0x10000); tag mismatch exits 1 (script and workflow step). Test: `python3 tools/tests/test_make_manifest.py`.
 - Pending: the GitHub run (user pushes a test tag, e.g. v1.0.0 matching include/version.h). actionlint/act were not available.
+- GitHub check 2026-10-30: v1.1.0 release run green (firmware, 3 installers, manifest); site live at https://asdwsda.github.io/inkhaus/, download links resolve.
