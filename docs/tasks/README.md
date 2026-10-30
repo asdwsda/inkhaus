@@ -9,7 +9,7 @@
 | 005 | [Power policy (logic only)](005-power-policy.md) | done | 002 |
 | 006 | [UI layout engine](006-layout-engine.md) | done | 009, 010 |
 | 007 | [Settings screen logic and layout](007-settings-screen.md) | done | 010, 011 |
-| 008 | [HTTPS certificate bundle](008-https-ca-bundle.md) | in-progress | 004 |
+| 008 | [HTTPS certificate bundle](008-https-ca-bundle.md) | done | 004 |
 | 009 | [Config schema: tabs, widget size, group names](009-config-tabs.md) | done | 003 |
 | 010 | [Orientation setting](010-orientation-setting.md) | done | 002 |
 | 011 | [Layout engine update to the approved compact UI](011-compact-tabs-layout.md) | done | 006 |
@@ -21,22 +21,22 @@
 | 017 | [Render the real UI on the device (demo data)](017-render-ui-demo.md) | done | 011, 014, 016 |
 | 018 | [Session logic: Wi-Fi, HA fetch, action queue](018-session-logic.md) | done | 004, 005 |
 | 019 | [Explicit on/off actions, actions before the first fetch](019-explicit-actions.md) | done | 004, 018 |
-| 020 | [Write config.yaml to the device over USB](020-provision-config-over-usb.md) | in-progress | 017 |
-| 021 | [Wi-Fi connection module (fast reconnect)](021-wifi-net-module.md) | in-progress | 003 |
-| 022 | [Draw the Settings screen](022-settings-screen-render.md) | in-progress | 007, 017 |
-| 023 | [Wire Wi-Fi, Home Assistant and Settings into the app](023-wire-session.md) | in-progress | 017–022, 008 |
+| 020 | [Write config.yaml to the device over USB](020-provision-config-over-usb.md) | done | 017 |
+| 021 | [Wi-Fi connection module (fast reconnect)](021-wifi-net-module.md) | done | 003 |
+| 022 | [Draw the Settings screen](022-settings-screen-render.md) | done | 007, 017 |
+| 023 | [Wire Wi-Fi, Home Assistant and Settings into the app](023-wire-session.md) | done | 017–022, 008 |
 | 024 | [Sleep, wake and scheduled refresh](024-sleep-and-wake.md) | in-progress | 005, 016, 023 |
-| 025 | [Config cache in internal flash](025-config-cache.md) | in-progress | 003, 020 |
+| 025 | [Config cache in internal flash](025-config-cache.md) | done | 003, 020 |
 | 026 | [Follow-ups from device session 1](026-device-session-1-followups.md) | in-progress | 023 |
 | 027 | [TLS session resumption (researched, deferred)](027-tls-resumption.md) | todo | 008 |
 | 028 | [State wording and icons](028-state-wording.md) | in-progress | 026 |
-| 029 | [Wake log on the SD card](029-wake-log-sd.md) | in-progress | 024 |
+| 029 | [Wake log on the SD card](029-wake-log-sd.md) | done | 024 |
 | 030 | [Configurable sensor attributes (config + data)](030-sensor-attributes.md) | done | 003, 004, 017 |
 | 032 | [Separate secrets.yaml from config.yaml](032-separate-secrets.md) | done | 003, 020, 025 |
 | 033 | [Built-in demo showcase](033-demo-showcase.md) | done | 017, 028, 030 |
-| 034 | ["Demo mode" setting](034-demo-mode-setting.md) | in-progress | 002, 007, 022, 033 |
+| 034 | ["Demo mode" setting](034-demo-mode-setting.md) | done | 002, 007, 022, 033 |
 | 035 | [Button mode: deep sleep with power hold](035-safe-button-sleep.md) | in-progress | 024 |
-| 036 | [Fast taps: optimistic UI, keep-alive](036-fast-actions.md) | in-progress | 019, 023 |
+| 036 | [Fast taps: optimistic UI, keep-alive](036-fast-actions.md) | done | 019, 023 |
 | 037 | [Persist last known states](037-state-cache.md) | in-progress | 023, 025 |
 | 038 | [Status bar states, sleep indicator redesign](038-status-bar-and-sleep-indicator.md) | in-progress | 024 |
 | 039 | [Three wake modes, wake-mode fixes](039-wake-modes.md) | in-progress | 034, 035 |
@@ -67,6 +67,7 @@
 | 064 | [Flasher: optional YAML upload to the SD card](064-flasher-yaml-upload.md) | todo | 062, 020 |
 | 065 | [Project website on GitHub Pages](065-project-website.md) | todo | – |
 | 066 | [Choose a new project name (Inkling may be taken)](066-project-name.md) | todo | – |
+| 067 | [Intermittent cold-boot hang after BOOT: controller_id=](067-cold-boot-hang.md) | todo | – |
 
 ## Open items (not yet tasks, 2026-10-30)
 - Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
