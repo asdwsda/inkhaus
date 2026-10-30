@@ -204,6 +204,7 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
 - 2026-10-27: Target original M5Paper (ESP32), not M5Paper S3. Reason: the user's hardware.
 - 2026-10-27: Arduino + M5Unified/M5GFX on PlatformIO. Reason: maintained M5Paper support with fast partial EPD modes; mature ecosystem.
 - 2026-10-27: HA REST + long-lived token, no persistent WebSocket/MQTT. Reason: short wake sessions; an idle socket would drain the battery.
+- 2026-10-30: History statistics (7 d+, bars) via a short-lived WebSocket (connect, auth, one command, close) with our own minimal RFC 6455 client over the existing TLS client. Reason: no REST endpoint for statistics; native-testable, no new dependency, no idle socket.
 - 2026-10-27: Fetch states with one `/api/template` call. Reason: one small response for only the needed entities.
 - 2026-10-27: Local-first URL with optional external HTTPS fallback. Reason: fast and cheap at home, still works remotely for a published app.
 - 2026-10-27: Layout/connection in `config.yaml` on SD; user settings in NVS. Reason: no reflash to change layout; device-side settings survive SD edits.

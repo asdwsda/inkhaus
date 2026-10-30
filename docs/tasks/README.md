@@ -54,10 +54,11 @@
 | 051 | [Streaming HTTP for history fetches](051-history-streaming-transport.md) | PC done; device check pending | 046 |
 | 052 | [History graph renderer](052-history-graph-renderer.md) | PC done; device check pending | 048, 050 |
 | 053 | [History popup (input, cache, refresh)](053-history-popup.md) | PC done; device check pending | 049, 050, 051, 052 |
-| 054 | [History from WebSocket statistics (phase 2)](054-history-ws-statistics.md) | todo | 050, 051 |
+| 054 | [WebSocket statistics client and parser](054-history-ws-statistics.md) | todo | 050, 051 |
+| 055 | [Statistics source on the device](055-history-statistics-device.md) | todo | 053, 054 |
 
 ## Open items (not yet tasks, 2026-10-30)
-- Version: the unreleased CHANGELOG section is "1.0.1" but holds new features (045, 047, history); consider 1.1.0. Ask the user.
+- Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
 - 053: review done, F1-F4 fixed; user decision on rocker focus for sensor/binary widgets (see 053 Notes).
 - 052: draw "unavailable" spans (needs a lib/history Series change). Time-tick follow-up is done (323ad1b).
 - 049: `statistic`/`period`/`source` are not checked against the graph type; 053/054 must handle it.

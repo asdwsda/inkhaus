@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1 (unreleased)
+## 1.1.0 (unreleased)
 
 - Brightness popup for dimmable lights: long press (or rocker long-push), tap-to-set bar, -/+10 %, presets, Off.
 - Wi-Fi profiles in `secrets.yaml` (up to 4), chosen automatically or forced in Settings; HA connection Auto / Internal / External, learned per network.
@@ -52,7 +52,7 @@ First release of Inkling, an e-ink Home Assistant remote for the M5Stack M5Paper
   from the SD card), `tools/screenshot.py`, `tools/serial_capture.py`.
 
 ### Known limitations
-- The splash shows on a cold boot only when the screen record is unknown (e.g. after flashing); a plain reset skips it (planned for 1.0.1).
+- The splash shows on a cold boot only when the screen record is unknown (e.g. after flashing); a plain reset skips it (planned for 1.1.0).
 - The first HTTPS request of a wake takes about 4 s via Cloudflare-hosted domains (TLS
   handshake); later requests of the same wake reuse the connection.
 - The touch controller stays awake during sleep; the standby current is not yet measured.
