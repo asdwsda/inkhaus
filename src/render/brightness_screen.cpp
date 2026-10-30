@@ -77,7 +77,6 @@ void drawBrightnessPopup(M5Canvas &c, const uistate::AppState &app) {
   for (int i = 0; i < 4; ++i)
     labelButton(c, l.presets[i], kPresetText[i], !unknown && pct == uistate::kBrightnessPresets[i]);
   labelButton(c, l.off, "Off", !unknown && pct == 0);
-  labelButton(c, l.done, "Done", false);
 }
 
 }  // namespace render

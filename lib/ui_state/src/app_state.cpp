@@ -446,7 +446,6 @@ bool AppState::popupTouch(ui::Point p, uint32_t now) {
   switch (brightnessHitTest(l, p)) {
     case BrightnessHit::Outside:
     case BrightnessHit::Close:
-    case BrightnessHit::Done:
       return closeBrightness(now);
     case BrightnessHit::Panel: popup_.poke(now); return false;
     case BrightnessHit::Bar: {

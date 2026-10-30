@@ -70,7 +70,7 @@ class AppState {
   bool dimmableLightAt(ui::Point p) const;
   bool longPress(ui::Point p, uint32_t now);      // opens the popup on a dimmable light (or history on a sensor); true if opened
   bool openBrightnessFocused(uint32_t now);       // rocker long push on the focused dimmable light
-  bool closeBrightness(uint32_t now);             // Done (flushes an unsent value); true if it was open
+  bool closeBrightness(uint32_t now);             // close (flushes an unsent value); true if it was open
   bool brightnessOpen() const { return popup_.isOpen(); }
   const BrightnessPopup &brightness() const { return popup_; }
   std::string brightnessTitle() const { return widgetTitle(popup_.widget()); }

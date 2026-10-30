@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
-<!-- Brightness popup, landscape. Spec: docs/ui/brightness.md. Panel (152,98,656,400) + 6 px shadow. State: light at 75 %. -->
+<!-- Brightness popup, landscape. Spec: docs/ui/brightness.md. Panel (152,136,656,324) + 6 px shadow. State: light at 75 %. -->
 <defs>
 <symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/><rect x="10.5" y="4" width="3" height="16" fill="currentColor"/></symbol>
@@ -80,32 +80,30 @@
 <text x="628" y="32" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#000">Garden</text>
 <rect x="700" y="4" width="120" height="56" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
 <text x="760" y="32" font-size="18" text-anchor="middle" dominant-baseline="central" fill="#000">Office</text>
-<rect id="popup-shadow" x="158" y="104" width="656" height="400" rx="8" fill="#000"/>
+<rect id="popup-shadow" x="158" y="142" width="656" height="324" rx="8" fill="#000"/>
 <g id="w-1">
-<rect id="w-1-frame" x="152" y="98" width="656" height="400" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
-<text id="w-1-name" x="168" y="154" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Ceiling light</text>
-<rect id="w-1-close-btn" x="728" y="114" width="64" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<use id="w-1-close-icon" xlink:href="#i-close" x="740.0" y="126.0" width="40" height="40" color="#000"/>
-<text id="w-1-pct" x="168" y="236" font-size="40" text-anchor="start" fill="#000">75<tspan font-size="24" dx="2">%</tspan></text>
-<rect id="w-1-bar-btn" x="324" y="190" width="468" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect id="w-1-bar-fill" x="328" y="194" width="345" height="56" rx="4" fill="#000"/>
-<rect id="w-1-minus-btn" x="168" y="266" width="200" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<use id="w-1-minus-icon" xlink:href="#i-minus" x="213.5" y="278.0" width="40" height="40" color="#000"/>
-<text id="w-1-minus-label" x="261.5" y="306.0" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">10 %</text>
-<rect id="w-1-plus-btn" x="380" y="266" width="200" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<use id="w-1-plus-icon" xlink:href="#i-plus" x="425.5" y="278.0" width="40" height="40" color="#000"/>
-<text id="w-1-plus-label" x="473.5" y="306.0" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">10 %</text>
-<rect id="w-1-off-btn" x="592" y="266" width="200" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<text id="w-1-off-label" x="692.0" y="306.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Off</text>
-<rect id="w-1-p25-btn" x="168" y="342" width="147" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<text id="w-1-p25-label" x="241.5" y="382.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">25%</text>
-<rect id="w-1-p50-btn" x="327" y="342" width="147" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<text id="w-1-p50-label" x="400.5" y="382.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">50%</text>
-<rect id="w-1-p75-btn" x="486" y="342" width="147" height="64" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
-<text id="w-1-p75-label" x="559.5" y="382.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#fff">75%</text>
-<rect id="w-1-p100-btn" x="645" y="342" width="147" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<text id="w-1-p100-label" x="718.5" y="382.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">100%</text>
-<rect id="w-1-done-btn" x="168" y="418" width="624" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
-<text id="w-1-done-label" x="480.0" y="458.0" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Done</text>
+<rect id="w-1-frame" x="152" y="136" width="656" height="324" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
+<text id="w-1-name" x="168" y="192" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">Ceiling light</text>
+<rect id="w-1-close-btn" x="728" y="152" width="64" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-close-icon" xlink:href="#i-close" x="740.0" y="164.0" width="40" height="40" color="#000"/>
+<text id="w-1-pct" x="168" y="274" font-size="40" text-anchor="start" fill="#000">75<tspan font-size="24" dx="2">%</tspan></text>
+<rect id="w-1-bar-btn" x="324" y="228" width="468" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="w-1-bar-fill" x="328" y="232" width="345" height="56" rx="4" fill="#000"/>
+<rect id="w-1-minus-btn" x="168" y="304" width="200" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-minus-icon" xlink:href="#i-minus" x="213.5" y="316" width="40" height="40" color="#000"/>
+<text id="w-1-minus-label" x="261.5" y="344" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">10 %</text>
+<rect id="w-1-plus-btn" x="380" y="304" width="200" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<use id="w-1-plus-icon" xlink:href="#i-plus" x="425.5" y="316" width="40" height="40" color="#000"/>
+<text id="w-1-plus-label" x="473.5" y="344" font-size="24" text-anchor="start" dominant-baseline="alphabetic" fill="#000">10 %</text>
+<rect id="w-1-off-btn" x="592" y="304" width="200" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-off-label" x="692" y="344" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">Off</text>
+<rect id="w-1-p25-btn" x="168" y="380" width="147" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-p25-label" x="241.5" y="420" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">25%</text>
+<rect id="w-1-p50-btn" x="327" y="380" width="147" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-p50-label" x="400.5" y="420" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">50%</text>
+<rect id="w-1-p75-btn" x="486" y="380" width="147" height="64" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-1-p75-label" x="559.5" y="420" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#fff">75%</text>
+<rect id="w-1-p100-btn" x="645" y="380" width="147" height="64" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-1-p100-label" x="718.5" y="420" font-size="24" text-anchor="middle" dominant-baseline="alphabetic" fill="#000">100%</text>
 </g>
 </svg>

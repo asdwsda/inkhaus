@@ -34,56 +34,56 @@ All targets 64 high. Text boxes follow the 1.2 rule; every element sits inside t
 
 ### 3.1 Portrait (540 x 960)
 
-Panel (16, 240, 508, 456), centred in the content area (68..868). Shadow rect (22, 246, 508, 456).
-Dirty rect of the whole popup = (16, 240, 514, 462).
+Panel (16, 278, 508, 380), centred in the content area (68..868). Shadow rect (22, 284, 508, 380).
+Dirty rect of the whole popup = (16, 278, 514, 386). There is no Done button; the close button is the
+only explicit close control.
 
 | Element | Rect (absolute) | Font / icon | Grey | Notes |
 |---------|-----------------|-------------|------|-------|
-| Panel frame | (16, 240, 508, 456) | border 3, r 8 | INK on PAPER | `w-1-frame` |
-| Name | x = 32, cy = 288, left, max width 380 (to x 412) | F24 | INK | truncated with "…" |
-| Close button | (444, 256, 64, 64) | `close` M | INK, outline | closes (= Done) |
-| Percent | centred at x = 270, cy = 352, box (200, 328, 140, 48) | `60` F40 + `%` F24 sharing the baseline y = 366 (unit dx 2) | INK | when off: `Off` F40. Region (190, 324, 160, 56) |
-| Pending icon | (484, 340, 24, 24), cy = 352 | `hourglass` S / `alert` S | INK | only while a change is unsent or unconfirmed; blank otherwise |
-| Bar (tap target) | (32, 388, 476, 64) | border 2, r 8 | INK on PAPER | |
-| Bar fill | (36, 392, round(468 * pct / 100), 56), r 4 | | INK | empty bar at 0 |
-| Step minus | (32, 464, 232, 64) | `minus` M + `10 %` F24, group centred (icon 40, 8 px, text) | INK, outline | |
-| Step plus | (276, 464, 232, 64) | `plus` M + `10 %` F24 | INK, outline | |
-| Preset 25 | (32, 540, 110, 64) | `25%` F24 centred | | |
-| Preset 50 | (154, 540, 110, 64) | `50%` | | |
-| Preset 75 | (276, 540, 110, 64) | `75%` | | |
-| Preset 100 | (398, 540, 110, 64) | `100%` | | |
-| Off | (32, 616, 232, 64) | `Off` F24 | | |
-| Done | (276, 616, 232, 64) | `Done` F24 | | |
+| Panel frame | (16, 278, 508, 380) | border 3, r 8 | INK on PAPER | `w-1-frame` |
+| Name | x = 32, cy = 326, left, max width 380 (to x 412) | F24 | INK | truncated with "..." |
+| Close button | (444, 294, 64, 64) | `close` M | INK, outline | closes, sends pending value |
+| Percent | centred at x = 270, cy = 390, box (200, 366, 140, 48) | `60` F40 + `%` F24 sharing the baseline y = 404 (unit dx 2) | INK | when off: `Off` F40. Region (190, 362, 160, 56) |
+| Pending icon | (484, 378, 24, 24), cy = 390 | `hourglass` S / `alert` S | INK | only while a change is unsent or unconfirmed; blank otherwise |
+| Bar (tap target) | (32, 426, 476, 64) | border 2, r 8 | INK on PAPER | |
+| Bar fill | (36, 430, round(468 * pct / 100), 56), r 4 | | INK | empty bar at 0 |
+| Step minus | (32, 502, 150, 64) | `minus` M + `10 %` F24, group centred (icon 40, 8 px, text) | INK, outline | |
+| Off | (194, 502, 152, 64) | `Off` F24 centred | | filled when off |
+| Step plus | (358, 502, 150, 64) | `plus` M + `10 %` F24 | INK, outline | |
+| Preset 25 | (32, 578, 110, 64) | `25%` F24 centred | | |
+| Preset 50 | (154, 578, 110, 64) | `50%` | | |
+| Preset 75 | (276, 578, 110, 64) | `75%` | | |
+| Preset 100 | (398, 578, 110, 64) | `100%` | | |
 
 Buttons: outline (PAPER, INK border 2). **Filled (INK, PAPER text) means "current"**: the preset
 equal to the current percent, and Off when the light is off. Disabled: Minus at 0 % and Plus at 100 %
 get the unavailable style (dotted OFF border, OFF glyph, no action). Mockup state: 60 % (no preset
-filled).
+filled). Off moved into the step row (Minus | Off | Plus) to free the old last row; the panel is 76 px
+shorter.
 
 ### 3.2 Landscape (960 x 540)
 
-Panel (152, 98, 656, 400), centred in the content area (72..524). Shadow (158, 104, 656, 400).
-Dirty rect of the whole popup = (152, 98, 662, 406). The two-row top block is compressed: percent
+Panel (152, 136, 656, 324), centred in the content area (72..524). Shadow (158, 142, 656, 324).
+Dirty rect of the whole popup = (152, 136, 662, 330). The two-row top block is compressed: percent
 and bar share a row.
 
 | Element | Rect (absolute) | Font / icon | Notes |
 |---------|-----------------|-------------|-------|
-| Panel frame | (152, 98, 656, 400) | border 3, r 8 | |
-| Name | x = 168, cy = 146, max width 540 | F24 INK | |
-| Close button | (728, 114, 64, 64) | `close` M | |
-| Percent | x = 168 left, cy = 222, box (168, 198, 116, 48) | `75` F40 + `%` F24 on one baseline (y = 236) | `Off` when off. Region (160, 190, 130, 64) |
-| Pending icon | (284, 210, 24, 24), cy = 222 | `hourglass` / `alert` S | |
-| Bar | (324, 190, 468, 64), fill (328, 194, round(460 * pct / 100), 56) | | |
-| Step minus | (168, 266, 200, 64) | `minus` M + `10 %` | |
-| Step plus | (380, 266, 200, 64) | `plus` M + `10 %` | |
-| Off | (592, 266, 200, 64) | `Off` F24 | filled when off |
-| Preset 25 / 50 / 75 / 100 | (168, 342, 147, 64), (327, 342, 147, 64), (486, 342, 147, 64), (645, 342, 147, 64) | F24 | the current one filled (mockup: 75 %) |
-| Done | (168, 418, 624, 64) | F24 | |
+| Panel frame | (152, 136, 656, 324) | border 3, r 8 | |
+| Name | x = 168, cy = 184, max width 540 | F24 INK | |
+| Close button | (728, 152, 64, 64) | `close` M | |
+| Percent | x = 168 left, cy = 260, box (168, 236, 116, 48) | `75` F40 + `%` F24 on one baseline (y = 274) | `Off` when off. Region (160, 228, 130, 64) |
+| Pending icon | (284, 248, 24, 24), cy = 260 | `hourglass` / `alert` S | |
+| Bar | (324, 228, 468, 64), fill (328, 232, round(460 * pct / 100), 56) | | |
+| Step minus | (168, 304, 200, 64) | `minus` M + `10 %` | |
+| Step plus | (380, 304, 200, 64) | `plus` M + `10 %` | |
+| Off | (592, 304, 200, 64) | `Off` F24 | filled when off |
+| Preset 25 / 50 / 75 / 100 | (168, 380, 147, 64), (327, 380, 147, 64), (486, 380, 147, 64), (645, 380, 147, 64) | F24 | the current one filled (mockup: 75 %) |
 
-Checks: portrait 16 + 476 + 16 = 508; 3 * 12 + 4 * 110 = 476; vertical 16 + 64 + 12 + 48 (percent) + 12 +
-64 + 12 + 64 + 12 + 64 + 12 + 64 + 16 = 456 (percent row is 64 high with the 48 box centred).
-Landscape 16 + 624 + 16 = 656; 3 * 200 + 2 * 12 = 624; 4 * 147 + 3 * 12 = 624; vertical 16 + 64 + 12 +
-64 + 12 + 64 + 12 + 64 + 12 + 64 + 16 = 400.
+Checks: portrait 16 + 476 + 16 = 508; 3 * 12 + 4 * 110 = 476; 150 + 12 + 152 + 12 + 150 = 476; vertical
+16 + 64 + 8 + 48 (percent) + 12 + 64 + 12 + 64 + 12 + 64 + 16 = 380 (percent box sits 8 below the close
+button, bar 12 below the box). Landscape 16 + 624 + 16 = 656; 3 * 200 + 2 * 12 = 624; 4 * 147 + 3 * 12 =
+624; vertical 16 + 64 + 12 + 64 + 12 + 64 + 12 + 64 + 16 = 324.
 
 ## 4. Value rules
 
@@ -95,7 +95,7 @@ Landscape 16 + 624 + 16 = 656; 3 * 200 + 2 * 12 = 624; 4 * 147 + 3 * 12 = 624; v
   without input the last value is sent (`brightness_pct`, or `light.turn_off` for 0). Hourglass shows
   from the first input until the state is confirmed by the next fetch; a failed send shows `alert`
   until close; on close the real state is drawn with the usual failed badge on the widget.
-- Close on Done, close button, a tap outside, rocker push, or 10 s without input. Closing with an unsent
+- Close on the close button, a tap outside, rocker push, or 10 s without input. Closing with an unsent
   value sends it immediately (no wait for the debounce).
 
 ## 5. Interactions
@@ -105,11 +105,11 @@ Landscape 16 + 624 + 16 = 656; 3 * 200 + 2 * 12 = 624; 4 * 147 + 3 * 12 = 624; v
 | Long press on a dimmable light / rocker long push on it | open popup at the light's current percent | panel + shadow (one refresh) |
 | Tap bar | set pct from x | percent rect, bar rect, preset buttons that change state, Off button if it changes, pending icon |
 | Tap Minus / Plus / preset / Off | set value | same set as above (+ the tapped button briefly needs nothing extra: no pressed state) |
-| Tap Done, close button, outside | close (sends pending value) | panel + shadow, plus the light widget rect (new "On 60%") |
-| 10 s inactivity | same as Done | same |
+| Tap close button, outside | close (sends pending value) | panel + shadow, plus the light widget rect (new "On 60%") |
+| 10 s inactivity | same as close button | same |
 | Rocker UP / DOWN | + 10 % / - 10 % (UP brighter) | as for Plus / Minus |
-| Rocker PUSH | Done | as Done |
-| Rocker long push | close | as Done |
+| Rocker PUSH | close (sends pending value) | as close |
+| Rocker long push | close | as close |
 
 Rocker order note: task 045 wrote "up/down = -/+10 %"; this spec uses UP = +10 (brighter), which is the
 natural reading and matches the cover widget. Decided: portrait UP = brighter; landscape the key pointing right (BtnC) = brighter.

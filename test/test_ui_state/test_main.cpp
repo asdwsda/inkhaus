@@ -1066,12 +1066,13 @@ void test_brightness_layout_hits_and_bar() {
     TEST_ASSERT_EQUAL(int(BrightnessHit::Close), int(brightnessHitTest(l, {l.close.x + 5, l.close.y + 5})));
     TEST_ASSERT_EQUAL(int(BrightnessHit::Bar), int(brightnessHitTest(l, {l.bar.x + 5, l.bar.y + 5})));
     TEST_ASSERT_EQUAL(int(BrightnessHit::Preset2), int(brightnessHitTest(l, {l.presets[2].x + 3, l.presets[2].y + 3})));
-    TEST_ASSERT_EQUAL(int(BrightnessHit::Done), int(brightnessHitTest(l, {l.done.x + 3, l.done.y + 3})));
+    TEST_ASSERT_EQUAL(int(BrightnessHit::Off), int(brightnessHitTest(l, {l.off.x + 3, l.off.y + 3})));
+    TEST_ASSERT_TRUE(ui::rectInside(l.panel, l.dirty));
     TEST_ASSERT_EQUAL(int(BrightnessHit::Panel), int(brightnessHitTest(l, {l.panel.x + 2, l.panel.y + 2})));
     TEST_ASSERT_TRUE(brightnessBarFraction(l, l.bar.x) == 0.0);
     TEST_ASSERT_TRUE(brightnessBarFraction(l, l.bar.x + l.bar.w + 50) == 1.0);
     // every control sits inside the panel
-    for (const ui::Rect &r : {l.close, l.bar, l.minus, l.plus, l.off, l.done, l.presets[0], l.presets[3]})
+    for (const ui::Rect &r : {l.close, l.bar, l.minus, l.plus, l.off, l.presets[0], l.presets[3]})
       TEST_ASSERT_TRUE(ui::rectInside(r, l.panel));
   }
 }

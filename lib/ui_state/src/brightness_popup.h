@@ -1,7 +1,7 @@
 #pragma once
 // Model of the brightness popup (task 045). Pure logic with a millisecond clock; no drawing.
 // The value is optimistic from the first change. Changes are debounced: the last value is sent
-// once kSendDebounceMs passed without input. The popup closes on Done, tap outside or after
+// once kSendDebounceMs passed without input. The popup closes on the close button, tap outside or after
 // kIdleCloseMs without input; closing flushes an unsent value.
 #include <cstdint>
 #include <functional>

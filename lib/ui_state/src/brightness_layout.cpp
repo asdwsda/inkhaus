@@ -6,35 +6,33 @@ BrightnessLayout brightnessLayout(settings::Orientation o) {
   BrightnessLayout l;
   if (o == settings::Orientation::Landscape) {
     l.landscape = true;
-    l.panel = {152, 98, 656, 400};
-    l.dirty = {152, 98, 662, 406};
-    l.close = {728, 114, 64, 64};
-    l.percentRegion = {160, 190, 130, 64};
-    l.pending = {284, 210, 24, 24};
-    l.bar = {324, 190, 468, 64};
-    l.minus = {168, 266, 200, 64};
-    l.plus = {380, 266, 200, 64};
-    l.off = {592, 266, 200, 64};
+    l.panel = {152, 136, 656, 324};
+    l.dirty = {152, 136, 662, 330};
+    l.close = {728, 152, 64, 64};
+    l.percentRegion = {160, 228, 130, 64};
+    l.pending = {284, 248, 24, 24};
+    l.bar = {324, 228, 468, 64};
+    l.minus = {168, 304, 200, 64};
+    l.plus = {380, 304, 200, 64};
+    l.off = {592, 304, 200, 64};
     const int px[4] = {168, 327, 486, 645};
-    for (int i = 0; i < 4; ++i) l.presets[i] = {px[i], 342, 147, 64};
-    l.done = {168, 418, 624, 64};
-    l.nameX = 168; l.nameCy = 146; l.nameMaxW = 540;
-    l.percentX = 168; l.percentBaseline = 236; l.percentCentered = false;
+    for (int i = 0; i < 4; ++i) l.presets[i] = {px[i], 380, 147, 64};
+    l.nameX = 168; l.nameCy = 184; l.nameMaxW = 540;
+    l.percentX = 168; l.percentBaseline = 274; l.percentCentered = false;
   } else {
-    l.panel = {16, 240, 508, 456};
-    l.dirty = {16, 240, 514, 462};
-    l.close = {444, 256, 64, 64};
-    l.percentRegion = {190, 324, 160, 56};
-    l.pending = {484, 340, 24, 24};
-    l.bar = {32, 388, 476, 64};
-    l.minus = {32, 464, 232, 64};
-    l.plus = {276, 464, 232, 64};
+    l.panel = {16, 278, 508, 380};
+    l.dirty = {16, 278, 514, 386};
+    l.close = {444, 294, 64, 64};
+    l.percentRegion = {190, 362, 160, 56};
+    l.pending = {484, 378, 24, 24};
+    l.bar = {32, 426, 476, 64};
+    l.minus = {32, 502, 150, 64};
+    l.off = {194, 502, 152, 64};
+    l.plus = {358, 502, 150, 64};
     const int px[4] = {32, 154, 276, 398};
-    for (int i = 0; i < 4; ++i) l.presets[i] = {px[i], 540, 110, 64};
-    l.off = {32, 616, 232, 64};
-    l.done = {276, 616, 232, 64};
-    l.nameX = 32; l.nameCy = 288; l.nameMaxW = 380;
-    l.percentX = 270; l.percentBaseline = 366; l.percentCentered = true;
+    for (int i = 0; i < 4; ++i) l.presets[i] = {px[i], 578, 110, 64};
+    l.nameX = 32; l.nameCy = 326; l.nameMaxW = 380;
+    l.percentX = 270; l.percentBaseline = 404; l.percentCentered = true;
   }
   return l;
 }
@@ -48,7 +46,6 @@ BrightnessHit brightnessHitTest(const BrightnessLayout &l, ui::Point p) {
   for (int i = 0; i < 4; ++i)
     if (l.presets[i].contains(p)) return BrightnessHit(int(BrightnessHit::Preset0) + i);
   if (l.off.contains(p)) return BrightnessHit::Off;
-  if (l.done.contains(p)) return BrightnessHit::Done;
   return BrightnessHit::Panel;
 }
 
