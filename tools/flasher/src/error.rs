@@ -58,7 +58,7 @@ impl Error {
             Error::Http(403) | Error::Http(429) => "Wait a few minutes and start again, or use \"Choose file...\".".into(),
             Error::Http(_) | Error::Network(_) => "Try again in a moment.".into(),
             Error::BadManifest(_) => "Pick another version.".into(),
-            Error::HashMismatch(_) | Error::BadFile(_) => "Press Install again to download it anew.".into(),
+            Error::HashMismatch(_) | Error::BadFile(_) => "Go back and press Install to download it anew.".into(),
             Error::NoDevice => {
                 if cfg!(windows) {
                     "Connect the M5Paper with a USB cable. If it still does not appear, install the CH9102 USB driver (https://www.wch-ic.com/downloads/CH343SER_EXE.html).".into()

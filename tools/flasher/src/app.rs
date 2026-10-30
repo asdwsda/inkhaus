@@ -434,14 +434,14 @@ impl App {
             View::NoDevice => ("Install", false),
             View::Ready => ("Install", self.can_install()),
             View::Working => ("Please wait", false),
-            View::Done => ("Install again", self.can_install()),
-            View::Error => ("Try again", true),
+            View::Done => ("Back", true),
+            View::Error => ("Back", true),
         };
         let mut act = None;
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = gap;
             if ui::button(ui, label, Kind::Primary, enabled, Vec2::new(main_w, ui::BUTTON_H), 22.0, p) {
-                act = Some(if view == View::Error { Act::Retry } else { Act::Install });
+                act = Some(if matches!(view, View::Error | View::Done) { Act::Back } else { Act::Install });
             }
             if with_upload && ui::button(ui, "Upload YAML...", Kind::Secondary, self.port().is_some(), Vec2::new(upload_w, ui::BUTTON_H), 16.0, p) {
                 act = Some(Act::Upload);
@@ -450,7 +450,7 @@ impl App {
         // Enter presses the primary button unless a widget has focus.
         let enter = ui.ctx().input(|i| i.key_pressed(egui::Key::Enter)) && ui.ctx().memory(|m| m.focused().is_none());
         if enter && enabled && act.is_none() {
-            act = Some(if view == View::Error { Act::Retry } else { Act::Install });
+            act = Some(if matches!(view, View::Error | View::Done) { Act::Back } else { Act::Install });
         }
         act
     }
@@ -468,7 +468,7 @@ pub enum View {
 enum Act {
     Install,
     Upload,
-    Retry,
+    Back,
 }
 
 /// Which card to show.
@@ -507,14 +507,10 @@ impl eframe::App for App {
         match act {
             Some(Act::Install) => self.start(&ctx),
             Some(Act::Upload) => self.start_upload(&ctx),
-            Some(Act::Retry) => {
-                let was_install = matches!(self.outcome, Some(Outcome::Err(_)));
+            Some(Act::Back) => {
                 self.outcome = None;
                 self.upload_note = None;
                 self.show_details = false;
-                if was_install && self.can_install() {
-                    self.start(&ctx);
-                }
             }
             None => {}
         }

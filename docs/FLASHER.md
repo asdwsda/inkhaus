@@ -31,7 +31,7 @@ by itself with the new files (no extra button). Limit: 64 KB per file. Opening t
 ## Problems
 - **No device found**: use a data cable; on Windows install the CH9102 USB driver (WCH CH343 driver).
 - **Port cannot be opened**: close serial monitors, Arduino IDE, PlatformIO.
-- **Checksum does not match**: the download was damaged; press Install again. Nothing is written in that case.
+- **Checksum does not match**: the download was damaged; go back and press Install again. Nothing is written in that case.
 - **Windows SmartScreen / macOS Gatekeeper warn**: the binary is unsigned. Windows: "More info", then "Run anyway".
   macOS: right-click the app, "Open", confirm. If it says the app is damaged, run
   `xattr -dr com.apple.quarantine "Inkhaus Installer.app"` once.
