@@ -16,7 +16,7 @@ history popup (same renderer, graph types, config options and data sources).
   shows it before the fetch finishes.
 - Tap: does nothing (no popup, no focus action).
 - Shows the current value in the widget header; empty / loading / error states as in the popup.
-Out of scope: several entities in one graph, new graph types.
+Out of scope: several entities in one graph, new graph types; other widgets keep fetching all tabs (user, 2026-10-30).
 
 ## Files to touch
 - lib/config (new key, validation), lib/ui (layout size rules), lib/history (cache reuse),
