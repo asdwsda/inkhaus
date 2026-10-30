@@ -370,8 +370,28 @@ void test_merge_into_regions_untouched_region_not_added() {
     TEST_ASSERT_EQUAL(320, rects[0].x);
 }
 
+// Task 077: a diff rect that only overlaps a region (a popup opening over a graph widget) must keep the part
+// outside the region; replacing it by the region left the rest of the popup unrefreshed on the panel.
+void test_merge_into_regions_keeps_rect_extending_beyond_region() {
+    const Rect graph{16, 416, 508, 220};
+    std::vector<Rect> rects{{16, 212, 514, 518}};  // popup panel, covers the graph
+    mergeIntoRegions(rects, {graph});
+    TEST_ASSERT_EQUAL(1, (int)rects.size());
+    TEST_ASSERT_EQUAL(16, rects[0].x);
+    TEST_ASSERT_EQUAL(212, rects[0].y);
+    TEST_ASSERT_EQUAL(514, rects[0].w);
+    TEST_ASSERT_EQUAL(518, rects[0].h);
+    // partial overlap: the union is refreshed
+    std::vector<Rect> r2{{100, 300, 40, 150}};  // from above into the graph
+    mergeIntoRegions(r2, {graph});
+    TEST_ASSERT_EQUAL(1, (int)r2.size());
+    TEST_ASSERT_EQUAL(300, r2[0].y);
+    TEST_ASSERT_TRUE(r2[0].y + r2[0].h >= graph.y + graph.h);
+}
+
 int main() {
     UNITY_BEGIN();
+    RUN_TEST(test_merge_into_regions_keeps_rect_extending_beyond_region);
     RUN_TEST(test_equal_frames_give_no_rects);
     RUN_TEST(test_single_pixel_is_aligned_to_four);
     RUN_TEST(test_one_widget_rect_is_exact);

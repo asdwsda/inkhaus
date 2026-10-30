@@ -1,6 +1,6 @@
 # 074: Graph widget redraw in one refresh
 
-Status: in-progress
+Status: done
 Depends on: 071
 UI spec: docs/ui/history-widget.md (Redraw: one epd_quality partial refresh of the widget)
 Needs device: yes
@@ -24,3 +24,4 @@ Out of scope: changing graph fetch rules, refresh modes of other widgets.
 
 ## Notes
 - Measurement source: 071 Notes (device measurement, 2026-10-30).
+- Done 2026-10-30: user check on the device ok.

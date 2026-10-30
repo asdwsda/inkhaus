@@ -255,13 +255,17 @@ void mergeIntoRegions(std::vector<Rect>& rects, const std::vector<Rect>& regions
     std::vector<bool> used(regions.size(), false);
     std::vector<Rect> out;
     for (const Rect& r : rects) {
-        bool inRegion = false;
+        bool inRegion = false, outside = false;
         for (size_t i = 0; i < regions.size(); ++i) {
             if (regions[i].w <= 0 || regions[i].h <= 0 || !hit(r, regions[i])) continue;
             used[i] = true;
             inRegion = true;
+            const Rect& g = regions[i];
+            if (r.x < g.x || r.y < g.y || r.x + r.w > g.x + g.w || r.y + r.h > g.y + g.h) outside = true;
         }
-        if (!inRegion) out.push_back(r);
+        // A rect reaching beyond the region it touches (a popup over a graph) stays: the region alone would drop
+        // the part outside (task 077); mergeRects() below unites the two.
+        if (!inRegion || outside) out.push_back(r);
     }
     for (size_t i = 0; i < regions.size(); ++i)
         if (used[i]) out.push_back(regions[i]);
