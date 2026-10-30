@@ -38,7 +38,7 @@
 | 035 | [Button mode: deep sleep with power hold](035-safe-button-sleep.md) | in-progress | 024 |
 | 036 | [Fast taps: optimistic UI, keep-alive](036-fast-actions.md) | done | 019, 023 |
 | 037 | [Persist last known states](037-state-cache.md) | done | 023, 025 |
-| 038 | [Status bar states, sleep indicator redesign](038-status-bar-and-sleep-indicator.md) | in-progress | 024 |
+| 038 | [Status bar states, sleep indicator redesign](038-status-bar-and-sleep-indicator.md) | done | 024 |
 | 039 | [Three wake modes, wake-mode fixes](039-wake-modes.md) | done | 034, 035 |
 | 040 | [`unknown` is not `unavailable`](040-unknown-state.md) | done | 028, 036 |
 | 041 | [Debug-log setting, Advanced page, splash](041-debug-log-and-splash.md) | done | 029, 034, 038 |

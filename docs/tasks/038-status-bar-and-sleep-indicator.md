@@ -1,6 +1,6 @@
 # 038: Status bar link states and a nicer sleep indicator (spec, then firmware)
 
-Status: in-progress
+Status: done
 Depends on: 024
 UI spec: docs/ui/STYLE.md (status bar, sleep indicator) — revised by ui-designer
 Needs device: yes (later)
@@ -20,3 +20,4 @@ User feedback: the status bar is blank while connecting; no sign of fetching; va
 - [ ] Firmware implements it; on device: every state visible at the right time.
 
 ## Notes
+- Device session 2026-10-30: user batches 4-5 OK (hotspot -> external and back to internal; demo icons; outdated chip; token rejected).
