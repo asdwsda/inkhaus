@@ -65,5 +65,4 @@
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
 - README: device screenshots, taken once the device is back.
 - User-approved (2026-10-29): Settings overview summary wording (OPEN-S5) and long Wi-Fi names shrink then "..." (OPEN-S6).
-- User to do: convert secrets.yaml `wifi:` to the profile list (secrets.example.yaml).
 - 056: a scan after a deep-sleep wake fails (aps=-2); rare now (scan only after a failed direct connect). Watch `event_ms=-1` in debug.log.
