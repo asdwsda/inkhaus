@@ -1,6 +1,6 @@
 # 008: HTTPS certificate bundle for external_url
 
-Status: in-progress
+Status: done
 Depends on: 004
 UI spec: none
 Needs device: yes (final check only)
@@ -64,3 +64,4 @@ Out of scope: TLS session resumption (later, together with power measurements).
   the Mozilla list. Fix: certs/extra-roots.pem (GlobalSign Root CA R1, SHA-256 EB:D4:…:1C:99, verified
   against the server's cross-signed R4), appended by tools/gen_ca_bundle.sh → 119 roots, 55139 bytes.
   Result: `https://ha.example.org/api/` → status=401, verified=yes (6.1 s with debug logging; measure again).
+- Device session 2026-10-30 (tester): verified or superseded by later daily use; details in the session's device-checklist.md.
