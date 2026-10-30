@@ -37,7 +37,7 @@ You verify one task from docs/tasks/ against its acceptance criteria.
 For each acceptance criterion: PASS, FAIL or NOT VERIFIED, with the evidence
 (test name, command output excerpt, serial log line). For each failure, give
 the exact reproduction steps and your best guess at the cause, with file:line.
-Keep the report short (about 40 lines). Put long logs, tables and coverage maps in a
+Keep the report short (about 20 lines). Put long logs, tables and coverage maps in a
 file in the scratchpad and link it.
 
 ## Device work

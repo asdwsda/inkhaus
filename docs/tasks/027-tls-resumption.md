@@ -70,3 +70,16 @@ transport (high risk, touches the tested HA path) for about 1 s. First measure o
 device with debug logs off: time of DNS, TCP connect, handshake, first byte. If the
 handshake alone is >2 s in release builds, revisit, using a custom ssl_client fork
 and a RTC/NVS blob store behind a build flag (default off).
+
+## Research round 2 (tester, 2026-10-30)
+- No split timings exist (only `HTTP: ms=` in src/net_task.cpp and wake-log `fetch_ms`); the 6 s was with debug logs.
+- Measure first: one `NETT: dns= tcp= tls= ttfb= total=` line (time `WiFi.hostByName`, and
+  `-Wl,--wrap=mbedtls_ssl_handshake` to time the handshake), release env, ~5 cold remote wakes.
+- Cheapest route if handshake >= ~1.2 s: the same linker wrap loads/saves the session around
+  `__real_mbedtls_ssl_handshake` (~60 lines in src/, default-off flag); no fork, no custom transport. Untested (spike build needed).
+- Dead ends: esp_tls tickets (off in precompiled sdkconfig, unused by WiFiClientSecure); faster curve (server picks X25519);
+  HW crypto (already on); smaller trust set (<50 ms). Pinning WE1 would save 0.3-0.5 s but is fragile: not recommended.
+- Correction: ChaCha20 is off in this build; the device negotiates ECDHE-ECDSA-AES-GCM.
+- Storage/security notes above confirmed; budget 4 KB (KEEP_PEER_CERTIFICATE=y), key the blob by host, drop on TLS error.
+- Expected gain 0.6-1.2 s + 1 RTT per remote wake; zero on the local http:// URL.
+- Full notes: tester scratchpad 027-research.md (session 2026-10-30).

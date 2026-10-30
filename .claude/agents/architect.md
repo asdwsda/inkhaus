@@ -71,7 +71,7 @@ Run independent tasks in parallel only when they touch different files.
   what to watch for and wait for "ready" before resetting.
 - ui-designer renders and checks its own mockups (`tools/render_mockups.sh`,
   `tools/check_mockups.py`) before handing over; reject specs without that evidence.
-- Ask agents for short reports (about 40 lines) with long evidence in scratchpad files.
+- Ask agents for short reports (about 20 lines) with long evidence in scratchpad files.
 
 ## Hardware
 Agents can build and run native tests on their own. Flashing and on-device checks

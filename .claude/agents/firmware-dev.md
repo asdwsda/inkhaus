@@ -32,7 +32,7 @@ You implement exactly one task from docs/tasks/ in the M5Paper firmware.
 - Add or update unit tests for any logic you wrote.
 - Report: what you changed (file list), how each acceptance criterion is met,
   and anything left open. Don't commit; the architect does that.
-- Keep the report short (about 40 lines). Put long logs, timings and screenshots in
+- Keep the report short (about 20 lines). Put long logs, timings and screenshots in
   files in the scratchpad and link them.
 - On long tasks, keep a short progress note in the task file's "## Notes" section
   (done / next), so an interrupted session can be continued.
