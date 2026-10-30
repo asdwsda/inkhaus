@@ -27,7 +27,7 @@
 | 023 | [Wire Wi-Fi, Home Assistant and Settings into the app](023-wire-session.md) | done | 017–022, 008 |
 | 024 | [Sleep, wake and scheduled refresh](024-sleep-and-wake.md) | in-progress | 005, 016, 023 |
 | 025 | [Config cache in internal flash](025-config-cache.md) | done | 003, 020 |
-| 026 | [Follow-ups from device session 1](026-device-session-1-followups.md) | in-progress | 023 |
+| 026 | [Follow-ups from device session 1](026-device-session-1-followups.md) | done | 023 |
 | 027 | [TLS session resumption (researched, deferred)](027-tls-resumption.md) | todo | 008 |
 | 028 | [State wording and icons](028-state-wording.md) | in-progress | 026 |
 | 029 | [Wake log on the SD card](029-wake-log-sd.md) | done | 024 |

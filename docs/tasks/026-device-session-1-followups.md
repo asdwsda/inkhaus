@@ -1,6 +1,6 @@
 # 026: Follow-ups from device session 1
 
-Status: in-progress
+Status: done
 Depends on: 023
 UI spec: docs/ui/widgets.md (sensor), STYLE.md (fonts)
 Needs device: yes for the visual check (later)
@@ -34,3 +34,4 @@ Needs device: yes for the visual check (later)
 - PC part done (2026-10-28): `humanise()` + `textState` (wide sensor text in F24); remembered base URL
   persisted (RTC + NVS "net"/"base", written on change, never logged) and restored at net-task start;
   empty id list → no request, OK result. 466 native tests. Device checks pending.
+- Device session 2026-10-30: user batches 4-5 OK (hotspot -> external and back to internal; demo icons; outdated chip; token rejected).
