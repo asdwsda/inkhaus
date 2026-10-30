@@ -1,6 +1,6 @@
 # 062: Flasher app (Rust, single binary)
 
-Status: todo
+Status: PC part done (no device flash yet)
 Depends on: 061 (manifest format)
 UI spec: in this file (desktop, not e-ink)
 Needs device: yes (flash test)

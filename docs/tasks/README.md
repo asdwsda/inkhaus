@@ -39,7 +39,7 @@
 | 036 | [Fast taps: optimistic UI, keep-alive](036-fast-actions.md) | done | 019, 023 |
 | 037 | [Persist last known states](037-state-cache.md) | done | 023, 025 |
 | 038 | [Status bar states, sleep indicator redesign](038-status-bar-and-sleep-indicator.md) | in-progress | 024 |
-| 039 | [Three wake modes, wake-mode fixes](039-wake-modes.md) | in-progress | 034, 035 |
+| 039 | [Three wake modes, wake-mode fixes](039-wake-modes.md) | done | 034, 035 |
 | 040 | [`unknown` is not `unavailable`](040-unknown-state.md) | done | 028, 036 |
 | 041 | [Debug-log setting, Advanced page, splash](041-debug-log-and-splash.md) | done | 029, 034, 038 |
 | 042 | [v1.0 release](042-release-1-0.md) | done | 041 |
@@ -66,7 +66,7 @@
 | 063 | [Build the flasher for Windows, macOS and Linux in CI](063-flasher-ci.md) | todo | 061, 062 |
 | 064 | [Flasher: optional YAML upload to the SD card](064-flasher-yaml-upload.md) | todo | 062, 020 |
 | 065 | [Project website on GitHub Pages](065-project-website.md) | todo | – |
-| 066 | [Choose a new project name (Inkling may be taken)](066-project-name.md) | todo | – |
+| 066 | [Choose a new project name (Inkling may be taken)](066-project-name.md) | in-progress | – |
 | 067 | [Intermittent cold-boot hang after BOOT: controller_id=](067-cold-boot-hang.md) | todo | – |
 
 ## Open items (not yet tasks, 2026-10-30)

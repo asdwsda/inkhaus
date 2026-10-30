@@ -1,6 +1,6 @@
 # 066: Choose a new project name (Inkling may be taken)
 
-Status: todo
+Status: in-progress
 Depends on: none
 UI spec: logo/splash follow-up by ui-designer once a name is chosen
 Needs device: no
@@ -20,3 +20,4 @@ Needs device: no
 - Research (tester, 2026-10-30; full tables + sources in the session scratchpad 066-names.md): Inkling has no HA/HACS/ESPHome
   conflict but is crowded (489 GitHub repos, all package names and main domains taken, Wacom Inkling, a WIPO INKLING mark).
   Ranked alternatives: Inkhaus (cleanest), Tapink, Papertap, Paperdeck, Inkdeck (too close to an e-ink HA dashboard), Inkey.
+- User (2026-10-30): new name **Inkhaus**.

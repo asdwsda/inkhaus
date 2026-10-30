@@ -1,6 +1,6 @@
 # 039: Three wake modes, wake-mode bug fixes
 
-Status: in-progress
+Status: done
 Depends on: 035, 034
 UI spec: docs/ui/settings.md (wake mode row: 3 values; drop the warn icon next to the value)
 Needs device: yes (later)
@@ -30,3 +30,4 @@ Needs device: yes (later)
 
 ## Notes
 - PC part done (2026-10-29): cause of the current-settings bug: goToSleep used the session-start plan (session.cpp:132/363); now always app_logic::planForSleep from g_settings. Schema v2 with legacy 1 → TouchAndButton. EXT1 always Rocker. Warn icon removed. 522 tests. Check on device: "Touch & Button" F40 width in the landscape row.
+- Device session 2026-10-30: user batch 2 all OK (Button / Touch / Touch & Button wake only on their sources).
