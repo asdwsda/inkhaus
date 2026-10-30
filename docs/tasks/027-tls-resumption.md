@@ -83,3 +83,5 @@ and a RTC/NVS blob store behind a build flag (default off).
 - Storage/security notes above confirmed; budget 4 KB (KEEP_PEER_CERTIFICATE=y), key the blob by host, drop on TLS error.
 - Expected gain 0.6-1.2 s + 1 RTT per remote wake; zero on the local http:// URL.
 - Full notes: tester scratchpad 027-research.md (session 2026-10-30).
+- First device sample (task 060, 2026-10-30, release env, debug_log on): remote handshake tls=3510 ms (above the ~1.2 s threshold);
+  needs ~4 more remote samples before starting the linker-wrap resumption spike.
