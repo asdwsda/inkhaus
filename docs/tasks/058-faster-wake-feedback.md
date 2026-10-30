@@ -56,3 +56,8 @@ Analysis (firmware-dev, read-only, 2026-10-30; full: session scratchpad 058-anal
   - Proposal 5: go: start the session/Wi-Fi right after config load; the net task must not touch the display or SD
     while a waveform runs (check the existing locks).
   - Proposal 6 trims: only the SD wakelog write after the first draw; skip the rest.
+- Part 2 implemented (firmware-dev, PC only; device check pending): early badge-pill clear (`present::earlyClear`, quality, no wait)
+  right after rotation on non-scheduled deep-sleep wakes; bootFrame waits first and adopts badge-only tile diffs
+  (`screen_track::adoptClearedTiles`, native test); first frame keeps the cached status (`g_keepStatus`); session/Wi-Fi start moved
+  before frame alloc; wakelog boot line written after the first draw (`begin(..., deferWrite)`, `writeDeferred`).
+  New logs: `t_wake_feedback_ms`, `t_wake_feedback_done_ms`, `early_clear_paper`, `early_clear_adopted_tiles`.

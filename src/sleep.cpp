@@ -28,6 +28,7 @@ const char *kNs = "slp";
 const char *kKeyMarker = "m", *kKeyInd = "ind";
 
 app_logic::Indicator g_stored = app_logic::Indicator::None;
+bool g_badgeOnPanel = false;
 
 app_logic::ResetKind resetKind() {
   switch (esp_reset_reason()) {
@@ -118,6 +119,8 @@ power::WakeReason detect() {
   // The first frame only keeps the indicator of the previous sleep for a scheduled wake that
   // follows a sleep of ours; every other start clears it.
   g_stored = (r == power::WakeReason::RtcAlarm) ? app_logic::indicatorFromByte(ind) : app_logic::Indicator::None;
+  g_badgeOnPanel = in.reset == app_logic::ResetKind::DeepSleep && in.slept_marker &&
+                   app_logic::indicatorFromByte(ind) == app_logic::Indicator::Badge;
   wakelog::logf("WAKE: reason=%s reset=%s pin=%s rtc_flag=%d marker=%d indicator_on_panel=%s\n", app_logic::wakeName(r),
                 resetName(in.reset), pinName(in.pin), in.rtc_alarm_flag ? 1 : 0, in.slept_marker ? 1 : 0,
                 app_logic::indicatorName(g_stored));
@@ -125,6 +128,7 @@ power::WakeReason detect() {
 }
 
 app_logic::Indicator storedIndicator() { return g_stored; }
+bool badgeOnPanel() { return g_badgeOnPanel; }
 
 void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoch, int32_t batteryMv) {
   const app_logic::SleepPath sp = app_logic::planSleepPath(plan, session, nowEpoch);

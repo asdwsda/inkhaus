@@ -9,6 +9,7 @@
 #include "app_config.h"
 #include "demo_mode.h"
 #include "app_state.h"
+#include "ui_layout.h"
 #include "config_sd.h"
 #include "boot.h"
 #include "brightness_intent.h"
@@ -118,6 +119,8 @@ static bool landscape() { return g_app.orientation() == settings::Orientation::L
 
 // Status bar phase (STYLE.md 5.3): never blank. Values restored from the cache (g_restoredEpoch, task 037)
 // count as the last good update until a fetch result replaces them.
+static bool g_keepStatus = false;  // task 058: the first frame after a deep-sleep wake shows the last known status
+
 static void updateStatus() {
   g_status.batteryPct = batteryPercent();
   using P = app_logic::Phase;
@@ -126,7 +129,12 @@ static void updateStatus() {
   bool failed = false;
   if (g_real) {
     phase = P::ConnectingWifi;  // before the session driver exists (first frame)
-    if (g_drv) {
+    if (g_keepStatus && app_logic::plausibleEpoch(g_restoredEpoch)) {
+      // No transient "connecting" in the first frame: the cached time is the last known state (the loop
+      // replaces it as soon as the session reports something else).
+      phase = P::Online;
+      lastOk = g_restoredEpoch;
+    } else if (g_drv) {
       lastOk = g_drv->lastOkEpoch() ? g_drv->lastOkEpoch() : g_restoredEpoch;
       failed = g_drv->lastFetchFailed();
       switch (g_drv->status()) {
@@ -622,7 +630,13 @@ void setup() {
     }
   }
   wakelog::setEnabled(s.debug_log);
-  wakelog::begin(app_logic::wakeName(g_wake), kind);
+  // Early wake feedback (task 058): a touch/rocker wake that finds our sleep badge on the panel clears it
+  // at once. The pill is 96x44 centred in the badge rect; its x is 4-aligned in both orientations.
+  const ui::Rect badgeRect = ui::sleepBadgeRect(s.orientation);
+  const ui::Rect pill{badgeRect.x + badgeRect.w / 2 - 48, badgeRect.y + badgeRect.h / 2 - 22, 96, 44};
+  const bool earlyClear = !g_scheduled && kind == power::Session::Interactive && sleepwake::badgeOnPanel() &&
+                          pill.x % 4 == 0;
+  wakelog::begin(app_logic::wakeName(g_wake), kind, earlyClear);  // earlyClear: the SD write waits for the first draw
   if (g_scheduled) g_status.sleepBadge = sleepwake::storedIndicator() == app_logic::Indicator::Badge;
 
 #ifdef DEMO_LANDSCAPE
@@ -637,6 +651,7 @@ void setup() {
   d.getPanel()->setAutoDisplay(false);
   d.setRotation(rotation);
   if (kind == power::Session::LowBattery) lowBatterySleep();  // returns only if sleeping failed
+  if (earlyClear) present::earlyClear(pill.x, pill.y, pill.w, pill.h);  // no wait: the CPU work below overlaps the waveform
   if (!g_scheduled) input::begin();  // a scheduled refresh never initialises touch input
 
   // Cold boot splash (docs/ui/splash.md): power-on, reset button or flashing. One GC16 refresh, then the rest of setup runs.
@@ -697,7 +712,18 @@ void setup() {
 #endif
   boot::mark("config");
 
+  // Start Wi-Fi early (task 058): the connect overlaps frame composition and the first draw. The net task
+  // touches neither the display nor the SD card before the first fetch result, which the loop applies.
+  if (g_real) {
+    session_glue::loadClockFromRtc();
+    g_net.begin(cfg.cfg.connection.ha.internalUrl, cfg.cfg.connection.ha.externalUrl, cfg.cfg.connection.ha.token);
+    startSession(millis());
+  }
+  g_keepStatus = g_real && esp_reset_reason() == ESP_RST_DEEPSLEEP;
+
   if (!framesReady && !present::begin()) {
+    present::settleEarlyClear();
+    wakelog::writeDeferred();
     boot::log("fatal", "frame_alloc_failed");
     present::showError("Out of memory");
     boot::log("version", "017");
@@ -719,8 +745,11 @@ void setup() {
     boot::feed();
     delay(10);
   }
-  present::bootFrame(boot::fallbackActive() || splashed);  // after the splash: ghost-free full redraw
+  present::EarlyClear early{pill.x, pill.y, pill.w, pill.h, [](M5Canvas &c) { render::drawSleepBadgeOverlay(c, g_settings.orientation); }};
+  present::bootFrame(boot::fallbackActive() || splashed, earlyClear ? &early : nullptr);  // after the splash: ghost-free full redraw
+  g_keepStatus = false;  // the loop compares the live status with this frame's and redraws what differs
   boot::mark("first_draw");
+  wakelog::writeDeferred();
 
   boot::log("version", "017");
   boot::log("orientation", (long)rotation);
@@ -733,11 +762,6 @@ void setup() {
 #ifdef TLS_CHECK
   tls_check::run();
 #endif
-  if (g_real) {
-    session_glue::loadClockFromRtc();
-    g_net.begin(cfg.cfg.connection.ha.internalUrl, cfg.cfg.connection.ha.externalUrl, cfg.cfg.connection.ha.token);
-    startSession(millis());
-  }
 #ifdef TEST_SETTINGS
   openSettings(true, millis());
 #endif

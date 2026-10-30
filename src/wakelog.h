@@ -17,7 +17,11 @@ void note(const char *line);
 // printf to Serial (as before) and note() of the same line (without its newline).
 void logf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 // Call right after boot::begin() and the wake detection: remembers the wake reason and the start.
-void begin(const char *wakeName, power::Session session);
+// deferWrite: keep the boot line in RAM instead of writing it to the SD card now (task 058: no SD access while
+// the wake-feedback waveform runs); writeDeferred() appends it later.
+void begin(const char *wakeName, power::Session session, bool deferWrite = false);
+// Writes the boot line kept by begin(..., true), if any.
+void writeDeferred();
 // Phase marks (millis() values). Only the first Wi-Fi/fetch of a wake counts.
 void sessionStarted(uint32_t nowMs);
 void wifiUp(uint32_t nowMs);

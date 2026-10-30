@@ -18,6 +18,10 @@ power::WakeReason detect();
 // Valid after detect(); only meaningful for a scheduled-refresh wake (the first frame then keeps it).
 app_logic::Indicator storedIndicator();
 
+// True if the panel still shows the sleep badge of our previous deep sleep (any wake kind except a power-up
+// or reset). Valid after detect(). Task 058: the early wake feedback clears it.
+bool badgeOnPanel();
+
 // Last step of a session. Persists the marker and the indicator variant, arms the BM8563 alarm, then
 // either releases the main power hold (PowerOff; on battery the device is off after this call) or
 // enters ESP32 deep sleep (Touch mode, and the USB-powered fallback of PowerOff). Does not return

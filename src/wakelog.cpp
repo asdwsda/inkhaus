@@ -30,6 +30,7 @@ constexpr bool kForced = false;
 #endif
 bool g_enabled = kForced;
 std::string g_pending;
+std::string g_deferredBoot;  // boot line waiting for writeDeferred()
 
 app_logic::WakeRecord g_rec;
 uint32_t g_sessionStartMs = 0, g_wifiMs = 0;
@@ -161,7 +162,7 @@ void setSleptPath(const char *path) {
   g_rtcSleptPath[sizeof g_rtcSleptPath - 1] = 0;
 }
 
-void begin(const char *wakeName, power::Session session) {
+void begin(const char *wakeName, power::Session session, bool deferWrite) {
   if (!g_enabled) return;
   g_rec = app_logic::WakeRecord();
   g_rec.wake = wakeName;
@@ -186,7 +187,15 @@ void begin(const char *wakeName, power::Session session) {
   b.session = "boot";
   b.battery_mv = int32_t(M5.Power.getBatteryVoltage());
   b.awake_ms = int32_t(millis());
-  appendLine(app_logic::wakeLogLine(b));
+  if (deferWrite) g_deferredBoot = app_logic::wakeLogLine(b);
+  else appendLine(app_logic::wakeLogLine(b));
+}
+
+void writeDeferred() {
+  if (g_deferredBoot.empty()) return;
+  const std::string line = g_deferredBoot;
+  g_deferredBoot.clear();
+  appendLine(line);
 }
 
 void sessionStarted(uint32_t nowMs) {

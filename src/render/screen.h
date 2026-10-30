@@ -24,5 +24,8 @@ struct StatusInfo {
 };
 
 void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &status);
+// Just the sleep badge (what renderScreen draws last when status.sleepBadge is set), for the early-clear
+// bookkeeping at wake (task 058).
+void drawSleepBadgeOverlay(M5Canvas &c, settings::Orientation o);
 
 }  // namespace render

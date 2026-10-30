@@ -27,10 +27,25 @@ bool hasValidRecord();
 M5Canvas &canvas();
 const M5Canvas &previous();
 
+// Task 058, wake feedback: clears the sleep badge's pill on the panel at once. Fills the 4-px-aligned
+// rect (x, y, w, h, display coordinates, rotation already set) paper and starts an epd_quality refresh of
+// just that rect; does NOT wait (the controller is cold, its previous image unknown: no epd_fastest).
+// Needs no frames. Nothing may touch the controller or the SD card until bootFrame() or settleEarlyClear().
+// Logs t_wake_feedback_ms.
+void earlyClear(int x, int y, int w, int h);
+// Waits for the early refresh (no-op if none is running); logs t_wake_feedback_done_ms.
+void settleEarlyClear();
+// What bootFrame() needs to know about an early clear: the cleared rect and a function drawing the badge
+// into a canvas. The rect counts as paper in the diff baseline when the new frame has paper there.
+struct EarlyClear {
+  int x, y, w, h;
+  void (*drawBadge)(M5Canvas &);
+};
+
 // First frame after boot: `canvas()` holds the rendered screen. Decides between a full redraw
 // (no record, other geometry, forced) and "diff against the stored tile hashes of what the panel
 // shows", pushes the whole frame into controller memory without a refresh in the latter case.
-void bootFrame(bool forceFull);
+void bootFrame(bool forceFull, const EarlyClear *early = nullptr);
 
 // A new frame is in canvas(). Full: GC16 refresh of the whole screen (tab/page change).
 // Partial: diff against the previous frame; per changed rectangle, epd_fastest if the panel holds only

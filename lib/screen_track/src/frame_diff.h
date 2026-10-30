@@ -53,6 +53,15 @@ uint32_t hashOfTiles(const std::vector<uint16_t>& tiles);
 std::vector<Rect> diffTiles(const std::vector<uint16_t>& a, const std::vector<uint16_t>& b, int w,
                             int h, const DiffOptions& opts = DiffOptions());
 
+// Task 058: a region of the panel was cleared early (the sleep badge removed before the frame was
+// ready). `stored` holds the hashes of the old frame (badge included); `now` the new frame (badge
+// region plain paper); `nowWithBadge` the new frame with the badge drawn into it. A tile touching
+// `cleared` whose stored hash equals the one with the badge differs from the new frame only by the
+// badge, which is already gone from the panel: its stored hash is set to `now`. Other tiles stay.
+// Returns the number of tiles adopted. Vectors of another size: nothing happens.
+size_t adoptClearedTiles(std::vector<uint16_t>& stored, const std::vector<uint16_t>& now,
+                         const std::vector<uint16_t>& nowWithBadge, int w, int h, const Rect& cleared);
+
 // ---- run-length coding for the serial screenshot ---------------------------------------------
 // Byte pairs (count-1, value), count 1..256. Used by "shotz".
 size_t rleEncode(const uint8_t* data, size_t len, uint8_t* out, size_t outCap);

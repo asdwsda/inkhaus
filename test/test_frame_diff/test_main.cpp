@@ -178,6 +178,40 @@ void test_tile_diff_finds_changed_tile_only() {
     TEST_ASSERT_EQUAL(0, (int)diffTiles(ha, ha, W, H).size());
 }
 
+// Task 058: the badge was cleared early; only its tiles that differ by the badge alone are adopted.
+void test_adopt_cleared_tiles() {
+    const Rect badge{40, 4, 100, 48};  // tiles cols 1..4, rows 0..1
+    auto fresh = blank();
+    auto old = fresh;  // old frame: badge drawn
+    for (int y = 4; y < 52; ++y)
+        for (int x = 40; x < 140; ++x) old[size_t(y) * W + x] = 0;
+    auto withBadge = old;  // new frame + badge: same as old when nothing else changed
+    auto stored = tileHashes(old.data(), W, H, W);
+    const auto now = tileHashes(fresh.data(), W, H, W);
+    const auto wb = tileHashes(withBadge.data(), W, H, W);
+    TEST_ASSERT_TRUE(diffTiles(stored, now, W, H).size() == 1);
+    auto s1 = stored;
+    TEST_ASSERT_EQUAL(8, (int)adoptClearedTiles(s1, now, wb, W, H, badge));
+    TEST_ASSERT_EQUAL(0, (int)diffTiles(s1, now, W, H).size());
+    // something else changed inside a badge tile (outside the badge): that tile keeps its diff
+    auto fresh2 = fresh;
+    fresh2[size_t(60) * W + 36] = 0;  // tile col 1, row 1, outside the badge rect
+    const auto now2 = tileHashes(fresh2.data(), W, H, W);
+    auto with2 = fresh2;
+    for (int y = 4; y < 52; ++y)
+        for (int x = 40; x < 140; ++x) with2[size_t(y) * W + x] = 0;
+    auto s2 = stored;
+    adoptClearedTiles(s2, now2, tileHashes(with2.data(), W, H, W), W, H, badge);
+    const auto r = diffTiles(s2, now2, W, H);
+    TEST_ASSERT_EQUAL(1, (int)r.size());
+    TEST_ASSERT_TRUE(covers(r, 36, 60));
+    // mismatching sizes / empty rect: untouched
+    auto s3 = stored;
+    TEST_ASSERT_EQUAL(0, (int)adoptClearedTiles(s3, now, {}, W, H, badge));
+    TEST_ASSERT_EQUAL(0, (int)adoptClearedTiles(s3, now, wb, W, H, Rect{0, 0, 0, 0}));
+    TEST_ASSERT_TRUE(s3 == stored);
+}
+
 void test_tile_diff_partial_edge_tiles_are_clamped() {
     auto a = blank(), b = blank();
     b[size_t(H - 1) * W + (W - 1)] = 0;  // last (partial) tile: 28 px wide, 32 high
@@ -329,6 +363,7 @@ int main() {
     RUN_TEST(test_align_rect_clamps);
     RUN_TEST(test_tile_grid_and_hash_stability);
     RUN_TEST(test_tile_diff_finds_changed_tile_only);
+    RUN_TEST(test_adopt_cleared_tiles);
     RUN_TEST(test_tile_diff_partial_edge_tiles_are_clamped);
     RUN_TEST(test_tile_diff_geometry_mismatch_means_everything);
     RUN_TEST(test_tile_diff_agrees_with_pixel_diff_coverage);

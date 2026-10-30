@@ -203,6 +203,28 @@ std::vector<Rect> diffTiles(const std::vector<uint16_t>& a, const std::vector<ui
     return out;
 }
 
+size_t adoptClearedTiles(std::vector<uint16_t>& stored, const std::vector<uint16_t>& now,
+                         const std::vector<uint16_t>& nowWithBadge, int w, int h, const Rect& cleared) {
+    const TileGrid g = tileGridFor(w, h);
+    if (stored.size() != g.count() || now.size() != g.count() || nowWithBadge.size() != g.count() ||
+        cleared.w <= 0 || cleared.h <= 0)
+        return 0;
+    const int tx0 = std::max(cleared.x, 0) / kTileSize;
+    const int ty0 = std::max(cleared.y, 0) / kTileSize;
+    const int tx1 = std::min((cleared.x + cleared.w - 1) / kTileSize, g.cols - 1);
+    const int ty1 = std::min((cleared.y + cleared.h - 1) / kTileSize, g.rows - 1);
+    size_t n = 0;
+    for (int ty = ty0; ty <= ty1; ++ty)
+        for (int tx = tx0; tx <= tx1; ++tx) {
+            const size_t i = size_t(ty) * size_t(g.cols) + size_t(tx);
+            if (stored[i] != now[i] && stored[i] == nowWithBadge[i]) {
+                stored[i] = now[i];
+                ++n;
+            }
+        }
+    return n;
+}
+
 size_t rleEncode(const uint8_t* data, size_t len, uint8_t* out, size_t outCap) {
     size_t n = 0, i = 0;
     while (i < len) {

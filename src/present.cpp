@@ -320,6 +320,29 @@ bool begin() {
   return ok;
 }
 
+namespace {
+bool g_earlyPending = false;
+}
+
+void earlyClear(int x, int y, int w, int h) {
+  auto &d = M5.Display;
+  d.startWrite();
+  d.setEpdMode(epd_mode_t::epd_quality);
+  d.fillRect(x, y, w, h, TFT_WHITE);
+  d.endWrite();
+  d.setEpdMode(epd_mode_t::epd_quality);
+  d.display(x, y, w, h);
+  g_earlyPending = true;
+  boot::log("t_wake_feedback_ms", (long)boot::elapsedMs());
+}
+
+void settleEarlyClear() {
+  if (!g_earlyPending) return;
+  g_earlyPending = false;
+  waitAndCheck("wake_feedback");
+  boot::log("t_wake_feedback_done_ms", (long)boot::elapsedMs());
+}
+
 void showError(const char *msg) {
   auto &d = M5.Display;
   boot::log("error_screen", msg);
@@ -371,8 +394,9 @@ bool hasValidRecord() {
 M5Canvas &canvas() { return g_cur; }
 const M5Canvas &previous() { return g_panel; }
 
-void bootFrame(bool forceFull) {
+void bootFrame(bool forceFull, const EarlyClear *early) {
   auto &d = M5.Display;
+  settleEarlyClear();  // before anything is written to the controller
   std::vector<uint16_t> stored;
   const bool have = !forceFull && loadRecord(stored);
   boot::log("record", have ? "valid" : (forceFull ? "ignored_forced" : "none_or_other_geometry"));
@@ -392,6 +416,33 @@ void bootFrame(bool forceFull) {
   }
   g_recordValid = true;
   const auto now = screen_track::tileHashes(buf(g_cur), g_w, g_h, g_w);
+  size_t adopted = 0;
+  if (early && early->w > 0 && early->h > 0 && early->x >= 0 && early->y >= 0 && early->x + early->w <= g_w &&
+      early->y + early->h <= g_h) {
+    // The pill is already off the panel: where the new frame is paper there, the panel matches it, so the
+    // tiles that differ from the stored frame by the badge alone need no refresh.
+    bool paper = true;
+    for (int y = early->y; y < early->y + early->h && paper; ++y) {
+      const uint8_t *row = buf(g_cur) + size_t(y) * size_t(g_w);
+      for (int x = early->x; x < early->x + early->w; ++x)
+        if (row[x] != 255) { paper = false; break; }
+    }
+    if (paper && early->drawBadge) {
+      std::vector<uint8_t> save(size_t(early->w) * size_t(early->h));
+      for (int y = 0; y < early->h; ++y)
+        memcpy(save.data() + size_t(y) * size_t(early->w), buf(g_cur) + size_t(early->y + y) * size_t(g_w) + size_t(early->x),
+               size_t(early->w));
+      early->drawBadge(g_cur);
+      const auto withBadge = screen_track::tileHashes(buf(g_cur), g_w, g_h, g_w);
+      for (int y = 0; y < early->h; ++y)
+        memcpy(buf(g_cur) + size_t(early->y + y) * size_t(g_w) + size_t(early->x), save.data() + size_t(y) * size_t(early->w),
+               size_t(early->w));
+      adopted = screen_track::adoptClearedTiles(stored, now, withBadge, g_w, g_h,
+                                                Rect{early->x, early->y, early->w, early->h});
+    }
+    boot::log("early_clear_paper", paper ? 1L : 0L);
+    boot::log("early_clear_adopted_tiles", (long)adopted);
+  }
   const auto rects = screen_track::diffTiles(stored, now, g_w, g_h);
   // The controller's memory may hold garbage (cold start) or be intact; either way, write the
   // whole frame into it without refreshing, then refresh only what differs from the panel.
@@ -404,7 +455,7 @@ void bootFrame(bool forceFull) {
   boot::log("rerender_ms", (long)((micros() - t1) / 1000));
   copyAllToPrev();
   boot::log("diff_rects", (long)rects.size());
-  if (!rects.empty()) touchRecord();
+  if (!rects.empty() || adopted) touchRecord();  // adopted: the panel no longer shows the stored frame
   // Task 058: smallest rect first. The sleep indicator (the thing the user is waiting to see go away
   // after a wake) is far smaller than the status text; its refresh is done first. Not merged into one
   // union: the union of two distant rects is much larger and not clearly faster.

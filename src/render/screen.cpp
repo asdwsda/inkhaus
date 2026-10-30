@@ -183,6 +183,8 @@ void drawSleepBadge(M5Canvas &c, Orientation o) {
 
 }  // namespace
 
+void drawSleepBadgeOverlay(M5Canvas &c, settings::Orientation o) { drawSleepBadge(c, o); }
+
 void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &status) {
   c.fillScreen(PAPER);
   if (app.screen() == uistate::Screen::ConfigError) {
