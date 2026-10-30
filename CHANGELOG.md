@@ -1,6 +1,9 @@
 # Changelog
 
 ## 1.1.0 (unreleased)
+- History popup for sensors: long press or rocker opens a 24 h line / step graph, 7 d+ and daily bars from HA statistics.
+- Sensor values show 1 decimal by default (`decimals` overrides).
+- Wi-Fi Auto reconnects to the last network without a scan.
 
 - Brightness popup for dimmable lights: long press (or rocker long-push), tap-to-set bar, -/+10 %, presets, Off.
 - Wi-Fi profiles in `secrets.yaml` (up to 4), chosen automatically or forced in Settings; HA connection Auto / Internal / External, learned per network.

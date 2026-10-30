@@ -55,7 +55,7 @@
 | 052 | [History graph renderer](052-history-graph-renderer.md) | done | 048, 050 |
 | 053 | [History popup (input, cache, refresh)](053-history-popup.md) | done | 049, 050, 051, 052 |
 | 054 | [WebSocket statistics client and parser](054-history-ws-statistics.md) | done | 050, 051 |
-| 055 | [Statistics source on the device](055-history-statistics-device.md) | todo | 053, 054 |
+| 055 | [Statistics source on the device](055-history-statistics-device.md) | done | 053, 054 |
 | 056 | [Wi-Fi scan always fails](056-wifi-scan-fails.md) | done | 047 |
 
 ## Open items (not yet tasks, 2026-10-30)

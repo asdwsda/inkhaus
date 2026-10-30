@@ -103,6 +103,7 @@ WidgetData AppState::widgetData(int idx) const {
   if (!w) return d;
   d.type = w->type;
   d.group = !w->group.empty();
+  d.cfg = w;
   d.members = membersOf(*w);
   for (const std::string &id : w->entities) {
     auto it = marks_.find(id);

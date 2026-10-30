@@ -1,6 +1,6 @@
 # 055: Statistics source on the device (history phase 2 wiring)
 
-Status: todo
+Status: done
 Depends on: 053, 054
 UI spec: docs/ui/history.md
 Needs device: yes
@@ -31,3 +31,6 @@ Needs device: yes
   ignores fragmentation; architect decision: simpler and safe, a history popup is rare). F2 bars are
   aligned to UTC days; HA day buckets start at local midnight: use the local offset in barWindow.
   F3 heap_min is the since-boot minimum. No native coverage for the Arduino socket/connector.
+- 2026-10-30 device check: 7 d line (Outside) OK; daily bars (DP buffer) OK after wiring buckets into the
+  renderer and a bucket-based empty check; `heap_min=123836`; a tap right after works. Also: window text
+  "7 days"; sensor values default to 1 decimal on tile and popup (`decimals` overrides, integers stay).

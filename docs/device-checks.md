@@ -64,3 +64,4 @@ tagged `UNVERIFIED` in code comments and task notes.
 - [x] History popup closes before sleep; rocker opens/closes it; graph looks right (task 053, user 2026-10-30)
 - [x] Brightness popup without Done: [X] only, - / Off / + row, steps and presets work (task 045, user 2026-10-30)
 - [x] Forced Wi-Fi profile + Internal connects (cache hit 0.23 s, `link=local`) (task 047, 2026-10-30)
+- [x] History from statistics: 7 d line and daily bars, heap_min 124 KB, tap afterwards works (task 055, user 2026-10-30)

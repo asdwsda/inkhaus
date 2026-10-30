@@ -300,6 +300,42 @@ StepSummary stepSummary(const Series& s) {
   return r;
 }
 
+std::string barLabel(int64_t start, int64_t bs, bool newest, int off) {
+  const int64_t local = start + off;
+  if (bs >= 86400) {
+    if (newest) return "Today";
+    static const char* kDays[] = {"Thu", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"};  // 1970-01-01 was a Thursday
+    int64_t d = local / 86400;
+    if (local < 0 && local % 86400) d--;
+    return kDays[((d % 7) + 7) % 7];
+  }
+  int64_t h = (local / 3600) % 24;
+  if (h < 0) h += 24;
+  char b[4];
+  snprintf(b, sizeof b, "%02d", (int)h);
+  return b;
+}
+
+bool barRange(const Series& s, float& lo, float& hi) {
+  bool any = false;
+  lo = hi = 0;
+  for (const Bucket& b : s.buckets) {
+    if (!b.has) continue;
+    if (!any || b.last < lo) lo = b.last;
+    if (!any || b.last > hi) hi = b.last;
+    any = true;
+  }
+  return any;
+}
+
+bool hasContent(ChartType type, const Series& s) {
+  if (type == ChartType::Bar) {
+    float lo, hi;
+    return barRange(s, lo, hi);
+  }
+  return !s.empty();
+}
+
 // ---- bars --------------------------------------------------------------------------------------
 
 std::vector<BarSlot> barSlots(const Rect& plot, int n) {

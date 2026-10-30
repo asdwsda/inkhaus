@@ -43,6 +43,7 @@ using ActionSink = std::function<void(int tab, int widget, int sub, const std::v
 struct WidgetData {
   config::WidgetType type = config::WidgetType::Sensor;
   bool group = false;
+  const config::Widget *cfg = nullptr;  // the widget's config (sensor options: decimals, attribute, unit)
   std::vector<const EntityState *> members;
   bool pending = false;     // the hourglass state; no longer set (taps are optimistic, task 036)
   bool optimistic = false;  // members show the requested result of a tap that is still unconfirmed

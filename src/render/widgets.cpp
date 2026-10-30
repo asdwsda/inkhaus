@@ -245,7 +245,7 @@ void drawClimate(Ctx &x, const uistate::WidgetData &d, const std::string &title)
 
 void drawSensor(Ctx &x, const ui::Placement &pl, const uistate::WidgetData &d, const std::string &title) {
   const EntityState *st = d.members.empty() ? nullptr : d.members[0];
-  const auto v = uistate::sensorView(st);
+  const auto v = uistate::sensorView(st, d.cfg);
   const bool una = v.look == Look::Unavailable;
   drawFrame(x, PAPER, una);
   const int W = x.W();

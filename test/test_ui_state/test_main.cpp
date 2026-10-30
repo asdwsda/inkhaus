@@ -977,6 +977,24 @@ static config::Widget sensorOpts(const char* attr) {
   return w;
 }
 
+void test_sensor_default_one_decimal() {
+  EntityState s = E("sensor.d", "45.37");
+  TEST_ASSERT_EQUAL_STRING("45.4", sensorView(&s).value.c_str());
+  s.state = "45.3712345678901";
+  TEST_ASSERT_EQUAL_STRING("45.4", sensorView(&s).value.c_str());
+  s.state = "45";
+  TEST_ASSERT_EQUAL_STRING("45", sensorView(&s).value.c_str());
+  config::Widget w;
+  s.state = "45.37";
+  TEST_ASSERT_EQUAL_STRING("45.4", sensorView(&s, &w).value.c_str());
+  w.decimals = 0;
+  TEST_ASSERT_EQUAL_STRING("45", sensorView(&s, &w).value.c_str());
+  w.decimals = 2;
+  TEST_ASSERT_EQUAL_STRING("45.37", sensorView(&s, &w).value.c_str());
+  s.state = "45";
+  TEST_ASSERT_EQUAL_STRING("45.00", sensorView(&s, &w).value.c_str());
+}
+
 void test_sensor_attribute_main_value() {
   EntityState s = E("sensor.c", "21.5");
   s.unit_of_measurement = "kWh";
@@ -984,7 +1002,7 @@ void test_sensor_attribute_main_value() {
   config::Widget w = sensorOpts("humidity");
   SensorView v = sensorView(&s, &w);
   TEST_ASSERT_TRUE(v.numeric);
-  TEST_ASSERT_EQUAL_STRING("45.678", v.value.c_str());
+  TEST_ASSERT_EQUAL_STRING("45.7", v.value.c_str());  // default: 1 decimal
   TEST_ASSERT_EQUAL_STRING("%", v.unit.c_str());  // attribute's own unit, not the state's kWh
   w.decimals = 1;
   TEST_ASSERT_EQUAL_STRING("45.7", sensorView(&s, &w).value.c_str());
@@ -1330,6 +1348,7 @@ int main() {
   RUN_TEST(test_optimistic_cover_direction_and_vacuum);
   RUN_TEST(test_sink_fast_double_taps);
   RUN_TEST(test_sink_also_in_demo_mode);
+  RUN_TEST(test_sensor_default_one_decimal);
   RUN_TEST(test_sensor_attribute_main_value);
   RUN_TEST(test_sensor_state_with_decimals_and_unit_override);
   RUN_TEST(test_sensor_details);

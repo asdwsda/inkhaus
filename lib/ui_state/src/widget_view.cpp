@@ -252,6 +252,14 @@ std::string unitText(const std::string &u) {
   return (tight ? "" : " ") + u;
 }
 
+// Numeric text: explicit decimals round; otherwise integers stay as written and anything with a
+// fraction (or exponent) gets 1 decimal ("45.37" -> "45.4", raw HA states can carry 13 digits).
+std::string numText(const std::string &raw, double d, const std::optional<int> &decimals) {
+  if (decimals) return fmtNumber(d, *decimals);
+  if (raw.find_first_of(".eE") == std::string::npos) return raw;
+  return fmtNumber(d, 1);
+}
+
 // Value text of one attribute: numbers rounded when decimals is set, text humanised, missing "-".
 std::string attrValue(const std::string *raw, const std::optional<int> &decimals, bool &numeric) {
   numeric = false;
@@ -259,7 +267,7 @@ std::string attrValue(const std::string *raw, const std::optional<int> &decimals
   double d;
   if (parseNumber(*raw, d)) {
     numeric = true;
-    return decimals ? fmtNumber(d, *decimals) : *raw;
+    return numText(*raw, d, decimals);
   }
   return humanise(*raw);
 }
@@ -281,7 +289,7 @@ SensorView sensorView(const EntityState *st, const config::Widget *opts) {
   } else {
     double d;
     v.numeric = parseNumber(st->state, d);
-    v.value = v.numeric ? (decimals ? fmtNumber(d, *decimals) : st->state) : humanise(st->state);
+    v.value = v.numeric ? numText(st->state, d, decimals) : humanise(st->state);
   }
   v.textState = !v.numeric;
   if (v.numeric) {

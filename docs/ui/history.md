@@ -51,7 +51,7 @@ Panel (16, 212, 508, 512), centred in the content area; shadow (22, 218, 508, 51
 | Name | x = 32, cy = 260, max width 396 (to x 428) | F24 | INK | truncated with "…" |
 | Close button | (444, 228, 64, 64) | `close` M | INK, outline | |
 | Value | x = 32, cy = 328, baseline 342, box (32, 304, 200, 48) | F40 + unit F24 (dx 2, same baseline) | INK | current state; unit written without the degree sign (`C`); `-` while unknown. On/off: the state word (`Closed`, `Open`, `On`, `Off`) F40 without unit |
-| Range line 1 | right edge x = 508, cy = 315 | F18 | INK | `Last 24 h` / `Last 7 d` / `Last 90 min` |
+| Range line 1 | right edge x = 508, cy = 315 | F18 | INK | `Last 24 hours` / `Last 7 days` / `Last 1 hour` |
 | Range line 2 | right edge x = 508, cy = 341 | F18 | INK | line: `min 19.9 max 22.7` (window extremes, widget decimals); bar: `total 47.3 kWh`; step: `4x open, 38 min total` |
 | Plot rect | (92, 372, 392, 264) | | | x axis = time, W = 392 columns |
 | Y tick labels | right edge x = 84, cy = 372 / 504 / 636 | F18 | INK | 3 ticks: top, middle, bottom |

@@ -91,6 +91,13 @@ struct BarSlot {
 };
 // N slots share the plot width; bar width = slot - 20 (slot - 4 when slots are narrow, min 1).
 std::vector<BarSlot> barSlots(const Rect& plot, int n);
+// X label of bucket `start` (UTC epoch): weekday ("Mon") for day buckets, "Today" when `newest`; "HH" (local hour)
+// for shorter buckets. utcOffsetS = local offset at `start`.
+std::string barLabel(int64_t start, int64_t bucketSeconds, bool newest, int utcOffsetS);
+// Range of the bar values (Bucket.last, what is drawn) over the buckets that have data. False if none.
+bool barRange(const Series& s, float& lo, float& hi);
+// Is there anything to draw? Bars look at the buckets, the other charts at the point count.
+bool hasContent(ChartType type, const Series& s);
 inline bool barLabels(int n) { return n >= 1 && n <= 8; }
 
 }  // namespace history

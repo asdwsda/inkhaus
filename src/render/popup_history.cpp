@@ -54,8 +54,8 @@ Geo geo(settings::Orientation o) {
 }
 
 std::string hoursText(int hours) {
-  if (hours >= 48 && hours % 24 == 0) return std::to_string(hours / 24) + " d";
-  return std::to_string(hours) + " h";
+  if (hours >= 48 && hours % 24 == 0) return std::to_string(hours / 24) + " days";
+  return std::to_string(hours) + (hours == 1 ? " hour" : " hours");
 }
 
 std::string hhmm(int64_t epoch) {
@@ -168,7 +168,11 @@ std::string rangeLine2(const uistate::HistoryPopup &h, int decimals, const std::
     return std::to_string(ss.episodes) + "x " + lower(onWord) + ", " + t + " total";
   }
   float lo, hi;
-  if (!h.series().range(lo, hi)) return "";
+  if (h.spec().chart == uistate::HistChart::Bar) {
+    if (!history::barRange(h.series(), lo, hi)) return "";
+  } else if (!h.series().range(lo, hi)) {
+    return "";
+  }
   return "min " + history::formatValue(lo, decimals) + " max " + history::formatValue(hi, decimals);
 }
 
@@ -179,7 +183,7 @@ int legendEntry(M5Canvas &c, int right, int cy, uint32_t fill, bool outline, con
   const int sx = right - tw - 8 - 24;
   if (outline) {
     c.fillRect(sx, cy - 6, 24, 12, INK);
-    c.fillRect(sx + 2, cy - 4, 20, 8, PAPER);
+    c.fillRect(sx + 2, cy - 4, 20, 8, fill);
   } else {
     c.fillRect(sx, cy - 6, 24, 12, fill);
   }
@@ -191,6 +195,8 @@ void drawLegend(M5Canvas &c, const uistate::HistoryPopup &h, const Geo &g, const
   if (h.spec().chart == uistate::HistChart::Step) {
     const int x = legendEntry(c, g.legendRight, g.noteCy, PAPER, true, offWord);
     legendEntry(c, x - 16, g.noteCy, INK, false, onWord);
+  } else if (h.spec().chart == uistate::HistChart::Bar) {
+    legendEntry(c, g.legendRight, g.noteCy, HIST_MID, true, "today so far");
   } else {
     legendEntry(c, g.legendRight, g.noteCy, HIST_GRID, false, "min-max");
   }
@@ -214,7 +220,7 @@ void drawHistoryPopup(M5Canvas &c, const uistate::AppState &app) {
   drawNote(c, h, g);
 
   const bool graph = (h.state() == HistState::Ready || h.state() == HistState::Stale) && h.hasData();
-  if (graph && !h.series().empty()) {
+  if (graph && history::hasContent(h.spec().chart == uistate::HistChart::Bar ? history::ChartType::Bar : history::ChartType::Line, h.series())) {
     drawTextCy(c, Font::F18, "Last " + hoursText(h.spec().hours), g.rangeRight, g.rangeCy1, Align::Right, INK);
     const config::Widget *w = widgetOf(app);
     HistoryGraphInput in;
@@ -226,6 +232,19 @@ void drawHistoryPopup(M5Canvas &c, const uistate::AppState &app) {
       in.hasMax = w->history.max.has_value();
       in.fixedMin = w->history.min.value_or(0);
       in.fixedMax = w->history.max.value_or(0);
+    }
+    if (h.spec().chart == uistate::HistChart::Bar) {
+      const history::Series &sr = h.series();
+      const int n = static_cast<int>(sr.buckets.size());
+      for (int i = 0; i < n; ++i) {
+        const int64_t bs0 = sr.start + sr.bucketSeconds * i;
+        HistoryBar b;
+        b.has = sr.buckets[size_t(i)].has;
+        b.value = sr.buckets[size_t(i)].last;
+        b.partial = i == n - 1;
+        b.label = history::barLabel(bs0, sr.bucketSeconds, i == n - 1, localUtcOffset(bs0));
+        in.bars.push_back(b);
+      }
     }
     switch (h.spec().chart) {
       case uistate::HistChart::Line: in.type = history::ChartType::Line; break;

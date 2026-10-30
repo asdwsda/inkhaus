@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <string>
 
+#include "history_layout.h"
 #include "stats_parser.h"
 #include "stats_plan.h"
 
@@ -224,6 +225,61 @@ void test_bars_mean_statistic_and_window() {
   TEST_ASSERT_EQUAL_FLOAT(17.5f, s.buckets[4].mean);
 }
 
+// Realistic HA day statistics in Europe/Budapest (UTC+1): buckets start at local midnight; window from barWindow.
+void test_bars_local_midnight_days() {
+  const int64_t now = 1761850000;  // 2025-10-30 ~18:46 UTC
+  const int32_t off = 3600;
+  const history::BarWindow w = barWindow(now, 168, 86400, off);
+  TEST_ASSERT_EQUAL(7, w.count);
+  TEST_ASSERT_EQUAL(0, (int)((w.start + off) % 86400));
+  StatsParams p;
+  p.bars = true;
+  p.statistic = StatsType::Mean;
+  p.layout.start = w.start;
+  p.layout.end = now;
+  p.layout.bucketSeconds = 86400;
+  p.layout.bucketCount = w.count;
+  p.periodSeconds = 86400;
+  StatsParser sp("sensor.dp_buffer", p);
+  std::string b = "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":{\"sensor.dp_buffer\":[";
+  for (int i = 4; i < 7; i++) {  // the last three days only
+    int64_t st = (w.start + i * 86400) * 1000;
+    if (i > 4) b += ",";
+    b += "{\"start\":" + std::to_string(st) + ",\"end\":" + std::to_string(st + 86400000) + ",\"mean\":" +
+         std::to_string(10 + i) + ".25}";
+  }
+  b += "]}}";
+  TEST_ASSERT_EQUAL((int)StatsOutcome::Ok, (int)run(sp, b, 64));
+  Series s = sp.series();
+  TEST_ASSERT_EQUAL(3, (int)s.points);
+  TEST_ASSERT_FALSE(s.buckets[3].has);
+  TEST_ASSERT_TRUE(s.buckets[4].has);
+  TEST_ASSERT_TRUE(s.buckets[6].has);
+  TEST_ASSERT_EQUAL_FLOAT(16.25f, s.buckets[6].last);
+  // x labels
+  TEST_ASSERT_EQUAL_STRING("Today", barLabel(w.start + 6 * 86400, 86400, true, off).c_str());
+  TEST_ASSERT_EQUAL_STRING("Tue", barLabel(w.start + 4 * 86400, 86400, false, off).c_str());  // 2025-10-28
+  TEST_ASSERT_EQUAL_STRING("19", barLabel(1761850000 - 1761850000 % 3600, 3600, false, off).c_str());
+}
+
+// Bar charts are empty by their buckets, not by Series::range / columns (3 buckets arrived, no columns).
+void test_bar_content_decision() {
+  history::Series s;
+  s.bucketSeconds = 86400;
+  s.buckets.resize(7);
+  TEST_ASSERT_FALSE(history::hasContent(history::ChartType::Bar, s));
+  s.buckets[4].has = true; s.buckets[4].last = 12;
+  s.buckets[6].has = true; s.buckets[6].last = 15.5f;
+  s.points = 2;
+  TEST_ASSERT_TRUE(history::hasContent(history::ChartType::Bar, s));
+  float lo = 0, hi = 0;
+  TEST_ASSERT_TRUE(history::barRange(s, lo, hi));
+  TEST_ASSERT_EQUAL_FLOAT(12, lo);
+  TEST_ASSERT_EQUAL_FLOAT(15.5f, hi);
+  history::Series e;
+  TEST_ASSERT_FALSE(history::hasContent(history::ChartType::Line, e));
+}
+
 void test_plans() {
   TEST_ASSERT_EQUAL((int)StatsPeriod::FiveMinute, (int)linePeriod(24));
   TEST_ASSERT_EQUAL((int)StatsPeriod::Hour, (int)linePeriod(25));
@@ -253,6 +309,8 @@ int main() {
   RUN_TEST(test_malformed_and_truncated);
   RUN_TEST(test_bars);
   RUN_TEST(test_bars_mean_statistic_and_window);
+  RUN_TEST(test_bars_local_midnight_days);
+  RUN_TEST(test_bar_content_decision);
   RUN_TEST(test_plans);
   RUN_TEST(test_huge_numbers_are_ignored);
   return UNITY_END();
