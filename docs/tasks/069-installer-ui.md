@@ -2,7 +2,7 @@
 
 Status: in-progress
 Depends on: 062, 064
-UI spec: docs/ui/installer.md (ui-designer; variant pending user choice)
+UI spec: docs/ui/installer.md, variant C (minimal e-ink; user 2026-10-30)
 Needs device: yes (user check of the real window)
 Target: release 1.2.0
 
@@ -16,6 +16,6 @@ Out of scope: new features.
 - docs/ui/installer.md + mockups (ui-designer), tools/flasher/src (app.rs, theme), embedded fonts/logo
 
 ## Acceptance criteria
-- [ ] Spec with mockups of every state (no device, ready, installing, done, error, YAML upload), variant approved by the user.
+- [x] Spec with mockups of every state (no device, ready, installing, done, error, YAML upload), variant approved by the user.
 - [ ] Implementation matches the spec; cargo test/build pass; binary size growth noted.
 - [ ] User check on the real window (install + YAML upload).

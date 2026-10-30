@@ -1,6 +1,6 @@
 # 070: User-friendly README
 
-Status: todo
+Status: in-progress
 Depends on: 063, 065 (installer, website)
 UI spec: none (ui-designer may review wording/images)
 Needs device: no
