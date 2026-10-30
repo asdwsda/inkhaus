@@ -15,6 +15,7 @@
 #include "brightness_intent.h"
 #include "history_cache_sd.h"
 #include "deferred_tap.h"
+#include "demo_history.h"
 #include "input.h"
 #include "net.h"
 #include "net_task.h"
@@ -312,6 +313,23 @@ static void onHistoryDone(app_logic::NetEvent &&ev) {
 // Just after the popup opened: cache lookup (shown at once when found), then plan the fetch.
 static void historyOpened() {
   uistate::HistoryPopup &h = g_app.historyPopup();
+  if (g_demoMode) {  // task 068: synthetic series, no cache, no network; the clock may be unset, anchor to a fixed day then
+    const int64_t now = session_glue::wallClock() ? session_glue::wallClock() : 1793361600;
+    h.applyCache(history::Freshness::Missing, history::Series(), 0);
+    uistate::HistoryJob job;
+    g_histWaitNet = false;
+    if (!h.takeFetch(now, job, utcOffsetAt(now))) return;
+    history::DemoParams d;
+    d.entity = job.entity;
+    d.binary = h.spec().binary;
+    d.bar = job.bar;
+    d.start = job.start; d.end = job.end;
+    d.columns = job.columns;
+    d.bucketSeconds = job.bucketSeconds; d.bucketCount = job.bucketCount;
+    h.onFetchDone(job.ticket, uistate::HistOutcome::Ok, history::demoSeries(d), now);
+    g_histChanged = true;
+    return;
+  }
   history::Series s;
   int64_t at = 0;
   const history::Freshness f =
