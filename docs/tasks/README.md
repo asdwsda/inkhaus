@@ -71,7 +71,6 @@
 | 068 | [Demo mode shows history charts](068-demo-history.md) | done | 034 |
 
 ## Open items (not yet tasks, 2026-10-30)
-- Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
 - User-approved (2026-10-29): Settings overview summary wording (OPEN-S5) and long Wi-Fi names shrink then "..." (OPEN-S6).

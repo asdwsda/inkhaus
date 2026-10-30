@@ -6,17 +6,15 @@ running on the original **M5Stack M5Paper** (ESP32, 960×540 touch e-ink screen,
 lights, thermostats and sensors from the last known state, and sends your taps to Home Assistant.
 Battery life comes first: the goal is about **one month per charge**.
 
-Version 1.0.0, see [CHANGELOG.md](CHANGELOG.md).
+Version 1.1.0, see [CHANGELOG.md](CHANGELOG.md).
 
 ## Screenshots
-
-<!-- TODO(architect): replace the mockups below with device screenshots (portrait, landscape, Settings, Tools). -->
 
 | Portrait | Landscape |
 |---|---|
 | ![Portrait mockup](docs/ui/png/tab-portrait.png) | ![Landscape mockup](docs/ui/png/tab-landscape.png) |
 
-*Design mockups; device screenshots will replace them.*
+*Design mockups of the two layouts.*
 
 **UI flow** (wake, tap a light, a shutter and the thermostat, switch tab, Settings, sleep).
 Inverted rectangles mark partial e-ink refreshes; black/white frames are full refreshes:
@@ -57,9 +55,24 @@ Design decisions and their reasons are in [docs/ARCHITECTURE.md](docs/ARCHITECTU
 - M5Stack M5Paper, the original ESP32 version (not the M5Paper S3)
 - a microSD card, FAT32 (not exFAT), for `config.yaml` and `secrets.yaml` (optional if you only
   provision over USB)
-- a USB-C cable for flashing
+- a USB-C data cable for installing
 
-## Quick start
+## Install
+
+The easiest way, no programming tools needed: download the **Inkhaus Installer** for Windows,
+macOS or Linux from the [Releases page](https://github.com/asdwsda/inkhaus/releases/latest) (or
+from the Inkhaus website), connect the M5Paper with a USB data cable and press **Install**. The
+installer can also copy your `config.yaml` and `secrets.yaml` to the device. Step by step, with
+troubleshooting: [docs/FLASHER.md](docs/FLASHER.md).
+
+Then create your two files from the examples:
+- `secrets.yaml` from [`secrets.example.yaml`](secrets.example.yaml): Wi-Fi, Home Assistant
+  URL(s) and a long-lived token (Home Assistant, your profile, Security).
+- `config.yaml` from [`config.example.yaml`](config.example.yaml): your tabs and widgets.
+
+Put them on the **root of the SD card**, or upload them with the installer ("Upload YAML files...").
+
+### Building from source (developers)
 
 1. Install [PlatformIO](https://platformio.org/) (e.g. `pipx install platformio`).
 2. Build and flash (M5Paper connected over USB):
@@ -71,11 +84,7 @@ Design decisions and their reasons are in [docs/ARCHITECTURE.md](docs/ARCHITECTU
    ```
 
    The first build downloads the ESP32 toolchain (a few hundred MB).
-3. Create your two files from the examples (both are gitignored; never commit them):
-   - `secrets.yaml` from [`secrets.example.yaml`](secrets.example.yaml): Wi-Fi, Home Assistant
-     URL(s) and a long-lived token (Home Assistant, your profile, Security).
-   - `config.yaml` from [`config.example.yaml`](config.example.yaml): your tabs and widgets.
-4. Put them on the **root of the SD card**, or send them over USB with no card reader:
+3. Alternatively send the files over USB with the helper script:
 
    ```bash
    python3 tools/provision.py --dry-run config.yaml          # size + CRC check, no device access
@@ -83,9 +92,7 @@ Design decisions and their reasons are in [docs/ARCHITECTURE.md](docs/ARCHITECTU
    python3 tools/provision.py --name secrets.yaml secrets.yaml
    ```
 
-   The tool never prints file content, only a summary such as `PUT-SECRETS ok wifi=yes ha=yes`. It
-   takes the device lock itself and asks before rebooting the device (`--yes` skips the question,
-   `--no-reboot` never reboots).
+   The tool never prints file content, only a summary such as `PUT-SECRETS ok wifi=yes ha=yes`.
 
 Without a `config.yaml`, or with Demo mode on, Inkhaus shows the built-in demo dashboard
 ([`demo.yaml`](demo.yaml)) with fake values and no network.

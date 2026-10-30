@@ -116,7 +116,7 @@ jobs:
           <plist version="1.0">
           <dict>
             <key>CFBundleName</key><string>Inkhaus Installer</string>
-            <key>CFBundleIdentifier</key><string>io.github.m5paper-ha-remote.flasher</string>
+            <key>CFBundleIdentifier</key><string>io.github.asdwsda.inkhaus.installer</string>
             <key>CFBundleExecutable</key><string>flasher</string>
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>CFBundleVersion</key><string>1</string>

@@ -4,7 +4,7 @@ use crate::error::Error;
 use serde::Deserialize;
 use std::time::Duration;
 
-pub const DEFAULT_REPO: &str = "asdwsda/m5paper-ha-remote";
+pub const DEFAULT_REPO: &str = "asdwsda/inkhaus";
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Asset {

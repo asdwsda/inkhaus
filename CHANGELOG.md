@@ -1,16 +1,31 @@
 # Changelog
 
-## 1.1.0 (unreleased)
-- Renamed the project from Inkling to Inkhaus (splash, README, logo).
-- History popup for sensors: long press or rocker opens a 24 h line / step graph, 7 d+ and daily bars from HA statistics.
-- Sensor values show 1 decimal by default (`decimals` overrides).
-- Wi-Fi Auto reconnects to the last network without a scan.
+## 1.1.0 - 2026-10-30
 
-- Brightness popup for dimmable lights: long press (or rocker long-push), tap-to-set bar, -/+10 %, presets, Off.
-- Wi-Fi profiles in `secrets.yaml` (up to 4), chosen automatically or forced in Settings; HA connection Auto / Internal / External, learned per network.
-- Settings reorganised into Display, Sleep & wake, Network and Tools pages.
+### Install and website
+- **Inkhaus Installer**: a small desktop app for Windows, macOS and Linux that downloads a released firmware and installs it on the M5Paper over USB, with real progress. No PlatformIO or Python needed (see `docs/FLASHER.md`).
+- The installer can also upload your `config.yaml` and `secrets.yaml` to the SD card over USB and restarts the M5Paper afterwards.
+- Release builds of the firmware and the installer are produced automatically for every version tag.
+- New one-page website for Inkhaus.
+- The project is renamed from Inkling to Inkhaus (splash screen, README, logo).
+
+### Dashboard
+- History popup for sensors: long press or rocker push opens a 24 h line / step graph, or 7 day and daily bars from Home Assistant statistics.
+- Brightness popup for dimmable lights: long press (or rocker long push), tap-to-set bar, -/+10 %, presets, Off.
+- Sensor values show 1 decimal by default (`decimals` overrides).
+- Demo mode now shows realistic sample charts.
 - Landscape: a rule line between the tabs and the widgets.
-- The splash now shows on every cold boot (reset button, power loss, flashing), followed by a full redraw; a deep-sleep wake never shows it.
+
+### Network and settings
+- Up to 4 Wi-Fi profiles in `secrets.yaml`, chosen automatically or forced in Settings; Home Assistant connection Auto / Internal / External, learned per network.
+- Wi-Fi Auto reconnects to the last network without a scan.
+- Settings reorganised into Display, Sleep & wake, Network and Tools pages.
+
+### Power and display
+- Faster wake: the screen reacts after about 1.6 s instead of 3.2 s, and Wi-Fi starts earlier.
+- A bold "Zz" badge shows that the device is going to sleep, the same in every wake mode.
+- The splash screen now shows on every cold boot (reset button, power loss, flashing), followed by a full redraw; a deep-sleep wake never shows it.
+- Cleaner popups: they keep their grey tones, with a full refresh when they close.
 
 ## 1.0.0 - 2026-10-29
 
