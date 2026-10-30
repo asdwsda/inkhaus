@@ -773,6 +773,29 @@ void test_focus_order_and_skip_readonly() {
     TEST_ASSERT_EQUAL_INT(0, f.st.tab);
   }
 }
+void test_focus_history_sensors() {
+  for (Orientation o : {P, L}) {
+    Widget hs = W(WidgetType::Sensor);
+    hs.entity = "sensor.t";
+    Widget hb = W(WidgetType::BinarySensor);
+    hb.entity = "binary_sensor.d";
+    Widget off = hs;
+    off.history.enabled = false;
+    Widget attr = hs;
+    attr.attribute = "battery";
+    Widget noEntity = W(WidgetType::Sensor);
+    Fx f(o, 2, {hs, W(WidgetType::Light), off, hb, attr, noEntity});
+    auto stops = focusStops(f.env, 0);
+    TEST_ASSERT_EQUAL_INT(3, (int)stops.size());  // hs, light, hb; the others stay unfocusable
+    for (int w : stops) TEST_ASSERT_TRUE(w == 0 || w == 1 || w == 3);
+    // without history flags the old behaviour holds
+    Fx g(o, 2, {W(WidgetType::Sensor), W(WidgetType::Light)});
+    TEST_ASSERT_EQUAL_INT(1, (int)focusStops(g.env, 0).size());
+    TEST_ASSERT_FALSE(isFocusable(WidgetType::Sensor));
+    TEST_ASSERT_TRUE(isFocusable(WidgetType::Sensor, true));
+    TEST_ASSERT_FALSE(isFocusable(WidgetType::Weather, true));
+  }
+}
 void test_focus_row_col_order() {
   // portrait: cover (0,0) 2x1; light (0,1); light (1,1)
   Fx f(P, 1, {W(WidgetType::Cover), W(WidgetType::Light), W(WidgetType::Light)});
@@ -1785,6 +1808,7 @@ int main(int, char **) {
   RUN_TEST(test_rocker_mapping);
   RUN_TEST(test_focus_tab_mode_wrap_and_groups);
   RUN_TEST(test_focus_order_and_skip_readonly);
+  RUN_TEST(test_focus_history_sensors);
   RUN_TEST(test_focus_row_col_order);
   RUN_TEST(test_focus_unavailable_skipped);
   RUN_TEST(test_focus_single_action_and_inner);

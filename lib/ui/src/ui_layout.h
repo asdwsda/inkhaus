@@ -88,6 +88,7 @@ struct Placement {
   Rect rect;
   int cellX = 0, cellY = 0, cellW = 1, cellH = 1;
   bool clamped = false;
+  bool history = false;  // sensor/binary_sensor with history enabled: rocker-focusable (opens the popup)
 };
 
 struct Flow {

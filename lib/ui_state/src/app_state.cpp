@@ -408,8 +408,6 @@ bool AppState::openHistory(int idx, uint32_t now) {
   return true;
 }
 
-// UNVERIFIED: sensors and binary sensors are not focusable today (ui::isFocusable), so the rocker never
-// reaches this; it works as soon as the architect makes them focusable (task 053 report).
 bool AppState::openHistoryFocused(uint32_t now) {
   if (focus_.mode == ui::FocusMode::Tab || !focus_.ringVisible) return false;
   const int idx = focusedWidgetIndex();

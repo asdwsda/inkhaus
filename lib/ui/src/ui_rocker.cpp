@@ -16,10 +16,10 @@ LogicalKey mapRocker(PhysicalKey key, settings::Orientation, bool invert) {
   return LogicalKey::Push;
 }
 
-bool isFocusable(WidgetType t) {
+bool isFocusable(WidgetType t, bool history) {
   switch (t) {
     case WidgetType::Sensor:
-    case WidgetType::BinarySensor:
+    case WidgetType::BinarySensor: return history;
     case WidgetType::Weather: return false;
     default: return true;
   }
@@ -32,7 +32,7 @@ std::vector<int> focusStops(const FocusEnv &env, int subPage) {
   std::vector<const Placement *> v;
   if (env.flow) {
     for (const Placement &p : env.flow->placements) {
-      if (p.page != subPage || !isFocusable(p.type)) continue;
+      if (p.page != subPage || !isFocusable(p.type, p.history)) continue;
       if (p.index < (int)env.unavailable.size() && env.unavailable[p.index]) continue;
       v.push_back(&p);
     }

@@ -32,7 +32,8 @@ struct FocusEnv {
   std::vector<bool> unavailable;               // by widget index; missing = available
 };
 
-bool isFocusable(config::WidgetType t);
+// Sensors / binary sensors are focusable only when their history popup is available (`history`).
+bool isFocusable(config::WidgetType t, bool history = false);
 bool isSingleAction(config::WidgetType t);  // light, switch, automation
 // Focusable, available widgets of a sub-page sorted by (row, col); widget indices.
 std::vector<int> focusStops(const FocusEnv &env, int subPage);

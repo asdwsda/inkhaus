@@ -832,7 +832,8 @@ void loop() {
     } else if (e.key == ui::PhysicalKey::LongPush && !g_app.modalOpen() && g_app.openBrightnessFocused(now)) {
       g_defer.cancel();
       changed = true;
-    } else if (e.key == ui::PhysicalKey::LongPush && !g_app.modalOpen() && g_app.openHistoryFocused(now)) {
+    } else if ((e.key == ui::PhysicalKey::LongPush || e.key == ui::PhysicalKey::Push) && !g_app.modalOpen() &&
+               g_app.screen() == uistate::Screen::Tabs && g_app.openHistoryFocused(now)) {
       historyOpened();
       changed = true;
     } else {

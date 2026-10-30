@@ -157,6 +157,8 @@ Flow computeFlow(Orientation o, const std::vector<config::Widget> &widgets, int 
     Placement p;
     p.index = (int)i;
     p.type = widgets[i].type;
+    p.history = (p.type == config::WidgetType::Sensor || p.type == config::WidgetType::BinarySensor) &&
+                widgets[i].attribute.empty() && widgets[i].history.enabled && !widgets[i].entity.empty();
     p.page = slots[i].page;
     p.cellX = slots[i].c;
     p.cellY = slots[i].r;
