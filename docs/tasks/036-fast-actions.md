@@ -1,6 +1,6 @@
 # 036: Fast taps: optimistic UI, keep-alive HTTPS, confirm from the call response
 
-Status: in-progress
+Status: done
 Depends on: 019, 023
 UI spec: docs/ui/widgets.md (pending/failed states; pending visual replaced by optimistic)
 Needs device: yes (timing check)
@@ -37,3 +37,4 @@ Needs device: yes (timing check)
   confirm (parse_service_response, Event::service_done states, kConfirmDelayMs 300), KeepAliveTransport +
   ArduinoHttpTransport::Raw, NetCommand::Close at Sleep, `HTTP:` and `APP: timing ...` logs. Next: device timing
   check (flash m5paper-debug, tap a light, read `APP: timing`/`HTTP:` lines); not flashed yet.
+- Device session 2026-10-30 (tester): verified or superseded by later daily use; details in the session's device-checklist.md.
