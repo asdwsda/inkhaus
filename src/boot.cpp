@@ -176,6 +176,7 @@ bool attachNoResetDisplay() {
     if (!ok) return false;
 
     configureBus(g_parts->bus, 40000000, 20000000);
+    wakelog::logf("BOOT: dbg_after_cfgbus %u\n",(unsigned)millis());
     g_parts->panel.bus(&g_parts->bus);
     {
         auto cfg = g_parts->panel.config();
@@ -215,7 +216,9 @@ bool attachNoResetDisplay() {
         useReset = true;
         g_recoveredCold = true;
     }
+    wakelog::logf("BOOT: dbg_before_panel_init reset=%d %u\n",(int)useReset,(unsigned)millis());
     if (!g_parts->panel.init(useReset)) return false;  // init(false): no reset pulse
+    wakelog::logf("BOOT: dbg_after_panel_init %u\n",(unsigned)millis());
     d.startWrite();
     d.invertDisplay(g_parts->panel.getInvert());
     d.setColorDepth(g_parts->panel.getWriteDepth());
@@ -223,6 +226,7 @@ bool attachNoResetDisplay() {
     d.setPivot(d.width() >> 1, d.height() >> 1);
     d.endWrite();
     d.setBrightness(d.getBrightness());
+    wakelog::logf("BOOT: dbg_before_touch %u\n",(unsigned)millis());
     const bool touchOk = g_parts->panel.initTouch();
     boot::log("touch_init", touchOk ? "ok" : "fail");
     // From here M5GFX::init_impl returns early, so M5.begin() keeps this display.
@@ -405,6 +409,7 @@ void begin() {
     }
     const uint32_t d1 = micros();
     g_start = noReset ? Start::NoReset : Start::Stock;
+    wakelog::logf("BOOT: dbg_before_m5begin %u\n",(unsigned)millis());
     M5.begin(cfg);
     const uint32_t d2 = micros();
 
