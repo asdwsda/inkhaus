@@ -1,6 +1,6 @@
 # 065: Project website on GitHub Pages
 
-Status: in-progress
+Status: done
 Depends on: none (links to 063's downloads once they exist)
 UI spec: docs/ui/website.md
 Needs device: no
@@ -14,5 +14,6 @@ minimal generator); no tracking.
 - site/ (or docs/site/), .github/workflows/pages.yml
 
 ## Acceptance criteria
-- [ ] Builds locally; Pages deploy succeeds after the user pushes and enables Pages.
-- [ ] Download links resolve to the latest release assets.
+- [x] Builds locally; Pages deploy succeeds after the user pushes and enables Pages.
+- [x] Download links resolve to the latest release assets.
+- GitHub check 2026-10-30: v1.1.0 release run green (firmware, 3 installers, manifest); site live at https://asdwsda.github.io/inkhaus/, download links resolve.

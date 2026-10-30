@@ -65,7 +65,7 @@
 | 062 | [Flasher app (Rust, single binary)](062-flasher-app.md) | done | 061 |
 | 063 | [Build the flasher for Windows, macOS and Linux in CI](063-flasher-ci.md) | done | 061, 062 |
 | 064 | [Flasher: optional YAML upload to the SD card](064-flasher-yaml-upload.md) | done | 062, 020 |
-| 065 | [Project website on GitHub Pages](065-project-website.md) | in-progress | – |
+| 065 | [Project website on GitHub Pages](065-project-website.md) | done | – |
 | 066 | [Choose a new project name (Inkling may be taken)](066-project-name.md) | done | – |
 | 067 | [Intermittent cold-boot hang after BOOT: controller_id=](067-cold-boot-hang.md) | todo | – |
 | 068 | [Demo mode shows history charts](068-demo-history.md) | done | 034 |
