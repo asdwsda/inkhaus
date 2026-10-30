@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
+  <!-- Landscape 960x540 with a history graph widget (task 071, docs/ui/history-widget.md). Chrome and neighbours from tab-landscape.svg. Original comment: tab "Living room" of config.example.yaml (+ sensor, automation, weather appended). Spec: docs/ui/STYLE.md, layout.md, widgets.md (revision 4).
+       Greys only: #000 (0), #444 (4), #888 (8), #fff (15). Dynamic text (state, value, condition) is #000. No pager (10 widgets fit in 4 rows).
+       Top bar (0,0,960,64) = status + tabs. Grid: 5 columns x 176 at x=16,204,392,580,768; 4 rows x 104 at y=72,188,304,420; gap 12. Wide = 3 cells = 552.
+       Widget ids: <g id="w-N"> with <rect id="w-N-frame">; every text/icon inside has an id starting "w-N-"; buttons end in "-btn".
+       Widget text uses dominant-baseline="alphabetic" at an explicit baseline y = cy + 6 (F18) / 8 (F24) / 14 (F40) / 19 (F56), so the render does not depend on dominant-baseline support.
+       Text box = 1.2 x font size centred on cy; every box lies inside the frame minus 12 px (see the budget tables in widgets.md).
+       Status bar and tab text still use dominant-baseline="central" (unchanged).
+       5 tabs configured = 5 slots (x=172,304,436,568,700, w=120, y=4, h=56), so no overflow slot.
+       Invisible hit areas: refresh (16,4,144,56); settings (832,4,112,56). -->
+  <defs>
+    <symbol id="i-up" viewBox="0 0 24 24"><polygon points="12,5 21,19 3,19" fill="currentColor"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><polygon points="12,19 21,5 3,5" fill="currentColor"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" fill="currentColor"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M12 2 a7 7 0 0 0 -4 12.7 V18 h8 v-3.3 A7 7 0 0 0 12 2z" fill="currentColor"/><rect x="8.5" y="19.5" width="7" height="2.5" fill="currentColor"/></symbol>
+    <symbol id="i-bulb-off" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 a6.5 6.5 0 0 0 -3.6 11.9 V18 h7.2 v-3.1 A6.5 6.5 0 0 0 12 3z"/><path d="M9 21 H15"/></g></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><rect x="8" y="2" width="2.5" height="6" fill="currentColor"/><rect x="13.5" y="2" width="2.5" height="6" fill="currentColor"/><path d="M6 8 H18 V12 A6 6 0 0 1 6 12 Z" fill="currentColor"/><rect x="10.75" y="17.5" width="2.5" height="4.5" fill="currentColor"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.5 12 A7.5 7.5 0 0 1 19.5 12"/><path d="M19.5 12 A7.5 7.5 0 0 1 4.5 12"/></g><polygon points="15.5,10.5 23.5,10.5 19.5,15.5" fill="currentColor"/><polygon points="0.5,13.5 8.5,13.5 4.5,8.5" fill="currentColor"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2 C12 2 5 10 5 15 a7 7 0 0 0 14 0 C19 10 12 2 12 2z" fill="currentColor"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/><rect x="10.5" y="4" width="3" height="16" fill="currentColor"/></symbol>
+    <!-- flame: two tongues (tip at 14,1.5 and 7.6,8.2) and a hollow teardrop, so it never reads as a drop -->
+    <symbol id="i-flame" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22 C7.5 22 4.5 19 4.5 15 C4.5 12 6.2 10.2 7.6 8.2 C8.2 9.4 8.6 10.2 9.4 10.8 C9.6 7 11.2 3.6 14 1.5 C14.2 5 16.8 7 18.2 10.2 C19.6 13.4 19.5 15 19.5 15 C19.5 19 16.5 22 12 22 Z M12 20 C10.2 20 8.8 18.8 8.8 17.2 C8.8 15.8 10.2 14.8 12 12.6 C13.8 14.8 15.2 15.8 15.2 17.2 C15.2 18.8 13.8 20 12 20 Z" fill="currentColor"/></symbol>
+    <symbol id="i-window-off" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M12 3 V21 M3 12 H21"/></g></symbol>
+    <symbol id="i-window-on" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1" fill="currentColor"/><path d="M12 3 V21 M3 12 H21" fill="none" stroke="#fff" stroke-width="2"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 19 A4.5 4.5 0 0 1 6.6 10.05 A6 6 0 0 1 18.2 9.2 A5 5 0 0 1 17.5 19 Z" fill="currentColor"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="1.8" fill="currentColor"/></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3 H17 V8 L12 12 L17 16 V21 H7 V16 L12 12 L7 8 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7 V12 L16 14" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7 V13" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="16.5" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.6 5.6 L18.4 18.4" stroke="currentColor" stroke-width="2"/></symbol>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="540" fill="#fff"/>
+
+  <rect id="bar-rule" x="0" y="65" width="960" height="2" fill="#000"/>
+  <!-- Top bar, status part. Connection icon (16,20,24,24), centre line y=32; label x=56, two lines at cy 21 and 43 -->
+  <use xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+  <text x="56" y="21" font-size="18" fill="#000" dominant-baseline="central">updated</text>
+  <text x="56" y="43" font-size="18" fill="#000" dominant-baseline="central">14:05</text>
+  <!-- Battery icon at (848,22): body (848,22,36,20), inner (850,24,32,16), level fill 25 px (78 %), nub (884,27,4,10); percent right edge x=944, cy 32 -->
+  <rect x="848" y="22" width="36" height="20" fill="#000"/>
+  <rect x="850" y="24" width="32" height="16" fill="#fff"/>
+  <rect x="850" y="24" width="25" height="16" fill="#000"/>
+  <rect x="884" y="27" width="4" height="10" fill="#000"/>
+  <text x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+
+  <!-- Tab strip (172,0,648,64): 5 slots at x=172,304,436,568,700, y=4, 120x56, cy 32 (two-line labels at cy 21 / 43) -->
+  <rect x="172" y="4" width="120" height="56" rx="8" fill="#000"/>
+  <text x="232" y="21" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Living</text>
+  <text x="232" y="43" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">room</text>
+  <rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="364" y="21" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Whole</text>
+  <text x="364" y="43" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">house</text>
+  <rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Kitchen</text>
+  <rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Bedroom</text>
+  <rect x="701" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="760" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Garage</text>
+
+  <!-- w-1 History graph "Living room" 2x2 (16,72) 364x220, line, last 24 h. Plot (60,78,280,86); 2 x ticks (00:00, 12:00). -->
+  <g id="w-1" transform="translate(16,72)">
+    <rect id="w-1-frame" x="1" y="1" width="362" height="218" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-1-name" x="12" y="44" font-size="24" fill="#000" text-anchor="start" dominant-baseline="alphabetic">Living room</text>
+    <text id="w-1-value" x="352" y="50" font-size="40" fill="#000" text-anchor="end" dominant-baseline="alphabetic">21.5<tspan font-size="24" dx="2">°C</tspan></text>
+    <rect id="g-w-1-h0" x="60" y="78" width="280" height="1" fill="#d0d0d0"/>
+    <rect id="g-w-1-h1" x="60" y="121" width="280" height="1" fill="#d0d0d0"/>
+    <rect id="g-w-1-v0" x="176" y="78" width="1" height="86" fill="#d0d0d0"/>
+    <rect id="g-w-1-v1" x="316" y="78" width="1" height="86" fill="#d0d0d0"/>
+    <polygon id="g-w-1-band" points="60.0,97.1 61.0,96.2 62.0,95.4 63.0,94.6 64.0,93.8 65.0,93.2 66.0,92.5 67.0,92.0 68.0,91.5 69.0,91.2 70.0,90.9 71.0,90.7 72.0,90.7 73.0,90.7 74.0,90.9 75.0,91.1 76.0,91.4 77.0,91.8 78.0,92.4 79.0,92.9 80.0,93.6 81.0,94.3 82.0,95.1 83.0,95.8 84.0,96.7 85.0,97.5 86.0,98.4 87.0,99.2 88.0,100.0 89.0,100.8 90.0,101.6 91.0,102.3 92.0,103.0 93.0,103.7 94.0,104.3 95.0,104.6 96.0,104.5 97.0,104.4 98.0,104.2 99.0,104.0 100.0,103.8 101.0,103.6 102.0,103.3 103.0,103.1 104.0,102.9 105.0,102.7 106.0,102.6 107.0,102.5 108.0,102.5 109.0,102.6 110.0,102.7 111.0,102.9 112.0,103.2 113.0,103.6 114.0,104.1 115.0,104.7 116.0,105.4 117.0,106.2 118.0,107.1 119.0,108.1 120.0,109.1 121.0,110.2 122.0,111.5 123.0,112.7 124.0,114.0 125.0,115.4 126.0,116.7 127.0,118.1 128.0,119.5 129.0,120.8 130.0,121.7 131.0,122.4 132.0,123.1 133.0,123.7 134.0,124.3 135.0,124.9 136.0,125.4 137.0,125.9 138.0,126.3 139.0,126.6 140.0,127.0 141.0,127.3 142.0,127.5 143.0,127.8 144.0,128.0 145.0,128.2 146.0,128.4 147.0,128.6 148.0,128.8 149.0,129.1 150.0,129.4 151.0,129.7 152.0,130.1 153.0,130.5 154.0,131.0 155.0,131.5 156.0,132.2 157.0,132.9 158.0,133.6 159.0,134.5 160.0,135.4 161.0,136.4 162.0,137.4 163.0,138.5 164.0,139.5 165.0,140.1 166.0,140.8 167.0,141.4 168.0,142.2 169.0,142.9 170.0,143.6 171.0,144.4 172.0,145.1 173.0,145.9 174.0,146.6 175.0,147.3 176.0,147.9 177.0,148.6 178.0,149.2 179.0,149.7 180.0,150.2 181.0,150.7 182.0,151.1 183.0,151.4 184.0,151.7 185.0,152.0 186.0,152.2 187.0,152.3 188.0,152.5 189.0,152.6 190.0,152.7 191.0,152.8 192.0,152.9 193.0,152.9 194.0,153.0 195.0,153.1 196.0,153.3 197.0,153.4 198.0,153.6 199.0,153.4 200.0,153.1 201.0,152.8 202.0,152.6 203.0,152.5 204.0,152.4 205.0,152.3 206.0,152.4 207.0,152.5 208.0,152.7 209.0,152.9 210.0,153.2 211.0,153.5 212.0,153.8 213.0,154.2 214.0,154.6 215.0,155.0 216.0,155.4 217.0,155.9 218.0,156.3 219.0,156.6 220.0,157.0 221.0,157.3 222.0,157.5 223.0,157.7 224.0,157.9 225.0,158.0 226.0,158.0 227.0,158.0 228.0,157.9 229.0,157.7 230.0,157.5 231.0,157.2 232.0,156.9 233.0,156.4 234.0,155.4 235.0,154.4 236.0,153.3 237.0,152.3 238.0,151.2 239.0,150.2 240.0,149.2 241.0,148.3 242.0,147.4 243.0,146.6 244.0,145.8 245.0,145.1 246.0,144.5 247.0,144.0 248.0,143.5 249.0,143.1 250.0,142.9 251.0,142.6 252.0,142.5 253.0,142.4 254.0,142.4 255.0,142.4 256.0,142.5 257.0,142.6 258.0,142.8 259.0,142.9 260.0,143.1 261.0,143.2 262.0,143.3 263.0,143.4 264.0,143.5 265.0,143.5 266.0,143.4 267.0,143.3 268.0,142.8 269.0,141.9 270.0,141.0 271.0,140.1 272.0,139.1 273.0,138.0 274.0,136.9 275.0,135.7 276.0,134.6 277.0,133.4 278.0,132.2 279.0,131.0 280.0,129.8 281.0,128.6 282.0,127.5 283.0,126.4 284.0,125.4 285.0,124.5 286.0,123.6 287.0,122.8 288.0,122.0 289.0,121.4 290.0,120.9 291.0,120.4 292.0,120.1 293.0,119.8 294.0,119.6 295.0,119.5 296.0,119.5 297.0,119.5 298.0,119.6 299.0,119.7 300.0,119.9 301.0,120.1 302.0,120.3 303.0,120.0 304.0,119.6 305.0,119.2 306.0,118.9 307.0,118.5 308.0,118.1 309.0,117.6 310.0,117.1 311.0,116.6 312.0,116.1 313.0,115.5 314.0,114.9 315.0,114.3 316.0,113.6 317.0,112.9 318.0,112.2 319.0,111.5 320.0,110.7 321.0,110.0 322.0,109.3 323.0,108.6 324.0,107.9 325.0,107.3 326.0,106.7 327.0,106.2 328.0,105.7 329.0,105.3 330.0,104.9 331.0,104.7 332.0,104.5 333.0,104.4 334.0,104.4 335.0,104.5 336.0,104.6 337.0,104.6 338.0,104.3 339.0,104.1 339.0,116.3 338.0,115.9 337.0,115.6 336.0,115.7 335.0,116.1 334.0,116.6 333.0,117.2 332.0,117.8 331.0,118.5 330.0,119.3 329.0,120.1 328.0,120.9 327.0,121.8 326.0,122.7 325.0,123.6 324.0,124.5 323.0,125.4 322.0,126.3 321.0,127.1 320.0,127.9 319.0,128.7 318.0,129.3 317.0,130.0 316.0,130.5 315.0,131.0 314.0,131.4 313.0,131.7 312.0,132.0 311.0,132.1 310.0,132.2 309.0,132.3 308.0,132.2 307.0,132.1 306.0,132.0 305.0,131.8 304.0,131.6 303.0,131.3 302.0,131.1 301.0,131.4 300.0,131.8 299.0,132.2 298.0,132.6 297.0,133.0 296.0,133.5 295.0,134.0 294.0,134.6 293.0,135.2 292.0,135.9 291.0,136.6 290.0,137.3 289.0,138.1 288.0,138.9 287.0,139.8 286.0,140.7 285.0,141.7 284.0,142.6 283.0,143.6 282.0,144.5 281.0,145.5 280.0,146.4 279.0,147.3 278.0,148.2 277.0,149.1 276.0,149.9 275.0,150.6 274.0,151.3 273.0,151.9 272.0,152.5 271.0,152.9 270.0,153.3 269.0,153.6 268.0,153.9 267.0,154.3 266.0,155.0 265.0,155.6 264.0,156.2 263.0,156.7 262.0,157.1 261.0,157.5 260.0,157.8 259.0,158.1 258.0,158.4 257.0,158.6 256.0,158.8 255.0,159.0 254.0,159.2 253.0,159.4 252.0,159.6 251.0,159.8 250.0,160.1 249.0,160.3 248.0,160.6 247.0,160.9 246.0,161.3 245.0,161.7 244.0,162.1 243.0,162.5 242.0,163.0 241.0,163.4 240.0,163.9 239.0,164.0 238.0,164.0 237.0,164.0 236.0,164.0 235.0,164.0 234.0,164.0 233.0,164.0 232.0,164.0 231.0,164.0 230.0,164.0 229.0,164.0 228.0,164.0 227.0,164.0 226.0,164.0 225.0,164.0 224.0,164.0 223.0,164.0 222.0,164.0 221.0,164.0 220.0,164.0 219.0,164.0 218.0,164.0 217.0,164.0 216.0,164.0 215.0,164.0 214.0,164.0 213.0,164.0 212.0,164.0 211.0,164.0 210.0,164.0 209.0,164.0 208.0,164.0 207.0,164.0 206.0,164.0 205.0,164.0 204.0,164.0 203.0,164.0 202.0,164.0 201.0,164.0 200.0,164.0 199.0,164.0 198.0,164.0 197.0,164.0 196.0,164.0 195.0,164.0 194.0,164.0 193.0,164.0 192.0,164.0 191.0,164.0 190.0,164.0 189.0,164.0 188.0,164.0 187.0,164.0 186.0,164.0 185.0,164.0 184.0,164.0 183.0,164.0 182.0,164.0 181.0,164.0 180.0,164.0 179.0,164.0 178.0,164.0 177.0,164.0 176.0,164.0 175.0,163.6 174.0,162.5 173.0,161.5 172.0,160.3 171.0,159.1 170.0,157.9 169.0,156.6 168.0,155.4 167.0,154.1 166.0,152.9 165.0,151.6 164.0,150.4 163.0,149.7 162.0,149.2 161.0,148.7 160.0,148.3 159.0,147.9 158.0,147.6 157.0,147.3 156.0,147.1 155.0,146.9 154.0,146.7 153.0,146.6 152.0,146.4 151.0,146.3 150.0,146.2 149.0,146.1 148.0,146.0 147.0,145.8 146.0,145.6 145.0,145.3 144.0,145.0 143.0,144.7 142.0,144.2 141.0,143.7 140.0,143.1 139.0,142.4 138.0,141.7 137.0,140.8 136.0,139.9 135.0,138.9 134.0,137.8 133.0,136.7 132.0,135.5 131.0,134.2 130.0,132.9 129.0,131.7 128.0,130.9 127.0,130.1 126.0,129.3 125.0,128.5 124.0,127.7 123.0,126.9 122.0,126.1 121.0,125.3 120.0,124.6 119.0,123.9 118.0,123.3 117.0,122.7 116.0,122.1 115.0,121.6 114.0,121.2 113.0,120.8 112.0,120.4 111.0,120.1 110.0,119.8 109.0,119.5 108.0,119.3 107.0,119.1 106.0,118.9 105.0,118.7 104.0,118.5 103.0,118.3 102.0,118.1 101.0,117.9 100.0,117.6 99.0,117.3 98.0,116.9 97.0,116.5 96.0,116.1 95.0,115.6 94.0,115.4 93.0,115.4 92.0,115.3 91.0,115.1 90.0,114.9 89.0,114.7 88.0,114.4 87.0,114.0 86.0,113.6 85.0,113.2 84.0,112.7 83.0,112.2 82.0,111.7 81.0,111.1 80.0,110.6 79.0,110.1 78.0,109.5 77.0,109.0 76.0,108.6 75.0,108.2 74.0,107.8 73.0,107.4 72.0,107.1 71.0,106.9 70.0,106.7 69.0,106.6 68.0,106.6 67.0,106.6 66.0,106.6 65.0,106.7 64.0,106.9 63.0,107.1 62.0,107.3 61.0,107.6 60.0,107.8" fill="#d0d0d0"/>
+    <rect id="g-w-1-axl" x="59" y="74" width="2" height="91" fill="#000"/>
+    <rect id="g-w-1-axb" x="59" y="164" width="282" height="2" fill="#000"/>
+    <polyline id="g-w-1-line" points="60.5,102.5 62.5,101.3 64.5,100.4 66.5,99.6 68.5,99.1 70.5,98.8 72.5,98.9 74.5,99.3 76.5,100.0 78.5,100.9 80.5,102.1 82.5,103.4 84.5,104.7 86.5,106.0 88.5,107.2 90.5,108.3 92.5,109.2 94.5,109.8 96.5,110.3 98.5,110.6 100.5,110.7 102.5,110.7 104.5,110.7 106.5,110.8 108.5,110.9 110.5,111.2 112.5,111.8 114.5,112.6 116.5,113.8 118.5,115.2 120.5,116.9 122.5,118.8 124.5,120.8 126.5,123.0 128.5,125.2 130.5,127.3 132.5,129.3 134.5,131.1 136.5,132.7 138.5,134.0 140.5,135.0 142.5,135.9 144.5,136.5 146.5,137.0 148.5,137.4 150.5,137.8 152.5,138.3 154.5,138.8 156.5,139.6 158.5,140.6 160.5,141.8 162.5,143.3 164.5,145.0 166.5,146.8 168.5,148.8 170.5,150.8 172.5,152.7 174.5,154.6 176.5,156.2 178.5,157.7 180.5,158.8 182.5,159.6 184.5,160.2 186.5,160.4 188.5,160.4 190.5,160.3 192.5,160.0 194.5,159.6 196.5,159.3 198.5,159.1 200.5,159.0 202.5,159.1 204.5,159.4 206.5,159.9 208.5,160.5 210.5,161.4 212.5,162.3 214.5,163.2 216.5,164.0 218.5,164.0 220.5,164.0 222.5,164.0 224.5,164.0 226.5,164.0 228.5,164.0 230.5,163.7 232.5,162.5 234.5,161.1 236.5,159.6 238.5,158.1 240.5,156.6 242.5,155.2 244.5,153.9 246.5,152.9 248.5,152.1 250.5,151.5 252.5,151.0 254.5,150.8 256.5,150.7 258.5,150.6 260.5,150.4 262.5,150.2 264.5,149.8 266.5,149.2 268.5,148.3 270.5,147.2 272.5,145.8 274.5,144.1 276.5,142.2 278.5,140.2 280.5,138.1 282.5,136.0 284.5,134.0 286.5,132.2 288.5,130.5 290.5,129.1 292.5,128.0 294.5,127.1 296.5,126.5 298.5,126.1 300.5,125.9 302.5,125.7 304.5,125.6 306.5,125.4 308.5,125.1 310.5,124.7 312.5,124.0 314.5,123.2 316.5,122.1 318.5,120.8 320.5,119.3 322.5,117.8 324.5,116.2 326.5,114.7 328.5,113.3 330.5,112.1 332.5,111.2 334.5,110.5 336.5,110.2 338.5,110.1 339.5,110.2" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+    <circle id="g-w-1-dot" cx="340.0" cy="110.2" r="5" fill="#000"/>
+    <text id="w-1-yt" x="52" y="84" font-size="18" fill="#000" text-anchor="end" dominant-baseline="alphabetic">23.0</text>
+    <text id="w-1-yb" x="52" y="170" font-size="18" fill="#000" text-anchor="end" dominant-baseline="alphabetic">19.0</text>
+    <rect id="g-w-1-t0" x="175" y="164" width="2" height="6" fill="#808080"/>
+    <text id="w-1-xl0" x="176" y="194" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">00:00</text>
+    <rect id="g-w-1-t1" x="315" y="164" width="2" height="6" fill="#808080"/>
+    <text id="w-1-xl1" x="316" y="194" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">12:00</text>
+  </g>
+  <g id="w-8" transform="translate(392,72)">
+    <rect id="w-8-frame" x="1" y="1" width="174" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-8-value" x="88" y="53" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">8.4<tspan font-size="24" dx="2">°C</tspan></text>
+    <text id="w-8-name" x="88" y="84" font-size="18" fill="#444" text-anchor="middle" dominant-baseline="alphabetic">Outside</text>
+  </g>
+  <g id="w-9" transform="translate(392,188)">
+    <rect id="w-9-frame" x="1" y="1" width="174" height="102" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+    <text id="w-9-name" x="12" y="38" font-size="24" fill="#fff" dominant-baseline="alphabetic">Night mode</text>
+    <use id="w-9-icon" xlink:href="#i-auto" href="#i-auto" x="12" y="49" width="40" height="40" color="#fff"/>
+    <text id="w-9-state" x="58" y="77" font-size="24" fill="#fff" dominant-baseline="alphabetic">On</text>
+  </g>
+  <g id="w-3" transform="translate(580,72)">
+    <rect id="w-3-frame" x="1" y="1" width="174" height="102" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+    <text id="w-3-name" x="12" y="38" font-size="24" fill="#fff" dominant-baseline="alphabetic">Ceiling</text>
+    <use id="w-3-icon" xlink:href="#i-bulb" href="#i-bulb" x="12" y="49" width="40" height="40" color="#fff"/>
+    <text id="w-3-state" x="58" y="77" font-size="24" fill="#fff" dominant-baseline="alphabetic">On 80%</text>
+  </g>
+  <g id="w-4" transform="translate(768,72)">
+    <rect id="w-4-frame" x="1" y="1" width="174" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-4-name" x="12" y="38" font-size="24" fill="#000" dominant-baseline="alphabetic">Floor lamp</text>
+    <use id="w-4-icon" xlink:href="#i-bulb-off" href="#i-bulb-off" x="12" y="49" width="40" height="40" color="#000"/>
+    <text id="w-4-state" x="58" y="77" font-size="24" fill="#000" dominant-baseline="alphabetic">Off</text>
+  </g>
+  <g id="w-5" transform="translate(580,188)">
+    <rect id="w-5-frame" x="1" y="1" width="174" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-5-name" x="12" y="38" font-size="24" fill="#000" dominant-baseline="alphabetic">Fan</text>
+    <use id="w-5-icon" xlink:href="#i-plug" href="#i-plug" x="12" y="49" width="40" height="40" color="#000"/>
+    <text id="w-5-state" x="58" y="77" font-size="24" fill="#000" dominant-baseline="alphabetic">Off</text>
+  </g>
+  <g id="w-7" transform="translate(768,188)">
+    <rect id="w-7-frame" x="1" y="1" width="174" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-7-name" x="12" y="38" font-size="24" fill="#000" dominant-baseline="alphabetic">Window</text>
+    <use id="w-7-icon" xlink:href="#i-window-on" href="#i-window-on" x="12" y="49" width="40" height="40" color="#000"/>
+    <text id="w-7-state" x="58" y="77" font-size="24" fill="#000" dominant-baseline="alphabetic">Open</text>
+  </g>
+  <g id="w-6" transform="translate(16,304)">
+    <rect id="w-6-frame" x="1" y="1" width="550" height="102" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <text id="w-6-name" x="12" y="44" font-size="24" fill="#000" dominant-baseline="alphabetic">Living room</text>
+    <text id="w-6-temp" x="12" y="77" font-size="24" fill="#000" dominant-baseline="alphabetic">21.5°</text>
+    <use id="w-6-hum-icon" xlink:href="#i-drop" href="#i-drop" x="92" y="57" width="24" height="24" color="#000"/>
+    <text id="w-6-hum-text" x="120" y="77" font-size="24" fill="#000" dominant-baseline="alphabetic">45%</text>
+    <use id="w-6-act-icon" xlink:href="#i-flame" href="#i-flame" x="186" y="57" width="24" height="24" color="#000"/>
+    <rect id="w-6-minus-btn" x="277" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-6-minus-icon" xlink:href="#i-minus" href="#i-minus" x="288" y="32" width="40" height="40" color="#000"/>
+    <text id="w-6-target" x="408" y="66" font-size="40" fill="#000" text-anchor="middle" dominant-baseline="alphabetic">22.0°</text>
+    <rect id="w-6-plus-btn" x="477" y="21" width="62" height="62" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+    <use id="w-6-plus-icon" xlink:href="#i-plus" href="#i-plus" x="488" y="32" width="40" height="40" color="#000"/>
+  </g>
+
+</svg>

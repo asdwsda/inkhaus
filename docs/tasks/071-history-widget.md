@@ -1,8 +1,8 @@
 # 071: History graph widget
 
-Status: todo
+Status: in-progress
 Depends on: 049, 052, 053, 055
-UI spec: docs/ui/history-widget.md (to write; based on docs/ui/history.md)
+UI spec: docs/ui/history-widget.md (approved 2026-10-30)
 Needs device: yes
 
 ## Scope
@@ -37,3 +37,6 @@ Out of scope: several entities in one graph, new graph types; other widgets keep
   and on the scheduled refresh.
 - Power: each graph widget adds one history request per session. Fetch graphs only for the visible tab
   and after the state fetch, so taps and states are not delayed.
+- Reference (dropped 072): branch `ref/072-visible-tab` has `setVisible`/tab-fetch session code and tests that the graph fetch may reuse.
+- Scheduled refresh (user, 2026-10-30): update all graph widgets if cheap, else only the visible tab. Rule: measure on the device (debug NETT/timing); if all graphs together add < 0.5 s awake time per scheduled refresh, fetch all; otherwise visible tab only. Estimate from 046: 1-2 s per graph fetch on a warm connection, so expect "visible only".
+- Long press: does nothing, same as tap (user, 2026-10-30).
