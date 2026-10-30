@@ -241,9 +241,16 @@ void startScan() {
     g_scanned = true;
     g_scanT0 = millis();
     g_state = net::State::Connecting;
-    esp_wifi_scan_stop();  // no-op when idle
-    WiFi.scanDelete();
-    WiFi.scanNetworks(true, false, false, 300);  // UNVERIFIED: async scan with 300 ms/channel dwell finds the APs in <= ~4 s
+    // No esp_wifi_scan_stop() here: it is queued to the Wi-Fi task and can abort the scan started right
+    // after it (task 056 hypothesis). scanNetworks() returns RUNNING itself if a scan is still active.
+    // 200 ms/channel: 13 channels ~2.6 s; the library fails a scan after dwell*20 ms, which must stay
+    // clear of our own 6 s budget (300 ms made both 6000 ms).
+    int16_t r = WiFi.scanNetworks(true, false, false, 200);
+    if (r == WIFI_SCAN_FAILED) {  // esp_wifi_scan_start refused (STA not ready): retry once shortly
+        wakelog::logf("NET: scan_start_failed retry" "\n");
+        delay(50);
+        r = WiFi.scanNetworks(true, false, false, 200);
+    }
     wakelog::logf("NET: phase=scan profiles=%u\n", (unsigned)g_profiles.size());
 }
 
