@@ -31,23 +31,32 @@ impl Phase {
     }
 }
 
-/// Overall progress: bytes of all segments written so far / total.
+/// Overall progress. espflash reports per segment in chunks (of the compressed data), so each
+/// segment is weighted by its raw size in bytes.
 struct Progress<'a> {
+    sizes: Vec<usize>,
+    idx: usize,
     total: usize,
     before: usize,
-    seg_total: usize,
+    chunks: usize,
     report: &'a mut dyn FnMut(Phase, f32),
 }
 
-impl Progress<'_> {
-    fn frac(&self, cur: usize) -> f32 {
-        (((self.before + cur) as f32) / self.total.max(1) as f32).min(1.0)
+impl<'a> Progress<'a> {
+    fn new(sizes: Vec<usize>, report: &'a mut dyn FnMut(Phase, f32)) -> Self {
+        let total = sizes.iter().sum();
+        Progress { sizes, idx: 0, total, before: 0, chunks: 0, report }
+    }
+    fn frac(&self, cur_chunks: usize) -> f32 {
+        let size = self.sizes.get(self.idx).copied().unwrap_or(0) as f32;
+        let within = if self.chunks == 0 { 0.0 } else { cur_chunks as f32 / self.chunks as f32 };
+        ((self.before as f32 + size * within.min(1.0)) / self.total.max(1) as f32).min(1.0)
     }
 }
 
 impl ProgressCallbacks for Progress<'_> {
     fn init(&mut self, _addr: u32, total: usize) {
-        self.seg_total = total;
+        self.chunks = total;
         let f = self.frac(0);
         (self.report)(Phase::Writing, f);
     }
@@ -56,11 +65,15 @@ impl ProgressCallbacks for Progress<'_> {
         (self.report)(Phase::Writing, f);
     }
     fn verifying(&mut self) {
-        let f = self.frac(self.seg_total);
+        let f = self.frac(self.chunks);
         (self.report)(Phase::Verifying, f);
     }
     fn finish(&mut self, _skipped: bool) {
-        self.before += self.seg_total;
+        self.before += self.sizes.get(self.idx).copied().unwrap_or(0);
+        self.idx += 1;
+        self.chunks = 0;
+        let f = self.frac(0);
+        (self.report)(Phase::Writing, f);
     }
 }
 
@@ -88,7 +101,7 @@ pub fn flash(port_name: &str, image: &Image, report: &mut dyn FnMut(Phase, f32))
         .map_err(|e| Error::from_flash_text(port_name, &e.to_string()))?;
 
     let segments: Vec<Segment> = image.segments.iter().map(|(addr, d)| Segment { addr: *addr, data: pad4(d) }).collect();
-    let mut progress = Progress { total: image.total_bytes(), before: 0, seg_total: 0, report };
+    let mut progress = Progress::new(image.segments.iter().map(|(_, d)| d.len()).collect(), report);
     flasher
         .write_bins_to_flash(&segments, &mut progress)
         .map_err(|e| Error::from_flash_text(port_name, &e.to_string()))?;
@@ -114,20 +127,24 @@ mod tests {
     }
 
     #[test]
-    fn progress_accumulates_over_segments() {
+    fn progress_weights_segments_by_size() {
         let mut seen = Vec::new();
         {
             let mut cb = |p: Phase, f: f32| seen.push((p, f));
-            let mut pr = Progress { total: 100, before: 0, seg_total: 0, report: &mut cb };
-            pr.init(0, 40);
-            pr.update(20);
+            let mut pr = Progress::new(vec![40, 60], &mut cb);
+            pr.init(0, 4); // 4 chunks (compressed), 40 raw bytes
+            pr.update(2);
             pr.verifying();
             pr.finish(false);
-            pr.init(0x8000, 60);
-            pr.update(30);
+            pr.init(0x8000, 10);
+            pr.update(5);
+            pr.finish(true);
         }
+        assert_eq!(seen[0], (Phase::Writing, 0.0));
         assert_eq!(seen[1], (Phase::Writing, 0.2));
-        assert_eq!(seen[2].0, Phase::Verifying);
-        assert_eq!(seen.last().unwrap().1, 0.7);
+        assert_eq!(seen[2], (Phase::Verifying, 0.4));
+        assert_eq!(seen[3], (Phase::Writing, 0.4)); // after segment 1
+        assert_eq!(seen[5], (Phase::Writing, 0.7));
+        assert_eq!(seen.last().unwrap().1, 1.0);
     }
 }

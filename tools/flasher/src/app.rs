@@ -18,7 +18,7 @@ enum Releases {
 }
 
 enum Msg {
-    Progress(String, f32),
+    Progress(String, Option<f32>),
     Done(Result<String, Error>),
     Uploaded(Result<Vec<String>, Error>),
 }
@@ -38,7 +38,7 @@ pub struct App {
     chosen_tag: Option<String>,
     local: Option<PathBuf>,
     job: Option<Receiver<Msg>>,
-    progress: (String, f32),
+    progress: (String, Option<f32>),
     outcome: Option<Outcome>,
     upload_note: Option<Result<Vec<String>, Error>>,
     can_restart: bool,
@@ -61,7 +61,7 @@ impl App {
             chosen_tag: None,
             local: None,
             job: None,
-            progress: (String::new(), 0.0),
+            progress: (String::new(), Some(0.0)),
             outcome: None,
             upload_note: None,
             can_restart: false,
@@ -100,7 +100,7 @@ impl App {
         let (tx, rx) = channel();
         self.job = Some(rx);
         self.outcome = None;
-        self.progress = ("Downloading".into(), 0.0);
+        self.progress = ("Downloading".into(), Some(0.0));
         let ctx = ctx.clone();
         std::thread::spawn(move || {
             let send = |m: Msg| {
@@ -110,14 +110,14 @@ impl App {
             let result = (|| -> Result<String, Error> {
                 let tmp = tempfile::tempdir()?;
                 if let Some(p) = &local {
-                    send(Msg::Progress("Preparing".into(), 0.0));
+                    send(Msg::Progress("Preparing".into(), Some(0.0)));
                     source::import_local(p, tmp.path())?;
                 } else if let Some(r) = &release {
-                    source::fetch_release(r, tmp.path(), &mut |f| send(Msg::Progress("Downloading".into(), f)))?;
+                    source::fetch_release(r, tmp.path(), &mut |f| send(Msg::Progress("Downloading".into(), Some(f))))?;
                 }
-                send(Msg::Progress("Checking files".into(), 0.0));
+                send(Msg::Progress("Checking files".into(), Some(0.0)));
                 let image = source::load_dir(tmp.path())?;
-                flash::flash(&port, &image, &mut |ph: Phase, f| send(Msg::Progress(ph.text().into(), f)))?;
+                flash::flash(&port, &image, &mut |ph: Phase, f| send(Msg::Progress(ph.text().into(), if ph == Phase::Connecting { None } else { Some(f) })))?;
                 Ok(image.manifest.version)
             })();
             send(Msg::Done(result));
@@ -150,14 +150,14 @@ impl App {
         self.outcome = None;
         self.upload_note = None;
         self.can_restart = false;
-        self.progress = ("Uploading".into(), 0.0);
+        self.progress = ("Connecting to the M5Paper".into(), None);
         let ctx = ctx.clone();
         std::thread::spawn(move || {
             let send = |m: Msg| {
                 let _ = tx.send(m);
                 ctx.request_repaint();
             };
-            let r = provision::upload_files(&port, &files, &mut |n, f| send(Msg::Progress(format!("Uploading {n}"), f)));
+            let r = provision::upload_files(&port, &files, &mut |n, f| send(Msg::Progress(if f.is_none() { "Connecting to the M5Paper".into() } else { format!("Uploading {n}") }, f)));
             send(Msg::Uploaded(r));
         });
     }
@@ -279,7 +279,7 @@ impl eframe::App for App {
         let busy = self.job.is_some();
         egui::CentralPanel::default().show(root, |ui| {
             ui.add_space(8.0);
-            ui.heading("M5Paper Installer");
+            ui.heading("Inkhaus Installer");
             ui.add_space(12.0);
             self.device_ui(ui);
             ui.add_space(12.0);
@@ -299,7 +299,17 @@ impl eframe::App for App {
             ui.add_space(12.0);
             if busy {
                 ui.label(format!("{}...", self.progress.0));
-                ui.add(egui::ProgressBar::new(self.progress.1).show_percentage());
+                match self.progress.1 {
+                    Some(f) => {
+                        ui.add(egui::ProgressBar::new(f).show_percentage());
+                    }
+                    None => {
+                        ui.horizontal(|ui| {
+                            ui.spinner();
+                            ui.label("Please wait");
+                        });
+                    }
+                }
                 ui.label("Do not unplug the M5Paper.");
             }
             match &self.upload_note {

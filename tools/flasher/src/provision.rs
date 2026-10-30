@@ -182,11 +182,13 @@ pub fn open(port: &str) -> Result<Box<dyn serialport::SerialPort>, Error> {
 }
 
 /// Upload several files in one session. Returns one "name: summary" line per file.
-pub fn upload_files(port: &str, files: &[(String, Vec<u8>)], progress: &mut dyn FnMut(&str, f32)) -> Result<Vec<String>, Error> {
+pub fn upload_files(port: &str, files: &[(String, Vec<u8>)], progress: &mut dyn FnMut(&str, Option<f32>)) -> Result<Vec<String>, Error> {
+    // None = indeterminate: the port is opening and the board is resetting and booting.
+    progress("", None);
     let mut s = open(port)?;
     let mut out = Vec::new();
     for (name, data) in files {
-        let summary = transfer(&mut s, name, data, Timeouts::default(), &mut |f| progress(name, f))?;
+        let summary = transfer(&mut s, name, data, Timeouts::default(), &mut |f| progress(name, Some(f)))?;
         out.push(format!("{name}: {summary}"));
     }
     Ok(out)
