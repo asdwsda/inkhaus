@@ -1,0 +1,62 @@
+@font-face{font-family:"DejaVu Sans";src:url(fonts/dejavu-sans.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"DejaVu Sans";src:url(fonts/dejavu-sans-bold.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"DejaVu Sans Mono";src:url(fonts/dejavu-sans-mono.woff2) format("woff2");font-weight:400;font-display:swap}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#fff;color:#000;font:18px/1.5 "DejaVu Sans",Verdana,system-ui,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-weight:700;line-height:1.2;margin:0 0 16px}
+h1{font-size:40px}h2{font-size:28px}h3{font-size:20px}
+p{margin:0 0 16px}
+a{color:#000;text-decoration:underline}
+a:focus-visible,summary:focus-visible,pre:focus-visible{outline:3px solid #000;outline-offset:3px}
+.muted,.cap{color:#444}
+.cap{font-size:14px;margin:8px 0 0}
+header{padding:24px 0}
+header .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
+.brand{display:flex;align-items:center;gap:12px;font-size:28px;font-weight:700;text-decoration:none}
+.brand img{width:48px;height:48px}
+nav{display:flex;flex-wrap:wrap;gap:4px 24px}
+nav a{padding:12px 0}
+section{border-top:1px solid #888;padding:64px 0}
+.hero{border-top:0;padding-top:32px}
+.btn{display:inline-block;border:3px solid #000;background:#fff;color:#000;padding:10px 22px;min-height:48px;text-decoration:none;font-weight:400;border-radius:4px;margin:0 12px 12px 0;text-align:center}
+.btn:hover,.btn:focus-visible{background:#000;color:#fff}
+.btn.primary{font-weight:700}
+.shots{display:flex;gap:24px;align-items:flex-start;margin-top:32px}
+.shots figure:first-child{flex:0 0 auto;width:32%}
+.shots figure:last-child{flex:1 1 0}
+figure{margin:0}
+img.shot{display:block;max-width:100%;height:auto;border:2px solid #000;image-rendering:auto}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;list-style:none;padding:0;margin:0;counter-reset:s}
+.steps li{counter-increment:s;border:1px solid #888;padding:16px}
+.steps li::before{content:counter(s);display:block;font-weight:700;font-size:28px}
+.steps strong{display:block;font-size:20px}
+.feat{columns:2;column-gap:32px;padding-left:22px;margin:0}
+.feat li{break-inside:avoid;margin-bottom:4px}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:end}
+.os{display:flex;gap:12px;margin:16px 0 8px;flex-wrap:wrap}
+.os .btn{margin:0}
+pre{background:#f2f2f2;border:1px solid #888;padding:12px 16px;overflow-x:auto;font:14px/1.5 "DejaVu Sans Mono",monospace;margin:0 0 16px}
+code{font-family:"DejaVu Sans Mono",monospace;font-size:16px}
+details{border-top:1px solid #888;padding:12px 0}
+details:last-of-type{border-bottom:1px solid #888}
+summary{cursor:pointer;font-weight:400;min-height:32px}
+details p,details ul{margin:12px 0 0}
+footer{border-top:1px solid #888;padding:32px 0;color:#444;font-size:16px}
+footer a{color:#444}
+@media (max-width:899px){.gallery{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr}}
+@media (max-width:599px){
+ h1{font-size:32px}
+ header .wrap{flex-direction:column;align-items:flex-start}
+ nav a{padding:14px 0}
+ .shots{flex-direction:column;align-items:center}
+ .shots figure:first-child{width:100%;max-width:320px}
+ .shots figure:last-child{width:100%}
+ .gallery{grid-template-columns:1fr}
+ .feat{columns:1}
+ .os{flex-direction:column}
+ .os .btn{width:100%;min-height:56px;line-height:34px}
+ .btn{width:100%;margin-right:0}
+ section{padding:48px 0}
+}
