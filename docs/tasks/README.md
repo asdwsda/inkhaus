@@ -29,7 +29,7 @@
 | 025 | [Config cache in internal flash](025-config-cache.md) | done | 003, 020 |
 | 026 | [Follow-ups from device session 1](026-device-session-1-followups.md) | done | 023 |
 | 027 | [TLS session resumption (researched, deferred)](027-tls-resumption.md) | todo | 008 |
-| 028 | [State wording and icons](028-state-wording.md) | in-progress | 026 |
+| 028 | [State wording and icons](028-state-wording.md) | done | 026 |
 | 029 | [Wake log on the SD card](029-wake-log-sd.md) | done | 024 |
 | 030 | [Configurable sensor attributes (config + data)](030-sensor-attributes.md) | done | 003, 004, 017 |
 | 032 | [Separate secrets.yaml from config.yaml](032-separate-secrets.md) | done | 003, 020, 025 |

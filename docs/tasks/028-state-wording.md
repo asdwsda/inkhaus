@@ -1,6 +1,6 @@
 # 028: State wording and icons in the firmware
 
-Status: in-progress
+Status: done
 Depends on: 026
 UI spec: docs/ui/widgets.md section 11 (revision 6), STYLE.md section 8
 Needs device: yes for the visual check (later)
@@ -26,3 +26,4 @@ don't contain them yet), regenerate src/render/icon_data.*, keep existing icons 
 - PC part done (2026-10-28): §11 wording tables in `toggleView`/`StateIcon`, humanise per 11.4,
   vacuum low battery ≤ 20 % when not docked, 22 tool-drawn icons (existing icons byte-identical).
   Icon designs are unreviewed: check them in the on-device screenshots.
+- Device session 2026-10-30: user batches 4-5 OK (hotspot -> external and back to internal; demo icons; outdated chip; token rejected).
