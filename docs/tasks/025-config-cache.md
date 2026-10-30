@@ -1,6 +1,6 @@
 # 025: Config cache in internal flash
 
-Status: in-progress
+Status: done
 Depends on: 003, 020
 UI spec: none
 Needs device: yes (final timing check)
@@ -34,3 +34,4 @@ Per ARCHITECTURE.md ("parsed only when the file changes", "SD for editing, inter
   every truncation and bit flip), `config_sd::stat`, cache behind `app_config::load()` (LittleFS
   `/config.cache`, tmp + rename), invalidated by `putfile config.yaml`. Device timing check pending.
   Known limit: a PC edit keeping size and mtime identical isn't detected.
+- Device session 2026-10-30 (tester): verified or superseded by later daily use; details in the session's device-checklist.md.
