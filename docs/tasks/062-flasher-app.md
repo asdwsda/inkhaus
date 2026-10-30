@@ -1,6 +1,6 @@
 # 062: Flasher app (Rust, single binary)
 
-Status: PC part done (no device flash yet)
+Status: done
 Depends on: 061 (manifest format)
 UI spec: in this file (desktop, not e-ink)
 Needs device: yes (flash test)
@@ -21,9 +21,10 @@ Out of scope: YAML upload (064), CI builds (063).
 - tools/flasher/ (Cargo project), docs/FLASHER.md (user guide, short)
 
 ## Acceptance criteria
-- [ ] `cargo build --release` and `cargo test` pass on Linux; unit tests for manifest parsing, hash check, release list parsing.
-- [ ] Device: flashing a release from the picker works and keeps settings (Wi-Fi/settings survive); the device boots.
-- [ ] Unplugged / wrong hash / no network each show a plain message, no crash.
+- [x] `cargo build --release` and `cargo test` pass on Linux; unit tests for manifest parsing, hash check, release list parsing.
+- [x] Device: flashing a release from the picker works and keeps settings (Wi-Fi/settings survive); the device boots.
+- [x] Unplugged / wrong hash / no network each show a plain message, no crash.
 
 ## Notes
 - GitHub API unauthenticated limit 60/h: fetch the release list once per start.
+- Device check 2026-10-30 (user): install with progress, settings kept, YAML upload + automatic restart OK.

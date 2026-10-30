@@ -62,7 +62,7 @@
 | 059 | [Sleep indicator as a bold "Zz" icon](059-sleep-indicator-zz.md) | done | 038 |
 | 060 | [Split HTTPS timing (DNS / TCP / TLS / first byte)](060-net-timing-split.md) | done | 027 |
 | 061 | [Release workflow: firmware assets on GitHub Releases](061-release-workflow.md) | PC done; GitHub/device check pending | – |
-| 062 | [Flasher app (Rust, single binary)](062-flasher-app.md) | PC done; GitHub/device check pending | 061 |
+| 062 | [Flasher app (Rust, single binary)](062-flasher-app.md) | done | 061 |
 | 063 | [Build the flasher for Windows, macOS and Linux in CI](063-flasher-ci.md) | in-progress | 061, 062 |
 | 064 | [Flasher: optional YAML upload to the SD card](064-flasher-yaml-upload.md) | in-progress | 062, 020 |
 | 065 | [Project website on GitHub Pages](065-project-website.md) | in-progress | – |
