@@ -1,6 +1,6 @@
 # 047: Wi-Fi profiles, HA URL mode, Settings categories
 
-Status: todo
+Status: done
 Depends on: 021, 032, 026
 UI spec: docs/ui/settings.md (new "Network" page or rows) — ui-designer
 Needs device: yes (later, home Wi-Fi + hotspot)
@@ -39,3 +39,4 @@ Settings; LONG_PUSH = back one level.
 - [ ] Spec approved; native tests for schema compatibility, profile selection, URL choice per mode and the
       "back to internal at home" path; builds pass.
 - [ ] On device: home Wi-Fi → internal; hotspot → external; back home → internal again.
+- Device session 2026-10-30: user batches 4-5 OK (hotspot -> external and back to internal; demo icons; outdated chip; token rejected).

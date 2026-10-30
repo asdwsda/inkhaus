@@ -47,7 +47,7 @@
 | 044 | [Inkling branding (logo, splash, Tools)](044-inkling-branding.md) | done | 041 |
 | 045 | [Brightness popup for dimmable lights](045-brightness-popup.md) | done | 017, 036 |
 | 046 | [History popup for sensors (research)](046-history-research.md) | done | 030 |
-| 047 | [Wi-Fi profiles, HA URL mode, Settings categories](047-wifi-profiles-and-url-mode.md) | PC done; device check pending | 021, 032, 026 |
+| 047 | [Wi-Fi profiles, HA URL mode, Settings categories](047-wifi-profiles-and-url-mode.md) | done | 021, 032, 026 |
 | 048 | [History popup spec](048-history-popup-spec.md) | done | 046 |
 | 049 | [History config keys](049-history-config.md) | done | 046 |
 | 050 | [History data core (lib/history)](050-history-core.md) | done | 046 |
