@@ -24,6 +24,7 @@ namespace {
 uint32_t g_t0Us = 0;
 Start g_start = Start::Stock;
 uint32_t g_readyWaitMs = 0;  // how long BUSY was low at start-up (controller booting)
+uint32_t g_readyHighAtMs = 0;
 bool g_recoveredCold = false;  // we reset the controller ourselves: its image memory is garbage
 
 #ifndef BOOT_WDT_S
@@ -123,7 +124,8 @@ bool probeController(lgfx::Bus_SPI& bus, uint32_t& idOut) {
         if (millis() - t > 1024) return false;  // never ready
         delay(1);
     }
-    g_readyWaitMs = millis() - t;
+    g_readyHighAtMs = millis();
+    g_readyWaitMs = g_readyHighAtMs - t;
     configureBus(bus, 8000000, 8000000);
     if (!bus.init()) return false;
     bus.beginTransaction();
@@ -212,6 +214,12 @@ bool attachNoResetDisplay() {
     // The library's own waits last up to 4 s each; check BUSY first and, if the controller is
     // stuck, let init() pulse the reset line (the image memory is then garbage: cold).
     bool useReset = false;
+    // Task 067 r2: after a power-cycle BUSY goes high ~0.86 s in but the display start-up takes
+    // ~1.06 s; give the controller that time before the panel's own first commands.
+    if (g_readyWaitMs > 100) {
+        const uint32_t sinceReady = millis() - g_readyHighAtMs;
+        if (sinceReady < 400) delay(400 - sinceReady);
+    }
     if (!boot::waitBusyHigh(kReadyWaitMs, "pre_init")) {
         useReset = true;
         g_recoveredCold = true;

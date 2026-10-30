@@ -67,7 +67,7 @@
 | 064 | [Flasher: optional YAML upload to the SD card](064-flasher-yaml-upload.md) | done | 062, 020 |
 | 065 | [Project website on GitHub Pages](065-project-website.md) | done | – |
 | 066 | [Choose a new project name (Inkling may be taken)](066-project-name.md) | done | – |
-| 067 | [Intermittent cold-boot hang after BOOT: controller_id=](067-cold-boot-hang.md) | in-progress | – |
+| 067 | [Intermittent cold-boot hang after BOOT: controller_id=](067-cold-boot-hang.md) | done | – |
 | 068 | [Demo mode shows history charts](068-demo-history.md) | done | 034 |
 | 069 | [A more pleasant Inkhaus Installer UI](069-installer-ui.md) | done | 062, 064 |
 | 070 | [User-friendly README](070-readme-user-friendly.md) | done | 063, 065 |
