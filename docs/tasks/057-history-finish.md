@@ -30,3 +30,7 @@ Needs device: yes (short visual check)
 
 ## Notes
 - Remote-URL history fetch (051 device item) is checked when the user is on a hotspot; not part of this task.
+- 2026-10-30 hotspot check (hotspot.log): REST history over remote OK (`HIST: src=history fetch_ms=4153
+  heap_min=84648 err=0`). Follow-up: in portrait every history popup open/close is a full refresh
+  (`big_change_pct=51`, popup rect 516x518 > 50 % limit); the 053 spec wants one quality refresh of the
+  popup rect. Exempt modal rects from the big-change rule or shrink the popup below 50 %.
