@@ -246,4 +246,26 @@ void withGhost(std::vector<Rect>& rects, Rect ghost) {
     rects.push_back(ghost);
     mergeRects(rects, 0, rects.size());
 }
+
+void mergeIntoRegions(std::vector<Rect>& rects, const std::vector<Rect>& regions) {
+    if (rects.empty() || regions.empty()) return;
+    auto hit = [](const Rect& a, const Rect& b) {
+        return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    };
+    std::vector<bool> used(regions.size(), false);
+    std::vector<Rect> out;
+    for (const Rect& r : rects) {
+        bool inRegion = false;
+        for (size_t i = 0; i < regions.size(); ++i) {
+            if (regions[i].w <= 0 || regions[i].h <= 0 || !hit(r, regions[i])) continue;
+            used[i] = true;
+            inRegion = true;
+        }
+        if (!inRegion) out.push_back(r);
+    }
+    for (size_t i = 0; i < regions.size(); ++i)
+        if (used[i]) out.push_back(regions[i]);
+    mergeRects(out, 0, out.size());
+    rects.swap(out);
+}
 }  // namespace screen_track

@@ -348,6 +348,28 @@ void test_ghost_rect_absorbs_overlapping_changes() {
     TEST_ASSERT_TRUE(none.empty());
 }
 
+void test_merge_into_regions() {
+    const Rect graph{20, 100, 200, 120}, other{300, 100, 100, 50};
+    std::vector<Rect> rects{{30, 110, 40, 10}, {150, 150, 20, 20}, {60, 200, 30, 10}, {320, 110, 20, 10}};
+    mergeIntoRegions(rects, {graph});
+    TEST_ASSERT_EQUAL(2, (int)rects.size());
+    int g = 0, o = 0;
+    for (const Rect& r : rects) {
+        if (r.x == graph.x && r.y == graph.y && r.w == graph.w && r.h == graph.h) ++g;
+        if (r.x == 320 && r.y == 110 && r.w == 20 && r.h == 10) ++o;
+    }
+    TEST_ASSERT_EQUAL(1, g);
+    TEST_ASSERT_EQUAL(1, o);
+    (void)other;
+}
+
+void test_merge_into_regions_untouched_region_not_added() {
+    std::vector<Rect> rects{{320, 110, 20, 10}};
+    mergeIntoRegions(rects, {{20, 100, 200, 120}});
+    TEST_ASSERT_EQUAL(1, (int)rects.size());
+    TEST_ASSERT_EQUAL(320, rects[0].x);
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_equal_frames_give_no_rects);
@@ -375,5 +397,7 @@ int main() {
     RUN_TEST(test_t_tile_hash_detects_single_pixel_and_diff_rect_contains_it);
     RUN_TEST(test_t_rle_empty_and_max_run);
     RUN_TEST(test_ghost_rect_absorbs_overlapping_changes);
+    RUN_TEST(test_merge_into_regions);
+    RUN_TEST(test_merge_into_regions_untouched_region_not_added);
     return UNITY_END();
 }

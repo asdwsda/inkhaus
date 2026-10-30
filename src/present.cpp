@@ -478,6 +478,8 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
 
 static int g_renderTab = -1;
 void setLogTab(int tab) { g_renderTab = tab; }
+static std::vector<screen_track::Rect> g_mergeRegions;
+void setMergeRegions(const std::vector<screen_track::Rect> &regions) { g_mergeRegions = regions; }
 
 void setModal(bool open) {
   if (open == g_modal) return;
@@ -504,6 +506,9 @@ bool show(Mode mode, uint32_t now) {
   screen_track::DiffOptions opts;
   auto rects = screen_track::diffFrames(buf(g_prev), buf(g_cur), g_w, g_h, g_w, opts);
   if (rects.empty()) return false;
+  const size_t before = rects.size();
+  screen_track::mergeIntoRegions(rects, g_mergeRegions);
+  if (rects.size() != before) Serial.printf("APP: graph_merge rects_before=%u rects_after=%u\n", (unsigned)before, (unsigned)rects.size());
   Serial.printf("APP: render tab=%d rects=%u mode=partial\n", g_renderTab, (unsigned)rects.size());
   long area = 0;
   for (const Rect &r : rects) area += long(r.w) * long(r.h);

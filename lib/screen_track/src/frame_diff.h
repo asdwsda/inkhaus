@@ -24,6 +24,12 @@ void mergeRects(std::vector<Rect>& rects, int gap, size_t maxRects);
 // by the next frame. Adds `ghost` to `rects` and merges overlapping rects into it. Empty `rects`: unchanged.
 void withGhost(std::vector<Rect>& rects, Rect ghost);
 
+// Task 074: every rect that intersects a region is replaced by that region (several rects in one region
+// become one refresh of the region; a region gets the refresh as a whole, e.g. a graph with greys).
+// Rects outside all regions stay as they are; the result is merged again (gap 0) so that regions that
+// touch other rects join them. Empty regions are ignored.
+void mergeIntoRegions(std::vector<Rect>& rects, const std::vector<Rect>& regions);
+
 // Rounds x/width outward to multiples of `alignX`, clamped to [0, w). No-op for alignX <= 1.
 Rect alignRect(Rect r, int alignX, int w);
 

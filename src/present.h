@@ -6,6 +6,10 @@
 #include <M5Unified.h>
 #include <stdint.h>
 
+#include <vector>
+
+#include "screen_track.h"
+
 namespace present {
 
 // Allocates the current and previous frame (8-bit grey, PSRAM) at the display's current size.
@@ -57,6 +61,9 @@ bool show(Mode mode, uint32_t now);
 // the popup rect once in quality with the real greys (no big-change full refresh); while open, quality
 // refreshes keep greys. Closing: the next show() is one full GC16 refresh of the whole screen.
 void setModal(bool open);
+// Task 074: rects (display coordinates) refreshed as one when any change lands inside (graph widgets).
+// Call before every show(); an empty list turns it off.
+void setMergeRegions(const std::vector<screen_track::Rect> &regions);
 void setLogTab(int tab);  // tab index shown in the "APP: render" log line
 
 // Call regularly: after 2 s without a frame, runs one GC16 full refresh if the ghost debt is

@@ -271,6 +271,12 @@ static void showFrame(uint32_t now) {
   composeFrame();
   const bool full = g_app.takeFull();
   present::setLogTab(g_app.shownTab());
+  {
+    std::vector<screen_track::Rect> graphs;
+    for (const ui::Placement &pl : g_app.layout().widgets)
+      if (pl.graph) graphs.push_back({pl.rect.x, pl.rect.y, pl.rect.w, pl.rect.h});
+    present::setMergeRegions(graphs);
+  }
   present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible());
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
