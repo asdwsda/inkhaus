@@ -1,6 +1,6 @@
 # 068: Demo mode shows history charts
 
-Status: in-progress
+Status: done
 Depends on: 034 (demo mode), history widgets (docs/ui/history.md)
 UI spec: docs/ui/history.md (no new screens)
 Needs device: yes (visual check)
@@ -16,5 +16,6 @@ Out of scope: changes to the real history fetch path.
 - lib/ (pure generator + native tests), the demo data source in src/, demo.yaml if widgets need adding
 
 ## Acceptance criteria
-- [ ] Native tests: generator output deterministic, within each sensor's range, correct point count/time span per chart type.
-- [ ] Demo mode on the device: every chart widget in the demo tabs shows data in both orientations (user check).
+- [x] Native tests: generator output deterministic, within each sensor's range, correct point count/time span per chart type.
+- [x] Demo mode on the device: every chart widget in the demo tabs shows data in both orientations (user check).
+- Device check 2026-10-30 (user, via the flasher test): Inkhaus splash shown; demo charts OK in both orientations.

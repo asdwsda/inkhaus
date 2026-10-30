@@ -68,7 +68,7 @@
 | 065 | [Project website on GitHub Pages](065-project-website.md) | in-progress | – |
 | 066 | [Choose a new project name (Inkling may be taken)](066-project-name.md) | done | – |
 | 067 | [Intermittent cold-boot hang after BOOT: controller_id=](067-cold-boot-hang.md) | todo | – |
-| 068 | [Demo mode shows history charts](068-demo-history.md) | in-progress | 034 |
+| 068 | [Demo mode shows history charts](068-demo-history.md) | done | 034 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
