@@ -4,7 +4,6 @@
 running on the original **M5Stack M5Paper** (ESP32, 960×540 touch e-ink screen, 3-way rocker,
 1150 mAh battery). It sleeps almost all the time, wakes on a button press, shows your shutters,
 lights, thermostats and sensors from the last known state, and sends your taps to Home Assistant.
-Battery life comes first: the goal is about **one month per charge**.
 
 Version 1.1.0, see [CHANGELOG.md](CHANGELOG.md).
 
