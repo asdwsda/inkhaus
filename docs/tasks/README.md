@@ -57,6 +57,7 @@
 | 054 | [WebSocket statistics client and parser](054-history-ws-statistics.md) | done | 050, 051 |
 | 055 | [Statistics source on the device](055-history-statistics-device.md) | done | 053, 054 |
 | 056 | [Wi-Fi scan always fails](056-wifi-scan-fails.md) | done | 047 |
+| 057 | [History finishing touches](057-history-finish.md) | todo | 049, 052, 053, 055 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
