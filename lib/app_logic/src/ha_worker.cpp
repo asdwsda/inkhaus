@@ -138,7 +138,7 @@ void HaWorker::runStatistics(const NetCommand &cmd, NetEvent &e) {
   for (const std::string &base : wsBases()) {
     const ws::Endpoint ep = ws::parse_endpoint(base);
     if (!ep.valid) continue;
-    if (ws_->freeInternalHeap() < kWsHeapMargin) transport_.close();
+    transport_.close();  // always: the keep-alive TLS socket fragments the heap the WS handshake needs
     std::unique_ptr<ws::Socket> sock = ws_->open(ep.host, ep.port, ep.tls);
     if (!sock) continue;
     if (cmd.histCancel && *cmd.histCancel) { e.error = HaError::Cancelled; break; }

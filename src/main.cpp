@@ -319,7 +319,7 @@ static void historyOpened() {
   const history::Freshness f =
       g_histCache.lookup(h.entity(), histHash(), session_glue::wallClock(), h.spec().hours, s, at);
   h.applyCache(f, s, at);
-  g_histWaitNet = h.takeFetch(session_glue::wallClock(), g_histJob);
+  g_histWaitNet = h.takeFetch(session_glue::wallClock(), g_histJob, utcOffsetAt(session_glue::wallClock()));
 }
 
 // Every loop: starts a planned fetch once Wi-Fi is up, fails it when there is no way to get it, and aborts a

@@ -70,7 +70,7 @@ class HistoryPopup {
   void applyCache(history::Freshness f, const history::Series &s, int64_t fetchedAt);
   // Returns true once if a fetch should start now. Without a plausible clock the fetch cannot be planned:
   // no job, and the popup shows the failure (Error NotFetched, or Stale+offline with a cache).
-  bool takeFetch(int64_t nowEpoch, HistoryJob &job);
+  bool takeFetch(int64_t nowEpoch, HistoryJob &job, int32_t utcOffsetS = 0);
   // The outcome of the fetch started by takeFetch(). Returns true if the picture changed (always, except
   // for a late result after close). `s` is moved from on Ok.
   bool onFetchDone(int ticket, HistOutcome o, history::Series &&s, int64_t nowEpoch);

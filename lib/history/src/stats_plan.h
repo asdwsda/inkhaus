@@ -27,6 +27,7 @@ struct BarWindow {
   int64_t start = 0, end = 0;
   int count = 0;
 };
-BarWindow barWindow(int64_t now, int hours, int64_t bucketSeconds);
+// utcOffsetS: local offset east of UTC; bucket starts are aligned to local time.
+BarWindow barWindow(int64_t now, int hours, int64_t bucketSeconds, int32_t utcOffsetS = 0);
 
 }  // namespace history

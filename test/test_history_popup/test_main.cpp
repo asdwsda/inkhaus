@@ -371,6 +371,19 @@ void test_bar_window() {
   TEST_ASSERT_EQUAL(now - now % 86400, w.start);
 }
 
+void test_bar_window_local_days() {
+  const int64_t now = 1761696000 + 5 * 3600 + 123;  // 05:02 UTC
+  // CET (+1 h): local 06:02, local midnight is 23:00 UTC the day before.
+  history::BarWindow w = history::barWindow(now, 720, 86400, 3600);
+  TEST_ASSERT_EQUAL(30, w.count);
+  TEST_ASSERT_EQUAL(1761696000 - 3600 - 29 * 86400, w.start);
+  TEST_ASSERT_EQUAL(0, (w.start + 3600) % 86400);
+  // UTC-5 at 02:00 UTC is still the previous local day.
+  w = history::barWindow(1761696000 + 2 * 3600, 48, 86400, -5 * 3600);
+  TEST_ASSERT_EQUAL(2, w.count);
+  TEST_ASSERT_EQUAL(1761696000 + 5 * 3600 - 2 * 86400, w.start);  // local midnight of Oct 27
+}
+
 void test_layout_hit() {
   HistoryLayout l = historyLayout(settings::Orientation::Portrait);
   TEST_ASSERT_EQUAL(HistoryHit::Close, historyHitTest(l, {470, 250}));
@@ -531,5 +544,6 @@ int main() {
   RUN_TEST(test_source_choice_and_jobs);
   RUN_TEST(test_no_statistics_outcome);
   RUN_TEST(test_bar_window);
+  RUN_TEST(test_bar_window_local_days);
   return UNITY_END();
 }

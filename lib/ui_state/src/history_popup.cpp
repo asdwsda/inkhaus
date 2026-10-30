@@ -126,7 +126,7 @@ void HistoryPopup::applyCache(history::Freshness f, const history::Series &s, in
   }
 }
 
-bool HistoryPopup::takeFetch(int64_t nowEpoch, HistoryJob &job) {
+bool HistoryPopup::takeFetch(int64_t nowEpoch, HistoryJob &job, int32_t utcOffsetS) {
   if (!fetchWanted_) return false;
   fetchWanted_ = false;
   if (nowEpoch < 1000000000) {  // clock not set: the window cannot be planned
@@ -144,7 +144,7 @@ bool HistoryPopup::takeFetch(int64_t nowEpoch, HistoryJob &job) {
   job.statistic = spec_.statistic;
   if (job.bar) {
     job.bucketSeconds = stats_period_seconds(spec_.period);
-    const history::BarWindow bw = history::barWindow(nowEpoch, spec_.hours, job.bucketSeconds);
+    const history::BarWindow bw = history::barWindow(nowEpoch, spec_.hours, job.bucketSeconds, utcOffsetS);
     job.start = bw.start;
     job.bucketCount = bw.count;
   }

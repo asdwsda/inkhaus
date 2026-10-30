@@ -1121,7 +1121,7 @@ void test_statistics_job_over_ws() {
   TEST_ASSERT_TRUE(fc.sock.head.find("Host: ha.example.org\r\n") != std::string::npos);
   TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"period\":\"hour\"") != std::string::npos);
   TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"statistic_ids\":[\"sensor.t\"]") != std::string::npos);
-  TEST_ASSERT_EQUAL(0, ha.closes);  // enough heap: the HTTP socket stays
+  TEST_ASSERT_EQUAL(1, ha.closes);  // the HTTP socket is always closed first
   TEST_ASSERT_TRUE(fc.sock.closed);
 }
 
