@@ -1,6 +1,6 @@
 # 022: Draw the Settings screen
 
-Status: in-progress
+Status: done
 Depends on: 007, 017
 UI spec: docs/ui/settings.md, docs/ui/png/settings-portrait.png, settings-landscape.png
 Needs device: yes for the final visual check
@@ -30,3 +30,4 @@ orientation; screenshot comparison with docs/ui/png/settings-*.png.
   helpers to clean up later. Phase 2 hook list is in the agent report summary: SettingsScreen +
   SettingsInfo in main, enter/leave GC16, dirty rects, the TEST_SETTINGS flag, input routing,
   the AppState hook for long-push/battery tap.
+- Device session 2026-10-30 (tester): verified or superseded by later daily use; details in the session's device-checklist.md.
