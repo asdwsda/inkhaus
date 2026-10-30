@@ -1,6 +1,6 @@
 # 069: A more pleasant Inkhaus Installer UI
 
-Status: in-progress
+Status: done
 Depends on: 062, 064
 UI spec: docs/ui/installer.md, variant C (minimal e-ink; user 2026-10-30)
 Needs device: yes (user check of the real window)
@@ -19,3 +19,5 @@ Out of scope: new features.
 - [x] Spec with mockups of every state (no device, ready, installing, done, error, YAML upload), variant approved by the user.
 - [ ] Implementation matches the spec; cargo test/build pass; binary size growth noted.
 - [ ] User check on the real window (install + YAML upload).
+
+- 2026-10-30: user checked the real window on Linux (install, Back, YAML upload): ok. macOS/Windows not checked by eye.

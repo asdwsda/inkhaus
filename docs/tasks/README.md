@@ -69,7 +69,7 @@
 | 066 | [Choose a new project name (Inkling may be taken)](066-project-name.md) | done | – |
 | 067 | [Intermittent cold-boot hang after BOOT: controller_id=](067-cold-boot-hang.md) | todo | – |
 | 068 | [Demo mode shows history charts](068-demo-history.md) | done | 034 |
-| 069 | [A more pleasant Inkhaus Installer UI](069-installer-ui.md) | in-progress | 062, 064 |
+| 069 | [A more pleasant Inkhaus Installer UI](069-installer-ui.md) | done | 062, 064 |
 | 070 | [User-friendly README](070-readme-user-friendly.md) | done | 063, 065 |
 
 ## Open items (not yet tasks, 2026-10-30)
