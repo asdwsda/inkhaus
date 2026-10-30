@@ -33,6 +33,8 @@ int g_forced = 0;   // 0 = Auto, else 1-based
 int g_haLink = 0;   // settings::HaLink as int
 int g_active = 0;   // index into g_profiles of the profile in use
 bool g_scanning = false;
+volatile uint32_t g_scanDoneAt = 0;  // millis() of the SCAN_DONE event (0 = none yet), diagnostics for task 056
+int g_scanStartRet = 0;
 uint32_t g_scanT0 = 0;
 constexpr uint32_t kScanTimeoutMs = 6000;
 // Read by the network task (core 0): plain words, written when the link comes up / goes down.
@@ -240,6 +242,7 @@ void startScan() {
     g_scanning = true;
     g_scanned = true;
     g_scanT0 = millis();
+    g_scanDoneAt = 0;
     g_state = net::State::Connecting;
     // No esp_wifi_scan_stop() here: it is queued to the Wi-Fi task and can abort the scan started right
     // after it (task 056 hypothesis). scanNetworks() returns RUNNING itself if a scan is still active.
@@ -251,7 +254,8 @@ void startScan() {
         delay(50);
         r = WiFi.scanNetworks(true, false, false, 200);
     }
-    wakelog::logf("NET: phase=scan profiles=%u\n", (unsigned)g_profiles.size());
+    g_scanStartRet = r;
+    wakelog::logf("NET: phase=scan profiles=%u start_ret=%d\n", (unsigned)g_profiles.size(), (int)r);
 }
 
 void finishScan() {
@@ -267,8 +271,8 @@ void finishScan() {
     for (const auto &w : g_profiles) ssids.push_back(w.ssid);
     bool found = false;
     int pick = netselect::pickAfterScan(ssids, seen, lastProfile(), &found, g_exclude);
-    wakelog::logf("NET: scan_done aps=%d found=%d pick=%d ms=%u\n", n, found ? 1 : 0, pick,
-                  (unsigned)(millis() - g_scanT0));
+    wakelog::logf("NET: scan_done aps=%d found=%d pick=%d ms=%u event_ms=%d\n", n, found ? 1 : 0, pick,
+                  (unsigned)(millis() - g_scanT0), g_scanDoneAt ? (int)(g_scanDoneAt - g_scanT0) : -1);
     activate(pick);
     connectActive();
 }
@@ -320,6 +324,8 @@ void begin(const config::WifiConfig &wifi) {
                 if (isAuthReason(info.wifi_sta_disconnected.reason)) g_authLatch = true;
             },
             ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+        WiFi.onEvent([](arduino_event_id_t, arduino_event_info_t) { g_scanDoneAt = millis(); },
+                     ARDUINO_EVENT_WIFI_SCAN_DONE);
     }
     WiFi.persistent(false);
     WiFi.setAutoReconnect(false);

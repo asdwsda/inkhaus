@@ -1,6 +1,6 @@
 # 056: Wi-Fi scan always fails (aps=-2 after 6 s)
 
-Status: todo
+Status: done
 Depends on: 047
 UI spec: none
 Needs device: yes
@@ -38,3 +38,19 @@ if aps=-2 persists, log `scanNetworks` return value and Arduino SCAN_DONE event 
   `scan_done aps=-2 found=0 pick=1 ms=4890`, then profile 1 cache hit (0.28 s). Open: (a) scan after a
   deep-sleep wake; (b) Auto scans on every wake (2.5 s+ awake per session) even though the last profile
   has a valid cache: try the last profile's cache first and scan only on failure (`fallback=scan`).
+- 2026-10-30 follow-up (PC + cold-boot device check):
+  (b) Cause: `netselect::profileWithoutScan` skipped the scan only for `last == 0` (047 intent: a higher-priority
+  profile #1 might be back in range). Last connected was profile 1, so Auto scanned on every wake. Now any
+  last-connected profile with a usable cache is tried first (no scan); a failed connect still takes the existing
+  `direct_failed ... fallback=scan` path (scan once, exclude the failed profile). Trade-off: if #1 returns while
+  #2's cache still works, Auto stays on #2 until it fails or the user picks #1. Tests updated (test_net).
+  (a) Root cause of the post-deep-sleep scan failure NOT found by reading: no other Wi-Fi/PHY/sleep code touches
+  the radio on that path, and `start_ret=-1` (RUNNING) shows the scan was accepted; only the SCAN_DONE event is
+  missing. Added diagnostics to the log: `phase=scan ... start_ret=N` and `scan_done ... event_ms=N` (-1 = no
+  SCAN_DONE event arrived). Cold boot (2 captures, hardware reset): `aps=13/11 found=1 ms~2400-2600 event_ms~=ms`.
+  With (b) the post-wake scan no longer runs in the normal case, so the failure only matters after moving away.
+  Next: deep-sleep touch wake with a forced scan (e.g. Auto after changing location, or clear the RTC last-profile)
+  and read `event_ms`; if -1, suspect partial PHY calibration from RTC data after deep sleep.
+- 2026-10-30 device check 2: cold boot `scan_done aps=12 found=1 ms=2702 event_ms=2694`; touch wake from
+  deep sleep connects with no scan (`cache=hit`, 0.22 s, check6.log). Scan after a deep-sleep wake is
+  still unexplained but now only runs when the direct connect fails; `event_ms` logs it if it recurs.

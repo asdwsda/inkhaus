@@ -56,7 +56,7 @@
 | 053 | [History popup (input, cache, refresh)](053-history-popup.md) | done | 049, 050, 051, 052 |
 | 054 | [WebSocket statistics client and parser](054-history-ws-statistics.md) | done | 050, 051 |
 | 055 | [Statistics source on the device](055-history-statistics-device.md) | todo | 053, 054 |
-| 056 | [Wi-Fi scan always fails](056-wifi-scan-fails.md) | todo | 047 |
+| 056 | [Wi-Fi scan always fails](056-wifi-scan-fails.md) | done | 047 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
@@ -68,3 +68,4 @@
 - README: device screenshots, taken once the device is back.
 - User-approved (2026-10-29): Settings overview summary wording (OPEN-S5) and long Wi-Fi names shrink then "..." (OPEN-S6).
 - User to do: convert secrets.yaml `wifi:` to the profile list (secrets.example.yaml).
+- 056: a scan after a deep-sleep wake fails (aps=-2); rare now (scan only after a failed direct connect). Watch `event_ms=-1` in debug.log.

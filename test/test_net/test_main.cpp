@@ -316,7 +316,9 @@ void test_select_no_scan_cases() {
     TEST_ASSERT_EQUAL(0, profileWithoutScan(1, 0, -1, false));    // single profile
     TEST_ASSERT_EQUAL(0, profileWithoutScan(3, 0, 0, true));      // first one, cache usable
     TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, 0, false));    // cache worn out -> scan
-    TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, 1, true));     // last was #2: #1 might be back
+    TEST_ASSERT_EQUAL(1, profileWithoutScan(3, 0, 1, true));      // last was #2: its cache first, scan only on failure
+    TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, 1, false));    // #2 but cache unusable -> scan
+    TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, 5, true));     // stale index beyond the list -> scan
     TEST_ASSERT_EQUAL(-1, profileWithoutScan(3, 0, -1, false));
     TEST_ASSERT_EQUAL(-1, profileWithoutScan(2, 5, -1, false));   // forced beyond the list = Auto
 }

@@ -8,7 +8,7 @@ int profileWithoutScan(int n, int forced, int last, bool lastCacheUsable) {
   if (n <= 0) return -1;
   if (forced >= 1 && forced <= n) return forced - 1;
   if (n == 1) return 0;
-  if (last == 0 && lastCacheUsable) return 0;
+  if (last >= 0 && last < n && lastCacheUsable) return last;
   return -1;
 }
 
