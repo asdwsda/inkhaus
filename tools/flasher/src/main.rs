@@ -6,6 +6,7 @@ mod manifest;
 mod provision;
 mod releases;
 mod source;
+mod ui;
 
 use std::path::PathBuf;
 
@@ -52,8 +53,21 @@ fn main() -> eframe::Result<()> {
         return Ok(());
     }
     let opts = eframe::NativeOptions {
-        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([520.0, 420.0]).with_title("Inkhaus Installer"),
+        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([580.0, 480.0])
+            .with_min_inner_size([520.0, 400.0])
+            .with_title("Inkhaus Installer")
+            .with_icon(eframe::icon_data::from_png_bytes(include_bytes!("../assets/icon.png")).unwrap_or_default()),
         ..Default::default()
     };
-    eframe::run_native("Inkhaus Installer", opts, Box::new(|_cc| Ok(Box::new(app::App::new()))))
+    eframe::run_native("Inkhaus Installer", opts, Box::new(|cc| {
+        #[cfg(debug_assertions)]
+        match std::env::var("FLASHER_THEME").as_deref() {
+            Ok("dark") => cc.egui_ctx.set_theme(eframe::egui::ThemePreference::Dark),
+            Ok("light") => cc.egui_ctx.set_theme(eframe::egui::ThemePreference::Light),
+            _ => {}
+        }
+        ui::install_fonts(&cc.egui_ctx);
+        ui::install_style(&cc.egui_ctx);
+        Ok(Box::new(app::App::new()))
+    }))
 }

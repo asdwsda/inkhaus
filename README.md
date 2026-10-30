@@ -135,5 +135,7 @@ be useful, but WITHOUT ANY WARRANTY; see [LICENSE](LICENSE) for details.
 Third-party parts keep their own licenses:
 - `certs/gen_crt_bundle.py`: from ESP-IDF, Apache License 2.0 (GPL-3.0 compatible).
 - `certs/cacert.pem` and the generated `certs/x509_crt_bundle`: Mozilla's CA root list, MPL 2.0.
+- `tools/flasher/assets/DejaVuSans*.ttf`: DejaVu fonts (Bitstream Vera / public domain license),
+  embedded in the installer.
 - Libraries fetched at build time (not bundled): M5Unified and M5GFX (MIT), ArduinoJson (MIT),
   libyaml (MIT), Unity (MIT, tests only).
