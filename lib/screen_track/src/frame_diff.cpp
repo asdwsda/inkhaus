@@ -217,3 +217,11 @@ size_t rleEncode(const uint8_t* data, size_t len, uint8_t* out, size_t outCap) {
 }
 
 }  // namespace screen_track
+
+namespace screen_track {
+void withGhost(std::vector<Rect>& rects, Rect ghost) {
+    if (rects.empty() || ghost.w <= 0 || ghost.h <= 0) return;
+    rects.push_back(ghost);
+    mergeRects(rects, 0, rects.size());
+}
+}  // namespace screen_track

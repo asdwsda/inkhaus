@@ -20,6 +20,10 @@ struct DiffOptions {
 // count to `maxRects` by uniting the pair with the smallest growth in area. Empty rects are dropped.
 void mergeRects(std::vector<Rect>& rects, int gap, size_t maxRects);
 
+// A rect that was refreshed with a hinted fastest (so it may hold a ghost) must be redrawn as a whole
+// by the next frame. Adds `ghost` to `rects` and merges overlapping rects into it. Empty `rects`: unchanged.
+void withGhost(std::vector<Rect>& rects, Rect ghost);
+
 // Rounds x/width outward to multiples of `alignX`, clamped to [0, w). No-op for alignX <= 1.
 Rect alignRect(Rect r, int alignX, int w);
 

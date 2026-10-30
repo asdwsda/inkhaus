@@ -246,6 +246,8 @@ void fullRefresh(bool whiteFirst, const char *why) {
 // Refreshes one changed rectangle. Fastest only if the panel's content there (what was pushed
 // last) is pure black/white; otherwise one quality refresh. Keeps g_panel and g_prev exact.
 bool g_fastestOnce = false;  // fastestOverGreysOnce()
+bool g_ghostValid = false;   // a hinted fastest left a ghost in g_ghost: the next frame redraws all of it
+Rect g_ghost;
 
 void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   auto &d = M5.Display;
@@ -267,7 +269,10 @@ void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
     g_havePending = true;
     // UNVERIFIED: after a forced fastest over greys the panel is not clean black/white. Keep the rect
     // marked as grey so the next refresh of it is a quality one (clears the ghost).
-    if (forced) buf(g_panel)[size_t(r.y) * size_t(g_w) + size_t(r.x)] = 128;
+    if (forced) {
+      g_ghost = r;
+      g_ghostValid = true;
+    }
   }
   copyToPrev(r);
 }
@@ -423,6 +428,7 @@ bool show(Mode mode, uint32_t now) {
   if (mode == Mode::Full || g_forceFull) {
     if (mode != Mode::Full) boot::log("full_after_failure", 1);
     Serial.printf("APP: render tab=%d rects=1 mode=full\n", g_renderTab);
+    g_ghostValid = false;
     fullRefresh(g_forceFull, "full");
     saveRecordOfCurrent();
     return true;
@@ -440,6 +446,12 @@ bool show(Mode mode, uint32_t now) {
     fullRefresh(false, "full_big_change");
     saveRecordOfCurrent();
     return true;
+  }
+  if (g_ghostValid) {  // the frame after a hinted fastest: one quality refresh of the whole ghosted rect
+    screen_track::withGhost(rects, g_ghost);
+    for (int y = g_ghost.y; y < g_ghost.y + g_ghost.h; ++y)
+      memset(buf(g_panel) + size_t(y) * size_t(g_w) + size_t(g_ghost.x), 128, size_t(g_ghost.w));
+    g_ghostValid = false;
   }
   touchRecord();
   for (const Rect &r : rects) refreshRect(r, "partial", false);

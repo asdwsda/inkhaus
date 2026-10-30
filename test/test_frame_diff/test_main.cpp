@@ -302,6 +302,18 @@ void test_t_rle_empty_and_max_run() {
     TEST_ASSERT_EQUAL(0, o[2]);
 }
 
+void test_ghost_rect_absorbs_overlapping_changes() {
+    std::vector<Rect> r = {{268, 389, 40, 38}, {16, 18, 24, 19}};
+    withGhost(r, {16, 212, 516, 518});
+    TEST_ASSERT_EQUAL(2, (int)r.size());
+    bool whole = false;
+    for (const Rect& x : r) whole |= (x.x == 16 && x.y == 212 && x.w == 516 && x.h == 518);
+    TEST_ASSERT_TRUE(whole);
+    std::vector<Rect> none;
+    withGhost(none, {16, 212, 516, 518});
+    TEST_ASSERT_TRUE(none.empty());
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_equal_frames_give_no_rects);
@@ -327,5 +339,6 @@ int main() {
     RUN_TEST(test_t_changes_at_last_pixel_and_odd_width);
     RUN_TEST(test_t_tile_hash_detects_single_pixel_and_diff_rect_contains_it);
     RUN_TEST(test_t_rle_empty_and_max_run);
+    RUN_TEST(test_ghost_rect_absorbs_overlapping_changes);
     return UNITY_END();
 }
