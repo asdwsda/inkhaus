@@ -1,8 +1,8 @@
 # 065: Project website on GitHub Pages
 
-Status: todo
+Status: in-progress
 Depends on: none (links to 063's downloads once they exist)
-UI spec: ui-designer (one-page layout, reuses docs/ui mockups as images)
+UI spec: docs/ui/website.md
 Needs device: no
 
 ## Scope
