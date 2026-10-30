@@ -1,6 +1,6 @@
 # 066: Choose a new project name (Inkling may be taken)
 
-Status: in-progress
+Status: done
 Depends on: none
 UI spec: logo/splash follow-up by ui-designer once a name is chosen
 Needs device: no
@@ -15,9 +15,10 @@ Needs device: no
 - Research note in this file; later README.md, CHANGELOG.md, docs/, src/render/splash_screen.h, icon data (via gen_icons.py)
 
 ## Acceptance criteria
-- [ ] Findings with sources for Inkling and each proposal.
-- [ ] User-approved name; no old name left (`grep -ri inkling` clean except history notes).
+- [x] Findings with sources for Inkling and each proposal.
+- [x] User-approved name; no old name left (`grep -ri inkling` clean except history notes).
 - Research (tester, 2026-10-30; full tables + sources in the session scratchpad 066-names.md): Inkling has no HA/HACS/ESPHome
   conflict but is crowded (489 GitHub repos, all package names and main domains taken, Wacom Inkling, a WIPO INKLING mark).
   Ranked alternatives: Inkhaus (cleanest), Tapink, Papertap, Paperdeck, Inkdeck (too close to an e-ink HA dashboard), Inkey.
 - User (2026-10-30): new name **Inkhaus**.
+- Device check 2026-10-30 (user, via the flasher test): Inkhaus splash shown; demo charts OK in both orientations.
