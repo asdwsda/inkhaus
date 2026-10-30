@@ -41,3 +41,18 @@ Analysis (firmware-dev, read-only, 2026-10-30; full: session scratchpad 058-anal
   5) start Wi-Fi earlier (~1.9 s earlier connect); 6) small trims (100-200 ms).
 - Instrumentation to add: t_boot_abs_ms, display_start/boot_present/t_render splits, t_wake_feedback_ms(+_done), t_wifi_start/up_ms.
 - Order: 1 + instrumentation, 3 as experiment, 2 (after 059 fixes the badge rect), 5; 4 after a UI decision.
+- User (2026-10-30): proposal 4 approved: on wake keep the last known status text instead of redrawing a transient
+  "connecting" state in the first frame.
+- Decision for part 2 (architect, 2026-10-30):
+  - Proposal 2: go. On touch/rocker wakes (not RTC scheduled), right after display init + rotation, fill
+    `sleepBadgeRect(o)` PAPER and refresh it with `epd_quality` (cold controller: unknown previous image, so no
+    `epd_fastest`), no wait; do settings/config/compose CPU work during the waveform; waitDisplay before any
+    controller push or SD write. Log `t_wake_feedback_ms` / `t_wake_feedback_done_ms`. bootFrame must not
+    refresh the badge rect again unless the final content there is not plain paper (landscape tab slot 5): treat
+    the rect as paper in the diff baseline.
+  - Proposal 3 (hold GPIO23/15 in deep sleep): separate later task; needs a standby current measurement and a ghost
+    check on the device first. Not in 058.
+  - Proposal 4: go (first frame shows the last known status text, no transient "connecting" refresh).
+  - Proposal 5: go: start the session/Wi-Fi right after config load; the net task must not touch the display or SD
+    while a waveform runs (check the existing locks).
+  - Proposal 6 trims: only the SD wakelog write after the first draw; skip the rest.
