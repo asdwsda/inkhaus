@@ -1,6 +1,6 @@
 # 059: Sleep indicator as a bold "Zz" icon
 
-Status: in-progress
+Status: done
 Depends on: 038
 UI spec: docs/ui/STYLE.md 5.5 "Sleep badge", docs/ui/layout.md section 2 (variant B, landscape last tab slot; user 2026-10-30)
 Needs device: yes (visual check)
@@ -20,10 +20,12 @@ Keep the existing mechanics: drawn with a partial refresh of its rect right befo
 ## Acceptance criteria
 - [x] Spec with the chosen variant approved by the user (rendered mockups, both orientations).
 - [x] Native tests updated for the single indicator kind.
-- [ ] Device: the Zz badge is visible at arm's length before sleep in all wake modes, cleared on wake
+- [x] Device: the Zz badge is visible at arm's length before sleep in all wake modes, cleared on wake
       without ghosts.
 
 ## Notes
 - Coordinate with 058 (wake feedback): clearing the Zz badge quickly is a natural first wake feedback.
 
 - Firmware part done (pio run + native tests pass); device visual check pending.
+- Device result (2026-10-30): user accepted the badge (visibility and thickness OK). Landscape last-slot rule accepted even when
+  the config has fewer tabs than slots.
