@@ -1,5 +1,6 @@
 # Task 061: on a v* tag, check the version, run native tests, build, and attach the firmware
-# segments plus manifest.json to a GitHub release. Flasher binaries are added by task 063.
+# segments plus manifest.json, and the flasher (tools/flasher) for Windows, macOS and Linux, to a
+# GitHub release (task 063). Builds run in parallel; the release is published once all succeed.
 name: release
 
 on:
@@ -54,8 +55,117 @@ jobs:
             --tag "${GITHUB_REF_NAME}"
           cat release/manifest.json
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: release/*
+          if-no-files-found: error
+
+  flasher-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: tools/flasher
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/flasher
+      - run: cargo test --release
+      - run: cargo build --release
+      - name: Stage
+        shell: bash
+        run: cp target/release/flasher.exe "${GITHUB_WORKSPACE}/inkhaus-installer-windows-x86_64.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flasher-windows
+          path: inkhaus-installer-windows-x86_64.exe
+          if-no-files-found: error
+
+  flasher-macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: tools/flasher
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/flasher
+      - run: cargo test --release
+      - name: Build both architectures
+        run: |
+          cargo build --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+      - name: Universal binary and .app
+        run: |
+          app="Inkhaus Installer.app"
+          mkdir -p "${app}/Contents/MacOS"
+          lipo -create \
+            target/aarch64-apple-darwin/release/flasher \
+            target/x86_64-apple-darwin/release/flasher \
+            -output "${app}/Contents/MacOS/flasher"
+          lipo -info "${app}/Contents/MacOS/flasher"
+          cat > "${app}/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Inkhaus Installer</string>
+            <key>CFBundleIdentifier</key><string>io.github.m5paper-ha-remote.flasher</string>
+            <key>CFBundleExecutable</key><string>flasher</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleVersion</key><string>1</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          ditto -c -k --keepParent "${app}" "${GITHUB_WORKSPACE}/inkhaus-installer-macos-universal.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flasher-macos
+          path: inkhaus-installer-macos-universal.zip
+          if-no-files-found: error
+
+  flasher-linux:
+    # Dynamic glibc build on an older runner for wide compatibility. Not musl: the window
+    # loads X11/Wayland libraries at run time, which a static binary cannot do. No libudev.
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: tools/flasher
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/flasher
+      - run: cargo test --release
+      - run: cargo build --release
+      - name: Package
+        run: tar -C target/release -czf "${GITHUB_WORKSPACE}/inkhaus-installer-linux-x86_64.tar.gz" flasher
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flasher-linux
+          path: inkhaus-installer-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  publish:
+    needs: [firmware, flasher-windows, flasher-macos, flasher-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" release/* --title "${GITHUB_REF_NAME}" --generate-notes
+          ls -l assets
+          gh release create "${GITHUB_REF_NAME}" assets/* --title "${GITHUB_REF_NAME}" --generate-notes

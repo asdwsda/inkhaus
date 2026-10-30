@@ -1,6 +1,14 @@
-# M5Paper Installer (flasher)
+# Inkhaus Installer (flasher)
 
 Installs a released firmware on the M5Paper over USB. No PlatformIO or Python needed.
+
+## Download
+From the release page, pick the file for your system:
+- Windows: `inkhaus-installer-windows-x86_64.exe` (double-click).
+- macOS (Apple silicon and Intel): `inkhaus-installer-macos-universal.zip`; unzip, open `Inkhaus Installer.app`.
+- Linux: `inkhaus-installer-linux-x86_64.tar.gz`; `tar xzf` it and run `./flasher` (needs X11 or Wayland).
+
+The binaries are unsigned, so the first start shows a warning (see Problems).
 
 ## Use
 1. Connect the M5Paper with a USB data cable and start the installer.
@@ -18,7 +26,8 @@ firmware are written; the rest of the flash (including settings storage) is not 
 - **Port cannot be opened**: close serial monitors, Arduino IDE, PlatformIO.
 - **Checksum does not match**: the download was damaged; press Install again. Nothing is written in that case.
 - **Windows SmartScreen / macOS Gatekeeper warn**: the binary is unsigned. Windows: "More info", then "Run anyway".
-  macOS: right-click the app, "Open", confirm.
+  macOS: right-click the app, "Open", confirm. If it says the app is damaged, run
+  `xattr -dr com.apple.quarantine "Inkhaus Installer.app"` once.
 - **GitHub limits requests**: wait a few minutes, or use "Choose file...".
 
 ## Command line (no device needed)
@@ -29,3 +38,6 @@ resolves a release, downloads it and verifies every file against `manifest.json`
 ## Build (developers)
 `cd tools/flasher && cargo build --release` (binary: `target/release/flasher`), `cargo test`.
 Needs Rust. On Linux the window needs X11 or Wayland at run time; no -dev packages are needed to build.
+
+Releases are built by `.github/workflows/release.yml` when a `v*` tag is pushed (Windows, macOS universal via
+`lipo` of arm64 and x86_64, Linux glibc build on Ubuntu 22.04 without libudev).
