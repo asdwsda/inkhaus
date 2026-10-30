@@ -41,7 +41,6 @@ pub struct App {
     progress: (String, Option<f32>),
     outcome: Option<Outcome>,
     upload_note: Option<Result<Vec<String>, Error>>,
-    can_restart: bool,
 }
 
 impl App {
@@ -64,7 +63,6 @@ impl App {
             progress: (String::new(), Some(0.0)),
             outcome: None,
             upload_note: None,
-            can_restart: false,
         }
     }
 
@@ -149,7 +147,6 @@ impl App {
         self.job = Some(rx);
         self.outcome = None;
         self.upload_note = None;
-        self.can_restart = false;
         self.progress = ("Connecting to the M5Paper".into(), None);
         let ctx = ctx.clone();
         std::thread::spawn(move || {
@@ -174,7 +171,6 @@ impl App {
                 match rx.try_recv() {
                     Ok(Msg::Progress(t, f)) => self.progress = (t, f),
                     Ok(Msg::Uploaded(r)) => {
-                        self.can_restart = r.is_ok();
                         self.upload_note = Some(r);
                         self.job = None;
                         break;
@@ -317,20 +313,13 @@ impl eframe::App for App {
                     for l in lines {
                         ui.label(egui::RichText::new(format!("Uploaded. {l}")).color(egui::Color32::from_rgb(0, 130, 0)));
                     }
+                    ui.label(egui::RichText::new("Done. The M5Paper restarts with the new files.").size(16.0).color(egui::Color32::from_rgb(0, 130, 0)));
                 }
                 Some(Err(e)) => {
                     ui.label(egui::RichText::new(e.message()).size(16.0).color(egui::Color32::from_rgb(170, 0, 0)));
                     ui.label(e.action());
                 }
                 None => {}
-            }
-            if self.can_restart && !busy {
-                if ui.button("Restart the M5Paper to use the new files").clicked() {
-                    if let Some(p) = self.port() {
-                        self.upload_note = Some(provision::restart(&p).map(|_| vec!["Restarting.".to_string()]));
-                    }
-                    self.can_restart = false;
-                }
             }
             match &self.outcome {
                 Some(Outcome::Ok(v)) => {

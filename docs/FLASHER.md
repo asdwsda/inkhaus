@@ -23,8 +23,8 @@ firmware are written; the rest of the flash (including settings storage) is not 
 
 **Upload YAML files (optional).** Press "Upload YAML files..." and pick `config.yaml` and/or `secrets.yaml` (exactly
 these names). Each file is sent to the SD card over USB; the M5Paper checks its size and CRC32 and its summary is shown.
-File contents are never displayed or logged. Then press "Restart the M5Paper to use the new files". Limit: 64 KB per
-file. Opening the port resets the board once.
+File contents are never displayed or logged. After the last file the flasher sends `reboot`, so the M5Paper restarts
+by itself with the new files (no extra button). Limit: 64 KB per file. Opening the port resets the board once.
 
 ## Problems
 - **No device found**: use a data cable; on Windows install the CH9102 USB driver (WCH CH343 driver).

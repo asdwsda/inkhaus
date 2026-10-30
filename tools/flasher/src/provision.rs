@@ -191,13 +191,9 @@ pub fn upload_files(port: &str, files: &[(String, Vec<u8>)], progress: &mut dyn 
         let summary = transfer(&mut s, name, data, Timeouts::default(), &mut |f| progress(name, Some(f)))?;
         out.push(format!("{name}: {summary}"));
     }
+    // The firmware does not restart after a PUT, so it would keep the old files: restart it now.
+    reboot(&mut s)?;
     Ok(out)
-}
-
-pub fn restart(port: &str) -> Result<(), Error> {
-    // Opening resets the board already, but the user asked for a restart: be explicit and wait for no boot.
-    let mut s = serialport::new(port, 115_200).timeout(Duration::from_millis(100)).open().map_err(|e| Error::from_flash_text(port, &e.to_string()))?;
-    reboot(&mut s)
 }
 
 #[cfg(test)]
