@@ -2,6 +2,8 @@
 
 Installs a released firmware on the M5Paper over USB. No PlatformIO or Python needed.
 
+Next step after installing: create `secrets.yaml` and `config.yaml`, see the [README](../README.md) and [CONFIG.md](CONFIG.md).
+
 ## Download
 From the release page, pick the file for your system:
 - Windows: `inkhaus-installer-windows-x86_64.exe` (double-click).
