@@ -176,6 +176,46 @@ struct Rig {
 
 // ---- driver ----
 
+// Task 071: graph fetches after the state fetch hold a scheduled refresh's sleep (and the Wi-Fi power-down).
+void test_sleep_held_for_graph_fetch() {
+  Rig r;
+  int hooks = 0;
+  bool lastOk = false, busy = false;
+  r.drv.setFetchHook([&](bool ok) { ++hooks; lastOk = ok; busy = true; });
+  r.drv.setSleepHold([&] { return busy; });
+  r.drv.start(power::WakeReason::RtcAlarm, 4000, settings::Settings{}, 0, r.now);
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  r.until([] { return false; }, 1000);
+  SleepRequest sl;
+  TEST_ASSERT_FALSE(r.drv.takeSleep(sl));
+  TEST_ASSERT_EQUAL(1, hooks);
+  TEST_ASSERT_TRUE(lastOk);
+  TEST_ASSERT_EQUAL(0, r.wifi.downs);
+  TEST_ASSERT_TRUE(r.logHas("sleep_held"));
+  busy = false;  // the graph fetches ended
+  r.until([&] { return r.drv.takeSleep(sl); }, 1000);
+  TEST_ASSERT_EQUAL(1, r.wifi.downs);
+  TEST_ASSERT_TRUE(sl.session == power::Session::ScheduledRefresh);
+  TEST_ASSERT_TRUE(r.logHas("sleep_hold_released"));
+}
+
+void test_sleep_hold_is_capped() {
+  Rig r;
+  r.drv.setSleepHold([] { return true; });  // never ends
+  r.drv.start(power::WakeReason::RtcAlarm, 4000, settings::Settings{}, 0, r.now);
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.sessionDone(); }));
+  SleepRequest sl;
+  TEST_ASSERT_FALSE(r.drv.takeSleep(sl));
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.takeSleep(sl); }, SessionDriver::kSleepHoldMaxMs + 2000));
+}
+
+void test_no_hold_sleeps_at_once() {
+  Rig r;
+  r.drv.start(power::WakeReason::RtcAlarm, 4000, settings::Settings{}, 0, r.now);
+  SleepRequest sl;
+  TEST_ASSERT_TRUE(r.until([&] { return r.drv.takeSleep(sl); }));
+}
+
 void test_connect_fetch_render() {
   Rig r;
   r.start();
@@ -1232,6 +1272,9 @@ int main() {
   RUN_TEST(test_reprobe_on_hotspot_renews_external);
   RUN_TEST(test_demo_mode_decisions);
   RUN_TEST(test_connect_fetch_render);
+  RUN_TEST(test_sleep_held_for_graph_fetch);
+  RUN_TEST(test_sleep_hold_is_capped);
+  RUN_TEST(test_no_hold_sleeps_at_once);
   RUN_TEST(test_tap_call_confirm);
   RUN_TEST(test_tap_before_wifi_is_sent_before_initial_fetch);
   RUN_TEST(test_wifi_failed_is_offline);

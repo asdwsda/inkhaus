@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "brightness_screen.h"
+#include "graph_widget.h"
 #include "popup_history.h"
 #include "widgets.h"
 
@@ -204,7 +205,8 @@ void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &s
   drawStatusBar(c, app, status);
   for (const ui::Placement &pl : app.layout().widgets) {
     const bool inner = pl.index == ringIdx && app.focus().ringVisible && app.focus().mode == ui::FocusMode::Inner;
-    drawWidget(c, pl, app.widgetData(pl.index), app.widgetTitle(pl.index), inner ? app.focus().inner : 0);
+    if (pl.graph) drawGraphWidget(c, pl, app);
+    else drawWidget(c, pl, app.widgetData(pl.index), app.widgetTitle(pl.index), inner ? app.focus().inner : 0);
   }
   drawPager(c, app);
   drawTabBar(c, app);

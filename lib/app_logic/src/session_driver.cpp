@@ -73,6 +73,13 @@ void SessionDriver::tick(int64_t now) {
   }
   NetEvent ev;
   while (net_.poll(ev)) onNet(ev, now);
+  if (sleepHeld_ && (!sleepHold_ || !sleepHold_() || now - sleepHeldSince_ >= kSleepHoldMaxMs)) {
+    sleepHeld_ = false;
+    if (log_) log_("APP: sleep_hold_released ms=" + std::to_string(now - sleepHeldSince_));
+    releasingSleep_ = true;
+    execute({heldSleep_}, now);
+    releasingSleep_ = false;
+  }
   send(Event::tick(), now);
 }
 
@@ -86,6 +93,7 @@ void SessionDriver::onNet(NetEvent &ev, int64_t now) {
     std::vector<std::string> changed;
     if (ev.error == HaError::None) changed = store_.update(ev.states);
     lastChanged_ = changed.size();
+    const bool fullFetch = fetching_;
     fetching_ = false;
     sessionDone_ = true;
     ++fetchSeq_;
@@ -104,6 +112,7 @@ void SessionDriver::onNet(NetEvent &ev, int64_t now) {
     if (log_) log_("APP: fetch_done err=" + std::to_string(int(ev.error)) + " http=" +
                    std::to_string(ev.http_status) + " states=" + std::to_string(ev.states.size()) +
                    " changed=" + std::to_string(changed.size()) + (ev.external ? " link=remote" : " link=local"));
+    if (fullFetch && fetchHook_) fetchHook_(!lastFetchFailed_);
     send(Event::fetch_done(ev.error, std::move(changed), ev.states), now);
   } else if (ev.type == NetEvent::Type::ServiceDone) {
     std::vector<std::string> changed;
@@ -181,6 +190,13 @@ void SessionDriver::execute(const std::vector<Command> &cmds, int64_t now) {
         render_ = true;
         break;
       case CT::Sleep:
+        if (!releasingSleep_ && !sleepHeld_ && sleepHold_ && sleepHold_()) {
+          sleepHeld_ = true;
+          sleepHeldSince_ = now;
+          heldSleep_ = c;
+          if (log_) log_("APP: sleep_held");
+          break;
+        }
         if (log_) log_("APP: cmd sleep alarm=" + std::string(c.plan.rtc_alarm_at ? "yes" : "no") +
                        " touch_wake=" + (c.plan.touch_wake ? "1" : "0"));
         sleep_.plan = c.plan;

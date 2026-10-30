@@ -153,6 +153,7 @@ std::string serializeConfig(const Config &cfg) {
       w.f32(h.min ? *h.min : 0.f);
       w.u8(h.max.has_value());
       w.f32(h.max ? *h.max : 0.f);
+      w.u8(uint32_t(wd.display));
     }
   }
   w.strs(cfg.entityIds);
@@ -251,7 +252,9 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       r.f32(hMin);
       r.u8(hHasMax);
       r.f32(hMax);
-      if (!r.ok || hHours < uint32_t(kMinHistoryHours) || hHours > uint32_t(kMaxHistoryHours) ||
+      uint32_t disp = 0;
+      r.u8(disp);
+      if (!r.ok || disp > uint32_t(WidgetDisplay::Graph) || hHours < uint32_t(kMinHistoryHours) || hHours > uint32_t(kMaxHistoryHours) ||
           hType > uint32_t(HistoryType::Step) || hHasStat > 1 ||
           hStat > uint32_t(HistoryStatistic::Change) || hPeriod > uint32_t(HistoryPeriod::Day) ||
           hSource > uint32_t(HistorySource::Statistics) || hHasMin > 1 || hHasMax > 1)
@@ -265,6 +268,7 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       if (hHasMax) h.max = hMax;
       if (!r.ok || type > uint32_t(WidgetType::Vacuum) || hasSize > 1) return false;
       wd.type = WidgetType(type);
+      wd.display = WidgetDisplay(disp);
       if (hasSize) {
         if (sw < 1 || sw > uint32_t(kMaxWidgetSize) || sh < 1 || sh > uint32_t(kMaxWidgetSize))
           return false;

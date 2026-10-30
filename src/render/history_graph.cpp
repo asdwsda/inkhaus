@@ -44,6 +44,7 @@ void drawYAxis(M5Canvas &c, const GraphLayout &l, const Axis &a, int decimals) {
     // ticks ascend; tick 0 is the bottom one
     const int cy = l.yTickCy[2 - i];
     if (i > 0) hline(c, l.plot.x, cy, l.plot.w, HIST_GRID);
+    if (i == 1 && !l.yMidLabel) continue;
     drawTextCy(c, Font::F18, formatValue(a.ticks[i], std::max(decimals, a.decimals)), l.yLabelRight, cy, Align::Right, INK);
   }
   c.fillRect(l.axisLeft.x, l.axisLeft.y, l.axisLeft.w, l.axisLeft.h, INK);
@@ -62,8 +63,12 @@ bool drawLine(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, Tz
   float lo, hi;
   if (!s.range(lo, hi)) return false;
   const Axis a = axis3(lo, hi, in.hasMin, in.fixedMin, in.hasMax, in.fixedMax, true);
-  drawVGrid(c, l, s.start, s.end, tz);
-  drawYAxis(c, l, a, in.decimals);
+  if (l.labels) {
+    drawVGrid(c, l, s.start, s.end, tz);
+    drawYAxis(c, l, a, in.decimals);
+  } else {
+    c.fillRect(l.axisBottom.x, l.axisBottom.y, l.axisBottom.w, l.axisBottom.h, INK);
+  }
   const int n = std::min<int>(static_cast<int>(s.columns.size()), l.plot.w);
   // band, then the polyline
   for (int i = 0; i < n; ++i) {
@@ -84,7 +89,7 @@ bool drawLine(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, Tz
   }
   if (havePrev) c.fillCircle(std::min(px, l.plot.right() - 1), py, 5, INK);
   drawUnavail(c, s, l.plot);
-  drawTimeAxis(c, l, s.start, s.end, tz, true);
+  if (l.labels) drawTimeAxis(c, l, s.start, s.end, tz, true);
   return true;
 }
 
@@ -92,7 +97,7 @@ void drawStep(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, Tz
   const Series &s = *in.series;
   const Rect &r = l.plot;
   c.fillRect(r.x, r.y, r.w, r.h, PAPER);
-  drawVGrid(c, l, s.start, s.end, tz);
+  if (l.labels) drawVGrid(c, l, s.start, s.end, tz);
   for (const Span &sp : laneSpans(s)) c.fillRect(r.x + sp.x0, r.y, sp.x1 - sp.x0, r.h, INK);
   // 2 px INK frame; grid ticks cross it as MID marks below
   c.fillRect(r.x, r.y, r.w, 2, INK);
@@ -100,7 +105,8 @@ void drawStep(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, Tz
   c.fillRect(r.x, r.y, 2, r.h, INK);
   c.fillRect(r.right() - 2, r.y, 2, r.h, INK);
   drawUnavail(c, s, r);
-  drawTimeAxis(c, l, s.start, s.end, tz, false);
+  if (l.labels) drawTimeAxis(c, l, s.start, s.end, tz, false);
+  if (l.listRows <= 0) return;  // widget lane: no changes list
   hline(c, r.x, l.hairlineY, r.w, HIST_MID);
   const auto changes = lastChanges(s, l.listRows);
   for (size_t i = 0; i < changes.size(); ++i) {
@@ -119,10 +125,11 @@ bool drawBars(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, Tz
   for (const auto &b : in.bars)
     if (b.has) { mx = any ? std::max<double>(mx, b.value) : b.value; any = true; }
   if (!any) return false;
-  const bool labels = barLabels(n);
+  const bool labels = barLabels(n) && l.labels && (l.plot.w / n >= l.minBarLabelSlot);
   const Axis a = barAxis(mx, in.hasMin, in.fixedMin, in.hasMax, in.fixedMax, l.plot.h, labels);
   const auto slots = barSlots(l.plot, n);
-  drawYAxis(c, l, a, in.decimals);
+  if (l.labels) drawYAxis(c, l, a, in.decimals);
+  else c.fillRect(l.axisBottom.x, l.axisBottom.y, l.axisBottom.w, l.axisBottom.h, INK);
   std::vector<int> cx, w;
   for (int i = 0; i < n; ++i) {
     const auto &b = in.bars[i];
@@ -142,7 +149,7 @@ bool drawBars(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, Tz
     w.push_back(textWidth(c, Font::F18, b.label));
   }
   const auto keep = fitLabels(cx, w, l.plot.x - 8, l.plot.right() + 24, 4);
-  for (int i = 0; i < n; ++i)
+  for (int i = 0; i < n && l.labels; ++i)
     if (keep[i]) drawTextCy(c, Font::F18, in.bars[i].label, cx[i], l.xLabelCy, Align::Center, INK);
   return true;
 }
@@ -159,7 +166,7 @@ int localUtcOffset(int64_t epoch) {
 }
 
 bool drawHistoryGraph(M5Canvas &c, const HistoryGraphInput &in) {
-  const GraphLayout l = graphLayout(in.type, in.landscape);
+  const GraphLayout l = in.layout ? *in.layout : graphLayout(in.type, in.landscape);
   const TzOffsetFn tz = in.tz ? in.tz : localUtcOffset;
   if (in.type == ChartType::Bar) return drawBars(c, in, l, tz);
   if (!in.series || in.series->columns.empty() || in.series->empty()) return false;

@@ -57,6 +57,11 @@ struct HistoryJob {
   int bucketCount = 0;
 };
 
+// Plans the fetch of `spec` ending at nowEpoch (everything but job.ticket). Shared with the graph widgets.
+void planHistoryJob(const HistorySpec &spec, int64_t nowEpoch, int32_t utcOffsetS, HistoryJob &job);
+// Do two series draw the same picture (within the cache's 16-bit quantisation)? Columns and bar buckets.
+bool sameSeriesData(const history::Series &a, const history::Series &b);
+
 struct HistoryLayout {
   ui::Rect panel, dirty, close;
 };

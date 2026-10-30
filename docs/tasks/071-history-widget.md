@@ -40,3 +40,15 @@ Out of scope: several entities in one graph, new graph types; other widgets keep
 - Reference (dropped 072): branch `ref/072-visible-tab` has `setVisible`/tab-fetch session code and tests that the graph fetch may reuse.
 - Scheduled refresh (user, 2026-10-30): update all graph widgets if cheap, else only the visible tab. Rule: measure on the device (debug NETT/timing); if all graphs together add < 0.5 s awake time per scheduled refresh, fetch all; otherwise visible tab only. Estimate from 046: 1-2 s per graph fetch on a warm connection, so expect "visible only".
 - Long press: does nothing, same as tap (user, 2026-10-30).
+- PC part (branch a60463c, 2026-10-30), accepted deviations:
+  - Landscape max height is 3 rows (the pager row).
+  - The "missing entity" look is not done: the store can't tell missing from unavailable, so it shows `-`.
+  - The cached marker shows only after a failed fetch.
+  - Redraws go through the frame diff; check epd_quality greys on the device.
+  - Input is ignored during the scheduled-refresh hold (cap 20 s).
+  - demo.yaml gets a "Graphs" tab.
+  - Scheduled rule constant: `uistate::kGraphFetchAllTabs` (graph_widgets.h). Device logs: `APP: graph_fetch ms=` and `APP: graph_batch`. Also measure `APP: graph_cache ms=`.
+- Review (tester, 2026-10-30): pass, no blockers. Device follow-ups:
+  - Check `mem` with many graphs.
+  - `graphsInit` reads the SD cache under the 15 s watchdog without `boot::feed()`, and before the RTC clock is loaded, so cached data is classed stale. Check `graph_cache ms`.
+  - The popup and widget share the per-entity cache key.

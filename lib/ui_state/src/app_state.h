@@ -13,6 +13,7 @@
 #include "config_model.h"
 #include "history_popup.h"
 #include "entity_state.h"
+#include "graph_widgets.h"
 #include "settings.h"
 #include "state_store.h"
 #include "ui_layout.h"
@@ -93,6 +94,12 @@ class AppState {
   HistoryPopup &historyPopup() { return hist_; }
   std::string historyTitle() const { return widgetTitle(hist_.widget()); }
 
+  // ---- history graph widgets (task 071) ----
+  // Rebuilt by init(); call rebuildGraphs() again once the entity states are known (device classes).
+  const GraphWidgets &graphs() const { return graphs_; }
+  GraphWidgets &graphs() { return graphs_; }
+  void rebuildGraphs();
+
   // The content (not only chrome) changed in a way that needs a full-quality refresh (tab or
   // sub-page change). Cleared by takeFull().
   bool takeFull();
@@ -166,6 +173,7 @@ class AppState {
   void brightnessMarks(bool &changed);
   BrightnessPopup popup_;
   HistoryPopup hist_;
+  GraphWidgets graphs_;
   BrightnessSink bsink_;
   bool bpUnknown_ = false, bpAwaiting_ = false, bpFailed_ = false, bpSawPending_ = false;
   uint32_t bpSentAt_ = 0, lastNow_ = 0;

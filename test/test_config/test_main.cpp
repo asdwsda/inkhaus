@@ -719,6 +719,41 @@ void test_attr_errors_do_not_echo_values() {
 
 static const char *kHp = "tabs[0].widgets[0].history";
 
+static std::string graphYaml(const std::string &entity, const std::string &extra) {
+  return "version: \"1\"\ntabs:\n  - title: P\n    widgets:\n      - entity: " + entity + "\n" + extra;
+}
+
+void test_display_graph() {
+  ParseResult r = parseConfig(graphYaml("sensor.t", "        display: graph\n        history: { hours: 48, type: bar }\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_TRUE(r.config.tabs[0].widgets[0].display == WidgetDisplay::Graph);
+  TEST_ASSERT_TRUE(isGraphWidget(r.config.tabs[0].widgets[0]));
+  TEST_ASSERT_EQUAL(48, r.config.tabs[0].widgets[0].history.hours);
+  r = parseConfig(graphYaml("binary_sensor.d", "        display: graph\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_TRUE(r.config.tabs[0].widgets[0].display == WidgetDisplay::Graph);
+  // default and explicit default
+  r = parseConfig(graphYaml("sensor.t", ""));
+  TEST_ASSERT_TRUE(r.ok() && r.config.tabs[0].widgets[0].display == WidgetDisplay::Default);
+  r = parseConfig(graphYaml("sensor.t", "        display: default\n"));
+  TEST_ASSERT_TRUE(r.ok() && r.config.tabs[0].widgets[0].display == WidgetDisplay::Default);
+  // a size is kept as requested (clamped by the layout)
+  r = parseConfig(graphYaml("sensor.t", "        display: graph\n        size: 1x1\n"));
+  TEST_ASSERT_TRUE(r.ok() && r.config.tabs[0].widgets[0].size->w == 1);
+}
+
+void test_display_graph_errors() {
+  const std::string p = "tabs[0].widgets[0].display";
+  assertErrorAt(graphYaml("sensor.t", "        display: chart\n"), p);
+  assertErrorAt(graphYaml("light.a", "        display: graph\n"), p);
+  assertErrorAt(graphYaml("sensor.t", "        display: graph\n        attribute: foo\n"), p);
+  assertErrorAt(graphYaml("sensor.t", "        display: graph\n        history: false\n"), p);
+  ParseResult r = parseConfig(
+      "version: \"1\"\ngroups:\n  g: [sensor.a, sensor.b]\ntabs:\n  - title: P\n    widgets:\n"
+      "      - group: g\n        name: G\n        display: graph\n");
+  TEST_ASSERT_NOT_NULL(findError(r, p));
+}
+
 void test_history_defaults() {
   ParseResult r = parseConfig(kMinimal);
   const HistoryConfig &h = r.config.tabs[0].widgets[0].history;
@@ -874,6 +909,8 @@ int main(int, char **) {
   RUN_TEST(test_secrets_wifi_profile_list);
   RUN_TEST(test_secrets_wifi_list_errors_no_values);
   RUN_TEST(test_secrets_wifi_list_limits_and_external_needs_url);
+  RUN_TEST(test_display_graph);
+  RUN_TEST(test_display_graph_errors);
   RUN_TEST(test_history_defaults);
   RUN_TEST(test_history_block);
   RUN_TEST(test_history_combination_checks);

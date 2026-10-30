@@ -51,6 +51,16 @@ class SessionDriver {
   void setHistoryHandler(HistoryHandler h) { historyHandler_ = std::move(h); }
   void postHistory(const NetCommand &cmd) { net_.post(cmd); }
 
+  // Task 071 (graph widgets): called when a full state fetch (wake, scheduled, manual refresh) has ended, with
+  // its success, before the session machine reacts (so a sleep that follows can be held back).
+  using FetchHook = std::function<void(bool ok)>;
+  void setFetchHook(FetchHook h) { fetchHook_ = std::move(h); }
+  // While this returns true (and for at most kSleepHoldMaxMs) the machine's Sleep command, including the Wi-Fi
+  // power-down, waits: the graph fetches that follow the state fetch still need the connection.
+  using SleepHold = std::function<bool()>;
+  void setSleepHold(SleepHold h) { sleepHold_ = std::move(h); }
+  static constexpr int64_t kSleepHoldMaxMs = 20000;
+
   // One-shot flags, cleared by the call.
   bool takeRender();
   bool takeSleep(SleepRequest &out);
@@ -80,6 +90,11 @@ class SessionDriver {
   std::function<int64_t()> wallClock_;
   Log log_;
   HistoryHandler historyHandler_;
+  FetchHook fetchHook_;
+  SleepHold sleepHold_;
+  bool sleepHeld_ = false, releasingSleep_ = false;
+  int64_t sleepHeldSince_ = 0;
+  session::Command heldSleep_;
   session::SessionMachine machine_;
   session::Status status_ = session::Status::Connecting;
   bool wifiPending_ = false, wifiUp_ = false, fetching_ = false, render_ = false, sleepDue_ = false;

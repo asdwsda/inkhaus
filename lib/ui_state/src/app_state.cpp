@@ -32,6 +32,14 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   bpUnknown_ = bpAwaiting_ = bpFailed_ = bpSawPending_ = false;
   relayout();
   refreshFocusFlow();
+  rebuildGraphs();
+}
+
+void AppState::rebuildGraphs() {
+  graphs_.rebuild(cfg_, orientation_, [this](const std::string &id) {
+    const EntityState *s = store_.get(id);
+    return s ? s->device_class : std::string();
+  });
 }
 
 void AppState::initError(const std::vector<config::ConfigError> &errors, settings::Orientation o) {

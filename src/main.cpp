@@ -298,7 +298,13 @@ static uistate::HistOutcome histOutcome(HaError e, size_t bytes, bool noStatisti
   }
 }
 
+static void graphsDone(app_logic::NetEvent &&ev);
+
 static void onHistoryDone(app_logic::NetEvent &&ev) {
+  if (ev.ticket >= uistate::kGraphTicketBase) {  // a graph widget's fetch (task 071)
+    graphsDone(std::move(ev));
+    return;
+  }
   uistate::HistoryPopup &h = g_app.historyPopup();
   const int64_t epoch = session_glue::wallClock();
   const uistate::HistOutcome o = histOutcome(ev.error, ev.bytes, ev.noStatistics);
@@ -378,6 +384,144 @@ static void historyShutdown() {
   historyPump();
 }
 
+// ---- history graph widgets (task 071, docs/ui/history-widget.md) ----
+// The model (lib/ui_state graph_widgets) knows what to fetch; this glue loads cached/demo data, posts the jobs one
+// at a time through the net task and feeds the results back. Graphs are fetched after the state fetch of a session
+// (hook of the session driver) for the visible tab (uistate::kGraphFetchAllTabs: every tab) and when a tab becomes
+// visible; the scheduled refresh's sleep waits for them (sleep hold of the driver).
+static uint32_t g_graphBatchMs = 0;  // when the first request of the running batch was made (0 = none)
+static uint32_t g_graphJobMs = 0;    // when the running job was posted
+static int g_graphBatchN = 0;
+
+// Cached (device) or synthetic (demo) data for the graphs of `tab` that have none yet.
+static void graphsLoad(int tab) {
+  uistate::GraphWidgets &g = g_app.graphs();
+  std::vector<std::pair<int, int>> todo;
+  for (const uistate::GraphEntry &e : g.entries())
+    if (e.tab == tab && !e.hasData) todo.push_back({e.tab, e.widget});
+  const uint32_t t0 = millis();
+  for (const auto &tw : todo) {
+    const uistate::GraphEntry *e = g.find(tw.first, tw.second);
+    if (!e) continue;
+    const int64_t wall = session_glue::wallClock();
+    if (g_demoMode) {  // synthetic series, no cache, no network; the clock may be unset, anchor to a fixed day then
+      const int64_t now = wall ? wall : 1793361600;
+      uistate::HistoryJob job;
+      uistate::planHistoryJob(e->spec, now, utcOffsetAt(now), job);
+      history::DemoParams d;
+      d.entity = job.entity;
+      d.binary = e->spec.binary;
+      d.bar = job.bar;
+      d.start = job.start; d.end = job.end;
+      d.columns = job.columns;
+      d.bucketSeconds = job.bucketSeconds; d.bucketCount = job.bucketCount;
+      g.setData(tw.first, tw.second, history::demoSeries(d), now);
+      continue;
+    }
+    history::Series s;
+    int64_t at = 0;
+    const history::Freshness f = g_histCache.lookup(e->spec.entity, g.cacheHash(*e), wall, e->spec.hours, s, at);
+    if (f != history::Freshness::Missing) g.applyCache(tw.first, tw.second, s, at);
+  }
+  if (!todo.empty() && !g_demoMode) wakelog::logf("APP: graph_cache n=%u ms=%u\n", (unsigned)todo.size(), (unsigned)(millis() - t0));
+}
+
+// After g_app.init() and the restore of the cached states.
+static void graphsInit() {
+  g_app.rebuildGraphs();
+  graphsLoad(g_app.shownTab());
+  g_app.graphs().takeChanged();  // the first frame is composed anyway
+}
+
+static void graphsRequest(int tab) {
+  if (g_app.graphs().requestSession(tab, uistate::kGraphFetchAllTabs) > 0 && !g_graphBatchMs) {
+    g_graphBatchMs = millis();
+    g_graphBatchN = 0;
+  }
+}
+
+// The session driver's hook: a full state fetch ended.
+static void graphsOnFetch(bool ok) {
+  if (g_demoMode || !g_app.graphs().any()) return;
+  if (ok) graphsRequest(g_app.shownTab());
+  else g_app.graphs().fetchFailed(g_app.shownTab(), uistate::kGraphFetchAllTabs);
+}
+
+static bool graphsBusy() { return g_real && g_app.graphs().busy(); }
+
+static void graphsDone(app_logic::NetEvent &&ev) {
+  uistate::GraphWidgets &g = g_app.graphs();
+  const int64_t epoch = session_glue::wallClock();
+  const uistate::HistOutcome o = histOutcome(ev.error, ev.bytes, ev.noStatistics);
+  std::string entity;
+  uint32_t hash = 0;
+  int tab = -1, widget = -1;
+  for (const uistate::GraphEntry &e : g.entries())
+    if (e.fetching && e.ticket == ev.ticket) {
+      entity = e.spec.entity;
+      hash = g.cacheHash(e);
+      tab = e.tab;
+      widget = e.widget;
+    }
+  const uint32_t jobMs = millis() - g_graphJobMs;
+  const bool changed = g.onFetchDone(ev.ticket, o, std::move(ev.series), epoch);
+  ++g_graphBatchN;
+  wakelog::logf("APP: graph_fetch ms=%u net_ms=%u parse_ms=%u bytes=%u points=%u err=%d changed=%d id=%s\n",
+                (unsigned)jobMs, (unsigned)ev.fetchMs, (unsigned)ev.parseMs, (unsigned)ev.bytes, (unsigned)ev.points,
+                (int)ev.error, changed ? 1 : 0, entity.c_str());
+  if (changed && o == uistate::HistOutcome::Ok) {
+    if (const uistate::GraphEntry *e = g.find(tab, widget)) g_histCache.put(entity, hash, e->series, epoch);
+  }
+  if (!g.busy() && g_graphBatchMs) {  // the measurement for the "all tabs or visible only" decision (task 071)
+    wakelog::logf("APP: graph_batch n=%d ms=%u all_tabs=%d\n", g_graphBatchN, (unsigned)(millis() - g_graphBatchMs),
+                  uistate::kGraphFetchAllTabs ? 1 : 0);
+    g_graphBatchMs = 0;
+  }
+}
+
+// Every loop: a tab became visible, then the next job once Wi-Fi is up.
+static void graphsPump() {
+  uistate::GraphWidgets &g = g_app.graphs();
+  if (!g.any()) return;
+  static int seenTab = -1;
+  const int tab = g_app.shownTab();
+  if (tab != seenTab) {
+    seenTab = tab;
+    graphsLoad(tab);
+    if (g_real && g_drv && g_drv->sessionDone() && g.tabHasGraphs(tab)) {
+      if (g_drv->status() == session::Status::Online) graphsRequest(tab);
+      else g.fetchFailed(tab, false);
+    }
+  }
+  if (g_demoMode || !g_real || !g_drv || !g.busy()) return;
+  const session::Status st = g_drv->status();
+  if (st == session::Status::Offline || st == session::Status::AuthError) {
+    g.fetchFailed(tab, uistate::kGraphFetchAllTabs);
+    g_graphBatchMs = 0;
+    return;
+  }
+  if (st != session::Status::Online || !g_drv->wifiUp()) return;
+  uistate::HistoryJob job;
+  const int64_t wall = session_glue::wallClock();
+  if (!g.takeJob(wall, utcOffsetAt(wall), job)) return;
+  app_logic::NetCommand c;
+  c.type = app_logic::NetCommand::Type::History;
+  c.ticket = job.ticket;
+  c.histEntity = job.entity;
+  c.histStart = job.start;
+  c.histEnd = job.end;
+  c.histColumns = job.columns;
+  c.histStats = job.statistics;
+  c.histBar = job.bar;
+  c.histPeriod = job.period;
+  c.histStatistic = job.statistic;
+  c.histBucketSeconds = job.bucketSeconds;
+  c.histBucketCount = job.bucketCount;
+  c.histCancel = std::make_shared<volatile bool>(false);
+  g_graphJobMs = millis();
+  g_drv->postHistory(c);
+}
+
 // ---- session ----
 
 static power::WakeReason g_sessionWake = power::WakeReason::Button;  // the wake reason the session was planned with
@@ -403,6 +547,10 @@ static void startSession(uint32_t now, bool restart = false) {
                                            session_glue::wallClock, appLog));
   g_sessionOver = false;
   g_drv->setHistoryHandler(onHistoryDone);
+  g_drv->setFetchHook(graphsOnFetch);
+  g_drv->setSleepHold(graphsBusy);
+  g_app.graphs().abortFetch();  // the old net session is gone: a graph result will not arrive
+  g_graphBatchMs = 0;
   if (g_app.history().fetching() || g_histWaitNet) {  // the old net session is gone: its result will not arrive
     g_histWaitNet = false;
     if (g_histCancel) *g_histCancel = true;
@@ -460,6 +608,7 @@ static void applyOrientation(settings::Orientation o) {
   g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMarksDriven(g_real);
   if (!g_demoMode) g_app.store().update(keep);
+  graphsInit();
   boot::log("orientation", (long)(o == settings::Orientation::Landscape ? 1 : 0));
 }
 
@@ -490,6 +639,7 @@ static void reloadConfigSource(settings::Orientation o) {
   g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMarksDriven(g_real);
+  graphsInit();
   boot::log("mode", g_real ? "real" : "demo");
   if (g_real) {
     session_glue::loadClockFromRtc();
@@ -719,6 +869,7 @@ void setup() {
     g_app.setMarksDriven(g_real);
     boot::log("mode", g_real ? "real" : "demo");
     if (g_real) g_restoredEpoch = state_cache::restore(cfg.cfg.entityIds, g_app.store());
+    graphsInit();
   }
 #ifdef TEST_CONFIG_MOCKUP
   g_status.mockLabel = true;
@@ -932,6 +1083,8 @@ void loop() {
 
   historyPump();
   if (g_histChanged) { g_histChanged = false; changed = true; }
+  graphsPump();
+  if (g_app.graphs().takeChanged()) changed = true;
 
   if (!settings_flow::active() && g_app.screen() == uistate::Screen::Tabs) {
     // A phase change repaints only the label region: the frame diff leaves everything else alone.

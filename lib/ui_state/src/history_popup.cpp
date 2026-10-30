@@ -12,7 +12,7 @@ int historyColumns(bool landscape, bool step) {
 
 bool historyEnabledFor(const config::Widget &w) {
   return (w.type == config::WidgetType::Sensor || w.type == config::WidgetType::BinarySensor) &&
-         w.attribute.empty() && w.history.enabled && !w.entity.empty();
+         w.attribute.empty() && w.history.enabled && !w.entity.empty() && !config::isGraphWidget(w);
 }
 
 HistorySpec makeHistorySpec(const config::Widget &w, bool landscape, const std::string &deviceClass) {
@@ -134,23 +134,27 @@ bool HistoryPopup::takeFetch(int64_t nowEpoch, HistoryJob &job, int32_t utcOffse
     else fail(HistReason::NotFetched);
     return false;
   }
-  job.entity = spec_.entity;
-  job.end = nowEpoch;
-  job.start = nowEpoch - int64_t(spec_.hours) * 3600;
-  job.columns = spec_.columns;
-  job.statistics = spec_.source == history::Source::Statistics;
-  job.bar = job.statistics && spec_.chart == HistChart::Bar;
-  job.period = spec_.period;
-  job.statistic = spec_.statistic;
-  if (job.bar) {
-    job.bucketSeconds = stats_period_seconds(spec_.period);
-    const history::BarWindow bw = history::barWindow(nowEpoch, spec_.hours, job.bucketSeconds, utcOffsetS);
-    job.start = bw.start;
-    job.bucketCount = bw.count;
-  }
+  planHistoryJob(spec_, nowEpoch, utcOffsetS, job);
   job.ticket = ++ticket_;
   fetching_ = true;
   return true;
+}
+
+void planHistoryJob(const HistorySpec &spec, int64_t nowEpoch, int32_t utcOffsetS, HistoryJob &job) {
+  job.entity = spec.entity;
+  job.end = nowEpoch;
+  job.start = nowEpoch - int64_t(spec.hours) * 3600;
+  job.columns = spec.columns;
+  job.statistics = spec.source == history::Source::Statistics;
+  job.bar = job.statistics && spec.chart == HistChart::Bar;
+  job.period = spec.period;
+  job.statistic = spec.statistic;
+  if (job.bar) {
+    job.bucketSeconds = stats_period_seconds(spec.period);
+    const history::BarWindow bw = history::barWindow(nowEpoch, spec.hours, job.bucketSeconds, utcOffsetS);
+    job.start = bw.start;
+    job.bucketCount = bw.count;
+  }
 }
 
 namespace {
@@ -172,6 +176,16 @@ bool sameColumns(const history::Series &a, const history::Series &b) {
   return true;
 }
 }  // namespace
+
+bool sameSeriesData(const history::Series &a, const history::Series &b) {
+  if (!sameColumns(a, b) || a.buckets.size() != b.buckets.size()) return false;
+  for (size_t i = 0; i < a.buckets.size(); ++i) {
+    const history::Bucket &x = a.buckets[i], &y = b.buckets[i];
+    if (x.has != y.has) return false;
+    if (x.has && std::fabs(x.last - y.last) > 1e-3f * std::max(1.0f, std::fabs(x.last))) return false;
+  }
+  return true;
+}
 
 bool HistoryPopup::onFetchDone(int ticket, HistOutcome o, history::Series &&s, int64_t nowEpoch) {
   if (!fetching_ || ticket != ticket_) return false;

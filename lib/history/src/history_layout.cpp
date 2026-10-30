@@ -34,6 +34,58 @@ GraphLayout graphLayout(ChartType type, bool landscape) {
   return l;
 }
 
+GraphLayout offsetLayout(GraphLayout l, int dx, int dy) {
+  for (Rect *r : {&l.plot, &l.axisLeft, &l.axisBottom}) { r->x += dx; r->y += dy; }
+  l.yLabelRight += dx;
+  for (int &y : l.yTickCy) y += dy;
+  l.xLabelCy += dy;
+  l.tickMarkY += dy;
+  l.hairlineY += dy;
+  l.listCy0 += dy;
+  l.listX += dx;
+  return l;
+}
+
+GraphLayout widgetGraphLayout(ChartType type, int W, int H, bool landscape) {
+  GraphLayout l;
+  l.type = type;
+  l.landscape = landscape;
+  l.listRows = 0;
+  if (H < kWidgetFullMinH) {  // compact: spark rect right of the name / value block
+    l.labels = false;
+    const int x = landscape ? 164 : 228;
+    const Rect spark{x, 20, W - 17 - x, 62};
+    if (type == ChartType::Step) {
+      l.plot = Rect{spark.x, spark.y + 11, spark.w, 40};
+    } else {
+      l.plot = spark;
+      l.axisBottom = Rect{spark.x, 82, spark.w, 2};
+    }
+    return l;
+  }
+  l.minBarLabelSlot = 48;
+  if (type == ChartType::Step) {
+    l.plot = Rect{12, 76, W - 24, H >= 336 ? H - 140 : 80};
+    l.xLabelCy = l.plot.bottom() + 22;
+    l.tickMarkY = l.plot.bottom() + 1;
+    l.tickMarkH = 7;
+  } else {
+    l.plot = Rect{60, 78, W - 84, H - 134};
+    l.axisLeft = Rect{59, 74, 2, l.plot.h + 5};
+    l.axisBottom = Rect{59, l.plot.bottom(), l.plot.w + 2, 2};
+    l.yLabelRight = 52;
+    l.yTickCy[0] = l.plot.y;
+    l.yTickCy[1] = l.plot.y + l.plot.h / 2;
+    l.yTickCy[2] = l.plot.bottom();
+    l.xLabelCy = H - 32;
+    l.tickMarkY = l.plot.bottom() + 2;
+    l.tickMarkH = 6;
+    l.yMidLabel = l.plot.h >= 120;
+  }
+  l.maxXTicks = l.plot.w / 90;
+  return l;
+}
+
 int timeToX(int64_t t, int64_t start, int64_t end, int w) {
   if (end <= start || w <= 0) return 0;
   if (t <= start) return 0;

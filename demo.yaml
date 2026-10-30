@@ -185,3 +185,17 @@ tabs:
         size: 1x1
       - entity: person.alice
         type: sensor
+  - title: Graphs
+    widgets:
+      - entity: sensor.outside_temperature   # history graph on the tab (task 071)
+        name: Outside
+        display: graph
+        decimals: 1
+      - entity: sensor.power_meter
+        name: Power per day
+        display: graph
+        history: { hours: 168, type: bar }
+      - entity: binary_sensor.front_door
+        name: Front door
+        display: graph
+        size: 2x1

@@ -205,9 +205,18 @@ void test_roundtrip_history() {
   expectEqual(c, out);
 }
 
+void test_roundtrip_display() {
+  Config c = fullConfig(), out;
+  c.tabs[0].widgets[1].display = WidgetDisplay::Graph;
+  TEST_ASSERT_TRUE(deserializeConfig(serializeConfig(c), out));
+  TEST_ASSERT_TRUE(out.tabs[0].widgets[1].display == WidgetDisplay::Graph);
+  TEST_ASSERT_TRUE(out.tabs[0].widgets[0].display == WidgetDisplay::Default);
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_roundtrip_all_fields);
+  RUN_TEST(test_roundtrip_display);
   RUN_TEST(test_more_than_four_profiles_rejected);
   RUN_TEST(test_roundtrip_landscape_columns);
   RUN_TEST(test_roundtrip_example_yaml);

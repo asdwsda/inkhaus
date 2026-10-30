@@ -1770,6 +1770,78 @@ void test_t011_status_hits_with_pager() {
   }
 }
 
+static Widget G(int w = 0, int h = 0, WidgetType t = WidgetType::Sensor) {
+  Widget x = W(t, w, h);
+  x.display = config::WidgetDisplay::Graph;
+  x.entity = "sensor.x";
+  return x;
+}
+
+static void test_graph_default_size() {
+  Flow p = computeFlow(Orientation::Portrait, {G()});
+  TEST_ASSERT_EQUAL(2, p.placements[0].cellW);
+  TEST_ASSERT_EQUAL(2, p.placements[0].cellH);
+  TEST_ASSERT_EQUAL(508, p.placements[0].rect.w);
+  TEST_ASSERT_EQUAL(220, p.placements[0].rect.h);
+  TEST_ASSERT_TRUE(p.placements[0].graph);
+  TEST_ASSERT_FALSE(p.placements[0].history);
+  TEST_ASSERT_TRUE(p.clampReports.empty());
+  Flow l = computeFlow(Orientation::Landscape, {G()});
+  TEST_ASSERT_EQUAL(364, l.placements[0].rect.w);
+  TEST_ASSERT_EQUAL(220, l.placements[0].rect.h);
+  Flow l4 = computeFlow(Orientation::Landscape, {G()}, 4);
+  TEST_ASSERT_EQUAL(2, l4.placements[0].cellW);
+}
+
+static void test_graph_size_clamp() {
+  // too small: 1x1 -> 2x1 (min), reported
+  Flow f = computeFlow(Orientation::Portrait, {G(1, 1)});
+  TEST_ASSERT_EQUAL(2, f.placements[0].cellW);
+  TEST_ASSERT_EQUAL(1, f.placements[0].cellH);
+  TEST_ASSERT_EQUAL(1, (int)f.clampReports.size());
+  TEST_ASSERT_TRUE(f.clampReports[0].reasons & kClampTypeMin);
+  // 2x1 is allowed as is
+  f = computeFlow(Orientation::Portrait, {G(2, 1)});
+  TEST_ASSERT_TRUE(f.clampReports.empty());
+  TEST_ASSERT_EQUAL(104, f.placements[0].rect.h);
+  // landscape: up to the grid width; the global rows-1 rule keeps the pager row free (3 of 4 rows)
+  f = computeFlow(Orientation::Landscape, {G(5, 3)});
+  TEST_ASSERT_TRUE(f.clampReports.empty());
+  TEST_ASSERT_EQUAL(928, f.placements[0].rect.w);
+  TEST_ASSERT_EQUAL(336, f.placements[0].rect.h);
+  f = computeFlow(Orientation::Landscape, {G(5, 4)});
+  TEST_ASSERT_EQUAL(3, f.placements[0].cellH);
+  TEST_ASSERT_TRUE(f.clampReports[0].reasons & kClampRows);
+  // 4-column tab: 5 wide -> 4
+  f = computeFlow(Orientation::Landscape, {G(5, 2)}, 4);
+  TEST_ASSERT_EQUAL(4, f.placements[0].cellW);
+  TEST_ASSERT_TRUE(f.clampReports[0].reasons & kClampTypeMax);
+  // binary_sensor graph has the same limits
+  f = computeFlow(Orientation::Portrait, {G(0, 0, WidgetType::BinarySensor)});
+  TEST_ASSERT_EQUAL(2, f.placements[0].cellH);
+  // a plain sensor keeps its own limits
+  f = computeFlow(Orientation::Portrait, {W(WidgetType::Sensor)});
+  TEST_ASSERT_EQUAL(1, f.placements[0].cellW);
+  TEST_ASSERT_FALSE(f.placements[0].graph);
+}
+
+static void test_graph_never_focusable() {
+  Widget g = G();
+  Widget s = W(WidgetType::Sensor);
+  s.entity = "sensor.y";
+  Flow f = computeFlow(Orientation::Portrait, {g, s});
+  TEST_ASSERT_FALSE(f.placements[0].history);
+  TEST_ASSERT_TRUE(f.placements[1].history);
+  FocusEnv env;
+  env.orientation = Orientation::Portrait;
+  env.tabCount = 1;
+  env.flow = &f;
+  env.unavailable.assign(2, false);
+  const std::vector<int> stops = focusStops(env, 0);
+  TEST_ASSERT_EQUAL(1, (int)stops.size());
+  TEST_ASSERT_EQUAL(1, stops[0]);  // the graph at index 0 is skipped
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_areas_portrait);
@@ -1849,5 +1921,8 @@ int main(int, char **) {
   RUN_TEST(test_t011_subpage_end_rules_landscape);
   RUN_TEST(test_t011_touch_interplay_extra);
   RUN_TEST(test_t011_status_hits_with_pager);
+  RUN_TEST(test_graph_default_size);
+  RUN_TEST(test_graph_size_clamp);
+  RUN_TEST(test_graph_never_focusable);
   return UNITY_END();
 }

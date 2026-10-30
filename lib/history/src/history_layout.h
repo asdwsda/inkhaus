@@ -32,10 +32,19 @@ struct GraphLayout {
   int hairlineY = 0;         // step: separator under the lane
   int listCy0 = 0, listRowH = 36, listRows = 4;  // step: last changes list
   int listX = 0, listStateDx = 100;
+  // Widget graphs (task 071, docs/ui/history-widget.md): labels=false is the compact spark (no labels, ticks, grid);
+  // yMidLabel=false drops the middle y label of a low plot; minBarLabelSlot: bar value labels need this slot width.
+  bool labels = true, yMidLabel = true;
+  int minBarLabelSlot = 0;
   int columns() const { return plot.w; }  // columns a Collector must produce
 };
 
 GraphLayout graphLayout(ChartType type, bool landscape);
+// Layout of a `display: graph` widget of W x H px, relative to the widget's origin (move it with offsetLayout).
+// H < kWidgetFullMinH is the compact spark layout (2x1).
+constexpr int kWidgetFullMinH = 220;
+GraphLayout widgetGraphLayout(ChartType type, int W, int H, bool landscape);
+GraphLayout offsetLayout(GraphLayout l, int dx, int dy);
 
 // x of column i (left edge) and the column a time falls in.
 inline int columnX(const GraphLayout& l, int i) { return l.plot.x + i; }

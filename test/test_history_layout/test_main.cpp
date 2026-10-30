@@ -230,6 +230,59 @@ void test_bar_range_line() {
   TEST_ASSERT_EQUAL_STRING("", barRangeLine(s, true, 1, "kWh").c_str());
 }
 
+static void test_widget_layout_full() {
+  GraphLayout p = widgetGraphLayout(ChartType::Line, 508, 220, false);
+  TEST_ASSERT_EQUAL(60, p.plot.x);
+  TEST_ASSERT_EQUAL(78, p.plot.y);
+  TEST_ASSERT_EQUAL(424, p.plot.w);
+  TEST_ASSERT_EQUAL(86, p.plot.h);
+  TEST_ASSERT_EQUAL(188, p.xLabelCy);
+  TEST_ASSERT_EQUAL(52, p.yLabelRight);
+  TEST_ASSERT_EQUAL(164, p.axisBottom.y);
+  TEST_ASSERT_FALSE(p.yMidLabel);  // ph < 120
+  TEST_ASSERT_EQUAL(4, p.maxXTicks);
+  GraphLayout l = widgetGraphLayout(ChartType::Line, 364, 220, true);
+  TEST_ASSERT_EQUAL(280, l.plot.w);
+  TEST_ASSERT_EQUAL(3, l.maxXTicks);
+  GraphLayout tall = widgetGraphLayout(ChartType::Line, 928, 452, true);
+  TEST_ASSERT_EQUAL(318, tall.plot.h);
+  TEST_ASSERT_TRUE(tall.yMidLabel);
+  TEST_ASSERT_EQUAL(420, tall.xLabelCy);
+  // step lane
+  GraphLayout s = widgetGraphLayout(ChartType::Step, 508, 220, false);
+  TEST_ASSERT_EQUAL(12, s.plot.x);
+  TEST_ASSERT_EQUAL(76, s.plot.y);
+  TEST_ASSERT_EQUAL(484, s.plot.w);
+  TEST_ASSERT_EQUAL(80, s.plot.h);
+  TEST_ASSERT_EQUAL(178, s.xLabelCy);
+  TEST_ASSERT_EQUAL(0, s.listRows);
+  TEST_ASSERT_EQUAL(196, widgetGraphLayout(ChartType::Step, 508, 336, false).plot.h);
+}
+
+static void test_widget_layout_compact() {
+  GraphLayout p = widgetGraphLayout(ChartType::Line, 508, 104, false);
+  TEST_ASSERT_FALSE(p.labels);
+  TEST_ASSERT_EQUAL(228, p.plot.x);
+  TEST_ASSERT_EQUAL(263, p.plot.w);
+  TEST_ASSERT_EQUAL(62, p.plot.h);
+  TEST_ASSERT_EQUAL(82, p.axisBottom.y);
+  GraphLayout l = widgetGraphLayout(ChartType::Line, 364, 104, true);
+  TEST_ASSERT_EQUAL(164, l.plot.x);
+  TEST_ASSERT_EQUAL(183, l.plot.w);
+  GraphLayout s = widgetGraphLayout(ChartType::Step, 508, 104, false);
+  TEST_ASSERT_EQUAL(40, s.plot.h);
+  TEST_ASSERT_EQUAL(31, s.plot.y);
+}
+
+static void test_offset_layout() {
+  GraphLayout l = offsetLayout(widgetGraphLayout(ChartType::Line, 508, 220, false), 16, 100);
+  TEST_ASSERT_EQUAL(76, l.plot.x);
+  TEST_ASSERT_EQUAL(178, l.plot.y);
+  TEST_ASSERT_EQUAL(288, l.xLabelCy);
+  TEST_ASSERT_EQUAL(68, l.yLabelRight);
+  TEST_ASSERT_EQUAL(178, l.yTickCy[0]);
+}
+
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_rects);
@@ -247,5 +300,8 @@ int main(int, char**) {
   RUN_TEST(test_changes);
   RUN_TEST(test_bars);
   RUN_TEST(test_bar_range_line);
+  RUN_TEST(test_widget_layout_full);
+  RUN_TEST(test_widget_layout_compact);
+  RUN_TEST(test_offset_layout);
   return UNITY_END();
 }

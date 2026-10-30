@@ -99,8 +99,12 @@ struct HistoryConfig {
   HistorySource source = HistorySource::Auto;
 };
 
+// How a widget is drawn (task 071): Graph = the history graph on the tab (sensor / binary_sensor only).
+enum class WidgetDisplay { Default, Graph };
+
 struct Widget {
   WidgetType type = WidgetType::Sensor;
+  WidgetDisplay display = WidgetDisplay::Default;
   std::string entity;  // single-entity widget, empty for groups
   std::string group;   // group widget, empty for single entities
   std::string name;    // empty: use HA friendly_name
@@ -114,6 +118,8 @@ struct Widget {
   // Entities this widget acts on: {entity} or the group members.
   std::vector<std::string> entities;
 };
+
+inline bool isGraphWidget(const Widget &w) { return w.display == WidgetDisplay::Graph; }
 
 constexpr int kDefaultLandscapeColumns = 5;
 

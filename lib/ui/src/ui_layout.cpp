@@ -89,6 +89,7 @@ WidgetSize clampSize(const SizeLimits &lim, WidgetSize req, const Grid &g, unsig
 WidgetSize resolveSize(WidgetType type, const config::Widget &w, const Grid &g,
                        unsigned *reasons, WidgetSize *requested) {
   SizeLimits lim = sizeLimits(type, g);
+  if (config::isGraphWidget(w)) lim = {{2, 2}, {2, 1}, {g.cols, config::kMaxWidgetSize}};  // task 071: wide graph, default 2x2
   WidgetSize req = w.size ? *w.size : lim.def;
   if (requested) *requested = req;
   return clampSize(lim, req, g, reasons);
@@ -157,7 +158,8 @@ Flow computeFlow(Orientation o, const std::vector<config::Widget> &widgets, int 
     Placement p;
     p.index = (int)i;
     p.type = widgets[i].type;
-    p.history = (p.type == config::WidgetType::Sensor || p.type == config::WidgetType::BinarySensor) &&
+    p.graph = config::isGraphWidget(widgets[i]);
+    p.history = !p.graph && (p.type == config::WidgetType::Sensor || p.type == config::WidgetType::BinarySensor) &&
                 widgets[i].attribute.empty() && widgets[i].history.enabled && !widgets[i].entity.empty();
     p.page = slots[i].page;
     p.cellX = slots[i].c;

@@ -618,6 +618,14 @@ class Validator {
                                 std::to_string(kMaxWidgetSize));
     }
 
+    bool hasDisplay = false;
+    {
+      std::string d;
+      if (str(o, "display", path, false, d)) {
+        if (d == "graph") hasDisplay = true;
+        else if (d != "default") err(path + ".display", "must be graph or default");
+      }
+    }
     attributeOptions(o, path, w);
     if (!o["history"].isNull()) history(o["history"], path + ".history", w);
 
@@ -660,6 +668,18 @@ class Validator {
       err(path + (hasEntity ? ".entity" : ".group"),
           "unsupported entity domain, set 'type' explicitly");
       return;
+    }
+    if (hasDisplay) {
+      if (w.type != WidgetType::Sensor && w.type != WidgetType::BinarySensor)
+        err(path + ".display", "graph is only available for sensor and binary_sensor widgets");
+      else if (!w.attribute.empty())
+        err(path + ".display", "graph cannot be combined with attribute");
+      else if (!w.group.empty())
+        err(path + ".display", "graph needs a single entity, not a group");
+      else if (!w.history.enabled)
+        err(path + ".display", "graph cannot be combined with history: false");
+      else
+        w.display = WidgetDisplay::Graph;
     }
     for (const auto &e : w.entities) addEntity(e);
     tb.widgets.push_back(std::move(w));

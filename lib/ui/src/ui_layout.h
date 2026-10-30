@@ -88,6 +88,7 @@ struct Placement {
   Rect rect;
   int cellX = 0, cellY = 0, cellW = 1, cellH = 1;
   bool clamped = false;
+  bool graph = false;    // `display: graph` (task 071): read-only history graph, never focusable, taps do nothing
   bool history = false;  // sensor/binary_sensor with history enabled: rocker-focusable (opens the popup)
 };
 

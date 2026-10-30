@@ -31,6 +31,7 @@ struct HistoryGraphInput {
   double fixedMin = 0, fixedMax = 0;
   std::string onWord = "Open", offWord = "Closed";  // step list state words
   history::TzOffsetFn tz = nullptr;                 // null: UTC offset from the C library TZ
+  const history::GraphLayout *layout = nullptr;     // widget graphs (task 071): absolute layout; null = the popup's
 };
 
 // Local UTC offset in seconds at `epoch` from the C library's TZ.
