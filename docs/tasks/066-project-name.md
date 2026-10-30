@@ -17,3 +17,6 @@ Needs device: no
 ## Acceptance criteria
 - [ ] Findings with sources for Inkling and each proposal.
 - [ ] User-approved name; no old name left (`grep -ri inkling` clean except history notes).
+- Research (tester, 2026-10-30; full tables + sources in the session scratchpad 066-names.md): Inkling has no HA/HACS/ESPHome
+  conflict but is crowded (489 GitHub repos, all package names and main domains taken, Wacom Inkling, a WIPO INKLING mark).
+  Ranked alternatives: Inkhaus (cleanest), Tapink, Papertap, Paperdeck, Inkdeck (too close to an e-ink HA dashboard), Inkey.
