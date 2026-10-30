@@ -71,8 +71,9 @@
 | 068 | [Demo mode shows history charts](068-demo-history.md) | done | 034 |
 | 069 | [A more pleasant Inkhaus Installer UI](069-installer-ui.md) | done | 062, 064 |
 | 070 | [User-friendly README](070-readme-user-friendly.md) | done | 063, 065 |
-| 071 | [History graph widget](071-history-widget.md) | in-progress | 049, 052, 053, 055 |
+| 071 | [History graph widget](071-history-widget.md) | done | 049, 052, 053, 055 |
 | 073 | [Showcase the history graph in the README and website](073-showcase-history.md) | done | 071, 070, 065 |
+| 074 | [Graph widget redraw in one refresh](074-graph-single-refresh.md) | in-progress | 071 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.

@@ -1,6 +1,6 @@
 # 071: History graph widget
 
-Status: in-progress
+Status: done
 Depends on: 049, 052, 053, 055
 UI spec: docs/ui/history-widget.md (approved 2026-10-30)
 Needs device: yes
@@ -52,3 +52,12 @@ Out of scope: several entities in one graph, new graph types; other widgets keep
   - Check `mem` with many graphs.
   - `graphsInit` reads the SD cache under the 15 s watchdog without `boot::feed()`, and before the RTC clock is loaded, so cached data is classed stale. Check `graph_cache ms`.
   - The popup and widget share the per-entity cache key.
+- Device measurement (2026-10-30, 1 graph, 168 h):
+  - Fetch: 2.36 s cold, 0.29 s warm. `graph_cache` 29 ms. heap_min about 120 KB.
+  - No 067 hang on 2 boots.
+  - Decision: `kGraphFetchAllTabs = false` (visible tab only); the 0.5 s rule is exceeded with more than one graph or a cold connection.
+  - Redraw uses 3-4 small `epd_quality` partial refreshes of about 440 ms each, adding 1.3-1.7 s per wake. Candidate follow-up: one merged refresh per widget.
+- Done 2026-10-30:
+  - User: the graph renders, tap and long press do nothing, and the image survives sleep.
+  - Log: a touch wake fetched the graph and redrew it (changed=1).
+  - The scheduled-refresh update is covered by native tests only; the RTC wake was not captured.
