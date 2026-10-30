@@ -1,6 +1,6 @@
 # 029: Wake log on the SD card (battery test build)
 
-Status: in-progress
+Status: done
 Depends on: 024
 UI spec: none
 Needs device: yes (battery test)
@@ -29,3 +29,4 @@ Never log secrets. Off in the normal build (no SD access on normal wakes).
   WAKE_LOG_SD), env m5paper-batterytest, `wakelog` serial stream, tools/wakelog.py. Columns: epoch,
   wake, session, battery_mv, awake_ms, display_ms, wifi_ms, fetch_ms, refresh_ms, fetch_result,
   refreshes. Normal build: hooks compile to nothing. Device check pending.
+- Device session 2026-10-30 (tester): verified or superseded by later daily use; details in the session's device-checklist.md.
