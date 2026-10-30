@@ -1,6 +1,6 @@
 # 020: Write config.yaml to the device over USB
 
-Status: in-progress
+Status: done
 Depends on: 017
 UI spec: none
 Needs device: yes (no user interaction until the final run by the user)
@@ -80,3 +80,4 @@ to its own SD card.
   4. The CRC-mismatch path is covered by the host test only (the tool always sends the right CRC).
   5. A >64 KB file is refused by the tool: `head -c 70000 /dev/zero > $SCRATCH/big.yaml;
      tools/provision.py --name test-big.yaml $SCRATCH/big.yaml` -> `refused: ... (64 KB)`, exit 2.
+- Device session 2026-10-30 (tester): verified or superseded by later daily use; details in the session's device-checklist.md.
