@@ -3,28 +3,13 @@
 **Inkhaus** turns an **M5Stack M5Paper** e-ink touch screen into a battery-powered remote for
 [Home Assistant](https://www.home-assistant.io/). It shows your shutters, lights, thermostats and
 sensors, sends your taps to Home Assistant, and sleeps the rest of the time, so the screen always
-shows the last known state without using power. Version 1.1.0, see [CHANGELOG.md](CHANGELOG.md).
+shows the last known state without using power. Version 1.2.0, see [CHANGELOG.md](CHANGELOG.md).
 
 Website: <https://asdwsda.github.io/inkhaus/>
 
-![Graph widgets on the tab and the 24 h history popup](docs/ui/png/showcase-device.png)
+![Feature tour: wake, switch, brightness, shutters, climate, graphs, history, settings, sleep](docs/ui/showcase-tour.gif)
 
-*Graphs right on the tab, 24 h history on a long press (design mockup).*
-
-## History graphs
-
-Put a line or bar graph of any sensor straight on a tab with `display: graph`, or long-press a
-sensor for its history popup:
-
-```yaml
-- entity: sensor.living_room_temperature
-  display: graph
-  history: 24
-```
-
-![Wake, tab with graphs, history popup](docs/ui/showcase.gif)
-
-*Wake, tab with graphs, long-press popup (design mockup).* All options: [docs/CONFIG.md](docs/CONFIG.md).
+*A tour of the screens (design mockups).*
 
 ## Get started in 4 steps
 
@@ -91,6 +76,19 @@ Find entity ids in Home Assistant under **Settings, Devices & services, Entities
 (groups, sensor attributes, history graphs, landscape columns, several Wi-Fi networks, fixed IP):
 [docs/CONFIG.md](docs/CONFIG.md).
 
+## History graphs
+
+Put a line or bar graph of any sensor straight on a tab with `display: graph`, or long-press a
+sensor for its history popup:
+
+```yaml
+- entity: sensor.living_room_temperature
+  display: graph
+  history: 24
+```
+
+All options: [docs/CONFIG.md](docs/CONFIG.md).
+
 ## Using the device
 
 - **Wake it** by pressing the rocker (the 3-way button on the side), or by touching the screen if
@@ -102,10 +100,6 @@ Find entity ids in Home Assistant under **Settings, Devices & services, Entities
   Sleep & wake, Network (Wi-Fi profile, Home Assistant connection) and Tools (demo mode, debug log).
   Changes are saved when you leave Settings (Back on the overview page, or after 60 s idle).
 - The device goes back to sleep by itself after the idle timeout.
-
-![Settings mockup](docs/ui/png/settings-portrait.png)
-
-*Settings (design mockup).*
 
 ## Troubleshooting
 

@@ -74,7 +74,7 @@
 | 071 | [History graph widget](071-history-widget.md) | done | 049, 052, 053, 055 |
 | 073 | [Showcase the history graph in the README and website](073-showcase-history.md) | done | 071, 070, 065 |
 | 074 | [Graph widget redraw in one refresh](074-graph-single-refresh.md) | in-progress | 071 |
-| 075 | [Feature tour GIF as the only README image](075-feature-tour-gif.md) | in-progress | 073 |
+| 075 | [Feature tour GIF as the only README image](075-feature-tour-gif.md) | done | 073 |
 | 076 | [Smaller demo (4 tabs)](076-smaller-demo.md) | in-progress | 033, 068, 071 |
 
 ## Open items (not yet tasks, 2026-10-30)

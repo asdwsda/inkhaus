@@ -1,6 +1,6 @@
 # 075: Feature tour GIF as the only README image
 
-Status: in-progress
+Status: done
 Depends on: 073
 UI spec: docs/ui/showcase-tour.md (to write)
 Needs device: no
@@ -41,3 +41,4 @@ Out of scope: firmware changes and new features.
 ## Notes
 - Unused showcase files are deleted at the end (README and site must not reference them).
 - Website hero uses the same GIF (user, 2026-10-30). Steps approved as listed.
+- Done 2026-10-30: the user approved the GIF, the README and the site. Site page weight 945 KiB.

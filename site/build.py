@@ -14,7 +14,7 @@ if out.exists():
 html = (site / "index.html").read_text()
 imgs = sorted(set(re.findall(r'src="img/([^"]+)"', html)))
 for name in imgs:
-    src = root / "docs/ui/png" / name
+    src = root / ("docs/ui" if name.endswith(".gif") else "docs/ui/png") / name
     if not src.is_file():
         sys.exit(f"missing image: {src}")
     shutil.copy(src, out / "img" / name)

@@ -1,0 +1,17 @@
+showcase-tour-01.svg	2400
+showcase-tour-02.svg	700
+showcase-tour-03.svg	1800
+showcase-tour-04.svg	1000
+showcase-tour-05.svg	1500
+showcase-tour-06.svg	900
+showcase-tour-07.svg	1800
+showcase-tour-08.svg	1000
+showcase-tour-09.svg	1500
+showcase-tour-10.svg	1000
+showcase-tour-11.svg	1500
+showcase-tour-12.svg	700
+showcase-tour-13.svg	1800
+showcase-tour-14.svg	900
+showcase-tour-15.svg	1800
+showcase-tour-16.svg	2400
+showcase-tour-17.svg	2400
