@@ -60,3 +60,7 @@ tagged `UNVERIFIED` in code comments and task notes.
 - [ ] `HIST: fetch_ms parse_ms bytes points err` line after each fetch, cached reopen shows at once (PSRAM), after a reboot from the SD file `/hist/<hash>.bin` (task 053, UNVERIFIED: SD mount/read/write between taps is fast enough and does not disturb the display bus; `/hist` is created on first store)
 - [ ] Session stays awake while the popup is open and fetching; popup closes before sleep; a net-session restart during a fetch ends in the HA unreachable state (task 053, UNVERIFIED: 15 s fetch on the net task delays queued session fetches but does not break them)
 - [x] Rocker push/long push on a sensor with history opens and closes the popup (task 053, user 2026-10-30)
+- [x] History popup first open: Loading frame fastest, then one quality refresh of the popup (16,212,516,518 `panel_has_grey`); drawn correctly (task 053 fix 7116a89, user 2026-10-30)
+- [x] History popup closes before sleep; rocker opens/closes it; graph looks right (task 053, user 2026-10-30)
+- [x] Brightness popup without Done: [X] only, - / Off / + row, steps and presets work (task 045, user 2026-10-30)
+- [x] Forced Wi-Fi profile + Internal connects (cache hit 0.23 s, `link=local`) (task 047, 2026-10-30)
