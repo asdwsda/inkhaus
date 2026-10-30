@@ -43,7 +43,7 @@ python3 tools/wakelog.py --file debug.log debug.log
 
 | Path | Contents |
 |---|---|
-| `src/`, `include/` | Device code (Arduino, M5Unified/M5GFX); `include/version.h` holds the firmware version |
+| `src/`, `include/` | Device code (Arduino, M5Unified/M5GFX); `include/version.h` holds the firmware version; `tools/flasher/Cargo.toml` must carry the same version (the release workflow checks both against the tag) |
 | `lib/` | Pure C++17 logic with no Arduino dependencies, unit-tested on the PC: `config`, `settings`, `ha_client`, `model`, `power`, `ui`, `session`, ... |
 | `test/` | Native unit tests (Unity) |
 | `config.example.yaml`, `secrets.example.yaml`, `demo.yaml` | Example dashboard, example credentials, built-in demo |
