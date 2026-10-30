@@ -55,3 +55,14 @@
 | 052 | [History graph renderer](052-history-graph-renderer.md) | PC done; device check pending | 048, 050 |
 | 053 | [History popup (input, cache, refresh)](053-history-popup.md) | PC part in progress; review pending | 049, 050, 051, 052 |
 | 054 | [History from WebSocket statistics (phase 2)](054-history-ws-statistics.md) | todo | 050, 051 |
+
+## Open items (not yet tasks, 2026-10-30)
+- Version: the unreleased CHANGELOG section is "1.0.1" but holds new features (045, 047, history); consider 1.1.0. Ask the user.
+- 053: rerun the interrupted tester review; user decision on rocker focus for sensor/binary widgets (see 053 Notes).
+- 052: draw "unavailable" spans (needs a lib/history Series change). Time-tick follow-up is done (323ad1b).
+- 049: `statistic`/`period`/`source` are not checked against the graph type; 053/054 must handle it.
+- 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
+- 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
+- README: device screenshots, taken once the device is back.
+- User-approved (2026-10-29): Settings overview summary wording (OPEN-S5) and long Wi-Fi names shrink then "..." (OPEN-S6).
+- User to do: convert secrets.yaml `wifi:` to the profile list (secrets.example.yaml).
