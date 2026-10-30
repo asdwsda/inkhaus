@@ -1,6 +1,6 @@
 # 058: Faster visual feedback on wake (investigation + fix)
 
-Status: in-progress
+Status: done
 Depends on: 024, 038
 UI spec: none (may need a small ui-designer note if a new wake mark is drawn)
 Needs device: yes
@@ -23,10 +23,10 @@ Out of scope: changing the sleep indicator's look (task 059).
 - src/boot.cpp, src/main.cpp, src/present.cpp, src/sleep.cpp (as found)
 
 ## Acceptance criteria
-- [ ] Notes: timeline of a wake with the cost of each step, and the chosen changes with a reason.
-- [ ] Device: `t_first_draw_ms` (or a new `t_wake_feedback_ms`) clearly lower than 3210 on a touch and a
+- [x] Notes: timeline of a wake with the cost of each step, and the chosen changes with a reason.
+- [x] Device: `t_first_draw_ms` (or a new `t_wake_feedback_ms`) clearly lower than 3210 on a touch and a
       rocker wake; the indicator disappears without ghosts; the final screen is unchanged.
-- [ ] No regression in awake time per scheduled refresh (`awake_ms` in the wake log).
+- [x] No regression in awake time per scheduled refresh (`awake_ms` in the wake log).
 
 ## Notes
 Analysis (firmware-dev, read-only, 2026-10-30; full: session scratchpad 058-analysis.md). Times since t_pre_begin:
@@ -61,3 +61,5 @@ Analysis (firmware-dev, read-only, 2026-10-30; full: session scratchpad 058-anal
   (`screen_track::adoptClearedTiles`, native test); first frame keeps the cached status (`g_keepStatus`); session/Wi-Fi start moved
   before frame alloc; wakelog boot line written after the first draw (`begin(..., deferWrite)`, `writeDeferred`).
   New logs: `t_wake_feedback_ms`, `t_wake_feedback_done_ms`, `early_clear_paper`, `early_clear_adopted_tiles`.
+- Device result (2026-10-30, 3 touch + 3 rocker wakes): wake-log display_ms 1608-1632 (was ~3210), early_clear_adopted_tiles=8,
+  wifi_ms ~930-980; user: badge gone at ~2 s by eye, no ghost, Offline shown with Wi-Fi off. Proposal 3 (warm controller) left for a later task.
