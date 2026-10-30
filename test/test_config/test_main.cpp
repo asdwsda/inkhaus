@@ -752,6 +752,27 @@ void test_history_block() {
   TEST_ASSERT_EQUAL(24, r.config.tabs[0].widgets[0].history.hours);
 }
 
+void test_history_combination_checks() {
+  // bar + source history is a mistake
+  ParseResult r = parseConfig(withWidget("        history: { type: bar, source: history }\n"));
+  TEST_ASSERT_FALSE(r.ok());
+  TEST_ASSERT_NOT_NULL(findError(r, std::string(kHp) + ".source"));
+  // hourly bars over 128 h
+  r = parseConfig(withWidget("        history: { hours: 129, type: bar, period: hour }\n"));
+  TEST_ASSERT_NOT_NULL(findError(r, std::string(kHp) + ".hours"));
+  r = parseConfig(withWidget("        history: { hours: 128, type: bar, period: hour }\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  r = parseConfig(withWidget("        history: { hours: 720, type: bar, period: day }\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  r = parseConfig(withWidget("        history: { hours: 720, type: bar }\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  // harmless: statistic / period on a line or step chart are ignored
+  r = parseConfig(withWidget("        history: { type: line, statistic: sum, period: day, source: history }\n"));
+  TEST_ASSERT_TRUE(r.ok());
+  r = parseConfig(withWidget("        history: { type: step, statistic: max }\n"));
+  TEST_ASSERT_TRUE(r.ok());
+}
+
 void test_history_shorthand_and_false() {
   ParseResult r = parseConfig(withWidget("        history: 48\n"));
   TEST_ASSERT_TRUE(r.ok());
@@ -855,6 +876,7 @@ int main(int, char **) {
   RUN_TEST(test_secrets_wifi_list_limits_and_external_needs_url);
   RUN_TEST(test_history_defaults);
   RUN_TEST(test_history_block);
+  RUN_TEST(test_history_combination_checks);
   RUN_TEST(test_history_shorthand_and_false);
   RUN_TEST(test_history_errors);
   RUN_TEST(test_history_errors_do_not_echo_values);

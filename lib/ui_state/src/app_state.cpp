@@ -405,7 +405,8 @@ bool AppState::openHistory(int idx, uint32_t now) {
   if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;
   const config::Widget *w = widgetAt(shownTab_, idx);
   if (!w || !historyEnabledFor(*w)) return false;
-  hist_.open(makeHistorySpec(*w, orientation_ == settings::Orientation::Landscape), shownTab_, idx, now);
+  const EntityState *es = store_.get(w->entity);
+  hist_.open(makeHistorySpec(*w, orientation_ == settings::Orientation::Landscape, es ? es->device_class : std::string()), shownTab_, idx, now);
   return true;
 }
 

@@ -245,15 +245,13 @@ void fullRefresh(bool whiteFirst, const char *why) {
 
 // Refreshes one changed rectangle. Fastest only if the panel's content there (what was pushed
 // last) is pure black/white; otherwise one quality refresh. Keeps g_panel and g_prev exact.
-bool g_fastestOnce = false;  // fastestOverGreysOnce()
-bool g_ghostValid = false;   // a hinted fastest left a ghost in g_ghost: the next frame redraws all of it
-Rect g_ghost;
+bool g_noBigChange = false;  // exemptBigChangeOnce()
+bool g_forceQuality = false;  // modalTransitionOnce()
 
 void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   auto &d = M5.Display;
-  const bool forced = g_fastestOnce && !unknownPanel;
-  const bool grey = !forced && (unknownPanel || panelHasGrey(r));
-  const char *reason = unknownPanel ? "boot_unknown_panel" : forced ? "hint_fastest" : (grey ? "panel_has_grey" : "panel_bw");
+  const bool grey = unknownPanel || g_forceQuality || panelHasGrey(r);
+  const char *reason = unknownPanel ? "boot_unknown_panel" : g_forceQuality ? "modal" : (grey ? "panel_has_grey" : "panel_bw");
   Serial.printf("PRESENT: rect=%d,%d,%d,%d mode=%s reason=%s\n", r.x, r.y, r.w, r.h, grey ? "quality" : "fastest",
                 reason);
   if (grey) {
@@ -267,12 +265,6 @@ void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
     ++g_partialCount;
     g_partialArea += long(r.w) * long(r.h);
     g_havePending = true;
-    // UNVERIFIED: after a forced fastest over greys the panel is not clean black/white. Keep the rect
-    // marked as grey so the next refresh of it is a quality one (clears the ghost).
-    if (forced) {
-      g_ghost = r;
-      g_ghostValid = true;
-    }
   }
   copyToPrev(r);
 }
@@ -418,17 +410,17 @@ void bootFrame(bool forceFull) {
 static int g_renderTab = -1;
 void setLogTab(int tab) { g_renderTab = tab; }
 
-void fastestOverGreysOnce() { g_fastestOnce = true; }
+void exemptBigChangeOnce() { g_noBigChange = true; }
+void modalTransitionOnce() { g_forceQuality = true; }
 
 bool show(Mode mode, uint32_t now) {
   auto &d = M5.Display;
   g_lastShowMs = now;
-  const bool hint = g_fastestOnce && mode != Mode::Full && !g_forceFull;
-  struct Clear { ~Clear() { g_fastestOnce = false; } } clearHint;
+  const bool exempt = g_noBigChange;
+  struct Clear { ~Clear() { g_noBigChange = false; g_forceQuality = false; } } clearExempt;
   if (mode == Mode::Full || g_forceFull) {
     if (mode != Mode::Full) boot::log("full_after_failure", 1);
     Serial.printf("APP: render tab=%d rects=1 mode=full\n", g_renderTab);
-    g_ghostValid = false;
     fullRefresh(g_forceFull, "full");
     saveRecordOfCurrent();
     return true;
@@ -440,18 +432,12 @@ bool show(Mode mode, uint32_t now) {
   long area = 0;
   for (const Rect &r : rects) area += long(r.w) * long(r.h);
   const long screen = long(g_w) * long(g_h);
-  if (!hint && area * 100 > screen * kBigChangePct) {
+  if (!exempt && area * 100 > screen * kBigChangePct) {
     boot::log("big_change_pct", area * 100 / screen);
     Serial.printf("APP: render tab=%d rects=%u mode=full\n", g_renderTab, (unsigned)rects.size());
     fullRefresh(false, "full_big_change");
     saveRecordOfCurrent();
     return true;
-  }
-  if (g_ghostValid) {  // the frame after a hinted fastest: one quality refresh of the whole ghosted rect
-    screen_track::withGhost(rects, g_ghost);
-    for (int y = g_ghost.y; y < g_ghost.y + g_ghost.h; ++y)
-      memset(buf(g_panel) + size_t(y) * size_t(g_w) + size_t(g_ghost.x), 128, size_t(g_ghost.w));
-    g_ghostValid = false;
   }
   touchRecord();
   for (const Rect &r : rects) refreshRect(r, "partial", false);

@@ -1,6 +1,6 @@
 # 057: History finishing touches
 
-Status: todo
+Status: done
 Depends on: 049, 052, 053, 055
 UI spec: docs/ui/history.md
 Needs device: yes (short visual check)
@@ -34,3 +34,9 @@ Needs device: yes (short visual check)
   heap_min=84648 err=0`). Follow-up: in portrait every history popup open/close is a full refresh
   (`big_change_pct=51`, popup rect 516x518 > 50 % limit); the 053 spec wants one quality refresh of the
   popup rect. Exempt modal rects from the big-change rule or shrink the popup below 50 %.
+- 2026-10-30 device check (user): unavailable marker, bar range line 2, statistics over the remote URL
+  (`HIST: src=stats fetch_ms=305 heap_min=83928`), SD cache reopen after a reset all OK. Decisions: the
+  Loading frame is a quality refresh (fastest stayed ghosty ~7 s on a slow link); modal open/close is
+  always a quality refresh of the popup rect and exempt from the 50 % big-change rule (fastest close
+  left a light shadow). Day-statistic bars cannot show partial coverage (HA gives no hour count); only
+  today's bar is marked in-progress.

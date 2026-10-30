@@ -50,6 +50,13 @@ void drawYAxis(M5Canvas &c, const GraphLayout &l, const Axis &a, int decimals) {
   c.fillRect(l.axisBottom.x, l.axisBottom.y, l.axisBottom.w, l.axisBottom.h, INK);
 }
 
+// Unavailable/unknown spans: no line, no band; a 4 px MID bar 8 px above the plot bottom over their width.
+void drawUnavail(M5Canvas &c, const Series &s, const Rect &r) {
+  const int n = std::min<int>(static_cast<int>(s.columns.size()), r.w);
+  for (int i = 0; i < n; ++i)
+    if (s.columns[i].unavail) c.fillRect(r.x + i, r.bottom() - 8, 1, 4, HIST_MID);
+}
+
 bool drawLine(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, TzOffsetFn tz) {
   const Series &s = *in.series;
   float lo, hi;
@@ -76,6 +83,7 @@ bool drawLine(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, Tz
     px = x; py = y; havePrev = true;
   }
   if (havePrev) c.fillCircle(std::min(px, l.plot.right() - 1), py, 5, INK);
+  drawUnavail(c, s, l.plot);
   drawTimeAxis(c, l, s.start, s.end, tz, true);
   return true;
 }
@@ -91,6 +99,7 @@ void drawStep(M5Canvas &c, const HistoryGraphInput &in, const GraphLayout &l, Tz
   c.fillRect(r.x, r.bottom() - 2, r.w, 2, INK);
   c.fillRect(r.x, r.y, 2, r.h, INK);
   c.fillRect(r.right() - 2, r.y, 2, r.h, INK);
+  drawUnavail(c, s, r);
   drawTimeAxis(c, l, s.start, s.end, tz, false);
   hline(c, r.x, l.hairlineY, r.w, HIST_MID);
   const auto changes = lastChanges(s, l.listRows);

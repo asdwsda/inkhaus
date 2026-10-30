@@ -51,19 +51,16 @@
 | 048 | [History popup spec](048-history-popup-spec.md) | done | 046 |
 | 049 | [History config keys](049-history-config.md) | done | 046 |
 | 050 | [History data core (lib/history)](050-history-core.md) | done | 046 |
-| 051 | [Streaming HTTP for history fetches](051-history-streaming-transport.md) | PC done; device check pending | 046 |
+| 051 | [Streaming HTTP for history fetches](051-history-streaming-transport.md) | done | 046 |
 | 052 | [History graph renderer](052-history-graph-renderer.md) | done | 048, 050 |
 | 053 | [History popup (input, cache, refresh)](053-history-popup.md) | done | 049, 050, 051, 052 |
 | 054 | [WebSocket statistics client and parser](054-history-ws-statistics.md) | done | 050, 051 |
 | 055 | [Statistics source on the device](055-history-statistics-device.md) | done | 053, 054 |
 | 056 | [Wi-Fi scan always fails](056-wifi-scan-fails.md) | done | 047 |
-| 057 | [History finishing touches](057-history-finish.md) | todo | 049, 052, 053, 055 |
+| 057 | [History finishing touches](057-history-finish.md) | done | 049, 052, 053, 055 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
-- 053: done; SD cache after a reboot not yet seen on the device (`/hist` reopen after reset).
-- 052: draw "unavailable" spans (needs a lib/history Series change). Time-tick follow-up is done (323ad1b).
-- 049: `statistic`/`period`/`source` are not checked against the graph type; 053/054 must handle it.
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
 - README: device screenshots, taken once the device is back.

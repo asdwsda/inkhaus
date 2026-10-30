@@ -37,7 +37,8 @@ struct HistorySpec {
 };
 // Plot columns: line/bar = plot width, step = lane width (docs/ui/history.md section 3).
 int historyColumns(bool landscape, bool step);
-HistorySpec makeHistorySpec(const config::Widget &w, bool landscape);
+// deviceClass: of the entity if known; "energy" makes `sum` the default statistic of bar charts.
+HistorySpec makeHistorySpec(const config::Widget &w, bool landscape, const std::string &deviceClass = "");
 // Widgets that open the popup: sensor / binary_sensor, no attribute, history not disabled.
 bool historyEnabledFor(const config::Widget &w);
 

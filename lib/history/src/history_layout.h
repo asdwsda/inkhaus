@@ -96,6 +96,9 @@ std::vector<BarSlot> barSlots(const Rect& plot, int n);
 std::string barLabel(int64_t start, int64_t bucketSeconds, bool newest, int utcOffsetS);
 // Range of the bar values (Bucket.last, what is drawn) over the buckets that have data. False if none.
 bool barRange(const Series& s, float& lo, float& hi);
+// Range line 2 of a bar chart: `total 47.3 kWh` (sum of the bar values; sum / change statistics) or
+// `min 1.2 max 3.4` (extremes of the bars; mean / min / max). Empty if no bar has data.
+std::string barRangeLine(const Series& s, bool total, int decimals, const std::string& unit);
 // Is there anything to draw? Bars look at the buckets, the other charts at the point count.
 bool hasContent(ChartType type, const Series& s);
 inline bool barLabels(int n) { return n >= 1 && n <= 8; }

@@ -218,6 +218,18 @@ void test_bars() {
   TEST_ASSERT_FALSE(barLabels(9));
 }
 
+void test_bar_range_line() {
+  Series s;
+  s.buckets.resize(4);
+  const float v[4] = {10.5f, 20.f, 0, 16.8f};
+  for (int i = 0; i < 4; ++i) { s.buckets[i].has = i != 2; s.buckets[i].last = v[i]; }
+  TEST_ASSERT_EQUAL_STRING("total 47.3 kWh", barRangeLine(s, true, 1, "kWh").c_str());
+  TEST_ASSERT_EQUAL_STRING("total 47", barRangeLine(s, true, 0, "").c_str());
+  TEST_ASSERT_EQUAL_STRING("min 10.5 max 20.0", barRangeLine(s, false, 1, "kWh").c_str());
+  s.buckets.clear();
+  TEST_ASSERT_EQUAL_STRING("", barRangeLine(s, true, 1, "kWh").c_str());
+}
+
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_rects);
@@ -234,5 +246,6 @@ int main(int, char**) {
   RUN_TEST(test_lane_spans);
   RUN_TEST(test_changes);
   RUN_TEST(test_bars);
+  RUN_TEST(test_bar_range_line);
   return UNITY_END();
 }

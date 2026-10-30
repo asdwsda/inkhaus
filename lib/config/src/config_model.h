@@ -83,6 +83,7 @@ struct WidgetSize {
 constexpr int kMinHistoryHours = 1;
 constexpr int kMaxHistoryHours = 720;
 constexpr int kDefaultHistoryHours = 24;
+constexpr int kMaxHistoryHourlyBars = 128;  // bar charts hold at most 128 buckets
 enum class HistoryType { Auto, Line, Bar, Step };
 enum class HistoryStatistic { Mean, Min, Max, Sum, Change };
 enum class HistoryPeriod { Auto, Hour, Day };

@@ -183,10 +183,11 @@ void test_unavailable_unknown_skipped() {
   TEST_ASSERT_EQUAL(2, r.s.points);  // collector accepts the two numeric ones
   TEST_ASSERT_EQUAL(Kind::Numeric, r.s.kind);
   TEST_ASSERT_FALSE(r.s.columns[0].has);  // before the first valid entry
+  TEST_ASSERT_TRUE(r.s.columns[0].unavail);
   TEST_ASSERT_TRUE(r.s.columns[1].has);
-  TEST_ASSERT_EQUAL_FLOAT(20.f, r.s.columns[3].last);  // carried over the unavailable gap
+  TEST_ASSERT_TRUE(!r.s.columns[2].has && r.s.columns[2].unavail);  // the unavailable span: no value, marked
+  TEST_ASSERT_TRUE(!r.s.columns[3].has && r.s.columns[3].unavail);
   TEST_ASSERT_EQUAL_FLOAT(22.f, r.s.columns[4].last);
-  TEST_ASSERT_EQUAL_FLOAT(20.f, r.s.columns[4].min);   // column 4 starts at the carried 20
   TEST_ASSERT_EQUAL_FLOAT(22.f, r.s.columns[5].last);
 }
 
@@ -320,7 +321,7 @@ void test_cache_roundtrip() {
   cp.columns = 700;
   uint32_t h = paramsHash(cp);
   auto bytes = serialize(r.s, h, 1761700000);
-  TEST_ASSERT_TRUE(bytes.size() < 700 * 6 + 24 * 17 + 80);
+  TEST_ASSERT_TRUE(bytes.size() < 700 * 7 + 24 * 17 + 80);
   Series o;
   int64_t fa = 0;
   TEST_ASSERT_EQUAL(CacheStatus::Ok, deserialize(bytes.data(), bytes.size(), h, o, fa));
@@ -343,6 +344,55 @@ void test_cache_roundtrip() {
   TEST_ASSERT_EQUAL(CacheStatus::Corrupt, deserialize(bad.data(), bad.size(), h, o, fa));
   TEST_ASSERT_EQUAL(CacheStatus::Corrupt, deserialize(bytes.data(), bytes.size() - 1, h, o, fa));
   TEST_ASSERT_EQUAL(CacheStatus::Corrupt, deserialize(bytes.data(), 3, h, o, fa));
+}
+
+std::string gapState(int i) { return i < 6 ? "20" : i < 12 ? "unavailable" : i < 20 ? "21" : "unknown"; }
+
+void test_unavailable_columns() {
+  Run r = run(body(kT0, kT0 + 86400, 3600, gapState), P(24, 24), 64);
+  TEST_ASSERT_EQUAL(Kind::Numeric, r.s.kind);
+  for (int i = 0; i < 24; ++i) {
+    const Column& c = r.s.columns[i];
+    const bool gap = (i >= 6 && i < 12) || i >= 20;
+    TEST_ASSERT_EQUAL_MESSAGE(gap, c.unavail, std::to_string(i).c_str());
+    TEST_ASSERT_EQUAL_MESSAGE(!gap, c.has, std::to_string(i).c_str());
+  }
+  TEST_ASSERT_EQUAL_FLOAT(21, r.s.columns[12].last);
+  // leading gap: unavailable first, value later; a gap inside one column is ignored
+  Collector c(P(10, 10));
+  c.onPoint(kT0, "unavailable", 11);
+  c.onPoint(kT0 + 3 * 3600, "5", 1);
+  c.onPoint(kT0 + 5 * 3600 + 10, "unknown", 7);
+  c.onPoint(kT0 + 5 * 3600 + 20, "6", 1);
+  Series s = c.finish();
+  for (int i = 0; i < 3; ++i) TEST_ASSERT_TRUE(s.columns[i].unavail && !s.columns[i].has);
+  for (int i = 3; i < 10; ++i) TEST_ASSERT_TRUE(!s.columns[i].unavail && s.columns[i].has);
+  // binary entities too
+  Collector b(P(4, 4));
+  b.onPoint(kT0, "on", 2);
+  b.onPoint(kT0 + 3600, "unavailable", 11);
+  b.onPoint(kT0 + 3 * 3600, "off", 3);
+  s = b.finish();
+  TEST_ASSERT_TRUE(s.columns[0].has && s.columns[1].unavail && s.columns[2].unavail && s.columns[3].has);
+}
+
+void test_cache_unavailable_and_version() {
+  Run r = run(body(kT0, kT0 + 86400, 3600, gapState), P(24, 24), 64);
+  auto bytes = serialize(r.s, 9, 5);
+  Series o;
+  int64_t fa;
+  TEST_ASSERT_EQUAL(CacheStatus::Ok, deserialize(bytes.data(), bytes.size(), 9, o, fa));
+  for (int i = 0; i < 24; ++i) {
+    TEST_ASSERT_EQUAL(r.s.columns[i].unavail, o.columns[i].unavail);
+    TEST_ASSERT_EQUAL(r.s.columns[i].has, o.columns[i].has);
+  }
+  // an old-version file (magic HST1, valid checksum) is rejected
+  std::vector<uint8_t> old(bytes.begin(), bytes.end() - 4);
+  old[3] = '1';
+  uint32_t h = 2166136261u;
+  for (uint8_t b : old) { h ^= b; h *= 16777619u; }
+  for (int k = 0; k < 4; ++k) old.push_back(uint8_t(h >> (8 * k)));
+  TEST_ASSERT_EQUAL(CacheStatus::Corrupt, deserialize(old.data(), old.size(), 9, o, fa));
 }
 
 void test_cache_gaps_and_empty() {
@@ -389,6 +439,8 @@ int main() {
   RUN_TEST(test_bucket_gap);
   RUN_TEST(test_axis);
   RUN_TEST(test_cache_roundtrip);
+  RUN_TEST(test_unavailable_columns);
+  RUN_TEST(test_cache_unavailable_and_version);
   RUN_TEST(test_cache_gaps_and_empty);
   RUN_TEST(test_params_hash);
   return UNITY_END();

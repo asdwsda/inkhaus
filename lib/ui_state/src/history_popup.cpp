@@ -15,7 +15,7 @@ bool historyEnabledFor(const config::Widget &w) {
          w.attribute.empty() && w.history.enabled && !w.entity.empty();
 }
 
-HistorySpec makeHistorySpec(const config::Widget &w, bool landscape) {
+HistorySpec makeHistorySpec(const config::Widget &w, bool landscape, const std::string &deviceClass) {
   using config::HistorySource;
   using config::HistoryType;
   HistorySpec s;
@@ -41,7 +41,7 @@ HistorySpec makeHistorySpec(const config::Widget &w, bool landscape) {
   } else {
     s.period = history::linePeriod(s.hours);
   }
-  s.statistic = StatsType::Mean;
+  s.statistic = bar && deviceClass == "energy" ? StatsType::Sum : StatsType::Mean;
   if (w.history.statistic) {
     switch (*w.history.statistic) {
       case config::HistoryStatistic::Mean: s.statistic = StatsType::Mean; break;

@@ -328,6 +328,16 @@ bool barRange(const Series& s, float& lo, float& hi) {
   return any;
 }
 
+std::string barRangeLine(const Series& s, bool total, int decimals, const std::string& unit) {
+  float lo, hi;
+  if (!barRange(s, lo, hi)) return "";
+  if (!total) return "min " + formatValue(lo, decimals) + " max " + formatValue(hi, decimals);
+  double sum = 0;
+  for (const Bucket& b : s.buckets)
+    if (b.has) sum += b.last;
+  return "total " + formatValue(sum, decimals) + (unit.empty() ? "" : " " + unit);
+}
+
 bool hasContent(ChartType type, const Series& s) {
   if (type == ChartType::Bar) {
     float lo, hi;

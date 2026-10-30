@@ -317,6 +317,15 @@ class Validator {
       if (parseNumber(s, f)) h.max = f;
       else { err(path + ".max", "must be a number"); okMax = false; }
     }
+    // Combinations that cannot work are errors; harmless ones are ignored (README): `statistic` outside
+    // bar charts and `period` outside bar charts have no effect.
+    if (h.type == HistoryType::Bar) {
+      if (h.source == HistorySource::History)
+        err(path + ".source", "bar charts need statistics (use auto or statistics)");
+      if (h.period == HistoryPeriod::Hour && h.hours > kMaxHistoryHourlyBars)
+        err(path + ".hours", "at most " + std::to_string(kMaxHistoryHourlyBars) +
+                                 " with period: hour (one bar per hour); use period: day");
+    }
     if (okMin && okMax && h.min && h.max && !(*h.min < *h.max))
       err(path + ".max", "must be greater than min");
     w.history = h;

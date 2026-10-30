@@ -159,7 +159,7 @@ std::string lower(std::string s) {
 }
 
 // Range line 2 (docs/ui/history.md section 3.1).
-std::string rangeLine2(const uistate::HistoryPopup &h, int decimals, const std::string &onWord) {
+std::string rangeLine2(const uistate::HistoryPopup &h, int decimals, const std::string &onWord, const std::string &unit) {
   if (h.spec().chart == uistate::HistChart::Step) {
     const history::StepSummary ss = history::stepSummary(h.series());
     const int64_t min = ss.onSeconds / 60;
@@ -169,10 +169,10 @@ std::string rangeLine2(const uistate::HistoryPopup &h, int decimals, const std::
   }
   float lo, hi;
   if (h.spec().chart == uistate::HistChart::Bar) {
-    if (!history::barRange(h.series(), lo, hi)) return "";
-  } else if (!h.series().range(lo, hi)) {
-    return "";
+    const bool total = h.spec().statistic == StatsType::Sum || h.spec().statistic == StatsType::Change;
+    return history::barRangeLine(h.series(), total, decimals, unit);
   }
+  if (!h.series().range(lo, hi)) return "";
   return "min " + history::formatValue(lo, decimals) + " max " + history::formatValue(hi, decimals);
 }
 
@@ -256,7 +256,12 @@ void drawHistoryPopup(M5Canvas &c, const uistate::AppState &app) {
     in.onWord = onWord;
     in.offWord = offWord;
     if (!drawHistoryGraph(c, in)) drawAxesFrame(c, g);
-    const std::string l2 = rangeLine2(h, in.decimals, onWord);
+    std::string unit;
+    if (const EntityState *st = app.store().get(h.entity())) {
+      unit = uistate::sensorView(st, w).unit;
+      while (!unit.empty() && unit[0] == ' ') unit.erase(0, 1);
+    }
+    const std::string l2 = rangeLine2(h, in.decimals, onWord, unit);
     if (!l2.empty()) drawTextCy(c, Font::F18, l2, g.rangeRight, g.rangeCy1 + 26, Align::Right, INK);
     drawLegend(c, h, g, onWord, offWord);
     return;

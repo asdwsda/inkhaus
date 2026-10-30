@@ -1,6 +1,6 @@
 # 051: Streaming HTTP for history fetches
 
-Status: PC done; device check pending
+Status: done
 Depends on: 046
 UI spec: none
 Needs device: yes (final check)

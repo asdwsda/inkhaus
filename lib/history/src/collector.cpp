@@ -60,7 +60,11 @@ int Collector::column(int64_t t) const {
 }
 
 void Collector::onPoint(int64_t t, const char* s, size_t n) {
-  if (kind_ == Kind::Unsupported || isSkipped(s, n)) return;
+  if (kind_ == Kind::Unsupported) return;
+  if (isSkipped(s, n)) {
+    if (!inGap_ && t < p_.end) { inGap_ = true; gapT_ = t; }
+    return;
+  }
   double v;
   Kind k;
   int b = binaryValue(s, n);
@@ -84,7 +88,18 @@ void Collector::onPoint(int64_t t, const char* s, size_t n) {
   if (k != kind_) return;
   if (t >= p_.end) return;
   ++points_;
+  const int gf = inGap_ ? gapFirst() : p_.columns;
+  inGap_ = false;
   value(t, v);
+  const int c = column(t);
+  for (int i = gf; i < c; ++i) cols_[i] = Column{0, 0, 0, false, true};
+}
+
+// First column a gap in effect covers: the one after the last column with a value.
+int Collector::gapFirst() const {
+  if (!inGap_) return 0;
+  const int gc = column(gapT_);
+  return hasCur_ ? std::max(gc, curCol_ + 1) : gc;
 }
 
 void Collector::value(int64_t t, double v) {
@@ -143,9 +158,12 @@ Series Collector::finish() {
     done_ = true;
     if (hasCur_) {
       const float cv = static_cast<float>(cur_);
-      for (int i = curCol_ + 1; i < p_.columns; ++i) cols_[i] = Column{cv, cv, cv, true};
+      const int fillEnd = inGap_ ? std::min(p_.columns, gapFirst()) : p_.columns;
+      for (int i = curCol_ + 1; i < fillEnd; ++i) cols_[i] = Column{cv, cv, cv, true};
       if (p_.bucketCount) advanceBuckets(std::min(p_.end, p_.start + p_.bucketSeconds * p_.bucketCount));
     }
+    if (inGap_)
+      for (int i = gapFirst(); i < p_.columns; ++i) cols_[i] = Column{0, 0, 0, false, true};
     for (size_t i = 0; i < bk_.size(); ++i)
       if (bkT_[i] > 0) bk_[i].mean = static_cast<float>(bkW_[i] / bkT_[i]);
       else if (bk_[i].has) bk_[i].mean = bk_[i].last;

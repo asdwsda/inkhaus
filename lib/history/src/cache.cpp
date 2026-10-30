@@ -58,9 +58,9 @@ uint32_t paramsHash(const CacheParams& p) {
 
 std::vector<uint8_t> serialize(const Series& s, uint32_t hash, int64_t fetchedAt) {
   std::vector<uint8_t> o;
-  o.reserve(64 + s.columns.size() * 6 + s.buckets.size() * 17);
+  o.reserve(64 + s.columns.size() * 7 + s.buckets.size() * 17);
   W w{o};
-  o.insert(o.end(), {'H', 'S', 'T', '1'});
+  o.insert(o.end(), {'H', 'S', 'T', '2'});
   w.put<uint32_t>(hash);
   w.put<int64_t>(fetchedAt);
   w.put<int64_t>(s.start);
@@ -79,6 +79,11 @@ std::vector<uint8_t> serialize(const Series& s, uint32_t hash, int64_t fetchedAt
     w.put<int16_t>(quant(c.max, lo, hi));
     w.put<int16_t>(quant(c.last, lo, hi));
   }
+  for (size_t i = 0; i < s.columns.size(); i += 8) {  // unavailable bitmap
+    uint8_t m = 0;
+    for (size_t k = 0; k < 8 && i + k < s.columns.size(); ++k) m |= static_cast<uint8_t>(s.columns[i + k].unavail) << k;
+    w.put<uint8_t>(m);
+  }
   for (const auto& b : s.buckets) {
     w.f32(b.min); w.f32(b.max); w.f32(b.mean); w.f32(b.last);
     w.put<uint8_t>(b.has);
@@ -88,7 +93,7 @@ std::vector<uint8_t> serialize(const Series& s, uint32_t hash, int64_t fetchedAt
 }
 
 CacheStatus deserialize(const uint8_t* d, size_t n, uint32_t expected, Series& out, int64_t& fetchedAt) {
-  if (!d || n < 8 + 4 || memcmp(d, "HST1", 4) != 0) return CacheStatus::Corrupt;
+  if (!d || n < 8 + 4 || memcmp(d, "HST2", 4) != 0) return CacheStatus::Corrupt;
   R chk{d + n - 4, 4};
   if (chk.get<uint32_t>() != fnv(2166136261u, d, n - 4)) return CacheStatus::Corrupt;
   R r{d, n - 4, 4};
@@ -102,7 +107,7 @@ CacheStatus deserialize(const uint8_t* d, size_t n, uint32_t expected, Series& o
   s.bucketSeconds = r.get<int64_t>();
   const float lo = r.f32(), hi = r.f32();
   if (r.bad || kind > 3 || nc > kMaxColumns || nb > kMaxBuckets) return CacheStatus::Corrupt;
-  if (r.n - r.i != static_cast<size_t>(nc) * 6 + static_cast<size_t>(nb) * 17) return CacheStatus::Corrupt;
+  if (r.n - r.i != static_cast<size_t>(nc) * 6 + (static_cast<size_t>(nc) + 7) / 8 + static_cast<size_t>(nb) * 17) return CacheStatus::Corrupt;
   if (hash != expected) return CacheStatus::WrongParams;
   s.kind = static_cast<Kind>(kind);
   s.columns.resize(nc);
@@ -111,6 +116,11 @@ CacheStatus deserialize(const uint8_t* d, size_t n, uint32_t expected, Series& o
     if (a == -32768) continue;
     c = Column{dequant(a, lo, hi), dequant(b, lo, hi), dequant(l, lo, hi), true};
     ++s.points;
+  }
+  for (size_t i = 0; i < s.columns.size(); i += 8) {
+    const uint8_t m = r.get<uint8_t>();
+    for (size_t k = 0; k < 8 && i + k < s.columns.size(); ++k)
+      if (m >> k & 1 && !s.columns[i + k].has) s.columns[i + k].unavail = true;
   }
   s.buckets.resize(nb);
   for (auto& b : s.buckets) {

@@ -267,12 +267,12 @@ static void showFrame(uint32_t now) {
   composeFrame();
   const bool full = g_app.takeFull();
   present::setLogTab(g_app.shownTab());
-  // First frame of the history popup's Loading state: hint the fastest mode over the greys, once.
-  static bool s_loadingHinted = false;
-  const uistate::HistoryPopup &hp = g_app.historyPopup();
-  const bool loadingVisible = hp.state() == uistate::HistState::Loading && hp.visible();
-  if (loadingVisible && !s_loadingHinted) present::fastestOverGreysOnce();
-  s_loadingHinted = loadingVisible;
+  // Modal popup (history or brightness) open, opening or closing: no big-change full refresh.
+  static bool s_modalPrev = false;
+  const bool modal = g_app.brightnessOpen() || g_app.historyPopup().visible();
+  if (modal || s_modalPrev) present::exemptBigChangeOnce();
+  if (modal != s_modalPrev) present::modalTransitionOnce();
+  s_modalPrev = modal;
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 

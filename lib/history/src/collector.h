@@ -12,6 +12,9 @@
 // "changed within it"). unavailable/unknown/"" are skipped. Any other first string -> Unsupported
 // (no data is collected). Later entries of the other kind are skipped.
 //
+// unavailable/unknown/"" entries open a gap that the next valid entry (or the end) closes; the columns
+// the gap covers get has=false, unavail=true (a gap inside one column is ignored).
+//
 // Buckets (bars): optional, `bucketCount` buckets of `bucketSeconds` from `start`; per bucket
 // min / max / time-weighted mean / last. change = last - previous bucket's last (see change()).
 //
@@ -33,6 +36,7 @@ enum class Kind : uint8_t { Unknown = 0, Numeric = 1, Binary = 2, Unsupported = 
 struct Column {
   float min = 0, max = 0, last = 0;
   bool has = false;
+  bool unavail = false;  // the entity was unavailable/unknown here: has=false, drawn as a MID marker
 };
 
 struct Bucket {
@@ -73,6 +77,7 @@ class Collector : public PointSink {
 
  private:
   void value(int64_t t, double v);
+  int gapFirst() const;
   int column(int64_t t) const;
   void advanceBuckets(int64_t t);
   void bucketTouch(int b, double v);
@@ -88,6 +93,8 @@ class Collector : public PointSink {
   int64_t lastT_ = 0;
   size_t points_ = 0;
   bool done_ = false;
+  bool inGap_ = false;  // an unavailable/unknown entry is in effect
+  int64_t gapT_ = 0;
 };
 
 }  // namespace history

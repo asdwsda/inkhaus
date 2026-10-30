@@ -1,7 +1,7 @@
 #pragma once
 // Cache (de)serialisation of a downsampled Series, plus the params hash that invalidates it.
 //
-// Layout (little endian), ~6 B per column: "HST1", u32 paramsHash, i64 fetchedAt, i64 start,
+// Layout (little endian), ~6 B per column: "HST2", u32 paramsHash, i64 fetchedAt, i64 start,
 // i64 end, u8 kind, u16 columns, u16 buckets, i64 bucketSeconds, f32 lo, f32 hi, then per column
 // i16 min, i16 max, i16 last (value scaled into [lo,hi] over 0..65534, -32768 = no data), then
 // per bucket 4 x f32 + u8 has, then a u32 FNV-1a checksum over everything before it.
