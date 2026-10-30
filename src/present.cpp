@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "present.h"
 
 #include <Preferences.h>
@@ -404,9 +405,17 @@ void bootFrame(bool forceFull) {
   copyAllToPrev();
   boot::log("diff_rects", (long)rects.size());
   if (!rects.empty()) touchRecord();
-  for (const Rect &r : rects) {
+  // Task 058: smallest rect first. The sleep indicator (the thing the user is waiting to see go away
+  // after a wake) is far smaller than the status text; its refresh is done first. Not merged into one
+  // union: the union of two distant rects is much larger and not clearly faster.
+  std::vector<Rect> order(rects.begin(), rects.end());
+  std::stable_sort(order.begin(), order.end(), [](const Rect &a, const Rect &b) { return a.w * a.h < b.w * b.h; });
+  bool firstRect = true;
+  for (const Rect &r : order) {
     Serial.printf("PRESENT: boot_rect=%d,%d,%d,%d\n", r.x, r.y, r.w, r.h);
     refreshRect(r, "boot_diff", true);  // what the panel shows there is only known by hash: quality
+    if (firstRect) boot::log("t_boot_diff1_done_ms", (long)boot::elapsedMs());
+    firstRect = false;
   }
   g_lastShowMs = millis();
   boot::log("draw", rects.empty() ? "none" : "partial");

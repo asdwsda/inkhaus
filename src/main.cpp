@@ -388,6 +388,7 @@ static void startSession(uint32_t now, bool restart = false) {
     if (g_app.historyPopup().fetchUnavailable()) g_histChanged = true;
   }
   wakelog::sessionStarted(now);
+  if (!restart && g_firstSession) boot::log("t_wifi_start_ms", (long)boot::elapsedMs());  // task 058
   // The offset is taken now (local time at planning time); the machine plans the wake-up from it.
   if (!restart) g_sessionWake = g_firstSession ? g_wake : power::WakeReason::Button;
   g_drv->start(g_sessionWake, batteryMv(), g_settings, utcOffsetAt(session_glue::wallClock()), now);
@@ -856,6 +857,13 @@ void loop() {
     if (g_drv->takeRender()) changed = true;
     logFetchApplied();
     if (g_drv->status() == session::Status::Online) wakelog::wifiUp(now);
+    {
+      static bool wifiLogged = false;
+      if (!wifiLogged && g_drv->wifiUp()) {
+        wifiLogged = true;
+        boot::log("t_wifi_up_ms", (long)boot::elapsedMs());  // task 058
+      }
+    }
     {
       static uint32_t seenFetch = 0;
       if (g_drv->fetchSeq() != seenFetch) {

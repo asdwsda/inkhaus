@@ -1,6 +1,6 @@
 # 058: Faster visual feedback on wake (investigation + fix)
 
-Status: todo
+Status: in-progress
 Depends on: 024, 038
 UI spec: none (may need a small ui-designer note if a new wake mark is drawn)
 Needs device: yes
@@ -29,3 +29,15 @@ Out of scope: changing the sleep indicator's look (task 059).
 - [ ] No regression in awake time per scheduled refresh (`awake_ms` in the wake log).
 
 ## Notes
+Analysis (firmware-dev, read-only, 2026-10-30; full: session scratchpad 058-analysis.md). Times since t_pre_begin:
+- 0-856 IT8951 ready wait (controller cold after deep sleep: RST GPIO23/CS GPIO15 not held, hypothesis);
+  856-1062 SYS_RUN/dev info/panel+touch init; -1180 M5.begin, settings, SD wakelog, config;
+  -1467 present::begin (sprites ~195) + compose (~90); -1850 full push to controller (296) + copy prev;
+  -2600 boot_diff #1 status text (748, cold +300); -3050 boot_diff #2 = sleep indicator (439); -3210 close/log; Wi-Fi starts after.
+- Proposals (gain/risk order): 1) merge/reorder boot_diff rects, indicator first (~440 ms, low risk);
+  2) clear the 059 badge rect right after display init, non-scheduled wakes, overlap CPU work with the waveform (~1.5 s, medium);
+  3) keep the controller warm in deep sleep by holding GPIO23/15 (up to ~1 s more; needs current measurement: architect);
+  4) don't refresh the transient "connecting" status text in the first frame (UI decision);
+  5) start Wi-Fi earlier (~1.9 s earlier connect); 6) small trims (100-200 ms).
+- Instrumentation to add: t_boot_abs_ms, display_start/boot_present/t_render splits, t_wake_feedback_ms(+_done), t_wifi_start/up_ms.
+- Order: 1 + instrumentation, 3 as experiment, 2 (after 059 fixes the badge rect), 5; 4 after a UI decision.

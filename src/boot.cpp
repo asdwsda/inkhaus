@@ -349,6 +349,7 @@ void begin() {
     const esp_err_t wdtRc = esp_task_wdt_init(kWatchdogS, true);  // already running: updates the timeout
     esp_task_wdt_add(NULL);
     mark("pre_begin");
+    wakelog::logf("BOOT: t_boot_abs_ms=%u\n", (unsigned)millis());  // task 058: since chip reset, incl. ROM/bootloader
     log("reset_reason_early", resetReasonName(rr));
     log("crash_count", (long)g_crashCount);
     log("wdt_timeout_s", (long)kWatchdogS);
