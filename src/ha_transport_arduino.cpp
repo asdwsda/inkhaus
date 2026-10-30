@@ -12,6 +12,9 @@
 // back to an insecure connection.
 extern const uint8_t ca_bundle_start[] asm("_binary_certs_x509_crt_bundle_start") __attribute__((weak));
 
+uint32_t net_timing_tls_ms();  // src/net_timing.cpp
+void net_timing_tls_reset();
+
 namespace {
 // Stream adapter feeding HTTPClient::writeToStream into a BodySink. A refused
 // write returns 0 (short write); HTTPClient retries once, gets 0 again and
@@ -75,6 +78,31 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
   // probes the socket, so a connection the server closed meanwhile reads as not connected here.
   out.reused = client->connected();
 
+  // Task 060 timing: on a new connection, resolve and connect here (HTTPClient then reuses the
+  // open socket) so dns / tcp+tls can be told apart. Same host, port and timeout as HTTPClient.
+  uint32_t dns_ms = 0, conn_ms = 0, tls_ms = 0;
+  if (!out.reused) {
+    const size_t hs = url.find("://") + 3;
+    size_t he = url.find_first_of("/?#", hs);
+    if (he == std::string::npos) he = url.size();
+    std::string host = url.substr(hs, he - hs);
+    uint16_t port = https ? 443 : 80;
+    const size_t colon = host.rfind(':');
+    if (colon != std::string::npos) {
+      port = (uint16_t)atoi(host.c_str() + colon + 1);
+      host.resize(colon);
+    }
+    IPAddress ip;
+    uint32_t t = millis();
+    WiFi.hostByName(host.c_str(), ip);
+    dns_ms = millis() - t;
+    net_timing_tls_reset();
+    t = millis();
+    client->connect(host.c_str(), port, connect_timeout_ms_);  // result checked by HTTPClient
+    conn_ms = millis() - t;
+    tls_ms = net_timing_tls_ms();
+  }
+
   http_.setConnectTimeout(connect_timeout_ms_);
   http_.setTimeout(read_timeout_ms_);
   http_.setReuse(true);
@@ -86,7 +114,9 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
   for (const auto& h : headers) http_.addHeader(h.first.c_str(), h.second.c_str());
 
   bool keep = false;  // false: the connection state is unclear, drop it
+  const uint32_t req_t0 = millis();
   int code = http_.sendRequest(method.c_str(), (uint8_t*)body.data(), body.size());
+  const uint32_t ttfb_ms = millis() - req_t0;
   if (code > 0) {
     if (content_length_too_large(http_.getSize())) {  // -1 when unknown/chunked
       out.too_large = true;
@@ -120,6 +150,9 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
   http_.end();
   if (!keep) drop();
   out.ms = millis() - start;
+  Serial.printf("NETT: dns=%u tcp=%u tls=%u ttfb=%u total=%u reused=%d\n", (unsigned)dns_ms,
+                (unsigned)(conn_ms > tls_ms ? conn_ms - tls_ms : 0), (unsigned)tls_ms, (unsigned)ttfb_ms,
+                (unsigned)out.ms, out.reused ? 1 : 0);
   return out;
 }
 
