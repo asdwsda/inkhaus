@@ -58,6 +58,8 @@
 | 055 | [Statistics source on the device](055-history-statistics-device.md) | done | 053, 054 |
 | 056 | [Wi-Fi scan always fails](056-wifi-scan-fails.md) | done | 047 |
 | 057 | [History finishing touches](057-history-finish.md) | done | 049, 052, 053, 055 |
+| 058 | [Faster visual feedback on wake](058-faster-wake-feedback.md) | todo | 024, 038 |
+| 059 | [Sleep indicator as a bold "Zz" icon](059-sleep-indicator-zz.md) | todo | 038 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - Version: next release is 1.1.0 (user, 2026-10-30); bump include/version.h at release.
