@@ -18,3 +18,4 @@ Find the cause (EPD controller init / BUSY wait / SPI bus with SD) and fix it, o
 - [ ] Device: 30 consecutive serial resets and 10 deep-sleep wakes without a watchdog reset.
 
 ## Notes
+- Timebox (user, 2026-10-30): if the hang cannot be reproduced, or only very rarely, stop the investigation: keep the markers/bounds that help catch it later, record the reproduction rate, and close the task without the 30-reset criterion.

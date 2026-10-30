@@ -72,6 +72,7 @@
 | 069 | [A more pleasant Inkhaus Installer UI](069-installer-ui.md) | done | 062, 064 |
 | 070 | [User-friendly README](070-readme-user-friendly.md) | done | 063, 065 |
 | 071 | [History graph widget](071-history-widget.md) | in-progress | 049, 052, 053, 055 |
+| 073 | [Showcase the history graph in the README and website](073-showcase-history.md) | todo | 071, 070, 065 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
