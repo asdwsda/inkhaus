@@ -164,12 +164,12 @@ def render(syms, names, size, tmp):
     return res
 
 
-LOGO_SVG = ROOT / "docs/ui/logo-inkling.svg"
+LOGO_SVG = ROOT / "docs/ui/logo-inkhaus.svg"
 LOGO_SIZES = (360, 48)  # splash (docs/ui/splash.md 6) and the 48 px icon
 
 
 def render_logo(size, tmp):
-    """Alpha bitmap (255 = ink) of docs/ui/logo-inkling.svg at size x size on white."""
+    """Alpha bitmap (255 = ink) of docs/ui/logo-inkhaus.svg at size x size on white."""
     png = Path(tmp) / f"logo{size}.png"
     subprocess.run(["inkscape", str(LOGO_SVG), "--export-type=png", f"--export-width={size}",
                     f"--export-height={size}", "--export-background=white", "--export-background-opacity=1",
@@ -195,7 +195,7 @@ def main():
     hdr += ["  Count", "};", "", "// 8-bit coverage bitmap (0 = nothing, 255 = ink), size x size, row-major.",
             "// Sizes: 24 (S), 40 (M), 48 (L); moon also 28 and 32, sidebtn and finger also 32. nullptr for other sizes.",
             "const uint8_t* iconBitmap(Icon icon, int size);", "",
-            "// The Inkling logo (docs/ui/logo-inkling.svg), same format, sizes 360 (splash) and 48. nullptr for others.",
+            "// The Inkhaus logo (docs/ui/logo-inkhaus.svg), same format, sizes 360 (splash) and 48. nullptr for others.",
             "const uint8_t* logoBitmap(int size);", "", "}  // namespace render", ""]
     (ROOT / "src/render/icon_data.h").write_text("\n".join(hdr))
 

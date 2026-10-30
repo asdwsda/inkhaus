@@ -84,7 +84,7 @@ enum class Icon : uint8_t {
 // Sizes: 24 (S), 40 (M), 48 (L); moon also 28 and 32, sidebtn and finger also 32. nullptr for other sizes.
 const uint8_t* iconBitmap(Icon icon, int size);
 
-// The Inkling logo (docs/ui/logo-inkling.svg), same format, sizes 360 (splash) and 48. nullptr for others.
+// The Inkhaus logo (docs/ui/logo-inkhaus.svg), same format, sizes 360 (splash) and 48. nullptr for others.
 const uint8_t* logoBitmap(int size);
 
 }  // namespace render

@@ -1,6 +1,6 @@
-# Inkling
+# Inkhaus
 
-**Inkling** is a battery-powered e-ink remote control for [Home Assistant](https://www.home-assistant.io/),
+**Inkhaus** is a battery-powered e-ink remote control for [Home Assistant](https://www.home-assistant.io/),
 running on the original **M5Stack M5Paper** (ESP32, 960×540 touch e-ink screen, 3-way rocker,
 1150 mAh battery). It sleeps almost all the time, wakes on a button press, shows your shutters,
 lights, thermostats and sensors from the last known state, and sends your taps to Home Assistant.
@@ -87,7 +87,7 @@ Design decisions and their reasons are in [docs/ARCHITECTURE.md](docs/ARCHITECTU
    takes the device lock itself and asks before rebooting the device (`--yes` skips the question,
    `--no-reboot` never reboots).
 
-Without a `config.yaml`, or with Demo mode on, Inkling shows the built-in demo dashboard
+Without a `config.yaml`, or with Demo mode on, Inkhaus shows the built-in demo dashboard
 ([`demo.yaml`](demo.yaml)) with fake values and no network.
 
 For development you can put credentials in `include/secrets.h` (copy `include/secrets.example.h`);
@@ -208,7 +208,7 @@ plan is in [docs/battery-test-plan.md](docs/battery-test-plan.md).
   `internal_url` is plain `http://`, `external_url` must be `https://`.
 - **Token rejected:** create a new long-lived token and update `secrets.yaml`. Make sure there is no
   stray whitespace or line break inside the quotes.
-- **HTTPS fails:** Inkling embeds the Mozilla root bundle, so Nabu Casa, Let's Encrypt and
+- **HTTPS fails:** Inkhaus embeds the Mozilla root bundle, so Nabu Casa, Let's Encrypt and
   Cloudflare/Google-hosted domains work. A private CA is not trusted. The first HTTPS request of a
   wake takes about 4 s through Cloudflare.
 - **A widget shows "-" or "unavailable":** `unknown` is a normal state and is shown as "-".
@@ -247,7 +247,7 @@ testing and review. See [CLAUDE.md](CLAUDE.md) and [docs/tasks/README.md](docs/t
 
 Copyright (C) 2026 Peter Szabo
 
-Inkling is free software: you can redistribute it and/or modify it under the terms of the
+Inkhaus is free software: you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by the Free Software Foundation, either version 3 of
 the License, or (at your option) any later version. It is distributed in the hope that it will
 be useful, but WITHOUT ANY WARRANTY; see [LICENSE](LICENSE) for details.

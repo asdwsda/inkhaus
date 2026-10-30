@@ -5,7 +5,7 @@
 
 namespace render {
 
-constexpr const char *kAppName = "Inkling";
+constexpr const char *kAppName = "Inkhaus";
 
 // `version` is the text shown as is ("v0.2.1"). Clears the canvas to PAPER first.
 void drawSplash(M5Canvas &c, const char *version);

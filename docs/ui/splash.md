@@ -16,9 +16,9 @@ Wi-Fi/config start-up (seconds) and which firmware runs. Data: app name and tagl
 
 ## 2. Name
 
-The app is named **Inkling** (user choice, ARCHITECTURE.md 2026-10-29), tagline `for Home
+The app is named **Inkhaus** (user choice, task 066; formerly Inkling), tagline `for Home
 Assistant`, footer `M5Paper e-ink remote`. (The long form "M5Paper HA Remote" stays the
-repo/product name.) "Inkling" at F56 is about 190 px wide, so it fits on one line in both
+repo/product name.) "Inkhaus" at F56 is about 219 px wide, so it fits on one line in both
 orientations. The name is a single constant; a name longer than 440 px at F56 (about 12
 characters) steps down to F40.
 
@@ -36,7 +36,7 @@ No partial updates, no progress bar, no animation.
 | Element | Rect | cy | Font / grey | Content |
 |---------|------|----|-------------|---------|
 | Logo | (90, 170, 360, 400), see 6 | | black only | variant D, toggle-i house (see 6, 8) |
-| Title | box (16, 650, 508, 80), centred x = 270 | 690 | F56 INK | `Inkling` |
+| Title | box (16, 650, 508, 80), centred x = 270 | 690 | F56 INK | `Inkhaus` |
 | Tagline | box (16, 734, 508, 36), centred | 752 | F24 DIM (#444) | `for Home Assistant` |
 | Divider | (235, 796, 70, 2) | | OFF (#888) | |
 | Version | box (16, 822, 508, 36), centred | 840 | F24 INK | `v0.3.1` |
@@ -50,13 +50,13 @@ margins >= 16.
 | Element | Rect | cy | Font / grey | Content |
 |---------|------|----|-------------|---------|
 | Logo | (70, 70, 360, 400) | | as portrait | same logo, same size |
-| Title | x = 500, box (500, 165, 444, 80) | 205 | F56 INK, left | `Inkling` |
+| Title | x = 500, box (500, 165, 444, 80) | 205 | F56 INK, left | `Inkhaus` |
 | Tagline | x = 500, box (500, 248, 444, 36) | 266 | F24 DIM, left | `for Home Assistant` |
 | Divider | (500, 306, 70, 2) | | OFF | |
 | Version | x = 500, box (500, 328, 444, 36) | 346 | F24 INK, left | `v0.3.1` |
 | Footer | x = 500, box (500, 486, 444, 28) | 500 | F18 DIM, left | `M5Paper e-ink remote` |
 
-## 6. Logo construction (variant D, "toggle-i house"; source `docs/ui/logo-inkling.svg`, 100 x 100 viewBox)
+## 6. Logo construction (variant D, "toggle-i house"; source `docs/ui/logo-inkhaus.svg`, 100 x 100 viewBox)
 
 Black on white, no greys, no gradients. On the splash the symbol is drawn at 360 x 360
 (scale 3.6) centred in the 360 x 400 Logo rect (offset (0, 20)); the same symbol is used
@@ -75,6 +75,6 @@ portrait. Version shows `v?` if `FW_VERSION` is not defined (a dev build).
 ## 8. Logo status (task 044)
 
 **Chosen: D** (variant C one-stroke house with variant B toggle-i in the doorway),
-sheet `docs/ui/logo-variants.svg`, standalone mark `docs/ui/logo-inkling.svg` (100 x 100,
+sheet `docs/ui/logo-variants.svg`, standalone mark `docs/ui/logo-inkhaus.svg` (100 x 100,
 for the firmware icon generator; render at 360 px for the splash and at 48 px for icons).
 It reads at 48 px (dot, stem and knob stay distinct). Everything else on the splash is unchanged.

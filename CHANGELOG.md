@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.1.0 (unreleased)
+- Renamed the project from Inkling to Inkhaus (splash, README, logo).
 - History popup for sensors: long press or rocker opens a 24 h line / step graph, 7 d+ and daily bars from HA statistics.
 - Sensor values show 1 decimal by default (`decimals` overrides).
 - Wi-Fi Auto reconnects to the last network without a scan.

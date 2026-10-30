@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-<!-- Inkling logo (variant D): one-stroke house (stroke 9) with a toggle-i in the doorway. Black on transparent; the knob is white. -->
+<!-- Inkhaus logo (variant D): one-stroke house (stroke 9) with a toggle-i in the doorway. Black on transparent; the knob is white. -->
  <path d="M74 90 H88 V46 L50 12 L12 46 V90 H26" fill="none" stroke="#000" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
  <path d="M50 28.27 L56.36 34.64 A9 9 0 1 1 43.64 34.64 Z" fill="#000"/>
  <rect x="38" y="55" width="24" height="35" rx="12" fill="#000"/>

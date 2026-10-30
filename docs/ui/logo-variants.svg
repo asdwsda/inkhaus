@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
-<!-- Inkling logo variants, sheet 960x540. Spec: docs/ui/splash.md section 8. Greys: #000, #444, #888 only (white background).
+<!-- Inkhaus logo variants, sheet 960x540. Spec: docs/ui/splash.md section 8. Greys: #000, #444, #888 only (white background).
      Marks are 100x100 symbols (stroke 8 where stroked); shown at 160 px and at 48 px. -->
 <defs>
 <symbol id="m-a" viewBox="0 0 100 100">
@@ -24,14 +24,14 @@
 </symbol>
 </defs>
 <rect width="960" height="540" fill="#fff"/>
-<text x="24" y="28" font-size="24" font-weight="bold" fill="#000" dominant-baseline="central">Inkling: logo variants</text>
+<text x="24" y="28" font-size="24" font-weight="bold" fill="#000" dominant-baseline="central">Inkhaus: logo variants</text>
 <text x="936" y="28" font-size="18" fill="#444" text-anchor="end" dominant-baseline="central">chosen: D (C house + B toggle-i)</text>
 
 <g id="p-d" transform="translate(24,56)">
 <rect x="1" y="1" width="418" height="462" rx="8" fill="#fff" stroke="#000" stroke-width="3"/>
 <text x="16" y="28" font-size="18" font-weight="bold" fill="#000" dominant-baseline="central">D  Toggle-i house (chosen)</text>
 <use xlink:href="#m-d" href="#m-d" x="105" y="52" width="210" height="210"/>
-<text x="210" y="312" font-size="64" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkling</text>
+<text x="210" y="312" font-size="64" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">Inkhaus</text>
 <text x="210" y="360" font-size="26" fill="#444" text-anchor="middle" dominant-baseline="central">for Home Assistant</text>
 <rect x="175" y="392" width="70" height="2" fill="#888"/>
 <use xlink:href="#m-d" href="#m-d" x="130" y="404" width="48" height="48"/>
@@ -41,7 +41,7 @@
 <rect x="1" y="1" width="466" height="146" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
 <text x="16" y="24" font-size="18" fill="#444" dominant-baseline="central">A  Drop house</text>
 <use xlink:href="#m-a" href="#m-a" x="24" y="36" width="96" height="96"/>
-<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkling</text>
+<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkhaus</text>
 <text x="144" y="118" font-size="18" fill="#444" dominant-baseline="central">for Home Assistant</text>
 <use xlink:href="#m-a" href="#m-a" x="380" y="76" width="48" height="48"/>
 <text x="436" y="100" font-size="14" fill="#444" dominant-baseline="central">48</text>
@@ -50,7 +50,7 @@
 <rect x="1" y="1" width="466" height="146" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
 <text x="16" y="24" font-size="18" fill="#444" dominant-baseline="central">B  Toggle i</text>
 <use xlink:href="#m-b" href="#m-b" x="24" y="36" width="96" height="96"/>
-<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkling</text>
+<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkhaus</text>
 <text x="144" y="118" font-size="18" fill="#444" dominant-baseline="central">for Home Assistant</text>
 <use xlink:href="#m-b" href="#m-b" x="380" y="76" width="48" height="48"/>
 <text x="436" y="100" font-size="14" fill="#444" dominant-baseline="central">48</text>
@@ -59,7 +59,7 @@
 <rect x="1" y="1" width="466" height="146" rx="8" fill="#fff" stroke="#888" stroke-width="2"/>
 <text x="16" y="24" font-size="18" fill="#444" dominant-baseline="central">C  One-stroke house</text>
 <use xlink:href="#m-c" href="#m-c" x="24" y="36" width="96" height="96"/>
-<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkling</text>
+<text x="144" y="84" font-size="40" font-weight="bold" fill="#000" dominant-baseline="central">Inkhaus</text>
 <text x="144" y="118" font-size="18" fill="#444" dominant-baseline="central">for Home Assistant</text>
 <use xlink:href="#m-c" href="#m-c" x="380" y="76" width="48" height="48"/>
 <text x="436" y="100" font-size="14" fill="#444" dominant-baseline="central">48</text>
