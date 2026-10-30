@@ -40,3 +40,6 @@ Needs device: yes (short visual check)
   always a quality refresh of the popup rect and exempt from the 50 % big-change rule (fastest close
   left a light shadow). Day-statistic bars cannot show partial coverage (HA gives no hour count); only
   today's bar is marked in-progress.
+- 2026-10-30 revised (user-checked): modal open = one quality refresh of the popup rect that keeps the
+  greys; close = one full GC16 refresh of the screen (cleans ghosting, keeps greys). Reason: a thresholded
+  partial quality refresh lost the MID/GRID greys, and without the full refresh static areas ghosted.

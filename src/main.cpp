@@ -267,12 +267,7 @@ static void showFrame(uint32_t now) {
   composeFrame();
   const bool full = g_app.takeFull();
   present::setLogTab(g_app.shownTab());
-  // Modal popup (history or brightness) open, opening or closing: no big-change full refresh.
-  static bool s_modalPrev = false;
-  const bool modal = g_app.brightnessOpen() || g_app.historyPopup().visible();
-  if (modal || s_modalPrev) present::exemptBigChangeOnce();
-  if (modal != s_modalPrev) present::modalTransitionOnce();
-  s_modalPrev = modal;
+  present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible());
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 

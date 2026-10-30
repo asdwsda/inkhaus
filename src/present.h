@@ -38,12 +38,10 @@ void bootFrame(bool forceFull);
 // Returns true if anything was refreshed.
 enum class Mode { Partial, Full };
 bool show(Mode mode, uint32_t now);
-// One-shot for the NEXT show() only: skip the big-change full refresh (a modal popup opening or closing
-// changes >50 % of the screen but is one quality refresh of the popup rect). Cleared by that show().
-void exemptBigChangeOnce();
-// One-shot for the NEXT show() only: every partial rect is an epd_quality refresh whatever the panel tracking
-// says (modal popup opening/closing: fastest leaves a light shadow of the popup).
-void modalTransitionOnce();
+// Modal popup (history, brightness) open/closed, call before every show(). Opening: the next show() refreshes
+// the popup rect once in quality with the real greys (no big-change full refresh); while open, quality
+// refreshes keep greys. Closing: the next show() is one full GC16 refresh of the whole screen.
+void setModal(bool open);
 void setLogTab(int tab);  // tab index shown in the "APP: render" log line
 
 // Call regularly: after 2 s without a frame, runs one GC16 full refresh if the ghost debt is

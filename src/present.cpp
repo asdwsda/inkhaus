@@ -245,18 +245,19 @@ void fullRefresh(bool whiteFirst, const char *why) {
 
 // Refreshes one changed rectangle. Fastest only if the panel's content there (what was pushed
 // last) is pure black/white; otherwise one quality refresh. Keeps g_panel and g_prev exact.
-bool g_noBigChange = false;  // exemptBigChangeOnce()
-bool g_forceQuality = false;  // modalTransitionOnce()
+bool g_modal = false;       // setModal(): a popup is open; its rect keeps real greys
+bool g_modalOpening = false;  // the next show() is the opening one
+bool g_modalClosing = false;  // the next show() is the closing one
 
 void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   auto &d = M5.Display;
-  const bool grey = unknownPanel || g_forceQuality || panelHasGrey(r);
-  const char *reason = unknownPanel ? "boot_unknown_panel" : g_forceQuality ? "modal" : (grey ? "panel_has_grey" : "panel_bw");
+  const bool grey = unknownPanel || g_modalOpening || panelHasGrey(r);
+  const char *reason = unknownPanel ? "boot_unknown_panel" : g_modalOpening ? "modal" : (grey ? "panel_has_grey" : "panel_bw");
   Serial.printf("PRESENT: rect=%d,%d,%d,%d mode=%s reason=%s\n", r.x, r.y, r.w, r.h, grey ? "quality" : "fastest",
                 reason);
   if (grey) {
     d.setEpdMode(epd_mode_t::epd_quality);
-    pushRegion(r, !kQualityPushesGrey);
+    pushRegion(r, !(kQualityPushesGrey || g_modal));  // popup: real greys, g_panel records them
     refresh(epd_mode_t::epd_quality, &r, tag);
   } else {
     d.setEpdMode(epd_mode_t::epd_fastest);
@@ -410,15 +411,21 @@ void bootFrame(bool forceFull) {
 static int g_renderTab = -1;
 void setLogTab(int tab) { g_renderTab = tab; }
 
-void exemptBigChangeOnce() { g_noBigChange = true; }
-void modalTransitionOnce() { g_forceQuality = true; }
+void setModal(bool open) {
+  if (open == g_modal) return;
+  g_modal = open;
+  if (open) g_modalOpening = true;
+  else g_modalClosing = true;
+}
 
 bool show(Mode mode, uint32_t now) {
   auto &d = M5.Display;
   g_lastShowMs = now;
-  const bool exempt = g_noBigChange;
-  struct Clear { ~Clear() { g_noBigChange = false; g_forceQuality = false; } } clearExempt;
-  if (mode == Mode::Full || g_forceFull) {
+  const bool exempt = g_modalOpening;
+  const bool closing = g_modalClosing;
+  struct Clear { ~Clear() { g_modalOpening = false; g_modalClosing = false; } } clearExempt;
+  // Popup close: one full GC16 refresh of the whole screen (greys pushed, ghost debt reset).
+  if (mode == Mode::Full || g_forceFull || closing) {
     if (mode != Mode::Full) boot::log("full_after_failure", 1);
     Serial.printf("APP: render tab=%d rects=1 mode=full\n", g_renderTab);
     fullRefresh(g_forceFull, "full");
