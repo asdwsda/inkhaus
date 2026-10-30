@@ -35,22 +35,9 @@ const char *wakeName(power::WakeReason r) {
   }
 }
 
-Indicator indicatorFor(const power::SleepPlan &plan, power::Session session) {
-  if (session == power::Session::LowBattery) return Indicator::Button;
-  return plan.touch_wake ? Indicator::Touch : Indicator::Button;
-}
+const char *indicatorName(Indicator i) { return i == Indicator::Badge ? "badge" : "none"; }
 
-const char *indicatorName(Indicator i) {
-  switch (i) {
-    case Indicator::Button: return "button";
-    case Indicator::Touch: return "touch";
-    default: return "none";
-  }
-}
-
-Indicator indicatorFromByte(uint8_t b) {
-  return b == uint8_t(Indicator::Button) ? Indicator::Button : b == uint8_t(Indicator::Touch) ? Indicator::Touch : Indicator::None;
-}
+Indicator indicatorFromByte(uint8_t b) { return b == uint8_t(Indicator::Badge) ? Indicator::Badge : Indicator::None; }
 
 std::optional<AlarmFields> alarmFields(std::optional<int64_t> alarm_at, int64_t now_epoch) {
   if (!alarm_at || !plausibleEpoch(now_epoch)) return std::nullopt;
@@ -67,7 +54,7 @@ std::optional<AlarmFields> alarmFields(std::optional<int64_t> alarm_at, int64_t 
 
 SleepPath planSleepPath(const power::SleepPlan &plan, power::Session session, int64_t now_epoch) {
   SleepPath p;
-  p.indicator = indicatorFor(plan, session);
+  p.indicator = Indicator::Badge;  // one badge for every wake mode and low-battery sleep
   if (session == power::Session::LowBattery) {
     p.low_battery = true;
     p.first = SleepMethod::PowerOff;

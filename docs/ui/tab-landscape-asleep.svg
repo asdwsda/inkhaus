@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
-  <!-- Landscape 960x540, ASLEEP, Touch variant ("tap to wake"). Identical to tab-landscape.svg (revision 4) except for the sleep indicator.
-       Spec: docs/ui/STYLE.md section 5.5. Indicator region (172,4,648,56), centre line y=32: INK rounded rect that REPLACES the tab strip (all 5 tab slots hidden while asleep).
-       Group centred in the banner: moon (299,12,40,40), finger (351,12,40,40), text "Tap the screen to wake" F24 PAPER starting x=411 (est. width 282, ends ~693).
-       Redrawn alone before sleep (strip rect (172,0,648,64)); on wake the tab strip is restored. Greys only: #000, #444, #fff.
-       Widget ids as in tab-landscape.svg (w-N, w-N-frame, w-N-*). Widget text uses dominant-baseline="alphabetic" at explicit baselines; status and banner text use "central". -->
+  <!-- Landscape 960x540, ASLEEP. Identical to tab-landscape.svg except slot 5 (700,4,120,56) is replaced by the sleep badge (STYLE.md 5.5): badge (712,10,96,44) r12 INK, "Zz" bold 30 PAPER at (760,33), redraw region (710,8,100,48). Greys: #000, #fff. Widget ids as in tab-landscape.svg. -->
   <defs>
     <symbol id="i-up" viewBox="0 0 24 24"><polygon points="12,5 21,19 3,19" fill="currentColor"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><polygon points="12,19 21,5 3,5" fill="currentColor"/></symbol>
@@ -38,11 +34,21 @@
   <rect x="884" y="27" width="4" height="10" fill="#000"/>
   <text x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
 
-  <!-- SLEEP INDICATOR, Touch variant: banner replaces the tab strip -->
-  <rect x="172" y="4" width="648" height="56" rx="8" fill="#000"/>
-  <use xlink:href="#i-moon" href="#i-moon" x="299" y="12" width="40" height="40" color="#fff"/>
-  <use xlink:href="#i-finger" href="#i-finger" x="351" y="12" width="40" height="40" color="#fff"/>
-  <text x="411" y="32" font-size="24" fill="#fff" dominant-baseline="central">Tap the screen to wake</text>
+  <!-- Tab strip slots 1..4 stay visible -->
+  <rect x="172" y="4" width="120" height="56" rx="8" fill="#000"/>
+  <text x="232" y="21" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Living</text>
+  <text x="232" y="43" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">room</text>
+  <rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="364" y="21" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Whole</text>
+  <text x="364" y="43" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">house</text>
+  <rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Kitchen</text>
+  <rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+  <text x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Bedroom</text>
+
+  <!-- SLEEP BADGE (STYLE.md 5.5): last tab slot (700,4,120,56) hidden; region (710,8,100,48), badge (712,10,96,44) r12 INK, "Zz" DejaVu Bold 30 PAPER at (760,33) -->
+  <rect x="712" y="10" width="96" height="44" rx="12" fill="#000"/>
+  <text x="760" y="33" font-size="30" font-weight="bold" fill="#fff" text-anchor="middle" dominant-baseline="central">Zz</text>
 
   <!-- w-1 Cover "Shutter" wide (16,72) -->
   <g id="w-1" transform="translate(16,72)">

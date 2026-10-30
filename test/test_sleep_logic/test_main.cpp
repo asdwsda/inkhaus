@@ -50,16 +50,18 @@ void test_session_kind_from_wake() {
 }
 
 void test_indicator() {
-  power::SleepPlan b;  // Button mode
+  TEST_ASSERT_EQUAL(int(Indicator::Badge), int(indicatorFromByte(uint8_t(Indicator::Badge))));
+  TEST_ASSERT_EQUAL(int(Indicator::None), int(indicatorFromByte(0)));
+  TEST_ASSERT_EQUAL(int(Indicator::None), int(indicatorFromByte(2)));  // old "touch" variant byte
+  TEST_ASSERT_EQUAL(int(Indicator::None), int(indicatorFromByte(77)));
+  // every mode and the low-battery sleep get the same badge
+  power::SleepPlan b;
   power::SleepPlan t;
   t.mode = power::SleepMode::DeepSleep; t.touch_wake = true;
-  TEST_ASSERT_EQUAL(int(Indicator::Button), int(indicatorFor(b, power::Session::Interactive)));
-  TEST_ASSERT_EQUAL(int(Indicator::Touch), int(indicatorFor(t, power::Session::Interactive)));
-  TEST_ASSERT_EQUAL(int(Indicator::Touch), int(indicatorFor(t, power::Session::ScheduledRefresh)));
-  // low battery: touch wake is off, so the button variant in any mode
-  TEST_ASSERT_EQUAL(int(Indicator::Button), int(indicatorFor(t, power::Session::LowBattery)));
-  TEST_ASSERT_EQUAL(int(Indicator::Touch), int(indicatorFromByte(uint8_t(Indicator::Touch))));
-  TEST_ASSERT_EQUAL(int(Indicator::None), int(indicatorFromByte(77)));
+  for (auto sess : {power::Session::Interactive, power::Session::ScheduledRefresh, power::Session::LowBattery}) {
+    TEST_ASSERT_EQUAL(int(Indicator::Badge), int(planSleepPath(b, sess, 1700000000).indicator));
+    TEST_ASSERT_EQUAL(int(Indicator::Badge), int(planSleepPath(t, sess, 1700000000).indicator));
+  }
 }
 
 // 2026-10-28 10:00:00 UTC
@@ -105,7 +107,7 @@ void test_path_button_mode() {
   TEST_ASSERT_FALSE(s.wake_touch);
   TEST_ASSERT_TRUE(s.wake_timer_s.has_value());
   TEST_ASSERT_EQUAL(3600, int(*s.wake_timer_s));
-  TEST_ASSERT_EQUAL(int(Indicator::Button), int(s.indicator));
+  TEST_ASSERT_EQUAL(int(Indicator::Badge), int(s.indicator));
   TEST_ASSERT_FALSE(s.low_battery);
 }
 
@@ -117,7 +119,7 @@ void test_path_touch_mode() {
   TEST_ASSERT_EQUAL(int(SleepMethod::DeepSleep), int(s.first));
   TEST_ASSERT_TRUE(s.wake_touch);
   TEST_ASSERT_TRUE(s.wake_rocker);
-  TEST_ASSERT_EQUAL(int(Indicator::Touch), int(s.indicator));
+  TEST_ASSERT_EQUAL(int(Indicator::Badge), int(s.indicator));
   TEST_ASSERT_EQUAL(600, int(*s.wake_timer_s));
 }
 
@@ -294,7 +296,7 @@ void test_path_scheduled_session_keeps_plan_wake_sources() {
   TEST_ASSERT_EQUAL(int(SleepMethod::PowerOff), int(s.first));
   TEST_ASSERT_TRUE(s.arm_rtc_alarm);
   TEST_ASSERT_FALSE(s.low_battery);
-  TEST_ASSERT_EQUAL(int(Indicator::Button), int(s.indicator));
+  TEST_ASSERT_EQUAL(int(Indicator::Badge), int(s.indicator));
 }
 
 void test_exec_resolution() {
@@ -361,8 +363,7 @@ void test_local_idle_plan() {
   p = app_logic::localIdlePlan(s, 1700000000, 0);
   TEST_ASSERT_FALSE(p.rtc_alarm_at.has_value());
   TEST_ASSERT_FALSE(p.touch_wake);
-  TEST_ASSERT_TRUE(app_logic::indicatorFor(p, power::Session::Interactive) == app_logic::Indicator::Button);
-}
+  }
 
 void test_ext1_empty_mask_is_rocker() {
   TEST_ASSERT_TRUE(pinForExt1(0) == WakePin::Rocker);
@@ -380,20 +381,17 @@ void test_sleep_plan_uses_current_settings_and_per_mode_sources() {
   TEST_ASSERT_FALSE(stale.touch_wake);
   TEST_ASSERT_TRUE(cur.touch_wake);
   TEST_ASSERT_FALSE(cur.button_wake);
-  TEST_ASSERT_TRUE(indicatorFor(cur, sess) == Indicator::Touch);
   auto sp = planSleepPath(cur, sess, 1700000000);
   TEST_ASSERT_TRUE(sp.wake_touch);
   TEST_ASSERT_FALSE(sp.wake_rocker);
   now.wake_mode = settings::WakeMode::Button;
   cur = planForSleep(now, sess, 1700000000, 0, false);
-  TEST_ASSERT_TRUE(indicatorFor(cur, sess) == Indicator::Button);
   sp = planSleepPath(cur, sess, 1700000000);
   TEST_ASSERT_TRUE(sp.wake_rocker);
   TEST_ASSERT_FALSE(sp.wake_touch);
   now.wake_mode = settings::WakeMode::TouchAndButton;
   cur = planForSleep(now, sess, 1700000000, 0, true);
   TEST_ASSERT_FALSE(cur.rtc_alarm_at.has_value());
-  TEST_ASSERT_TRUE(indicatorFor(cur, sess) == Indicator::Touch);
   sp = planSleepPath(cur, sess, 1700000000);
   TEST_ASSERT_TRUE(sp.wake_touch);
   TEST_ASSERT_TRUE(sp.wake_rocker);

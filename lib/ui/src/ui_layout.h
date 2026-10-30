@@ -39,7 +39,7 @@ struct Grid {
   int colX[kMaxCols];
   int rowY[kMaxRows];
   Rect statusBar, tabBar, content;
-  Rect refreshHit, settingsHit, sleepIndicator;
+  Rect refreshHit, settingsHit, sleepBadge;
   Rect slotRect[kMaxTabSlots];  // first tabSlots entries are valid
   int tabSlots;
 };
@@ -125,7 +125,7 @@ struct Layout {
   settings::Orientation orientation = settings::Orientation::Portrait;
   Rect statusBar, tabBar, content;
   Rect refreshHit, settingsHit;  // the two touchable status areas
-  Rect sleepIndicator;           // drawn by the firmware only while asleep; not a hit target
+  Rect sleepBadge;           // drawn by the firmware only while asleep; not a hit target
   std::vector<TabSlot> tabSlots;
   int activeTab = 0;
   int group = 0, groupCount = 1;
@@ -138,8 +138,8 @@ struct Layout {
 Layout computeLayout(settings::Orientation o, const std::vector<config::Tab> &tabs,
                      int activeTab, int subPage, int group = -1);
 
-// Sleep indicator region of an orientation (STYLE.md 5.5), for redrawing it on its own.
-Rect sleepIndicatorRect(settings::Orientation o);
+// Sleep badge region of an orientation (STYLE.md 5.5), the one constant for drawing/clearing it on its own.
+Rect sleepBadgeRect(settings::Orientation o);
 
 // ---- sub-regions (widgets.md summary) ----
 struct SubRegion {

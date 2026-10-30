@@ -167,40 +167,18 @@ void drawErrorScreen(M5Canvas &c, const uistate::AppState &app) {
   }
 }
 
-// Bold look for text: drawn twice, 1 px apart (the built-in fonts have no bold).
-void drawBoldCy(M5Canvas &c, Font f, const std::string &t, int x, int cy) {
-  drawTextCy(c, f, t, x, cy, Align::Left, INK);
-  drawTextCy(c, f, t, x + 1, cy, Align::Left, INK);
-}
-
-// STYLE.md 5.5: an outline pill (2 px INK border, PAPER inside) with moon, bold "Zz" and the wake glyph.
-// Portrait: icons only, pill (293,4,110,46). Landscape: pill (173,5,646,54) with the wake text.
-void drawSleepIndicator(M5Canvas &c, Orientation o, SleepIndicator v) {
-  if (v == SleepIndicator::None) return;
-  const bool btn = v == SleepIndicator::Button;
-  const Icon glyph = btn ? Icon::Sidebtn : Icon::Finger;
-  if (o == Orientation::Landscape) {
-    c.fillRoundRect(173, 5, 646, 54, 27, INK);
-    c.fillRoundRect(175, 7, 642, 50, 25, PAPER);
-    const std::string text = btn ? "Press the side button to wake" : "Tap the screen to wake";
-    const int zz = textWidth(c, Font::F24, "Zz") + 1;
-    const int tw = textWidth(c, Font::F24, text);
-    const int group = 32 + 8 + zz + 16 + tw + 12 + 32;
-    int x = 173 + (646 - group) / 2;
-    drawIcon(c, Icon::Moon, 32, x, 16, INK);
-    x += 32 + 8;
-    drawBoldCy(c, Font::F24, "Zz", x, 32);
-    x += zz + 16;
-    drawTextCy(c, Font::F24, text, x, 32, Align::Left, INK);
-    x += tw + 12;
-    drawIcon(c, glyph, 32, x, 16, INK);
-  } else {
-    c.fillRoundRect(293, 4, 110, 46, 23, INK);
-    c.fillRoundRect(295, 6, 106, 42, 21, PAPER);
-    drawIcon(c, Icon::Moon, 28, 304, 13, INK);
-    drawBoldCy(c, Font::F18, "Zz", 337, 27);
-    drawIcon(c, glyph, 24, 368, 15, INK);
-  }
+// STYLE.md 5.5: filled INK rounded rect 96x44 r12 centred in the badge region, PAPER "Zz" centred.
+// The built-in fonts have no bold, so the label (DejaVu24, the largest below the spec's 30 px bold) is
+// drawn three times, 1 px apart in x, and twice in y.
+void drawSleepBadge(M5Canvas &c, Orientation o) {
+  const ui::Rect r = ui::sleepBadgeRect(o);
+  const int cx = r.x + r.w / 2;
+  const int cy = r.y + r.h / 2;
+  c.fillRoundRect(cx - 48, cy - 22, 96, 44, 12, INK);
+  const int w = textWidth(c, Font::F24, "Zz");
+  const int x = cx - w / 2;
+  for (int dx = -1; dx <= 1; ++dx)
+    for (int dy = 0; dy <= 1; ++dy) drawTextCy(c, Font::F24, "Zz", x + dx, cy + 1 + dy - 1, Align::Left, PAPER);
 }
 
 }  // namespace
@@ -209,7 +187,7 @@ void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &s
   c.fillScreen(PAPER);
   if (app.screen() == uistate::Screen::ConfigError) {
     drawErrorScreen(c, app);
-    drawSleepIndicator(c, app.orientation(), status.sleepIndicator);
+    if (status.sleepBadge) drawSleepBadge(c, app.orientation());
     return;
   }
   const int ringIdx = app.focusedWidgetIndex();
@@ -230,7 +208,7 @@ void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &s
   drawTabBar(c, app);
   drawBrightnessPopup(c, app);
   drawHistoryPopup(c, app);
-  drawSleepIndicator(c, app.orientation(), status.sleepIndicator);
+  if (status.sleepBadge) drawSleepBadge(c, app.orientation());
 }
 
 }  // namespace render

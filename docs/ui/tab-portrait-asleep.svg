@@ -1,8 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans">
-  <!-- Portrait 540x960, ASLEEP, Button variant ("press the side button to wake"; also used for low battery). Identical to tab-portrait.svg (revision 4) except for the sleep indicator.
-       Spec: docs/ui/STYLE.md section 5.5. Indicator region (292,3,112,48), centre line y=27: INK rounded rect, moon (300,7,40,40), sidebtn (356,7,40,40), both PAPER.
-       It sits between the refresh label (ends x=284 at most) and the battery cluster (starts x=412); it replaces nothing. Only this region is redrawn before sleep and cleared on wake.
-       Greys only: #000, #444, #fff. Widget ids as in tab-portrait.svg (w-N, w-N-frame, w-N-*). Widget text uses dominant-baseline="alphabetic" at explicit baselines; status text uses "central". -->
+  <!-- Portrait 540x960, ASLEEP. Identical to tab-portrait.svg except the sleep badge (STYLE.md 5.5): badge (300,5,96,44) r12 INK, "Zz" bold 30 PAPER at (348,28), redraw region (298,3,100,48). Widget ids as in tab-portrait.svg. -->
   <defs>
     <symbol id="i-up" viewBox="0 0 24 24"><polygon points="12,5 21,19 3,19" fill="currentColor"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><polygon points="12,19 21,5 3,5" fill="currentColor"/></symbol>
@@ -37,10 +34,9 @@
   <text x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
   <rect x="0" y="54" width="540" height="2" fill="#000"/>
 
-  <!-- SLEEP INDICATOR, Button variant: region (292,3,112,48) -->
-  <rect x="292" y="3" width="112" height="48" rx="8" fill="#000"/>
-  <use xlink:href="#i-moon" href="#i-moon" x="300" y="7" width="40" height="40" color="#fff"/>
-  <use xlink:href="#i-sidebtn" href="#i-sidebtn" x="356" y="7" width="40" height="40" color="#fff"/>
+  <!-- SLEEP BADGE (STYLE.md 5.5): region (298,3,100,48), badge (300,5,96,44) r12 INK, "Zz" DejaVu Bold 30 PAPER at (348,28) -->
+  <rect x="300" y="5" width="96" height="44" rx="12" fill="#000"/>
+  <text x="348" y="28" font-size="30" font-weight="bold" fill="#fff" text-anchor="middle" dominant-baseline="central">Zz</text>
 
   <!-- w-1 Cover "Shutter" wide (16,68) -->
   <g id="w-1" transform="translate(16,68)">

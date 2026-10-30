@@ -158,12 +158,6 @@ static void updateStatus() {
   g_status.outdated = l.stale;
 }
 
-static render::SleepIndicator toRender(app_logic::Indicator i) {
-  return i == app_logic::Indicator::Button  ? render::SleepIndicator::Button
-         : i == app_logic::Indicator::Touch ? render::SleepIndicator::Touch
-                                            : render::SleepIndicator::None;
-}
-
 static void composeFrame() {
   updateStatus();
   render::renderScreen(present::canvas(), g_app, g_status);
@@ -581,7 +575,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   }
   if (!low && present::framesOk()) {
     present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
-    g_status.sleepIndicator = toRender(app_logic::indicatorFor(plan, session));
+    g_status.sleepBadge = true;  // STYLE.md 5.5: one badge for every wake mode and low-battery sleep
     composeFrame();
     now = millis();
     timedShow(present::Mode::Partial, now);
@@ -594,7 +588,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   sleepwake::enter(plan, session, session_glue::wallClock(), batteryMv());
   // Not asleep (should not happen): carry on as an awake device without the indicator.
   boot::log("sleep_failed", 1);
-  g_status.sleepIndicator = render::SleepIndicator::None;
+  g_status.sleepBadge = false;
 }
 
 // Battery below the limit at wake: no session, no network. A plain notice, no alarm, power off.
@@ -629,7 +623,7 @@ void setup() {
   }
   wakelog::setEnabled(s.debug_log);
   wakelog::begin(app_logic::wakeName(g_wake), kind);
-  if (g_scheduled) g_status.sleepIndicator = toRender(sleepwake::storedIndicator());
+  if (g_scheduled) g_status.sleepBadge = sleepwake::storedIndicator() == app_logic::Indicator::Badge;
 
 #ifdef DEMO_LANDSCAPE
   s.orientation = settings::Orientation::Landscape;

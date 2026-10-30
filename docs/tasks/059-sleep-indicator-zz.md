@@ -1,8 +1,8 @@
 # 059: Sleep indicator as a bold "Zz" icon
 
-Status: todo
+Status: in-progress
 Depends on: 038
-UI spec: docs/ui/ (ui-designer updates the status bar / sleep indicator spec and mockups)
+UI spec: docs/ui/STYLE.md 5.5 "Sleep badge", docs/ui/layout.md section 2 (variant B, landscape last tab slot; user 2026-10-30)
 Needs device: yes (visual check)
 
 ## Scope
@@ -18,10 +18,12 @@ Keep the existing mechanics: drawn with a partial refresh of its rect right befo
   lib (sleep plan: drop the indicator variants if nothing else uses them), tests
 
 ## Acceptance criteria
-- [ ] Spec with the chosen variant approved by the user (rendered mockups, both orientations).
-- [ ] Native tests updated for the single indicator kind.
+- [x] Spec with the chosen variant approved by the user (rendered mockups, both orientations).
+- [x] Native tests updated for the single indicator kind.
 - [ ] Device: the Zz badge is visible at arm's length before sleep in all wake modes, cleared on wake
       without ghosts.
 
 ## Notes
 - Coordinate with 058 (wake feedback): clearing the Zz badge quickly is a natural first wake feedback.
+
+- Firmware part done (pio run + native tests pass); device visual check pending.

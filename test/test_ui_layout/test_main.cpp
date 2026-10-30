@@ -46,8 +46,8 @@ void test_areas_portrait() {
   eqRect({16, 68, 508, 800}, l.content);
   eqRect({0, 0, 288, 56}, l.refreshHit);
   eqRect({412, 0, 112, 56}, l.settingsHit);
-  eqRect({292, 3, 112, 48}, l.sleepIndicator);
-  eqRect({292, 3, 112, 48}, sleepIndicatorRect(P));
+  eqRect({298, 3, 100, 48}, l.sleepBadge);
+  eqRect({298, 3, 100, 48}, sleepBadgeRect(P));
   const Grid &g = gridFor(P);
   TEST_ASSERT_EQUAL_INT(2, g.cols);
   TEST_ASSERT_EQUAL_INT(7, g.rows);
@@ -64,8 +64,8 @@ void test_areas_landscape() {
   eqRect({16, 72, 928, 452}, l.content);
   eqRect({16, 4, 144, 56}, l.refreshHit);
   eqRect({832, 4, 112, 56}, l.settingsHit);
-  eqRect({172, 4, 648, 56}, l.sleepIndicator);
-  eqRect({172, 4, 648, 56}, sleepIndicatorRect(L));
+  eqRect({710, 8, 100, 48}, l.sleepBadge);
+  eqRect({710, 8, 100, 48}, sleepBadgeRect(L));
   const Grid &g = gridFor(L);
   TEST_ASSERT_EQUAL_INT(5, g.cols);
   TEST_ASSERT_EQUAL_INT(4, g.rows);
@@ -94,9 +94,9 @@ void test_closing_sums() {
     TEST_ASSERT_FALSE(rectsOverlap(g.refreshHit, g.settingsHit));
     TEST_ASSERT_FALSE(rectsOverlap(g.refreshHit, g.content));
     TEST_ASSERT_FALSE(rectsOverlap(g.settingsHit, g.content));
-    TEST_ASSERT_TRUE(rectInside(g.sleepIndicator, g.statusBar));
-    TEST_ASSERT_FALSE(rectsOverlap(g.sleepIndicator, g.refreshHit));
-    TEST_ASSERT_FALSE(rectsOverlap(g.sleepIndicator, g.settingsHit));
+    TEST_ASSERT_TRUE(rectInside(g.sleepBadge, g.statusBar));
+    TEST_ASSERT_FALSE(rectsOverlap(g.sleepBadge, g.refreshHit));
+    TEST_ASSERT_FALSE(rectsOverlap(g.sleepBadge, g.settingsHit));
     for (int i = 0; i < g.tabSlots; ++i) {
       TEST_ASSERT_FALSE(rectsOverlap(g.slotRect[i], g.refreshHit));
       TEST_ASSERT_FALSE(rectsOverlap(g.slotRect[i], g.settingsHit));
@@ -105,8 +105,8 @@ void test_closing_sums() {
     }
   }
   // portrait indicator sits between the refresh hit area and the settings hit area
-  TEST_ASSERT_TRUE(p.sleepIndicator.x >= p.refreshHit.x + p.refreshHit.w);
-  TEST_ASSERT_TRUE(p.sleepIndicator.x + p.sleepIndicator.w <= p.settingsHit.x);
+  TEST_ASSERT_TRUE(p.sleepBadge.x >= p.refreshHit.x + p.refreshHit.w);
+  TEST_ASSERT_TRUE(p.sleepBadge.x + p.sleepBadge.w <= p.settingsHit.x);
 }
 void test_vector_slots_portrait() {
   Layout l = computeLayout(P, tabsOf(4), 0, 0);
@@ -1581,13 +1581,13 @@ void test_t011_subregion_spacing_exact() {
   (void)subRegions(WidgetType::Climate, {-5, 99}, {-100, -100, 10, 10});
 }
 
-// sleepIndicatorRect agrees with Layout in every orientation and under any tab count / state.
+// sleepBadgeRect agrees with Layout in every orientation and under any tab count / state.
 void test_t011_sleep_indicator_stable() {
   for (Orientation o : {P, L})
     for (int n : {0, 1, 5, 16}) {
       Layout l = computeLayout(o, tabsOf(n), n / 2, 3, 2);
-      eqRect(sleepIndicatorRect(o), l.sleepIndicator);
-      eqRect(gridFor(o).sleepIndicator, l.sleepIndicator);
+      eqRect(sleepBadgeRect(o), l.sleepBadge);
+      eqRect(gridFor(o).sleepBadge, l.sleepBadge);
     }
 }
 

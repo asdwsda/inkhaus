@@ -22,7 +22,7 @@ const Grid &gridFor(Orientation o, int columns) {
       {16, 276, 0, 0, 0},
       {68, 184, 300, 416, 532, 648, 764},
       {0, 0, 540, 56}, {0, 880, 540, 80}, {16, 68, 508, 800},
-      {0, 0, 288, 56}, {412, 0, 112, 56}, {292, 3, 112, 48},
+      {0, 0, 288, 56}, {412, 0, 112, 56}, {298, 3, 100, 48},
       {{16, 892, 118, 56}, {146, 892, 118, 56}, {276, 892, 118, 56}, {406, 892, 118, 56}, {}},
       4};
   static const Grid landscape = {
@@ -30,7 +30,7 @@ const Grid &gridFor(Orientation o, int columns) {
       {16, 204, 392, 580, 768},
       {72, 188, 304, 420, 0, 0, 0},
       {0, 0, 960, 64}, {172, 0, 648, 64}, {16, 72, 928, 452},
-      {16, 4, 144, 56}, {832, 4, 112, 56}, {172, 4, 648, 56},
+      {16, 4, 144, 56}, {832, 4, 112, 56}, {710, 8, 100, 48},
       {{172, 4, 120, 56}, {304, 4, 120, 56}, {436, 4, 120, 56}, {568, 4, 120, 56}, {700, 4, 120, 56}},
       5};
   static const Grid landscape4 = {
@@ -38,14 +38,14 @@ const Grid &gridFor(Orientation o, int columns) {
       {16, 251, 486, 721, 0},
       {72, 188, 304, 420, 0, 0, 0},
       {0, 0, 960, 64}, {172, 0, 648, 64}, {16, 72, 928, 452},
-      {16, 4, 144, 56}, {832, 4, 112, 56}, {172, 4, 648, 56},
+      {16, 4, 144, 56}, {832, 4, 112, 56}, {710, 8, 100, 48},
       {{172, 4, 120, 56}, {304, 4, 120, 56}, {436, 4, 120, 56}, {568, 4, 120, 56}, {700, 4, 120, 56}},
       5};
   if (o == Orientation::Portrait) return portrait;
   return columns == 4 ? landscape4 : landscape;
 }
 
-Rect sleepIndicatorRect(Orientation o) { return gridFor(o).sleepIndicator; }
+Rect sleepBadgeRect(Orientation o) { return gridFor(o).sleepBadge; }
 
 Rect cellRect(const Grid &g, int c, int r, int w, int h) {
   return {g.colX[c], g.rowY[r], w * g.cellW + (w - 1) * kGap, h * kCellH + (h - 1) * kGap};
@@ -201,7 +201,7 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
   L.content = g.content;
   L.refreshHit = g.refreshHit;
   L.settingsHit = g.settingsHit;
-  L.sleepIndicator = g.sleepIndicator;
+  L.sleepBadge = g.sleepBadge;
   if (T > 0) activeTab = std::min(std::max(activeTab, 0), T - 1);
   else activeTab = 0;
   L.activeTab = activeTab;

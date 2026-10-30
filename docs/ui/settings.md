@@ -42,8 +42,8 @@ No Home Assistant entity or service is used except the shared state fetch.
      (active tab kept, sub-page clamped), then **one full refresh** of the tab
      screen (STYLE.md section 10; Settings exit is always a full refresh).
    - Wake mode, refresh interval: used the next time the device prepares to
-     sleep (power module reads the saved settings). The sleep indicator variant
-     (STYLE.md 5.5) follows the saved wake mode.
+     sleep (power module reads the saved settings). The sleep badge (one for all wake modes)
+     (STYLE.md 5.5) is the same for every wake mode.
    - Idle timeout: used from the moment Settings is left.
    - Debug log: used from the moment Settings is left (SD logging starts/stops; no SD access while Off).
    - Demo mode: applied on leaving, like orientation: the config source is
@@ -57,7 +57,7 @@ No Home Assistant entity or service is used except the shared state fetch.
    (not the edited idle value, so lowering it to 10 s cannot cut the user off
    mid-edit). On expiry the screen auto-leaves (saves, applies orientation,
    draws the tab screen with a full refresh) and then sleeps, so the frozen
-   image is never a stale Settings page; the sleep indicator is then drawn on
+   image is never a stale Settings page; the sleep badge is then drawn on
    the tab screen. OPEN-S1.
 6. **Touch Wake note.** While wake mode is Touch or Touch & Button (in the
    buffer), the note slot shows an alert box `Touch wake shortens battery life. / Button wake is

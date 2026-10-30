@@ -8,7 +8,7 @@ rectangles are in `docs/ui/widgets.md`; the Settings screen is in
 
 Revision 3 (compact): cell 104 high, gap 12, touch minimum 64, portrait 2 x 7,
 landscape 5 x 4 (or 4 x 4 with `landscape_columns: 4`, section 2a), "wide" widgets (2 cells portrait, 3 landscape), all types are
-1 row high, new hit kind `settings`, new rect `sleepIndicator`, focus ring and
+1 row high, new hit kind `settings`, new rect `sleepBadge`, focus ring and
 dirty inflation 6.
 
 ## 1. Inputs and outputs
@@ -20,7 +20,7 @@ visible tab group (derived, see 5).
 Output `Layout`:
 - `statusBar` rect (portrait (0,0,540,56); landscape the whole top bar
   (0,0,960,64)), `tabBar` rect (redraw region of the tab slots), `refreshHit`
-  and `settingsHit` rects (the two touchable status areas), `sleepIndicator`
+  and `settingsHit` rects (the two touchable status areas), `sleepBadge`
   rect (STYLE.md 5.5; the firmware draws it, the engine only supplies the rect);
 - `tabSlots[]`: slot rects, each with `{kind: tab|overflow|empty, tabIndex}`;
 - `pager`: rect, prev/next button rects, label rect, `visible` flag, `subPage`,
@@ -30,8 +30,7 @@ Output `Layout`:
 - `clampReports[]`: widgets whose requested size was changed.
 
 Note (task 038): no rect changes. The stale chip is gone (clock icon instead, STYLE.md 5.3); the
-status label redraw region equals `refreshHit`; the sleep indicator is an outline pill inside the
-same `sleepIndicator` rect.
+status label redraw region equals `refreshHit`; the sleep indicator is now the Zz badge (STYLE.md 5.5, `sleepBadge` rect).
 
 ## 2. Grid geometry
 
@@ -41,7 +40,8 @@ same `sleepIndicator` rect.
 | Status bar | (0,0,540,56), rule (0,54,540,2) | top bar (0,0,960,64), status and tabs share it |
 | Refresh hit area | (0,0,288,56) | (16,4,144,56) |
 | Settings hit area | (412,0,112,56) | (832,4,112,56) |
-| Sleep indicator rect | (292,3,112,48) | (172,4,648,56) |
+| Sleep badge region | (298,3,100,48) | (710,8,100,48) |
+| Sleep badge rect (96x44) | (300,5,96,44) | (712,10,96,44), inside last tab slot (700,4,120,56) |
 | Tab bar (redraw region) | (0,880,540,80) | (172,0,648,64) |
 | Content area | (16,68,508,800) | (16,72,928,452) |
 | Columns / rows | 2 / 7 | 5 / 4 |
@@ -233,7 +233,7 @@ The `refreshHit` and `settingsHit` rects never overlap a tab slot or each other
 (landscape: refresh ends x=160, first slot starts 172, last slot ends 820,
 settings starts 832; portrait: refresh ends x=288, settings starts 412) or a
 widget (portrait: both end y=56, grid starts y=68; landscape: both end y=60, grid
-starts y=72). The sleep indicator region is not a hit target (it exists only
+starts y=72). The sleep badge region is not a hit target (it exists only
 while asleep).
 
 Sub-region id 0 means "widget body". Widgets with a single action (toggles)
@@ -284,8 +284,8 @@ focus". Examples: NEXT in TAB mode switches to the next tab and the (inner)
 tab frame appears on it; PUSH enters WIDGET mode and the ring appears on the
 first focusable widget; LONG_PUSH opens Settings (no ring). The same applies to
 the first event after a touch-only period: the ring is drawn as part of the
-result of the action. (The sleep indicator is cleared before the event is
-handled, STYLE.md 5.5; in landscape this restores the tab strip, so the tab
+result of the action. (The sleep badge is cleared before the event is
+handled, STYLE.md 5.5; in landscape this restores the last tab slot, so the tab
 frame can be drawn.)
 
 **TAB mode** (default). The focus is the active tab; its button shows the
@@ -374,7 +374,7 @@ are generated from it.
   (0,880,540,80), content (16,68,508,800). Landscape: statusBar (0,0,960,64),
   refreshHit (16,4,144,56), settingsHit (832,4,112,56), tabBar (172,0,648,64),
   content (16,72,928,452).
-- (new) `sleepIndicator` rect: portrait (292,3,112,48); landscape (172,4,648,56).
+- (new, superseded) `sleepBadge` region: portrait (298,3,100,48); landscape (710,8,100,48); see STYLE.md 5.5.
 - (changed) Columns x: portrait 16, 276; landscape 16, 204, 392, 580, 768.
   Rows y: portrait 68, 184, 300, 416, 532, 648, 764; landscape 72, 188, 304, 420.
   Columns / rows: portrait 2 / 7, landscape 5 / 4.
@@ -511,9 +511,7 @@ All are (changed) versus the previous geometry unless marked (new).
 - OPEN-3: Touch wake: the tap that wakes the device is assumed to be consumed
   (not delivered as a tap, otherwise it could hit a tab or widget that was just
   revealed under the sleep indicator). Needs hardware verification.
-- OPEN-4: in landscape the sleep indicator hides the tab labels while the device
-  sleeps. Alternative: show it only over slots 2..4 (loses the "tap/press" text);
-  not done.
+- OPEN-4 (resolved, task 059): the landscape badge covers only the last tab slot; other tabs stay visible.
 - OPEN-5 (was OPEN-4 and OPEN-5, resolved): the portrait status bar is now a real
   56 px bar, so the refresh hit area no longer reaches into hidden space; the
   battery cluster is the touch path to Settings.

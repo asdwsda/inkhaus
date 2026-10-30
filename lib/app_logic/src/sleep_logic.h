@@ -35,9 +35,9 @@ WakePin pinForExt1(uint64_t status_mask);
 
 // ---- sleep indicator -----------------------------------------------------------------------------
 
-enum class Indicator : uint8_t { None = 0, Button = 1, Touch = 2 };
-// STYLE.md 5.5: Touch only when the plan wakes on touch and it is not a low-battery sleep.
-Indicator indicatorFor(const power::SleepPlan &plan, power::Session session);
+// STYLE.md 5.5: a single Zz badge for every wake mode and low-battery sleep. The value is persisted
+// (1 = a badge is on the panel).
+enum class Indicator : uint8_t { None = 0, Badge = 1 };
 const char *indicatorName(Indicator i);
 // From a persisted byte; anything unknown is None.
 Indicator indicatorFromByte(uint8_t b);

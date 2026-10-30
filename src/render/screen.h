@@ -11,17 +11,15 @@ namespace render {
 // Link phase shown by the status bar (STYLE.md 5.3). None: nothing drawn (config error screen).
 enum class Link { None, ConnectingWifi, Fetching, Online, Offline, AuthError, Demo };
 
-// Sleep indicator (STYLE.md 5.5): drawn last, over the status bar (portrait: free space) or the tab strip
-// (landscape), only in the frame that is on the panel while the device sleeps.
-enum class SleepIndicator { None, Button, Touch };
-
 struct StatusInfo {
   int batteryPct = 100;
   Link link = Link::None;
   // Refresh label (one line in portrait, two in landscape); outdated = clock icon after it (STYLE.md 5.3).
   std::string label1, label2;
   bool outdated = false;
-  SleepIndicator sleepIndicator = SleepIndicator::None;
+  // Sleep badge (STYLE.md 5.5): "Zz" in a black rounded badge, drawn last, only in the frame that is on
+  // the panel while the device sleeps. Region: ui::sleepBadgeRect(orientation).
+  bool sleepBadge = false;
   bool mockLabel = false;  // test builds: draw the mockup's wifi icon and "updated 14:05" instead of "Demo"
 };
 

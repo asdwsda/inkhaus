@@ -155,7 +155,7 @@ Cell pitch = cell size + 12.
 | Status bar / top bar | status bar (0, 0, 540, 56) | top bar (0, 0, 960, 64), holds status AND tabs |
 | Refresh hit area | (0, 0, 288, 56) | (16, 4, 144, 56) |
 | Settings hit area (battery cluster) | (412, 0, 112, 56) | (832, 4, 112, 56) |
-| Sleep indicator region | (292, 3, 112, 48) | (172, 4, 648, 56) |
+| Sleep badge region | (298, 3, 100, 48) | (710, 8, 100, 48) |
 | Tab bar (redraw region) | bottom: (0, 880, 540, 80) | strip inside the top bar: (172, 0, 648, 64) |
 | Content area | (16, 68, 508, 800) | (16, 72, 928, 452) |
 | Columns x rows | 2 x 7 | 5 x 4 |
@@ -261,8 +261,8 @@ every element: **cy = 27** (the 54 px above the rule).
 |---------|------|-------|
 | Connection icon (S, 24x24) | (16, 15, 24, 24) | see 5.3 |
 | Refresh label text | x = 48, cy = 27, left, one line, max width 236 (to x = 284) | `updated 14:05` |
-| Refresh hit area | (0, 0, 288, 56) | invisible; 4 px from the sleep indicator region |
-| Sleep indicator region | (292, 3, 112, 48) | see 5.5 |
+| Refresh hit area | (0, 0, 288, 56) | invisible; 10 px from the sleep badge region |
+| Sleep badge region | (298, 3, 100, 48) | see 5.5 |
 | Battery icon | origin (428, 17), 40 x 20 | see 5.4; cy = 27 |
 | Battery percent | right edge x = 524, cy = 27, rect (472, 0, 52, 54) | `78%` |
 | Settings hit area | (412, 0, 112, 56) | invisible; battery icon + percent |
@@ -343,54 +343,46 @@ screen, not specified here.)
 section 6). This is the touch path to Settings; the rocker path is a long push.
 No feedback on the cluster itself (the screen changes with a full refresh).
 
-### 5.5 Sleep indicator
+### 5.5 Sleep badge
 
-Purpose: the e-ink image is frozen while the device sleeps and looks awake. Right
-before every power-off or deep sleep the firmware redraws **only the indicator
-region** (partial refresh) so the user knows the device is asleep and how to
-wake it. Chosen by the sleep plan:
+Purpose: the e-ink image is frozen while the device sleeps and looks awake. Right before every
+power-off or deep sleep the firmware draws **only the badge region** (partial refresh) so the user
+sees "asleep, not usable". One badge for every wake mode (Touch, Button, Both) and for low-battery
+sleep; no wake text or glyph (the battery cluster already shows low battery). 1-bit INK/PAPER only.
 
-| Variant | Used for | Icons |
-|---------|----------|-------|
-| Button | wake mode Button, and low battery in any mode (touch wake is off then) | moon + `Zz` + `sidebtn`: a bar at the device edge with an arrow pointing at it |
-| Touch | wake mode Touch | moon + `Zz` + `finger`: a tap symbol, a filled dot with two concentric ripple rings |
+**Drawing primitives (identical in both orientations, only the position differs)**
+1. Badge: filled rounded rect 96 x 44, radius 12, INK (grey 0), no border.
+2. Label: `Zz`, DejaVu Sans **Bold** 30 px, fill PAPER (grey 15), horizontally centred on the badge
+   centre x, vertically centred (middle baseline) at badge cy + 1.
+3. Nothing else. No icons.
 
-Look (both orientations, revised task 038): a calm **outline pill**, no fill (PAPER inside, 2 px
-INK border, fully rounded), with a small moon, a bold `Zz` and the wake glyph, all INK, centre-line
-aligned. No heavy black block; the pill is lighter to draw and to clear.
+| | Portrait | Landscape |
+|---|---|---|
+| Badge rect | (300, 5, 96, 44) | (712, 10, 96, 44) |
+| Centre (cx, cy) | (348, 27) | (760, 32) |
+| Label anchor | x = 348, cy = 28 | x = 760, cy = 33 |
+| Redraw region (badge + 2 px) | (298, 3, 100, 48) | (710, 8, 100, 48) |
+| Where | free gap between the status label (clock icon ends x = 284 at most) and the battery cluster (starts 412) | the **last tab slot** (700, 4, 120, 56), badge centred in it |
 
-**Portrait.** Pill (293, 4, 110, 46), radius 23 (inside the region (292, 3, 112, 48), cy = 27). It sits
-in the free space between the label (clock icon ends x = 284) and the battery cluster (starts 412),
-so it replaces nothing. Contents: `moon` at (304, 13, 28, 28); `Zz` bold F18 at x = 337, cy = 27;
-wake glyph (`sidebtn` for Button, `finger` for Touch) S at (368, 15, 24, 24). Icons only (the
-glyph tells the variant).
-
-**Landscape.** Pill (173, 5, 646, 54), radius 27 (region (172, 4, 648, 56), cy = 32). It replaces
-the tab strip while shown. Contents, the group centred in the pill: `moon` 32 x 32 at y = 16; 8 px;
-`Zz` bold F24 (31 wide); 16 px; text F24 INK; 12 px; wake glyph 32 x 32 at y = 16.
-
-| Variant | Text | Group width | Group left x | text starts |
-|---------|------|-------------|--------------|-------------|
-| Button | `Press the side button to wake` | 488 | 252 | x = 339 |
-| Touch | `Tap the screen to wake` | 413 | 289 | x = 376 |
+Landscape: only the last slot is covered; the other tabs stay visible (the old design hid the
+whole tab strip). With 5 tabs the slot shows tab 5 (or the overflow slot) and is hidden while
+asleep.
 
 Rules:
-- Drawn **last**, after any ghost-clearing full refresh that is due before sleep
-  (section 10), then the EPD is powered off.
-- **Cleared on wake**: the first draw after any wake restores the region with its
-  normal content (portrait: PAPER fill, nothing else; landscape: the tab strip
-  with the active tab highlighted), partial refresh, region only. This is the one
-  draw that happens before first input or data (the old "never redraw on wake"
-  rule excepts it). A scheduled (RTC) wake that changes nothing draws nothing: the
-  indicator simply stays, as long as the variant is unchanged.
-- The tap that wakes the device (wake mode Touch) is consumed as the wake event
-  and not delivered to the tab strip or widgets (OPEN-3 in layout.md).
-- While shown the region is not interactive. It never overlaps another hit area
-  in portrait (refresh hit ends x = 288, indicator starts 292 and ends 404,
-  settings hit starts 412).
-- Not shown while the Settings screen is open; Settings auto-leaves to the tab
-  screen before sleeping (settings.md rule 5), then the indicator is drawn.
-- The `touch_wake` flag of the sleep plan (ARCHITECTURE.md) selects the variant.
+- Drawn **last**, after any ghost-clearing full refresh that is due before sleep (section 10),
+  then the EPD is powered off. If the draw fails the device sleeps without it (no retry).
+- **Cleared on wake**: the first draw after any wake redraws the redraw region from the normal
+  layout (portrait: PAPER fill; landscape: the last tab slot with its normal state, active or
+  not), partial refresh, region only. Being small (100 x 48) it can be the first thing drawn,
+  before Wi-Fi/fetch (task 058). A scheduled (RTC) wake that changes nothing draws nothing: the
+  badge stays.
+- The tap that wakes the device (wake mode Touch) is consumed as the wake event and not delivered
+  to the tab strip or widgets (OPEN-3 in layout.md).
+- Not a hit target. It never overlaps another hit area (portrait: refresh hit ends x = 288, badge
+  region 298..398, settings hit starts 412; landscape: region inside slot 5, x 710..810).
+- Not shown while the Settings screen is open; Settings auto-leaves to the tab screen before
+  sleeping (settings.md rule 5), then the badge is drawn.
+- The sleep plan no longer selects a variant; the `touch_wake` flag does not affect the badge.
 
 ## 6. Tab bar
 
@@ -459,7 +451,7 @@ last (no wrap by touch; the rocker wraps, see layout.md).
 
 Line/solid glyphs on a 24x24 design grid, drawn as vector paths, stroke 2
 (scales with size). Sizes: **S = 24** (status bar, badges, inline in text
-lines), **M = 40** (buttons, leading icons of 1x1 toggles, sleep indicator),
+lines), **M = 40** (buttons, leading icons of 1x1 toggles, sleep badge),
 **L = 48** (weather condition icon, 1x1 and 2x1). XL (64) is retired: it left no room
 for the temperature and humidity on one row.
 
