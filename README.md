@@ -15,6 +15,12 @@ Version 1.1.0, see [CHANGELOG.md](CHANGELOG.md).
 
 *Design mockups of the two layouts.*
 
+| Settings | History graph | Brightness |
+|---|---|---|
+| ![Settings mockup](docs/ui/png/settings-portrait.png) | ![History graph mockup](docs/ui/png/history-line-portrait.png) | ![Brightness mockup](docs/ui/png/brightness-portrait.png) |
+
+*Settings, the history graph of a sensor, and the brightness control of a light (design mockups).*
+
 ## Features
 
 - Tabs and widgets defined in a YAML file on the SD card; no reflashing to change the layout.
