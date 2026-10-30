@@ -1,6 +1,6 @@
 # 064: Flasher: optional YAML upload to the SD card
 
-Status: in-progress
+Status: done
 Depends on: 062, 020
 UI spec: in this file
 Needs device: yes
@@ -14,5 +14,6 @@ The tool never logs file contents (secrets).
 - tools/flasher/
 
 ## Acceptance criteria
-- [ ] Unit tests for the protocol framing against provision.py's format.
-- [ ] Device: a test-*.yaml upload round-trips (CRC confirmed by the device); file contents never appear in logs.
+- [x] Unit tests for the protocol framing against provision.py's format.
+- [x] Device: a test-*.yaml upload round-trips (CRC confirmed by the device); file contents never appear in logs.
+- Device check 2026-10-30 (user): install with progress, settings kept, YAML upload + automatic restart OK.
