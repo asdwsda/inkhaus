@@ -98,9 +98,19 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
     dns_ms = millis() - t;
     net_timing_tls_reset();
     t = millis();
-    client->connect(host.c_str(), port, connect_timeout_ms_);  // result checked by HTTPClient
+    const bool connected = client->connect(host.c_str(), port, connect_timeout_ms_);
     conn_ms = millis() - t;
     tls_ms = net_timing_tls_ms();
+    if (!connected) {
+      // Same outcome as HTTPClient's own connect failure (HTTPC_ERROR_CONNECTION_REFUSED), without
+      // a second attempt inside sendRequest.
+      out.error = HTTPClient::errorToString(HTTPC_ERROR_CONNECTION_REFUSED).c_str();
+      drop();
+      out.ms = millis() - start;
+      Serial.printf("NETT: dns=%u tcp=%u tls=%u ttfb=0 total=%u reused=0 failed=1\n", (unsigned)dns_ms,
+                    (unsigned)(conn_ms > tls_ms ? conn_ms - tls_ms : 0), (unsigned)tls_ms, (unsigned)out.ms);
+      return out;
+    }
   }
 
   http_.setConnectTimeout(connect_timeout_ms_);

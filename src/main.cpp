@@ -129,9 +129,10 @@ static void updateStatus() {
   bool failed = false;
   if (g_real) {
     phase = P::ConnectingWifi;  // before the session driver exists (first frame)
+    if (g_keepStatus && g_drv && g_drv->status() != session::Status::Connecting) g_keepStatus = false;  // resolved
     if (g_keepStatus && app_logic::plausibleEpoch(g_restoredEpoch)) {
-      // No transient "connecting" in the first frame: the cached time is the last known state (the loop
-      // replaces it as soon as the session reports something else).
+      // No transient "connecting" after a deep-sleep wake: the cached time is the last known state until
+      // the session resolves (Online, Offline or AuthError).
       phase = P::Online;
       lastOk = g_restoredEpoch;
     } else if (g_drv) {
@@ -653,13 +654,15 @@ void setup() {
   if (kind == power::Session::LowBattery) lowBatterySleep();  // returns only if sleeping failed
   if (earlyClear) present::earlyClear(pill.x, pill.y, pill.w, pill.h);  // no wait: the CPU work below overlaps the waveform
   if (!g_scheduled) input::begin();  // a scheduled refresh never initialises touch input
+  // The frame allocations need no bus: do them while the early waveform runs, before the config load takes the SD.
+  bool framesReady = earlyClear && present::begin();
 
   // Cold boot splash (docs/ui/splash.md): power-on, reset button or flashing. One GC16 refresh, then the rest of setup runs.
-  bool framesReady = false, splashed = false;
+  bool splashed = false;
   uint32_t splashMs = 0;
   {
     const esp_reset_reason_t rr = esp_reset_reason();
-    if (!boot::fallbackActive() && (rr == ESP_RST_POWERON || rr == ESP_RST_EXT) && present::begin()) {
+    if (!boot::fallbackActive() && (rr == ESP_RST_POWERON || rr == ESP_RST_EXT) && (framesReady || present::begin())) {
       framesReady = true;
       // Every POWERON/EXT reset shows the splash (deep-sleep wakes never get here); the app then follows
       // with a full redraw (bootFrame(... || splashed) below).
@@ -747,7 +750,7 @@ void setup() {
   }
   present::EarlyClear early{pill.x, pill.y, pill.w, pill.h, [](M5Canvas &c) { render::drawSleepBadgeOverlay(c, g_settings.orientation); }};
   present::bootFrame(boot::fallbackActive() || splashed, earlyClear ? &early : nullptr);  // after the splash: ghost-free full redraw
-  g_keepStatus = false;  // the loop compares the live status with this frame's and redraws what differs
+  // g_keepStatus stays set: updateStatus() clears it once the session leaves Connecting.
   boot::mark("first_draw");
   wakelog::writeDeferred();
 

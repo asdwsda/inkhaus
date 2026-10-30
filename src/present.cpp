@@ -398,6 +398,8 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
   auto &d = M5.Display;
   settleEarlyClear();  // before anything is written to the controller
   std::vector<uint16_t> stored;
+  // A timed-out early clear left the controller memory untrusted (waitAndCheck set g_forceFull).
+  if (g_forceFull) forceFull = true;
   const bool have = !forceFull && loadRecord(stored);
   boot::log("record", have ? "valid" : (forceFull ? "ignored_forced" : "none_or_other_geometry"));
   const uint32_t t0 = micros();
