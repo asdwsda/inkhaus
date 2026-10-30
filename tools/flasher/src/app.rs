@@ -3,6 +3,7 @@
 use crate::device::{self, PortEntry};
 use crate::error::Error;
 use crate::flash::{self, Phase};
+use crate::provision;
 use crate::releases::{self, Release};
 use crate::source;
 use eframe::egui;
@@ -19,6 +20,7 @@ enum Releases {
 enum Msg {
     Progress(String, f32),
     Done(Result<String, Error>),
+    Uploaded(Result<Vec<String>, Error>),
 }
 
 enum Outcome {
@@ -38,6 +40,8 @@ pub struct App {
     job: Option<Receiver<Msg>>,
     progress: (String, f32),
     outcome: Option<Outcome>,
+    upload_note: Option<Result<Vec<String>, Error>>,
+    can_restart: bool,
 }
 
 impl App {
@@ -59,6 +63,8 @@ impl App {
             job: None,
             progress: (String::new(), 0.0),
             outcome: None,
+            upload_note: None,
+            can_restart: false,
         }
     }
 
@@ -118,6 +124,44 @@ impl App {
         });
     }
 
+    fn start_upload(&mut self, ctx: &egui::Context) {
+        let Some(port) = self.port() else {
+            self.outcome = Some(Outcome::Err(Error::NoDevice));
+            return;
+        };
+        let Some(paths) = rfd::FileDialog::new().set_title("Choose config.yaml and/or secrets.yaml").add_filter("YAML", &["yaml"]).pick_files() else { return };
+        let mut files = Vec::new();
+        for p in paths {
+            let name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+            if !provision::valid_name(&name) {
+                self.upload_note = Some(Err(Error::Flash(format!("{name} cannot be uploaded; the files must be called config.yaml or secrets.yaml"))));
+                return;
+            }
+            match std::fs::read(&p) {
+                Ok(d) => files.push((name, d)),
+                Err(e) => {
+                    self.upload_note = Some(Err(Error::from(e)));
+                    return;
+                }
+            }
+        }
+        let (tx, rx) = channel();
+        self.job = Some(rx);
+        self.outcome = None;
+        self.upload_note = None;
+        self.can_restart = false;
+        self.progress = ("Uploading".into(), 0.0);
+        let ctx = ctx.clone();
+        std::thread::spawn(move || {
+            let send = |m: Msg| {
+                let _ = tx.send(m);
+                ctx.request_repaint();
+            };
+            let r = provision::upload_files(&port, &files, &mut |n, f| send(Msg::Progress(format!("Uploading {n}"), f)));
+            send(Msg::Uploaded(r));
+        });
+    }
+
     fn poll(&mut self, ctx: &egui::Context) {
         if let Ok(r) = self.rx_releases.try_recv() {
             self.releases = match r {
@@ -129,6 +173,12 @@ impl App {
             loop {
                 match rx.try_recv() {
                     Ok(Msg::Progress(t, f)) => self.progress = (t, f),
+                    Ok(Msg::Uploaded(r)) => {
+                        self.can_restart = r.is_ok();
+                        self.upload_note = Some(r);
+                        self.job = None;
+                        break;
+                    }
                     Ok(Msg::Done(r)) => {
                         self.outcome = Some(match r {
                             Ok(v) => Outcome::Ok(v),
@@ -236,16 +286,41 @@ impl eframe::App for App {
             self.version_ui(ui, busy);
             ui.add_space(16.0);
 
+            let can_port = !busy && self.port().is_some();
             let can = !busy && self.port().is_some() && (self.local.is_some() || self.selected_release().is_some());
             let btn = egui::Button::new(egui::RichText::new("Install").size(28.0)).min_size(egui::vec2(ui.available_width(), 64.0));
             if ui.add_enabled(can, btn).clicked() {
                 self.start(&ctx);
+            }
+            ui.add_space(8.0);
+            if ui.add_enabled(can_port, egui::Button::new("Upload YAML files...")).clicked() {
+                self.start_upload(&ctx);
             }
             ui.add_space(12.0);
             if busy {
                 ui.label(format!("{}...", self.progress.0));
                 ui.add(egui::ProgressBar::new(self.progress.1).show_percentage());
                 ui.label("Do not unplug the M5Paper.");
+            }
+            match &self.upload_note {
+                Some(Ok(lines)) => {
+                    for l in lines {
+                        ui.label(egui::RichText::new(format!("Uploaded. {l}")).color(egui::Color32::from_rgb(0, 130, 0)));
+                    }
+                }
+                Some(Err(e)) => {
+                    ui.label(egui::RichText::new(e.message()).size(16.0).color(egui::Color32::from_rgb(170, 0, 0)));
+                    ui.label(e.action());
+                }
+                None => {}
+            }
+            if self.can_restart && !busy {
+                if ui.button("Restart the M5Paper to use the new files").clicked() {
+                    if let Some(p) = self.port() {
+                        self.upload_note = Some(provision::restart(&p).map(|_| vec!["Restarting.".to_string()]));
+                    }
+                    self.can_restart = false;
+                }
             }
             match &self.outcome {
                 Some(Outcome::Ok(v)) => {

@@ -3,6 +3,7 @@ mod device;
 mod error;
 mod flash;
 mod manifest;
+mod provision;
 mod releases;
 mod source;
 
