@@ -1,6 +1,6 @@
 # 023: Wire Wi-Fi, Home Assistant and Settings into the app
 
-Status: in-progress
+Status: done
 Depends on: 017, 018, 019, 020, 021, 022 (phase 1), 008
 UI spec: docs/ui/STYLE.md, layout.md, widgets.md, settings.md (revision 5)
 Needs device: yes for the final check (with the user's config.yaml on SD)
@@ -90,3 +90,4 @@ its commands with the real modules:
   member non-null, canvas and IT8951 memory both show the state. Open/watch: if it recurs, log right
   after FetchDone (store size, member pointer) and the panel record decision on that boot. Regression
   test `test_fetch_reaches_widget_data` added.
+- Device session 2026-10-30 (tester): verified or superseded by later daily use; details in the session's device-checklist.md.
