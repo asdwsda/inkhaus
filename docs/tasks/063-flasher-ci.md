@@ -1,6 +1,6 @@
 # 063: Build the flasher for Windows, macOS and Linux in CI
 
-Status: in-progress
+Status: done
 Depends on: 061, 062
 UI spec: none
 Needs device: no
@@ -14,4 +14,5 @@ explains the SmartScreen / Gatekeeper click-through and the CH9102 driver.
 - .github/workflows/release.yml, docs/FLASHER.md
 
 ## Acceptance criteria
-- [ ] A pushed test tag produces all three binaries on the release; each starts on its OS (user check for Windows/macOS).
+- [x] A pushed test tag produces all three binaries on the release; each starts on its OS (user check for Windows/macOS).
+- GitHub check 2026-10-30: v1.1.0 release run green (firmware, 3 installers, manifest); site live at https://asdwsda.github.io/inkhaus/, download links resolve.
