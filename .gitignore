@@ -9,3 +9,4 @@ secrets.yaml
 __pycache__/
 a.out
 tools/flasher/target/
+test-firmware/
