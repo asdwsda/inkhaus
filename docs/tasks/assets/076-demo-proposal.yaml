@@ -1,0 +1,106 @@
+# M5Paper HA remote: built-in demo dashboard (schema v1).
+#
+# Shown (with fake values, no Home Assistant) when the SD card has no config.yaml. Embedded in the
+# firmware. It doubles as a showcase of every widget type and state look. No connection, no secrets.
+# Four tabs, each fills one page in portrait (2x7 cells) and landscape (5x4 cells), no pager.
+
+version: 1
+
+groups:
+  downstairs_shutters: [cover.living_room_shutter, cover.kitchen_shutter, cover.hall_shutter]
+
+tabs:
+  - title: Living room
+    widgets:
+      - entity: cover.living_room_shutter
+        name: Shutter
+      - group: downstairs_shutters
+        name: Downstairs shutters
+      - entity: climate.living_room
+      - entity: light.living_room_ceiling       # brightness 80 %
+      - entity: light.living_room_floor_lamp
+        name: Floor lamp
+      - entity: light.kitchen_ceiling           # brightness 50 %
+        name: Kitchen
+      - entity: switch.living_room_fan
+      - entity: switch.tv
+        name: TV
+      - entity: switch.coffee_machine_fails     # a tap ends in the Failed state
+        name: Coffee (fails)
+      - entity: binary_sensor.living_room_window
+      - entity: automation.night_mode
+        name: Night mode
+  - title: Upstairs
+    widgets:
+      - entity: cover.bedroom_shutter
+        name: Bedroom shutter
+      - entity: climate.bedroom
+      - entity: vacuum.upstairs
+        name: Robot
+      - entity: light.bedroom_ceiling
+        name: Bedroom
+      - entity: light.bedroom_left
+        name: Left
+      - entity: light.bedroom_right
+        name: Right
+      - entity: light.office_desk
+        name: Desk
+      - entity: light.bathroom
+      - entity: light.guest_room
+        name: Guest
+      - entity: switch.printer
+        name: Printer
+      - entity: automation.good_night
+        name: Night
+  - title: Sensors
+    widgets:
+      - entity: sensor.living_room_climate
+        name: Living room
+        size: 2x1
+        attribute: temperature
+        details: [humidity, dew_point]
+        decimals: 1
+      - entity: sensor.power_meter
+        name: Power
+        size: 2x1
+        details: [today]
+      - entity: weather.home
+      - entity: sensor.outside_temperature      # tap opens the history popup
+        name: Outside
+      - entity: sensor.pressure
+        details: [trend]
+      - entity: sensor.attic_climate
+        name: Attic
+        attribute: temperature
+        details: [humidity]
+        decimals: 1
+      - entity: sensor.old_probe_unavailable    # deliberately unavailable
+        name: Old probe
+      - entity: binary_sensor.front_door
+        name: Front door
+      - entity: binary_sensor.garage_door
+        name: Garage
+      - entity: binary_sensor.hall_motion
+        name: Hall
+      - entity: binary_sensor.basement_moisture
+        name: Basement
+  - title: Garden
+    widgets:
+      - entity: sensor.outside_temperature      # history graph on the tab (task 071)
+        name: Outside
+        display: graph
+        decimals: 1
+      - entity: sensor.power_meter
+        name: Power per day
+        display: graph
+        history: { hours: 168, type: bar }
+      - entity: binary_sensor.front_door
+        name: Front door
+        display: graph
+        size: 2x1
+      - entity: cover.terrace_shutter
+        name: Terrace
+      - entity: switch.garden_pump
+        name: Pump
+      - entity: switch.terrace_heater
+        name: Heater

@@ -404,7 +404,7 @@ static config::Config demoConfig() {
 
 void test_demo_yaml_showcase() {
   config::Config cfg = demoConfig();
-  TEST_ASSERT_TRUE(cfg.tabs.size() > 5);  // tab overflow
+  TEST_ASSERT_EQUAL_INT(4, (int)cfg.tabs.size());
   auto st = demoStates(cfg);
   TEST_ASSERT_EQUAL(cfg.entityIds.size(), st.size());
   int unavailable = 0;
@@ -420,7 +420,7 @@ void test_demo_yaml_showcase() {
       TEST_ASSERT_EQUAL_INT(0, (int)f.clampReports.size());
       pager |= f.pagerVisible;
     }
-    TEST_ASSERT_TRUE(pager);
+    TEST_ASSERT_FALSE(pager);
   }
 }
 

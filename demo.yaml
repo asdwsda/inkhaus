@@ -2,13 +2,12 @@
 #
 # Shown (with fake values, no Home Assistant) when the SD card has no config.yaml. Embedded in the
 # firmware. It doubles as a showcase of every widget type and state look. No connection, no secrets.
+# Four tabs, each fills one page in portrait (2x7 cells) and landscape (5x4 cells), no pager.
 
 version: 1
 
 groups:
   downstairs_shutters: [cover.living_room_shutter, cover.kitchen_shutter, cover.hall_shutter]
-  all_shutters: [cover.living_room_shutter, cover.kitchen_shutter, cover.hall_shutter, cover.bedroom_shutter]
-  mixed_shutters: [cover.terrace_shutter, cover.bedroom_shutter, cover.hall_shutter]
 
 tabs:
   - title: Living room
@@ -17,116 +16,27 @@ tabs:
         name: Shutter
       - group: downstairs_shutters
         name: Downstairs shutters
-      - entity: light.living_room_ceiling
+      - entity: climate.living_room
+      - entity: light.living_room_ceiling       # brightness 80 %
       - entity: light.living_room_floor_lamp
         name: Floor lamp
+      - entity: light.kitchen_ceiling           # brightness 50 %
+        name: Kitchen
       - entity: switch.living_room_fan
-      - entity: switch.coffee_machine_fails   # a tap ends in the Failed state
+      - entity: switch.tv
+        name: TV
+      - entity: switch.coffee_machine_fails     # a tap ends in the Failed state
         name: Coffee (fails)
-      - entity: climate.living_room
       - entity: binary_sensor.living_room_window
       - entity: automation.night_mode
         name: Night mode
-  - title: Sensors
+  - title: Upstairs
     widgets:
-      - entity: sensor.living_room_climate
-        name: Living room
-        size: 2x1
-        attribute: temperature
-        details: [humidity, dew_point]
-        decimals: 1
-      - entity: sensor.outside_temperature
-        name: Outside
-      - entity: sensor.attic_climate
-        name: Attic
-        attribute: temperature
-        details: [humidity]
-        decimals: 1
-      - entity: sensor.power_meter
-        name: Power
-        size: 2x1
-        details: [today]
-      - entity: sensor.pressure
-        name: Pressure
-        details: [trend]
-      - entity: sensor.old_probe_unavailable   # deliberately unavailable
-        name: Old probe
-      - entity: weather.home
-      - entity: weather.garden
-        size: 1x1
-  - title: Binary
-    widgets:
-      - entity: binary_sensor.front_door
-        name: Front door
-      - entity: binary_sensor.garage_door
-        name: Garage
-      - entity: binary_sensor.living_room_window
-        name: Window
-      - entity: binary_sensor.terrace_opening
-        name: Terrace
-      - entity: binary_sensor.hall_motion
-        name: Hall
-      - entity: binary_sensor.office_occupancy
-        name: Office
-      - entity: binary_sensor.phone_presence
-        name: Phone
-      - entity: binary_sensor.basement_moisture
-        name: Basement
-      - entity: binary_sensor.kitchen_smoke
-        name: Smoke
-      - entity: binary_sensor.boiler_gas
-        name: Gas
-      - entity: binary_sensor.server_problem
-        name: Server
-      - entity: binary_sensor.remote_battery
-        name: Remote
-      - entity: binary_sensor.router_connectivity
-        name: Router
-      - entity: binary_sensor.front_lock
-        name: Lock
-      - entity: binary_sensor.charger_plug
-        name: Charger
-      - entity: binary_sensor.mains_power
-        name: Mains
-      - entity: binary_sensor.plain_contact
-        name: Plain
-  - title: Covers & vacuum
-    widgets:
-      - entity: cover.terrace_shutter
-        name: Terrace (open)
-      - entity: cover.living_room_shutter
-        name: Living room
-      - entity: cover.hall_shutter
-        name: Hall
       - entity: cover.bedroom_shutter
-        name: Bedroom
-      - group: mixed_shutters
-        name: Mixed group
-      - entity: vacuum.robot
-        name: Docked
-      - entity: vacuum.upstairs
-        name: Cleaning
-      - entity: vacuum.basement
-        name: Low battery
-      - entity: vacuum.attic
-        name: Error
-  - title: Climate
-    widgets:
-      - entity: climate.living_room
+        name: Bedroom shutter
       - entity: climate.bedroom
-      - entity: sensor.outside_temperature
-        name: Outside
-      - entity: weather.home
-  - title: Lights
-    widgets:
-      - entity: light.living_room_ceiling
-      - entity: light.living_room_floor_lamp
-        name: Floor lamp
-      - entity: light.kitchen_ceiling
-        name: Kitchen
-      - entity: light.kitchen_counter
-        name: Counter
-      - entity: light.hall
+      - entity: vacuum.upstairs
+        name: Robot
       - entity: light.bedroom_ceiling
         name: Bedroom
       - entity: light.bedroom_left
@@ -135,59 +45,48 @@ tabs:
         name: Right
       - entity: light.office_desk
         name: Desk
-      - entity: light.office_ceiling
-        name: Office
       - entity: light.bathroom
       - entity: light.guest_room
         name: Guest
-      - entity: switch.garden_pump
-        name: Pump
-      - entity: switch.terrace_heater
-        name: Heater
-      - entity: switch.washing_machine
-        name: Washer
-      - entity: switch.dryer
-        name: Dryer
       - entity: switch.printer
         name: Printer
-      - entity: switch.tv
-        name: TV
-      - entity: switch.stereo
-        name: Stereo
-      - entity: switch.aquarium
-        name: Aquarium
-      - entity: automation.good_morning
-        name: Morning
       - entity: automation.good_night
         name: Night
-      - entity: automation.away
-        name: Away
-      - entity: automation.movie
-        name: Movie
-  - title: Upstairs
+  - title: Sensors
     widgets:
-      - entity: light.bedroom_ceiling
-        name: Bedroom
-      - entity: climate.bedroom
-      - entity: cover.bedroom_shutter
-        name: Bedroom shutter
-  - title: Garage
-    widgets:
+      - entity: sensor.living_room_climate
+        name: Living room
+        size: 2x1
+        attribute: temperature
+        details: [humidity, dew_point]
+        decimals: 1
+      - entity: sensor.power_meter
+        name: Power
+        size: 2x1
+        details: [today]
+      - entity: weather.home
+      - entity: sensor.outside_temperature      # tap opens the history popup
+        name: Outside
+      - entity: sensor.pressure
+        details: [trend]
+      - entity: sensor.attic_climate
+        name: Attic
+        attribute: temperature
+        details: [humidity]
+        decimals: 1
+      - entity: sensor.old_probe_unavailable    # deliberately unavailable
+        name: Old probe
+      - entity: binary_sensor.front_door
+        name: Front door
       - entity: binary_sensor.garage_door
-        name: Door
-      - entity: switch.garage_light
-        name: Light
+        name: Garage
+      - entity: binary_sensor.hall_motion
+        name: Hall
+      - entity: binary_sensor.basement_moisture
+        name: Basement
   - title: Garden
     widgets:
-      - entity: switch.garden_pump
-        name: Pump
-      - entity: weather.garden
-        size: 1x1
-      - entity: person.alice
-        type: sensor
-  - title: Graphs
-    widgets:
-      - entity: sensor.outside_temperature   # history graph on the tab (task 071)
+      - entity: sensor.outside_temperature      # history graph on the tab (task 071)
         name: Outside
         display: graph
         decimals: 1
@@ -199,3 +98,9 @@ tabs:
         name: Front door
         display: graph
         size: 2x1
+      - entity: cover.terrace_shutter
+        name: Terrace
+      - entity: switch.garden_pump
+        name: Pump
+      - entity: switch.terrace_heater
+        name: Heater

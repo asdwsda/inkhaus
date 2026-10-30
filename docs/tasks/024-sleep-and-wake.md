@@ -55,3 +55,5 @@ of the boot/refresh rules):
   (still powered: USB)` as designed.
 - Follow-up (task 023): a config with no entities makes the HA fetch fail with Parse (empty template);
   "nothing to fetch" should count as success.
+- Battery test plan (user, 2026-10-30): data collection starts with v1.2.0. Flash it, turn on the debug log (Settings, Tools), charge to full, unplug and use normally. Each wake logs SLEEP battery_mv and awake_ms to the SD wakelog. Read it out later over USB (the `wakelog` serial command) and analyze: mV per day, wakes per day, mean awake ms.
+- Confirmed by the user (2026-10-30): the battery test starts right after the v1.2.0 install, with the debug log on.
