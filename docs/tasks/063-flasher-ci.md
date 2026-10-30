@@ -1,6 +1,6 @@
 # 063: Build the flasher for Windows, macOS and Linux in CI
 
-Status: todo
+Status: in-progress
 Depends on: 061, 062
 UI spec: none
 Needs device: no

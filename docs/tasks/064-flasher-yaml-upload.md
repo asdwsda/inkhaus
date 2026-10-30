@@ -1,6 +1,6 @@
 # 064: Flasher: optional YAML upload to the SD card
 
-Status: todo
+Status: in-progress
 Depends on: 062, 020
 UI spec: in this file
 Needs device: yes

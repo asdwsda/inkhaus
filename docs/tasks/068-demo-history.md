@@ -1,6 +1,6 @@
 # 068: Demo mode shows history charts
 
-Status: todo
+Status: in-progress
 Depends on: 034 (demo mode), history widgets (docs/ui/history.md)
 UI spec: docs/ui/history.md (no new screens)
 Needs device: yes (visual check)
