@@ -137,6 +137,8 @@ void setEnabled(bool on) {
   if (!g_enabled) g_pending.clear();
 }
 
+bool enabled() { return g_enabled; }
+
 void note(const char *line) {
   if (!line) return;
   const std::string l(line);

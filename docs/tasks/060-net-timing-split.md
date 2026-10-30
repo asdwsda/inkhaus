@@ -18,7 +18,7 @@ Out of scope: session resumption itself (027).
 
 ## Acceptance criteria
 - [ ] `pio run` (all envs) and `pio test -e native` pass; the wrap links.
-- [ ] Device, release env, remote URL, ~5 cold wakes: NETT lines logged; numbers noted in 027.
+- [ ] NETT lines only when the debug_log setting is on (Serial and /debug.log); off: no output. Device, release env, debug_log on, remote URL, ~5 cold wakes: NETT lines logged; numbers noted in 027.
 - [ ] Keep-alive reuse (task 036) unaffected: reused requests log `reused=1` with no tls time.
 
 ## Notes

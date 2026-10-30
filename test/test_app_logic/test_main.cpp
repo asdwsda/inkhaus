@@ -934,6 +934,7 @@ static void test_debuglog_filter_format_rotation() {
   using namespace app_logic;
   TEST_ASSERT_TRUE(isDebugLogLine("APP: settings saved"));
   TEST_ASSERT_TRUE(isDebugLogLine("NET: phase=connected connect_ms=900 rssi=-60 ch=6"));
+  TEST_ASSERT_TRUE(isDebugLogLine("NETT: dns=5 tcp=40 tls=700 ttfb=90 total=900 reused=0"));
   TEST_ASSERT_TRUE(isDebugLogLine("SLEEP: mode=x battery_mv=4000"));
   TEST_ASSERT_TRUE(isDebugLogLine("WAKE: reason=rocker reset=POWERON"));
   TEST_ASSERT_TRUE(isDebugLogLine("BOOT: config_error path=/config.yaml line=3 msg=bad"));

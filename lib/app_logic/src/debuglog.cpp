@@ -18,7 +18,7 @@ bool startsWith(const std::string &s, const char *p) { return s.compare(0, strle
 }  // namespace
 
 bool isDebugLogLine(const std::string &line) {
-  const bool prefixOk = startsWith(line, "APP:") || startsWith(line, "NET:") || startsWith(line, "SLEEP:") ||
+  const bool prefixOk = startsWith(line, "APP:") || startsWith(line, "NET:") || startsWith(line, "NETT:") || startsWith(line, "SLEEP:") ||
                         startsWith(line, "WAKE:") || startsWith(line, "BOOT:");
   if (!prefixOk) return false;
   if (startsWith(line, "BOOT:") && line.find("_ms=") != std::string::npos) return false;  // timing noise

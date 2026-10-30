@@ -12,6 +12,7 @@ namespace wakelog {
 
 // Runtime switch (debug_log setting). Ignored (stays on) in a -DWAKE_LOG_SD build. Turning it off drops pending lines.
 void setEnabled(bool on);
+bool enabled();  // debug_log on (or forced)
 // A serial log line: kept (RAM, flushed at the next boot/sleep append) if it passes the key-line filter.
 void note(const char *line);
 // printf to Serial (as before) and note() of the same line (without its newline).

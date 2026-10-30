@@ -1,6 +1,7 @@
 #include "ha_transport_arduino.h"
 
 #include "body_limit.h"
+#include "wakelog.h"
 #include "stream_pump.h"
 
 // Arduino-ESP32 2.0.x does not ship a ready CA bundle: the app must embed a
@@ -107,8 +108,9 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
       out.error = HTTPClient::errorToString(HTTPC_ERROR_CONNECTION_REFUSED).c_str();
       drop();
       out.ms = millis() - start;
-      Serial.printf("NETT: dns=%u tcp=%u tls=%u ttfb=0 total=%u reused=0 failed=1\n", (unsigned)dns_ms,
-                    (unsigned)(conn_ms > tls_ms ? conn_ms - tls_ms : 0), (unsigned)tls_ms, (unsigned)out.ms);
+      if (wakelog::enabled())
+        wakelog::logf("NETT: dns=%u tcp=%u tls=%u ttfb=0 total=%u reused=0 failed=1\n", (unsigned)dns_ms,
+                      (unsigned)(conn_ms > tls_ms ? conn_ms - tls_ms : 0), (unsigned)tls_ms, (unsigned)out.ms);
       return out;
     }
   }
@@ -160,9 +162,10 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
   http_.end();
   if (!keep) drop();
   out.ms = millis() - start;
-  Serial.printf("NETT: dns=%u tcp=%u tls=%u ttfb=%u total=%u reused=%d\n", (unsigned)dns_ms,
-                (unsigned)(conn_ms > tls_ms ? conn_ms - tls_ms : 0), (unsigned)tls_ms, (unsigned)ttfb_ms,
-                (unsigned)out.ms, out.reused ? 1 : 0);
+  if (wakelog::enabled())
+    wakelog::logf("NETT: dns=%u tcp=%u tls=%u ttfb=%u total=%u reused=%d\n", (unsigned)dns_ms,
+                  (unsigned)(conn_ms > tls_ms ? conn_ms - tls_ms : 0), (unsigned)tls_ms, (unsigned)ttfb_ms,
+                  (unsigned)out.ms, out.reused ? 1 : 0);
   return out;
 }
 
