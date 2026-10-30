@@ -288,11 +288,10 @@ static bool g_histChanged = false;  // a result arrived: redraw
 
 static uint32_t histHash() { return history::paramsHash(g_app.history().spec().params); }
 
-static uistate::HistOutcome histOutcome(HaError e) {
+static uistate::HistOutcome histOutcome(HaError e, size_t bytes) {
+  if (app_logic::histTooMany(e, bytes)) return uistate::HistOutcome::TooMany;  // the 512 KB / 15 s limits
   switch (e) {
     case HaError::None: return uistate::HistOutcome::Ok;
-    case HaError::TooLarge:
-    case HaError::Timeout: return uistate::HistOutcome::TooMany;  // the 512 KB / 15 s limits
     case HaError::Cancelled: return uistate::HistOutcome::Cancelled;
     case HaError::Parse: return uistate::HistOutcome::Unavailable;
     default: return uistate::HistOutcome::Unreachable;
@@ -302,7 +301,7 @@ static uistate::HistOutcome histOutcome(HaError e) {
 static void onHistoryDone(app_logic::NetEvent &&ev) {
   uistate::HistoryPopup &h = g_app.historyPopup();
   const int64_t epoch = session_glue::wallClock();
-  const uistate::HistOutcome o = histOutcome(ev.error);
+  const uistate::HistOutcome o = histOutcome(ev.error, ev.bytes);
   const std::string id = h.entity();
   if (h.onFetchDone(ev.ticket, o, std::move(ev.series), epoch)) {
     g_histChanged = true;
@@ -775,7 +774,7 @@ void loop() {
         (e.kind == input::Event::Touch && g_wakeGuard.blocksTouch()))
       e = input::Event();  // the press that woke the device
   }
-  const bool popupOpen = g_app.modalOpen();  // no idle sleep while open: brightness closes itself after 10 s; history stays awake while it fetches
+  const bool popupOpen = g_app.brightnessOpen() || g_app.historyPopup().fetching();  // activity: brightness closes itself after 10 s; an open history popup only counts while it fetches, then the idle timer closes it (goToSleep)
   if ((e.kind != input::Event::None || popupOpen) && g_real && g_drv) {
     if (g_sessionOver) startSession(now);  // a new interactive session (real sleep comes later)
     else g_drv->input(now);

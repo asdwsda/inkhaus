@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cmath>
 #include "history_popup.h"
 
 #include "history_layout.h"
@@ -126,9 +128,18 @@ bool HistoryPopup::takeFetch(int64_t nowEpoch, HistoryJob &job) {
 namespace {
 bool sameColumns(const history::Series &a, const history::Series &b) {
   if (a.kind != b.kind || a.columns.size() != b.columns.size()) return false;
+  // The cache stores values quantised to 16 bits over [lo, hi]; a cached series and a fresh one differ by up
+  // to one step even when nothing changed. Compare with that step as tolerance.
+  float lo = 0, hi = 0, tol = 0;
+  float alo = 0, ahi = 0, blo = 0, bhi = 0;
+  const bool ra = a.range(alo, ahi), rb = b.range(blo, bhi);
+  if (ra && rb) { lo = std::min(alo, blo); hi = std::max(ahi, bhi); tol = (hi - lo) / 65534.0f; }
   for (size_t i = 0; i < a.columns.size(); ++i) {
     const history::Column &x = a.columns[i], &y = b.columns[i];
-    if (x.has != y.has || x.min != y.min || x.max != y.max || x.last != y.last) return false;
+    if (x.has != y.has) return false;
+    if (!x.has) continue;
+    if (std::fabs(x.min - y.min) > tol || std::fabs(x.max - y.max) > tol || std::fabs(x.last - y.last) > tol)
+      return false;
   }
   return true;
 }

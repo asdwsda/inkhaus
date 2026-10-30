@@ -44,4 +44,10 @@ struct NetEvent {
   size_t bytes = 0, points = 0;
 };
 
+// History fetch failure that means "too much data": over the size cap, or the 15 s deadline hit while data was
+// flowing. A timeout with 0 bytes received is a dead link, not a big answer (task 053 F3).
+inline bool histTooMany(HaError e, size_t bytesReceived) {
+  return e == HaError::TooLarge || (e == HaError::Timeout && bytesReceived > 0);
+}
+
 }  // namespace app_logic

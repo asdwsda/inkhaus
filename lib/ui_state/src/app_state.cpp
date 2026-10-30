@@ -365,7 +365,7 @@ const EntityState *AppState::dimmableMember(const config::Widget &w) const {
 }
 
 bool AppState::dimmableLightAt(ui::Point p) const {
-  if (screen_ != Screen::Tabs || popup_.isOpen()) return false;
+  if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;  // one modal at a time
   const ui::Hit hit = ui::hitTest(layout_, p);
   if (hit.kind != ui::HitKind::Widget) return false;
   const config::Widget *w = widgetAt(shownTab_, hit.index);
@@ -373,7 +373,7 @@ bool AppState::dimmableLightAt(ui::Point p) const {
 }
 
 bool AppState::openBrightness(int idx, uint32_t now) {
-  if (screen_ != Screen::Tabs || popup_.isOpen()) return false;
+  if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;
   const config::Widget *w = widgetAt(shownTab_, idx);
   const EntityState *m = w ? dimmableMember(*w) : nullptr;
   if (!m) return false;

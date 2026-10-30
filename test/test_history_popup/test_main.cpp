@@ -9,6 +9,7 @@
 #include "cache_store.h"
 #include "config_model.h"
 #include "history_popup.h"
+#include "net_msgs.h"
 
 using namespace uistate;
 using history::Freshness;
@@ -395,6 +396,55 @@ void test_app_rocker_open_needs_focus() {
   TEST_ASSERT_FALSE(a.openHistoryFocused(0));  // no focus ring
 }
 
+void test_one_modal_at_a_time() {  // F2
+  AppState a = makeApp();
+  EntityState l;
+  l.id = "light.lamp"; l.state = "on"; l.available = true; l.brightness = 128; l.color_modes = "brightness";
+  a.store().update({l});
+  a.longPress(centre(a, 0), 0);
+  TEST_ASSERT_TRUE(a.historyOpen());
+  TEST_ASSERT_FALSE(a.dimmableLightAt(centre(a, 2)));
+  TEST_ASSERT_FALSE(a.longPress(centre(a, 2), 1));
+  TEST_ASSERT_FALSE(a.brightnessOpen());
+  TEST_ASSERT_TRUE(a.historyOpen());
+  TEST_ASSERT_EQUAL_STRING("sensor.temp", a.history().entity().c_str());
+}
+
+void test_timeout_without_bytes_keeps_cache() {  // F3
+  TEST_ASSERT_FALSE(app_logic::histTooMany(HaError::Timeout, 0));
+  TEST_ASSERT_TRUE(app_logic::histTooMany(HaError::Timeout, 1000));
+  TEST_ASSERT_TRUE(app_logic::histTooMany(HaError::TooLarge, 0));
+  TEST_ASSERT_FALSE(app_logic::histTooMany(HaError::Network, 500));
+  HistoryPopup p;  // such a failure arrives as Unreachable: the cached graph stays
+  p.open(lineSpec(), 0, 0, 0);
+  p.applyCache(Freshness::Stale, makeSeries(20), kNow - 7200);
+  HistoryJob j;
+  p.takeFetch(kNow, j);
+  p.onFetchDone(j.ticket, HistOutcome::Unreachable, history::Series(), kNow);
+  TEST_ASSERT_EQUAL(HistState::Stale, p.state());
+  TEST_ASSERT_TRUE(p.hasData());
+}
+
+void test_same_columns_tolerance() {  // F4
+  HistoryPopup p;
+  p.open(lineSpec(), 0, 0, 0);
+  p.applyCache(Freshness::Stale, makeSeries(20), kNow - 7200);
+  HistoryJob j;
+  p.takeFetch(kNow, j);
+  const float step = 2.0f / 65534.0f;  // the cache quantisation step for a range of 2
+  history::Series s = makeSeries(20);
+  for (auto &c : s.columns) { c.min += step * 0.5f; c.max -= step * 0.5f; c.last += step * 0.5f; }
+  TEST_ASSERT_TRUE(p.onFetchDone(j.ticket, HistOutcome::Ok, std::move(s), kNow));
+  TEST_ASSERT_FALSE(p.dataChanged());
+  // A real change is still a change.
+  HistoryPopup q;
+  q.open(lineSpec(), 0, 0, 0);
+  q.applyCache(Freshness::Stale, makeSeries(20), kNow - 7200);
+  q.takeFetch(kNow, j);
+  TEST_ASSERT_TRUE(q.onFetchDone(j.ticket, HistOutcome::Ok, makeSeries(20.5f), kNow));
+  TEST_ASSERT_TRUE(q.dataChanged());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_fresh_window);
@@ -414,5 +464,8 @@ int main() {
   RUN_TEST(test_app_modal_input);
   RUN_TEST(test_app_tick_reveals_loading);
   RUN_TEST(test_app_rocker_open_needs_focus);
+  RUN_TEST(test_one_modal_at_a_time);
+  RUN_TEST(test_timeout_without_bytes_keeps_cache);
+  RUN_TEST(test_same_columns_tolerance);
   return UNITY_END();
 }
