@@ -40,7 +40,7 @@
 | 037 | [Persist last known states](037-state-cache.md) | done | 023, 025 |
 | 038 | [Status bar states, sleep indicator redesign](038-status-bar-and-sleep-indicator.md) | in-progress | 024 |
 | 039 | [Three wake modes, wake-mode fixes](039-wake-modes.md) | in-progress | 034, 035 |
-| 040 | [`unknown` is not `unavailable`](040-unknown-state.md) | in-progress | 028, 036 |
+| 040 | [`unknown` is not `unavailable`](040-unknown-state.md) | done | 028, 036 |
 | 041 | [Debug-log setting, Advanced page, splash](041-debug-log-and-splash.md) | done | 029, 034, 038 |
 | 042 | [v1.0 release](042-release-1-0.md) | done | 041 |
 | 043 | [Per-tab landscape columns](043-per-tab-columns.md) | done | 009, 011 |

@@ -1,6 +1,6 @@
 # 040: `unknown` is not `unavailable` (covers without position feedback)
 
-Status: in-progress
+Status: done
 Depends on: 028, 036
 UI spec: docs/ui/widgets.md §11 (update: unknown rows)
 Needs device: yes (user's shutters, later)
@@ -30,3 +30,4 @@ out (unavailable look) and unusable.
 
 ## Notes
 - PC part done (2026-10-29): available=false only for unavailable/missing; supported_features fetched for covers; unknown → normal look "-"; optimistic Opening/Closing/Stopped briefly, back to "-" once the call is confirmed (user: no last-command display wanted). 525 tests. Device check pending.
+- Device session 2026-10-30: user batch 1 all OK (wake shows cached values before the fetch; cover tap shows Opening).
