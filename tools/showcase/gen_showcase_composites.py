@@ -28,10 +28,10 @@ def comp(name, p_png, l_png, cp, cl, comment):
     out = (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="DejaVu Sans">\n<!-- {comment} -->\n'
            f'<g id="w-1"><rect id="w-1-frame" x="0" y="0" width="{W}" height="{H}" fill="none"/></g>\n'
            f'<rect x="0" y="0" width="{W}" height="{H}" fill="#ebebe9"/>\n<rect x="0" y="738" width="{W}" height="162" fill="#e0e0de"/>\n<rect x="0" y="736" width="{W}" height="2" fill="#d2d2d0"/>\n')
-    s, bw, bh = device(120, 50, 540, 960, 0.70, p_png, "p")
-    out += s; out += cap(120+bw//2, 868 if False else 850, cp)
-    s2, bw2, bh2 = device(720, 150, 960, 540, 0.85, l_png, "l")
-    out += s2; out += cap(720+bw2//2, 850, cl)
+    s, bw, bh = device(111, 50, 540, 960, 0.70, p_png, "p")
+    out += s; out += cap(111+bw//2, 868 if False else 850, cp)
+    s2, bw2, bh2 = device(611, 150, 960, 540, 0.85, l_png, "l")
+    out += s2; out += cap(611+bw2//2, 850, cl)
     return out + "</svg>\n"
 open(UI+"showcase-device.svg", "w").write(comp("a", "png/showcase-tab-portrait.png", "png/showcase-popup-landscape.png", "Graph widgets on the tab", "Long press: 24 h history", "Showcase composite (task 073): light device frames around the rendered mockups."))
 open(UI+"showcase-device-tabs.svg", "w").write(comp("b", "png/showcase-tab-portrait.png", "png/showcase-tab-landscape.png", "Portrait", "Landscape", "Showcase composite, GIF frame 1."))

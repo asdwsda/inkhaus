@@ -1,6 +1,6 @@
 # 073: Showcase the history graph in the README and on the website
 
-Status: todo
+Status: done
 Depends on: 071, 070, 065
 UI spec: docs/ui/history-widget.md, docs/ui/website.md
 Needs device: no
@@ -26,3 +26,4 @@ Out of scope: new firmware features.
 - [ ] User approves the look.
 
 ## Notes
+- Done 2026-10-30: the user approved the look in the browser. Composites centered (margins 110/111 px). Page weight 893 KiB.
