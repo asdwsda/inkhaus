@@ -26,3 +26,8 @@ Needs device: yes
   scrub() the server error code (ws_client.cpp:376). Socket: read returns 0 on timeout, <0 on close;
   Request.host = HA host[:port]; align the window start to the period boundary for bars.
 - 054 line columns: min/max from the stat min/max, last = mean (accepted).
+- 2026-10-30 tester review of 1405b6d: no blockers. To fix with the device check:
+  F1 always close the HTTP keep-alive socket before the WS TLS connect (the 70 KB free-total check
+  ignores fragmentation; architect decision: simpler and safe, a history popup is rare). F2 bars are
+  aligned to UTC days; HA day buckets start at local midnight: use the local offset in barWindow.
+  F3 heap_min is the since-boot minimum. No native coverage for the Arduino socket/connector.
