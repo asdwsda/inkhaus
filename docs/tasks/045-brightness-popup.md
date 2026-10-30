@@ -29,3 +29,4 @@ get a brightness popup:
 ## Notes
 UI part done (PC, optimistic): lib/ui_state/src/brightness_layout.*, AppState popup wiring, src/render/brightness_screen.*,
 input LongTouch/TouchRelease, main.cpp hooks, `close` icon. Next: device check (docs/device-checks.md).
+- 2026-10-30 follow-up (user-checked): while a popup is open, value changes are fastest and ~1 s after the last one a quality refresh of the popup rect clears the ghosting (lib/screen_track modal_settle.h); no ghost-debt full refresh while a modal is open.

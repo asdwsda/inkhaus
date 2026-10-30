@@ -7,6 +7,7 @@
 
 #include "boot.h"
 #include "frame_diff.h"
+#include "modal_settle.h"
 #include "screen_track.h"
 
 using screen_track::Rect;
@@ -248,6 +249,7 @@ void fullRefresh(bool whiteFirst, const char *why) {
 bool g_modal = false;       // setModal(): a popup is open; its rect keeps real greys
 bool g_modalOpening = false;  // the next show() is the opening one
 bool g_modalClosing = false;  // the next show() is the closing one
+screen_track::ModalSettle g_settle(1000);  // popup fastest updates: one quality refresh ~1 s after the last
 
 void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   auto &d = M5.Display;
@@ -263,9 +265,13 @@ void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
     d.setEpdMode(epd_mode_t::epd_fastest);
     pushRegion(r, true);
     refresh(epd_mode_t::epd_fastest, &r, tag);
-    ++g_partialCount;
-    g_partialArea += long(r.w) * long(r.h);
-    g_havePending = true;
+    if (g_modal) {
+      g_settle.noteFastest(r, millis());  // popup debt: cleared by the settle refresh, not by a full one
+    } else {
+      ++g_partialCount;
+      g_partialArea += long(r.w) * long(r.h);
+      g_havePending = true;
+    }
   }
   copyToPrev(r);
 }
@@ -414,6 +420,7 @@ void setLogTab(int tab) { g_renderTab = tab; }
 void setModal(bool open) {
   if (open == g_modal) return;
   g_modal = open;
+  g_settle.reset();
   if (open) g_modalOpening = true;
   else g_modalClosing = true;
 }
@@ -455,10 +462,31 @@ bool ghostDebt(int partials, int areaPct) {
   return g_partialCount >= partials || g_partialArea * 100 > long(g_w) * long(g_h) * areaPct;
 }
 
+// Popup ghost clean-up: one quality refresh of the popup rect, real greys (g_modal), debt reset.
+static bool settleModal(uint32_t now) {
+  if (!g_modal || !g_settle.due(now)) return false;
+  const Rect r = g_settle.rect();
+  g_settle.done();
+  Serial.printf("PRESENT: modal_settle rect=%d,%d,%d,%d\n", r.x, r.y, r.w, r.h);
+  auto &d = M5.Display;
+  touchRecord();
+  d.setEpdMode(epd_mode_t::epd_quality);
+  pushRegion(r, false);
+  refresh(epd_mode_t::epd_quality, &r, "modal_settle");
+  copyToPrev(r);
+  g_lastShowMs = millis();
+  return true;
+}
+
 bool idle(uint32_t now) {
   // Close the read state after every refresh, whichever path it took (a Full show leaves nothing
   // pending, so the early return below would skip it): a restart can come at any moment.
   closeRead();
+  if (g_modal) {  // no ghost-debt full refresh under a popup; the close does a full one
+    const bool did = settleModal(now);
+    if (did) closeRead();
+    return did;
+  }
   if (!g_havePending && !g_recordDirty) return false;
   if (now - g_lastShowMs < kQuietMs) return false;
   const uint32_t t0 = micros();
