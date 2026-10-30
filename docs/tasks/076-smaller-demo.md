@@ -1,6 +1,6 @@
 # 076: Smaller demo (4 tabs)
 
-Status: in-progress
+Status: done
 Depends on: 033, 068, 071
 UI spec: none
 Needs device: no (a quick look in demo mode before the release)
@@ -20,3 +20,4 @@ Optional: remove demo_states.cpp entries that no demo entity uses any more, if t
 - [ ] `test_demo_yaml_showcase` is updated: it asserts 4 tabs and no pager in either orientation, and
   keeps its other checks.
 - [ ] `pio test -e native`, `pio run -e m5paper` and `pio run -e m5paper-debug` pass.
+- Done 2026-10-30: the user chose to release it as is (fit is checked by tests); visual look after the release.

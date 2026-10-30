@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.0 - 2026-10-30
+
+### Dashboard
+- **History graph widget**: `display: graph` shows a sensor's history right on the tab (line, step or bars, same options as the history popup). Default size 2x2. It updates on every wake and on the scheduled refresh for the visible tab, and the last graph stays on screen while the device sleeps.
+- A changed graph is redrawn with a single screen refresh, so a wake takes less time.
+- Demo mode is smaller (4 tabs) and still shows every widget type, including graph widgets.
+
+### Fixes
+- Fixed a rare hang at power-on (about 1 in 10 cold starts) that needed the 15 s watchdog to recover.
+
+### Installer and docs
+- Redesigned installer with a cleaner look. After installing (or after an error) "Back" returns to the version choice instead of reinstalling.
+- The installer now has the same version number as the firmware.
+- Simpler README with a 4-step start. All options are now in `docs/CONFIG.md`, and the build notes are in `docs/DEVELOPMENT.md`.
+- A new animated tour of the screens on the README and the website.
+
 ## 1.1.0 - 2026-10-30
 
 ### Install and website

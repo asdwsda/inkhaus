@@ -75,7 +75,7 @@
 | 073 | [Showcase the history graph in the README and website](073-showcase-history.md) | done | 071, 070, 065 |
 | 074 | [Graph widget redraw in one refresh](074-graph-single-refresh.md) | done | 071 |
 | 075 | [Feature tour GIF as the only README image](075-feature-tour-gif.md) | done | 073 |
-| 076 | [Smaller demo (4 tabs)](076-smaller-demo.md) | in-progress | 033, 068, 071 |
+| 076 | [Smaller demo (4 tabs)](076-smaller-demo.md) | done | 033, 068, 071 |
 | 077 | [Long press on another sensor breaks the graph widget](077-graph-popup-crosstalk.md) | done | 071, 074 |
 
 ## Open items (not yet tasks, 2026-10-30)
