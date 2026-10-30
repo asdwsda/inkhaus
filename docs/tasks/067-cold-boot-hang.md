@@ -1,6 +1,6 @@
 # 067: Intermittent cold-boot hang after BOOT: controller_id=
 
-Status: todo
+Status: in-progress
 Depends on: none
 UI spec: none
 Needs device: yes
