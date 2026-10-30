@@ -60,6 +60,19 @@ StatsOutcome run(StatsParser& sp, const std::string& b, size_t chunk) {
 }
 }  // namespace
 
+void test_huge_numbers_are_ignored() {
+  StatsParams p = lineParams(1, 4);
+  StatsParser sp("sensor.t", p);
+  const std::string b = "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":{\"sensor.t\":["
+                        "{\"start\":1e300,\"end\":2e300,\"mean\":1.0},"
+                        "{\"start\":1761696000000,\"end\":1761699600000,\"mean\":1e300,\"min\":-1e999},"
+                        "{\"start\":1761696000000,\"end\":1761699600000,\"mean\":2.5}]}}";
+  TEST_ASSERT_EQUAL((int)StatsOutcome::Ok, (int)run(sp, b, 7));
+  Series s = sp.series();
+  TEST_ASSERT_EQUAL(1, (int)s.points);
+  TEST_ASSERT_EQUAL_FLOAT(2.5f, s.columns[0].last);
+}
+
 void test_line_24h_5min_ms_and_iso() {
   for (int isoT = 0; isoT < 2; isoT++) {
     StatsParams p = lineParams(24, 288);
@@ -241,5 +254,6 @@ int main() {
   RUN_TEST(test_bars);
   RUN_TEST(test_bars_mean_statistic_and_window);
   RUN_TEST(test_plans);
+  RUN_TEST(test_huge_numbers_are_ignored);
   return UNITY_END();
 }

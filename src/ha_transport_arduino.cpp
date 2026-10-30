@@ -177,3 +177,66 @@ StreamResult ArduinoHttpTransport::Raw::stream(const std::string& method, const 
   out.ms = millis() - start;
   return out;
 }
+
+#include <esp_heap_caps.h>
+#include <esp_system.h>
+
+namespace {
+// read(): 0 on timeout, <0 when the peer closed (task 054 socket contract).
+class ArduinoWsSocket : public ws::Socket {
+ public:
+  explicit ArduinoWsSocket(std::unique_ptr<WiFiClient> c) : c_(std::move(c)) {}
+  ~ArduinoWsSocket() override { close(); }
+  int write(const uint8_t* p, size_t n) override {
+    size_t off = 0;
+    const uint32_t t0 = millis();
+    while (off < n) {
+      const size_t w = c_->write(p + off, n - off);
+      if (w == 0) {
+        if (!c_->connected() || millis() - t0 > 5000) return -1;
+        delay(2);
+      }
+      off += w;
+    }
+    return (int)n;
+  }
+  int read(uint8_t* p, size_t cap, uint32_t timeout_ms) override {
+    const uint32_t t0 = millis();
+    for (;;) {
+      const int avail = c_->available();
+      if (avail > 0) {
+        const int n = c_->read(p, cap < (size_t)avail ? cap : (size_t)avail);
+        if (n > 0) return n;
+      }
+      if (!c_->connected() && c_->available() <= 0) return -1;
+      if (millis() - t0 >= timeout_ms) return 0;
+      delay(5);
+    }
+  }
+  void close() override {
+    if (c_) c_->stop();
+  }
+  uint32_t nowMs() override { return millis(); }
+  uint32_t random32() override { return esp_random(); }
+
+ private:
+  std::unique_ptr<WiFiClient> c_;
+};
+}  // namespace
+
+std::unique_ptr<ws::Socket> ArduinoWsConnector::open(const std::string& host, uint16_t port, bool tls) {
+  std::unique_ptr<WiFiClient> c;
+  if (tls) {
+    if (!ca_bundle_start) return nullptr;
+    auto* s = new WiFiClientSecure();
+    s->setCACertBundle(ca_bundle_start);
+    s->setTimeout(4);  // seconds (connect + handshake reads)
+    c.reset(s);
+  } else {
+    c.reset(new WiFiClient());
+  }
+  if (!c->connect(host.c_str(), port, 4000)) return nullptr;
+  return std::unique_ptr<ws::Socket>(new ArduinoWsSocket(std::move(c)));
+}
+
+size_t ArduinoWsConnector::freeInternalHeap() { return heap_caps_get_free_size(MALLOC_CAP_INTERNAL); }

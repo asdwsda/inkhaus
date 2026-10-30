@@ -51,3 +51,15 @@ class ArduinoHttpTransport : public HttpTransport {
   Raw raw_;
   KeepAliveTransport keep_;
 };
+
+#include <memory>
+
+#include "ha_worker.h"
+
+// WebSocket byte sockets over WiFiClient / WiFiClientSecure (CA bundle), task 055. The client lives only as
+// long as the returned socket, so the TLS buffers are freed right after the fetch.
+class ArduinoWsConnector : public app_logic::WsConnector {
+ public:
+  std::unique_ptr<ws::Socket> open(const std::string& host, uint16_t port, bool tls) override;
+  size_t freeInternalHeap() override;
+};

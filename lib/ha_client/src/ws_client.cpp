@@ -66,9 +66,6 @@ class Flow : public FrameHandler {
  public:
   Flow(Socket& s, const Request& r, const ChunkFn& sink)
       : sock_(s), req_(r), gate_(r.limits, sink) {
-    seed_ = 0x9E3779B9u;
-    for (int i = 0; i < 16; i++) seed_ = (seed_ << 5 | seed_ >> 27) ^ r.key[i] ^ (uint32_t)(i * 0x45D9F3Bu);
-    if (seed_ == 0) seed_ = 1;
   }
 
   FlowResult run();
@@ -96,8 +93,8 @@ class Flow : public FrameHandler {
     return m;
   }
   void masks(uint8_t m[4]) {
-    seed_ ^= seed_ << 13; seed_ ^= seed_ >> 17; seed_ ^= seed_ << 5;
-    for (int i = 0; i < 4; i++) m[i] = (uint8_t)(seed_ >> (8 * i));
+    const uint32_t r = sock_.random32();  // the device socket uses esp_random
+    for (int i = 0; i < 4; i++) m[i] = (uint8_t)(r >> (8 * i));
   }
   bool write_all(const std::vector<uint8_t>& f) {
     size_t off = 0;
@@ -140,7 +137,6 @@ class Flow : public FrameHandler {
   StreamGate gate_;
   StreamResult sr_;
   FlowResult res_;
-  uint32_t seed_;
   uint32_t t0_ = 0;
   Phase phase_ = Phase::AuthRequired;
   std::string buf_;       // small messages, or the prefix of the result message
@@ -218,7 +214,11 @@ bool Flow::result_data(const uint8_t* p, size_t n, bool last) {
   if (k != std::string::npos) {
     k += 8;
     size_t e = m.find('"', k);
-    res_.code = m.substr(k, e == std::string::npos ? std::string::npos : std::min<size_t>(e - k, 64));
+    std::string code = m.substr(k, e == std::string::npos ? std::string::npos : std::min<size_t>(e - k, 64));
+    code = scrub(code);
+    for (char& c : code)  // HA codes are snake_case words; anything else is not shown
+      if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) c = '?';
+    res_.code = code;
   }
   fail(HaError::Http, "ha error " + (res_.code.empty() ? std::string("unknown") : res_.code));
   return false;

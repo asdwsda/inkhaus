@@ -288,7 +288,8 @@ static bool g_histChanged = false;  // a result arrived: redraw
 
 static uint32_t histHash() { return history::paramsHash(g_app.history().spec().params); }
 
-static uistate::HistOutcome histOutcome(HaError e, size_t bytes) {
+static uistate::HistOutcome histOutcome(HaError e, size_t bytes, bool noStatistics) {
+  if (noStatistics) return uistate::HistOutcome::NoStatistics;
   if (app_logic::histTooMany(e, bytes)) return uistate::HistOutcome::TooMany;  // the 512 KB / 15 s limits
   switch (e) {
     case HaError::None: return uistate::HistOutcome::Ok;
@@ -301,7 +302,7 @@ static uistate::HistOutcome histOutcome(HaError e, size_t bytes) {
 static void onHistoryDone(app_logic::NetEvent &&ev) {
   uistate::HistoryPopup &h = g_app.historyPopup();
   const int64_t epoch = session_glue::wallClock();
-  const uistate::HistOutcome o = histOutcome(ev.error, ev.bytes);
+  const uistate::HistOutcome o = histOutcome(ev.error, ev.bytes, ev.noStatistics);
   const std::string id = h.entity();
   if (h.onFetchDone(ev.ticket, o, std::move(ev.series), epoch)) {
     g_histChanged = true;
@@ -345,6 +346,12 @@ static void historyPump() {
   c.histStart = g_histJob.start;
   c.histEnd = g_histJob.end;
   c.histColumns = g_histJob.columns;
+  c.histStats = g_histJob.statistics;
+  c.histBar = g_histJob.bar;
+  c.histPeriod = g_histJob.period;
+  c.histStatistic = g_histJob.statistic;
+  c.histBucketSeconds = g_histJob.bucketSeconds;
+  c.histBucketCount = g_histJob.bucketCount;
   c.histCancel = g_histCancel;
   g_drv->postHistory(c);
 }

@@ -10,6 +10,7 @@
 #include "collector.h"
 #include "config_model.h"
 #include "settings.h"
+#include "stats_plan.h"
 #include "ui_layout.h"
 
 namespace uistate {
@@ -17,10 +18,10 @@ namespace uistate {
 constexpr uint32_t kHistoryLoadingDelayMs = 300;  // data within this time: the Loading frame is skipped
 
 enum class HistState { Closed, Loading, Ready, Stale, Error };
-enum class HistReason { None, TooMany, NoGraph, NeedsStatistics, Unreachable, Unavailable, NotFetched };
+enum class HistReason { None, TooMany, NoGraph, NoStatistics, Unreachable, Unavailable, NotFetched };
 enum class HistNote { None, Updated, Updating, Fetching, Cached, TooMany };
 enum class HistChart { Line, Step, Bar };
-enum class HistOutcome { Ok, TooMany, Unreachable, Unavailable, Cancelled };
+enum class HistOutcome { Ok, TooMany, Unreachable, Unavailable, Cancelled, NoStatistics };
 
 // What a popup shows and fetches; built from the widget's config.
 struct HistorySpec {
@@ -29,7 +30,9 @@ struct HistorySpec {
   HistChart chart = HistChart::Line;
   int columns = 0;
   bool binary = false;           // widget is a binary_sensor
-  bool needsStatistics = false;  // bar / statistics source: not before the WebSocket task
+  history::Source source = history::Source::History;  // resolved from the config (task 054 chooseSource)
+  StatsPeriod period = StatsPeriod::Hour;               // statistics source only
+  StatsType statistic = StatsType::Mean;                // bars: which statistic
   history::CacheParams params;
 };
 // Plot columns: line/bar = plot width, step = lane width (docs/ui/history.md section 3).
@@ -44,6 +47,13 @@ struct HistoryJob {
   int64_t start = 0, end = 0;
   int columns = 0;
   int ticket = 0;  // echoed by onFetchDone(); a result of an older job is ignored
+  // Statistics source (task 055): WebSocket recorder/statistics_during_period instead of REST history.
+  bool statistics = false;
+  bool bar = false;  // bars: bucketCount buckets of bucketSeconds from `start` (aligned), else `columns`
+  StatsPeriod period = StatsPeriod::Hour;
+  StatsType statistic = StatsType::Mean;
+  int64_t bucketSeconds = 0;
+  int bucketCount = 0;
 };
 
 struct HistoryLayout {

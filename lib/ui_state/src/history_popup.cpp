@@ -28,7 +28,29 @@ HistorySpec makeHistorySpec(const config::Widget &w, bool landscape) {
     case HistoryType::Line: s.chart = HistChart::Line; break;
     case HistoryType::Auto: s.chart = s.binary ? HistChart::Step : HistChart::Line; break;
   }
-  s.needsStatistics = s.chart == HistChart::Bar || w.history.source == HistorySource::Statistics;
+  const bool bar = s.chart == HistChart::Bar;
+  history::SourceCfg sc = history::SourceCfg::Auto;
+  if (w.history.source == HistorySource::History) sc = history::SourceCfg::History;
+  else if (w.history.source == HistorySource::Statistics) sc = history::SourceCfg::Statistics;
+  s.source = history::chooseSource(sc, s.binary, bar, s.hours);
+  if (bar) {
+    history::BarPeriodCfg pc = history::BarPeriodCfg::Auto;
+    if (w.history.period == config::HistoryPeriod::Hour) pc = history::BarPeriodCfg::Hour;
+    else if (w.history.period == config::HistoryPeriod::Day) pc = history::BarPeriodCfg::Day;
+    s.period = history::barPeriod(pc, s.hours);
+  } else {
+    s.period = history::linePeriod(s.hours);
+  }
+  s.statistic = StatsType::Mean;
+  if (w.history.statistic) {
+    switch (*w.history.statistic) {
+      case config::HistoryStatistic::Mean: s.statistic = StatsType::Mean; break;
+      case config::HistoryStatistic::Min: s.statistic = StatsType::Min; break;
+      case config::HistoryStatistic::Max: s.statistic = StatsType::Max; break;
+      case config::HistoryStatistic::Sum: s.statistic = StatsType::Sum; break;
+      case config::HistoryStatistic::Change: s.statistic = StatsType::Change; break;
+    }
+  }
   s.columns = historyColumns(landscape, s.chart == HistChart::Step);
   history::CacheParams &p = s.params;
   p.entity = s.entity;
@@ -77,10 +99,6 @@ void HistoryPopup::open(const HistorySpec &spec, int tab, int widget, uint32_t n
   openedAt_ = now;
   series_ = history::Series();
   dataAt_ = 0;
-  if (spec_.needsStatistics) {
-    fetchWanted_ = false;
-    fail(HistReason::NeedsStatistics);
-  }
 }
 
 void HistoryPopup::fail(HistReason r) {
@@ -120,6 +138,16 @@ bool HistoryPopup::takeFetch(int64_t nowEpoch, HistoryJob &job) {
   job.end = nowEpoch;
   job.start = nowEpoch - int64_t(spec_.hours) * 3600;
   job.columns = spec_.columns;
+  job.statistics = spec_.source == history::Source::Statistics;
+  job.bar = job.statistics && spec_.chart == HistChart::Bar;
+  job.period = spec_.period;
+  job.statistic = spec_.statistic;
+  if (job.bar) {
+    job.bucketSeconds = stats_period_seconds(spec_.period);
+    const history::BarWindow bw = history::barWindow(nowEpoch, spec_.hours, job.bucketSeconds);
+    job.start = bw.start;
+    job.bucketCount = bw.count;
+  }
   job.ticket = ++ticket_;
   fetching_ = true;
   return true;
@@ -162,6 +190,7 @@ bool HistoryPopup::onFetchDone(int ticket, HistOutcome o, history::Series &&s, i
       return true;
     case HistOutcome::TooMany: fail(HistReason::TooMany); return true;
     case HistOutcome::Unavailable: fail(HistReason::Unavailable); return true;
+    case HistOutcome::NoStatistics: fail(HistReason::NoStatistics); return true;
     case HistOutcome::Cancelled:
     case HistOutcome::Unreachable:
       if (hasData_) { state_ = HistState::Stale; offline_ = true; }

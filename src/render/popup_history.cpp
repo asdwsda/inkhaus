@@ -124,7 +124,7 @@ void drawMessage(M5Canvas &c, const Geo &g, Icon icon, const std::string &title,
 
 const char *reasonText(HistReason r) {
   switch (r) {
-    case HistReason::NeedsStatistics: return "Bar needs source: statistics";
+    case HistReason::NoStatistics: return "No statistics for this sensor";
     case HistReason::NoGraph: return "No graph for this entity type";
     case HistReason::Unreachable: return "HA unreachable";
     case HistReason::Unavailable: return "Entity unavailable";
@@ -230,7 +230,7 @@ void drawHistoryPopup(M5Canvas &c, const uistate::AppState &app) {
     switch (h.spec().chart) {
       case uistate::HistChart::Line: in.type = history::ChartType::Line; break;
       case uistate::HistChart::Step: in.type = history::ChartType::Step; break;
-      case uistate::HistChart::Bar: in.type = history::ChartType::Bar; break;  // not reachable before the statistics task
+      case uistate::HistChart::Bar: in.type = history::ChartType::Bar; break;
     }
     std::string onWord = "Open", offWord = "Closed";
     if (in.type == history::ChartType::Step) stateWords(app, onWord, offWord);

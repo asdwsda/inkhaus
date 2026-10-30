@@ -23,6 +23,15 @@ class Socket {
   virtual int read(uint8_t* p, size_t cap, uint32_t timeout_ms) = 0;
   virtual void close() = 0;
   virtual uint32_t nowMs() = 0;  // monotonic
+  // Randomness for the handshake key and the frame masks (device: esp_random). The default is a
+  // deterministic xorshift for tests and host tools only.
+  virtual uint32_t random32() {
+    rnd_ ^= rnd_ << 13; rnd_ ^= rnd_ >> 17; rnd_ ^= rnd_ << 5;
+    return rnd_;
+  }
+
+ private:
+  uint32_t rnd_ = 0x9E3779B9u;
 };
 
 // Upgrade request for GET /api/websocket. key16: 16 random bytes. `host` is the Host header value.
@@ -37,7 +46,7 @@ struct Request {
   std::string host;           // Host header (host[:port])
   std::string token;          // long-lived access token
   std::string command_json;   // the full command (id must be 1), e.g. from build_statistics_command
-  uint8_t key[16] = {0};      // random: handshake key and seed of the masking keys
+  uint8_t key[16] = {0};      // random (Socket::random32): the handshake key
   StreamLimits limits;
 };
 

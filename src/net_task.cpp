@@ -3,6 +3,8 @@
 #include <Arduino.h>
 #include <Preferences.h>
 
+#include <esp_heap_caps.h>
+
 #include <cstring>
 
 #include "ha_transport_arduino.h"
@@ -81,7 +83,9 @@ void NetTask::entry(void *self) { static_cast<NetTask *>(self)->loop(); }
 
 void NetTask::loop() {
   ArduinoHttpTransport transport(4000, 8000);
+  ArduinoWsConnector wsConnector;
   app_logic::HaWorker worker(transport, internal_, external_, token_);
+  worker.setWsConnector(&wsConnector);
   // The plan depends on the connected network and the Settings: recomputed when either changes.
   // net::linkInfo() is a consistent snapshot (published under a spinlock in net.cpp).
   net::LinkInfo planned;
@@ -121,9 +125,13 @@ void NetTask::loop() {
     Evt e;
     e.epoch = c.epoch;
     e.ev = worker.run(c.cmd);
-    if (e.ev.type == app_logic::NetEvent::Type::HistoryDone)
-      Serial.printf("HIST: fetch_ms=%u parse_ms=%u bytes=%u points=%u err=%d\n", (unsigned)e.ev.fetchMs,
-                    (unsigned)e.ev.parseMs, (unsigned)e.ev.bytes, (unsigned)e.ev.points, (int)e.ev.error);
+    if (e.ev.type == app_logic::NetEvent::Type::HistoryDone) {
+      e.ev.heapMin = (uint32_t)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+      Serial.printf("HIST: src=%s fetch_ms=%u parse_ms=%u bytes=%u points=%u heap_min=%u err=%d%s\n",
+                    e.ev.stats ? "stats" : "history", (unsigned)e.ev.fetchMs, (unsigned)e.ev.parseMs,
+                    (unsigned)e.ev.bytes, (unsigned)e.ev.points, (unsigned)e.ev.heapMin, (int)e.ev.error,
+                    e.ev.noStatistics ? " none=1" : "");
+    }
     if (e.ev.type != app_logic::NetEvent::Type::Closed && e.ev.http_status != 0)
       Serial.printf("HTTP: ms=%u reused=%d link=%s\n", (unsigned)e.ev.ms, e.ev.reused ? 1 : 0,
                     e.ev.external ? "remote" : "local");

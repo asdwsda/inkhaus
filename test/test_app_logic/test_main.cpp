@@ -1,6 +1,7 @@
 #include "brightness_intent.h"
 #include <unity.h>
 
+#include <cstring>
 #include <map>
 #include <memory>
 #include <string>
@@ -13,6 +14,7 @@
 #include "tap_intent.h"
 #include "url_plan.h"
 #include "wall_time.h"
+#include "ws_crypto.h"
 #include "wakelog_csv.h"
 #include "debuglog.h"
 #include "app_state.h"
@@ -994,6 +996,196 @@ void test_history_job_streams_into_series() {
   TEST_ASSERT_TRUE(ha.lastUrl.find("/api/history/period/") != std::string::npos);
 }
 
+// ---- statistics job over a WebSocket (task 055) ----
+
+static std::vector<uint8_t> serverFrame(const std::string &pl) {
+  std::vector<uint8_t> f{0x81};
+  if (pl.size() < 126) f.push_back((uint8_t)pl.size());
+  else { f.push_back(126); f.push_back(pl.size() >> 8); f.push_back(pl.size() & 255); }
+  f.insert(f.end(), pl.begin(), pl.end());
+  return f;
+}
+
+struct ScriptSocket : ws::Socket {
+  std::string result;
+  std::string sent, head, lastCommand;
+  std::vector<uint8_t> in;
+  size_t pos = 0;
+  bool upgraded = false, closed = false;
+  std::string clientFrames;  // unmasked text frames
+  std::vector<uint8_t> out;
+  int write(const uint8_t *p, size_t n) override {
+    out.insert(out.end(), p, p + n);
+    if (!upgraded) {
+      std::string s(out.begin(), out.end());
+      size_t e = s.find("\r\n\r\n");
+      if (e == std::string::npos) return (int)n;
+      head = s.substr(0, e);
+      size_t k = s.find("Sec-WebSocket-Key: ") + 19;
+      std::string key = s.substr(k, s.find("\r\n", k) - k);
+      std::string h = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " +
+                      ws::accept_for_key(key) + "\r\n\r\n";
+      in.insert(in.end(), h.begin(), h.end());
+      auto a = serverFrame("{\"type\":\"auth_required\"}");
+      in.insert(in.end(), a.begin(), a.end());
+      out.erase(out.begin(), out.begin() + e + 4);
+      upgraded = true;
+      return (int)n;
+    }
+    while (out.size() >= 6) {
+      size_t len = out[1] & 0x7F, off = 2;
+      if (len == 126) { len = out[2] << 8 | out[3]; off = 4; }
+      if (out.size() < off + 4 + len) break;
+      std::string pl;
+      for (size_t i = 0; i < len; i++) pl += (char)(out[off + 4 + i] ^ out[off + (i & 3)]);
+      const uint8_t op = out[0] & 0x0F;
+      out.erase(out.begin(), out.begin() + off + 4 + len);
+      if (op != 1) continue;
+      if (pl.find("\"type\":\"auth\"") != std::string::npos) {
+        auto f = serverFrame("{\"type\":\"auth_ok\"}");
+        in.insert(in.end(), f.begin(), f.end());
+      } else {
+        lastCommand = pl;
+        auto f = serverFrame(result);
+        in.insert(in.end(), f.begin(), f.end());
+      }
+    }
+    return (int)n;
+  }
+  int read(uint8_t *p, size_t cap, uint32_t) override {
+    if (pos >= in.size()) return -1;
+    size_t n = std::min<size_t>({cap, 100, in.size() - pos});
+    memcpy(p, &in[pos], n);
+    pos += n;
+    return (int)n;
+  }
+  void close() override { closed = true; }
+  uint32_t nowMs() override { return 0; }
+};
+
+struct ProxySocket : ws::Socket {  // lets the connector hand out a socket the test still inspects
+  ScriptSocket *s;
+  explicit ProxySocket(ScriptSocket *x) : s(x) {}
+  int write(const uint8_t *p, size_t n) override { return s->write(p, n); }
+  int read(uint8_t *p, size_t c, uint32_t t) override { return s->read(p, c, t); }
+  void close() override { s->close(); }
+  uint32_t nowMs() override { return 0; }
+};
+
+struct FakeConnector : WsConnector {
+  ScriptSocket sock;
+  std::vector<std::string> opened;
+  std::vector<bool> tlsSeen;
+  size_t heap = 200000;
+  bool failFirst = false;
+  std::unique_ptr<ws::Socket> open(const std::string &host, uint16_t port, bool tls) override {
+    opened.push_back(host + ":" + std::to_string(port));
+    tlsSeen.push_back(tls);
+    if (failFirst && opened.size() == 1) return nullptr;
+    return std::unique_ptr<ws::Socket>(new ProxySocket(&sock));
+  }
+  size_t freeInternalHeap() override { return heap; }
+};
+
+struct CountingHa : HistHa {
+  int closes = 0;
+  void close() override { closes++; }
+};
+
+static NetCommand statsCmd() {
+  NetCommand c = histCmd();
+  c.histStats = true;
+  c.histPeriod = StatsPeriod::Hour;
+  return c;
+}
+
+void test_statistics_job_over_ws() {
+  CountingHa ha;
+  FakeConnector fc;
+  fc.sock.result = "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":{\"sensor.t\":["
+                   "{\"start\":1767225600000,\"end\":1767229200000,\"mean\":20.5,\"min\":20,\"max\":21},"
+                   "{\"start\":1767308400000,\"end\":1767312000000,\"mean\":22.5}]}}";
+  HaWorker w(ha, "https://ha.example.org", "", "SECRET-TOKEN");
+  w.setWsConnector(&fc);
+  NetEvent e = w.run(statsCmd());
+  TEST_ASSERT_TRUE(e.type == NetEvent::Type::HistoryDone);
+  TEST_ASSERT_TRUE(e.stats);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL(7, e.ticket);
+  TEST_ASSERT_EQUAL(2, (int)e.points);
+  TEST_ASSERT_EQUAL(100, (int)e.series.columns.size());
+  TEST_ASSERT_EQUAL_FLOAT(20.5f, e.series.columns[0].last);
+  TEST_ASSERT_EQUAL_FLOAT(22.5f, e.series.columns[99].last);
+  TEST_ASSERT_EQUAL_STRING("ha.example.org:443", fc.opened[0].c_str());
+  TEST_ASSERT_TRUE(fc.tlsSeen[0]);
+  TEST_ASSERT_TRUE(fc.sock.head.find("Host: ha.example.org\r\n") != std::string::npos);
+  TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"period\":\"hour\"") != std::string::npos);
+  TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"statistic_ids\":[\"sensor.t\"]") != std::string::npos);
+  TEST_ASSERT_EQUAL(0, ha.closes);  // enough heap: the HTTP socket stays
+  TEST_ASSERT_TRUE(fc.sock.closed);
+}
+
+void test_statistics_job_heap_margin_closes_http() {
+  CountingHa ha;
+  FakeConnector fc;
+  fc.heap = kWsHeapMargin - 1;
+  fc.sock.result = "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":{}}";
+  HaWorker w(ha, "http://ha.local:8123", "", "T");
+  w.setWsConnector(&fc);
+  NetEvent e = w.run(statsCmd());
+  TEST_ASSERT_EQUAL(1, ha.closes);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_TRUE(e.noStatistics);  // valid answer without data for the entity
+  TEST_ASSERT_FALSE(fc.tlsSeen[0]);
+  TEST_ASSERT_EQUAL_STRING("ha.local:8123", fc.opened[0].c_str());
+  TEST_ASSERT_TRUE(fc.sock.head.find("Host: ha.local:8123\r\n") != std::string::npos);
+}
+
+void test_statistics_job_fallback_and_errors() {
+  CountingHa ha;
+  FakeConnector fc;
+  fc.failFirst = true;
+  fc.sock.result = "{\"id\":1,\"type\":\"result\",\"success\":false,\"error\":{\"code\":\"unknown_command\"}}";
+  HaWorker w(ha, "http://ha.local:8123", "https://ha.example.org", "T");
+  w.setWsConnector(&fc);
+  NetEvent e = w.run(statsCmd());
+  TEST_ASSERT_EQUAL(2, (int)fc.opened.size());  // the second URL is tried when the first cannot connect
+  TEST_ASSERT_EQUAL_STRING("ha.example.org:443", fc.opened[1].c_str());
+  TEST_ASSERT_TRUE(e.error == HaError::Parse);  // a server error is "unavailable", no further fallback
+  // No connector: network error.
+  HaWorker w2(ha, "http://ha.local:8123", "", "T");
+  TEST_ASSERT_TRUE(w2.run(statsCmd()).error == HaError::Network);
+  // Everything refuses to connect.
+  FakeConnector dead;
+  dead.failFirst = true;
+  HaWorker w3(ha, "http://ha.local:8123", "", "T");
+  w3.setWsConnector(&dead);
+  TEST_ASSERT_TRUE(w3.run(statsCmd()).error == HaError::Network);
+}
+
+void test_statistics_bar_job() {
+  CountingHa ha;
+  FakeConnector fc;
+  fc.sock.result = "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":{\"sensor.t\":["
+                   "{\"start\":1767225600000,\"end\":1767312000000,\"sum\":4.5}]}}";
+  HaWorker w(ha, "http://ha.local:8123", "", "T");
+  w.setWsConnector(&fc);
+  NetCommand c = statsCmd();
+  c.histBar = true;
+  c.histPeriod = StatsPeriod::Day;
+  c.histStatistic = StatsType::Sum;
+  c.histBucketSeconds = 86400;
+  c.histBucketCount = 3;
+  c.histStart = 1767225600;
+  c.histEnd = 1767225600 + 2 * 86400 + 100;
+  NetEvent e = w.run(c);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL(3, (int)e.series.buckets.size());
+  TEST_ASSERT_TRUE(e.series.buckets[0].has);
+  TEST_ASSERT_EQUAL_FLOAT(4.5f, e.series.buckets[0].last);
+  TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"types\":[\"sum\"]") != std::string::npos);
+}
+
 void test_history_job_errors_and_cancel() {
   HistHa ha;
   HaWorker w(ha, "http://ha.local:8123", "", "T");
@@ -1074,6 +1266,10 @@ int main() {
   RUN_TEST(test_brightness_intent_custom_call_expected_state);
   RUN_TEST(test_brightness_intent_session_last_value_wins_and_confirms);
   RUN_TEST(test_history_job_streams_into_series);
+  RUN_TEST(test_statistics_job_over_ws);
+  RUN_TEST(test_statistics_job_heap_margin_closes_http);
+  RUN_TEST(test_statistics_job_fallback_and_errors);
+  RUN_TEST(test_statistics_bar_job);
   RUN_TEST(test_history_job_errors_and_cancel);
   RUN_TEST(test_history_event_goes_to_handler_not_session);
   return UNITY_END();

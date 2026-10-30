@@ -9,6 +9,7 @@
 #include "entity_state.h"
 #include "ha_client.h"
 #include "service_call.h"
+#include "stats_types.h"
 
 namespace app_logic {
 
@@ -24,6 +25,13 @@ struct NetCommand {
   int64_t histStart = 0, histEnd = 0;
   int histColumns = 0;
   std::shared_ptr<volatile bool> histCancel;
+  // Statistics source (task 055): WebSocket recorder/statistics_during_period. Bars: histBucketCount
+  // buckets of histBucketSeconds from histStart; lines: histColumns columns.
+  bool histStats = false, histBar = false;
+  StatsPeriod histPeriod = StatsPeriod::Hour;
+  StatsType histStatistic = StatsType::Mean;
+  int64_t histBucketSeconds = 0;
+  int histBucketCount = 0;
 };
 
 struct NetEvent {
@@ -42,6 +50,9 @@ struct NetEvent {
   history::ScanResult scan = history::ScanResult::Ok;
   uint32_t fetchMs = 0, parseMs = 0;
   size_t bytes = 0, points = 0;
+  bool stats = false;          // the statistics source ran (log field src=stats)
+  bool noStatistics = false;   // statistics: valid answer, but the entity has none (error is None)
+  uint32_t heapMin = 0;        // filled by the net task for the log line
 };
 
 // History fetch failure that means "too much data": over the size cap, or the 15 s deadline hit while data was

@@ -298,16 +298,77 @@ void test_spec_chart_choice_and_columns() {
   TEST_ASSERT_EQUAL(452, s.columns);
   TEST_ASSERT_EQUAL(824, makeHistorySpec(ws[1], true).columns);
   TEST_ASSERT_EQUAL(72, makeHistorySpec(ws[5], false).hours);
-  TEST_ASSERT_TRUE(makeHistorySpec(ws[6], false).needsStatistics);
+  TEST_ASSERT_TRUE(makeHistorySpec(ws[6], false).source == history::Source::Statistics);
   // The params hash follows the config.
   TEST_ASSERT_TRUE(history::paramsHash(makeHistorySpec(ws[0], false).params) !=
                    history::paramsHash(makeHistorySpec(ws[0], true).params));
   HistoryPopup p;
   p.open(makeHistorySpec(ws[6], false), 0, 6, 0);
-  TEST_ASSERT_EQUAL(HistState::Error, p.state());
-  TEST_ASSERT_EQUAL(HistReason::NeedsStatistics, p.reason());
+  TEST_ASSERT_EQUAL(HistState::Loading, p.state());
   HistoryJob j;
-  TEST_ASSERT_FALSE(p.takeFetch(kNow, j));
+  TEST_ASSERT_TRUE(p.takeFetch(kNow, j));
+  TEST_ASSERT_TRUE(j.statistics);
+  TEST_ASSERT_TRUE(j.bar);
+}
+
+void test_source_choice_and_jobs() {
+  auto r = config::parseConfig(kYaml);
+  const auto &ws = r.config.tabs[0].widgets;
+  // 24 h sensor: history. 72 h: statistics, hour line. Binary: history.
+  HistorySpec a = makeHistorySpec(ws[0], false);
+  TEST_ASSERT_TRUE(a.source == history::Source::History);
+  HistorySpec l = makeHistorySpec(ws[5], false);
+  TEST_ASSERT_TRUE(l.source == history::Source::Statistics);
+  TEST_ASSERT_EQUAL(int(StatsPeriod::Hour), int(l.period));
+  TEST_ASSERT_TRUE(makeHistorySpec(ws[1], false).source == history::Source::History);
+  HistoryPopup p;
+  p.open(l, 0, 5, 0);
+  HistoryJob j;
+  TEST_ASSERT_TRUE(p.takeFetch(kNow, j));
+  TEST_ASSERT_TRUE(j.statistics);
+  TEST_ASSERT_FALSE(j.bar);
+  TEST_ASSERT_EQUAL(kNow - 72 * 3600, j.start);
+  TEST_ASSERT_EQUAL(l.columns, j.columns);
+  // History job: no statistics flags.
+  HistoryPopup q;
+  q.open(a, 0, 0, 0);
+  TEST_ASSERT_TRUE(q.takeFetch(kNow, j));
+  TEST_ASSERT_FALSE(j.statistics);
+  // Bar: aligned window of 24 hourly buckets holding now.
+  HistoryPopup b;
+  b.open(makeHistorySpec(ws[6], false), 0, 6, 0);
+  TEST_ASSERT_TRUE(b.takeFetch(kNow, j));
+  TEST_ASSERT_EQUAL(int(StatsPeriod::Hour), int(j.period));
+  TEST_ASSERT_EQUAL(3600, j.bucketSeconds);
+  TEST_ASSERT_EQUAL(24, j.bucketCount);
+  TEST_ASSERT_EQUAL(0, j.start % 3600);
+  TEST_ASSERT_TRUE(j.start <= kNow - 23 * 3600 && j.start > kNow - 24 * 3600 - 3600);
+}
+
+void test_no_statistics_outcome() {
+  auto r = config::parseConfig(kYaml);
+  HistoryPopup p;
+  p.open(makeHistorySpec(r.config.tabs[0].widgets[6], false), 0, 6, 0);
+  HistoryJob j;
+  p.takeFetch(kNow, j);
+  TEST_ASSERT_TRUE(p.onFetchDone(j.ticket, HistOutcome::NoStatistics, history::Series(), kNow));
+  TEST_ASSERT_EQUAL(HistState::Error, p.state());
+  TEST_ASSERT_EQUAL(HistReason::NoStatistics, p.reason());
+}
+
+void test_bar_window() {
+  const int64_t now = 1761696000 + 5 * 3600 + 123;  // 05:02:03 on a UTC midnight
+  history::BarWindow w = history::barWindow(now, 24, 3600);
+  TEST_ASSERT_EQUAL(24, w.count);
+  TEST_ASSERT_EQUAL(1761696000 + 5 * 3600 - 23 * 3600, w.start);
+  w = history::barWindow(now, 720, 86400);
+  TEST_ASSERT_EQUAL(30, w.count);
+  TEST_ASSERT_EQUAL(0, w.start % 86400);
+  w = history::barWindow(now, 720, 3600);  // clamped to kMaxBuckets
+  TEST_ASSERT_EQUAL(history::kMaxBuckets, w.count);
+  w = history::barWindow(now, 1, 86400);
+  TEST_ASSERT_EQUAL(1, w.count);
+  TEST_ASSERT_EQUAL(now - now % 86400, w.start);
 }
 
 void test_layout_hit() {
@@ -467,5 +528,8 @@ int main() {
   RUN_TEST(test_one_modal_at_a_time);
   RUN_TEST(test_timeout_without_bytes_keeps_cache);
   RUN_TEST(test_same_columns_tolerance);
+  RUN_TEST(test_source_choice_and_jobs);
+  RUN_TEST(test_no_statistics_outcome);
+  RUN_TEST(test_bar_window);
   return UNITY_END();
 }

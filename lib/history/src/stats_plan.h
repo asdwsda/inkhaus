@@ -2,6 +2,7 @@
 // Pure choices for the statistics path (task 054): period and data source.
 #include <cstdint>
 
+#include "collector.h"
 #include "stats_types.h"
 
 namespace history {
@@ -18,5 +19,14 @@ enum class Source : uint8_t { History, Statistics };
 // Auto: history for binary entities or hours <= 24, statistics otherwise. Bars always use
 // statistics. An explicit History / Statistics is kept (except for bars).
 Source chooseSource(SourceCfg cfg, bool binary, bool bar, int hours);
+
+// Window of a bar chart: `count` buckets of `bucketSeconds`, the first starting on a multiple of
+// bucketSeconds (UTC; HA aligns days to local midnight, the parser rounds to the nearest bucket), the last
+// one holding `now`. count = ceil(hours / bucket) clamped to 1..kMaxBuckets. end = now.
+struct BarWindow {
+  int64_t start = 0, end = 0;
+  int count = 0;
+};
+BarWindow barWindow(int64_t now, int hours, int64_t bucketSeconds);
 
 }  // namespace history

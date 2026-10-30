@@ -10,6 +10,7 @@
 #include "stats_request.h"
 #include "ws_client.h"
 #include "ws_crypto.h"
+#include "ws_endpoint.h"
 #include "ws_frame.h"
 
 void setUp() {}
@@ -435,6 +436,37 @@ void test_statistics_command() {
   TEST_ASSERT_EQUAL_STRING("\"a\\\"b\\\\\"", json_quote("a\"b\\").c_str());
 }
 
+void test_endpoint() {
+  ws::Endpoint e = ws::parse_endpoint("http://ha.local:8123/");
+  TEST_ASSERT_TRUE(e.valid);
+  TEST_ASSERT_FALSE(e.tls);
+  TEST_ASSERT_EQUAL_STRING("ha.local", e.host.c_str());
+  TEST_ASSERT_EQUAL(8123, e.port);
+  TEST_ASSERT_EQUAL_STRING("ha.local:8123", e.hostHeader.c_str());
+  e = ws::parse_endpoint("https://ha.example.org");
+  TEST_ASSERT_TRUE(e.tls);
+  TEST_ASSERT_EQUAL(443, e.port);
+  TEST_ASSERT_EQUAL_STRING("ha.example.org", e.hostHeader.c_str());
+  e = ws::parse_endpoint("https://ha.example.org:443/x");
+  TEST_ASSERT_EQUAL_STRING("ha.example.org", e.hostHeader.c_str());
+  e = ws::parse_endpoint("http://10.0.0.5");
+  TEST_ASSERT_EQUAL(80, e.port);
+  TEST_ASSERT_FALSE(ws::parse_endpoint("ftp://x").valid);
+  TEST_ASSERT_FALSE(ws::parse_endpoint("http://").valid);
+  TEST_ASSERT_FALSE(ws::parse_endpoint("http://a:99999").valid);
+  TEST_ASSERT_FALSE(ws::parse_endpoint("http://u:p@a").valid);
+}
+
+void test_error_code_is_scrubbed() {
+  Fake f;
+  std::string bad = std::string("{\"id\":1,\"type\":\"result\",\"success\":false,\"error\":{\"code\":\"") + kToken + "\"}}";
+  standard_server(f, "{\"type\":\"auth_ok\"}", sframe(ws::kText, bad));
+  ws::FlowResult r = ws::run_command(f, make_req(), [](const char*, size_t) { return true; });
+  TEST_ASSERT_TRUE(r.server_error);
+  TEST_ASSERT_TRUE(r.code.find("SECRET") == std::string::npos);
+  TEST_ASSERT_TRUE(r.message.find("SECRET") == std::string::npos);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_accept_rfc_sample);
@@ -454,5 +486,7 @@ int main() {
   RUN_TEST(test_flow_unexpected_and_early_close);
   RUN_TEST(test_flow_deadline_cancel_toolarge);
   RUN_TEST(test_statistics_command);
+  RUN_TEST(test_endpoint);
+  RUN_TEST(test_error_code_is_scrubbed);
   return UNITY_END();
 }

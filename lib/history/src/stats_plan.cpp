@@ -21,4 +21,17 @@ Source chooseSource(SourceCfg cfg, bool binary, bool bar, int hours) {
   return (binary || hours <= 24) ? Source::History : Source::Statistics;
 }
 
+BarWindow barWindow(int64_t now, int hours, int64_t bs) {
+  BarWindow w;
+  if (bs < 1) bs = 3600;
+  int64_t span = int64_t(hours < 1 ? 1 : hours) * 3600;
+  int64_t n = (span + bs - 1) / bs;
+  if (n < 1) n = 1;
+  if (n > kMaxBuckets) n = kMaxBuckets;
+  w.count = int(n);
+  w.start = (now / bs) * bs - (n - 1) * bs;
+  w.end = now;
+  return w;
+}
+
 }  // namespace history

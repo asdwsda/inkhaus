@@ -126,7 +126,7 @@ bool StatsParser::timeMs(const std::string& s, bool isString, bool& ok, int64_t&
   if (s == "null") return true;
   char* end = nullptr;
   double v = strtod(s.c_str(), &end);
-  if (end == s.c_str() || !std::isfinite(v) || v < 0) return true;
+  if (end == s.c_str() || !std::isfinite(v) || v < 0 || v > 1e15) return true;  // ms; clamp before the int64 cast
   ms = v >= 1e11 ? (int64_t)v : (int64_t)(v * 1000.0);  // tolerate epoch seconds
   ok = true;
   return true;
@@ -145,7 +145,7 @@ void StatsParser::value(const std::string& s, bool isString) {
     if (isString) return;
     char* end = nullptr;
     double v = strtod(s.c_str(), &end);
-    bool ok = s != "null" && end != s.c_str() && std::isfinite(v);
+    bool ok = s != "null" && end != s.c_str() && std::isfinite(v) && std::fabs(v) <= 3e38;  // fits a float
     if (k == "mean") { hMean_ = ok; mean_ = v; }
     else if (k == "min") { hMin_ = ok; min_ = v; }
     else if (k == "max") { hMax_ = ok; max_ = v; }
