@@ -8,3 +8,4 @@ secrets.yaml
 .claude/agent-memory/
 __pycache__/
 a.out
+tools/flasher/target/

@@ -1,0 +1,31 @@
+# M5Paper Installer (flasher)
+
+Installs a released firmware on the M5Paper over USB. No PlatformIO or Python needed.
+
+## Use
+1. Connect the M5Paper with a USB data cable and start the installer.
+2. The top line says "M5Paper connected (port)". If it says "Plug in the M5Paper...", check the cable.
+   A port list appears only when no or several M5Papers are found.
+3. Pick a version (the newest stable one is preselected; tick "Show pre-releases" for test versions).
+   Offline? Use "Choose file..." with a downloaded release zip, or the `manifest.json` from an unpacked release folder.
+4. Press **Install**. Phases: Downloading, Checking files, Writing, Verifying, Restarting. Do not unplug meanwhile.
+
+Settings (Wi-Fi, options) and the SD card are kept: only the bootloader, partition table, boot_app0 and
+firmware are written; the rest of the flash (including settings storage) is not touched.
+
+## Problems
+- **No device found**: use a data cable; on Windows install the CH9102 USB driver (WCH CH343 driver).
+- **Port cannot be opened**: close serial monitors, Arduino IDE, PlatformIO.
+- **Checksum does not match**: the download was damaged; press Install again. Nothing is written in that case.
+- **Windows SmartScreen / macOS Gatekeeper warn**: the binary is unsigned. Windows: "More info", then "Run anyway".
+  macOS: right-click the app, "Open", confirm.
+- **GitHub limits requests**: wait a few minutes, or use "Choose file...".
+
+## Command line (no device needed)
+`flasher --dry-run [--dir PATH|ZIP] [--version TAG] [--prerelease] [--repo OWNER/NAME] [--releases FILE]`
+resolves a release, downloads it and verifies every file against `manifest.json`. Nothing is written.
+`FLASHER_REPO=owner/name` changes the GitHub repository used by the window.
+
+## Build (developers)
+`cd tools/flasher && cargo build --release` (binary: `target/release/flasher`), `cargo test`.
+Needs Rust. On Linux the window needs X11 or Wayland at run time; no -dev packages are needed to build.

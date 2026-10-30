@@ -1,0 +1,31 @@
+{
+  "version": "1.0.0",
+  "chip": "esp32",
+  "flash_size": "16MB",
+  "segments": [
+    {
+      "file": "bootloader.bin",
+      "offset": 4096,
+      "size": 17536,
+      "sha256": "a23f2db3a09e9df581a397ade210cce2224b593f8ae563a28f75b5b9795f30b3"
+    },
+    {
+      "file": "partitions.bin",
+      "offset": 32768,
+      "size": 3072,
+      "sha256": "bd0f7954aca2ef7d925ee21aaa1f3dc8822d1d6ce5cbbd26a135e5886bfff6ce"
+    },
+    {
+      "file": "boot_app0.bin",
+      "offset": 57344,
+      "size": 8192,
+      "sha256": "f94c5d786a7a8fab06ac5d10e33bf37711a6697636dc037559ea19cc410a17f0"
+    },
+    {
+      "file": "firmware.bin",
+      "offset": 65536,
+      "size": 2175392,
+      "sha256": "0be51584207fcb900479dd484dd7f9bc6ae1ff57c088f78ec302a9864e9346a4"
+    }
+  ]
+}
