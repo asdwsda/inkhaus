@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 - 2026-10-30
+
+### Installer
+- Windows: the installer no longer opens an empty console window behind the app.
+
 ## 1.2.0 - 2026-10-30
 
 ### Dashboard

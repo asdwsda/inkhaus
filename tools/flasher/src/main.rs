@@ -1,3 +1,5 @@
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
 mod app;
 mod device;
 mod error;
@@ -39,8 +41,23 @@ fn dry_run(args: &[String]) -> Result<(), error::Error> {
     Ok(())
 }
 
+/// The release build is a GUI-subsystem exe (no console window); when started from a terminal with
+/// arguments, attach to the parent's console so the CLI output shows up.
+#[cfg(windows)]
+fn attach_parent_console() {
+    unsafe extern "system" {
+        fn AttachConsole(process_id: u32) -> i32;
+    }
+    const ATTACH_PARENT_PROCESS: u32 = u32::MAX;
+    unsafe { AttachConsole(ATTACH_PARENT_PROCESS) };
+}
+
 fn main() -> eframe::Result<()> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    #[cfg(windows)]
+    if !args.is_empty() {
+        attach_parent_console();
+    }
     if args.iter().any(|a| a == "--help" || a == "-h") {
         println!("{USAGE}");
         return Ok(());

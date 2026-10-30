@@ -3,7 +3,7 @@
 **Inkhaus** turns an **M5Stack M5Paper** e-ink touch screen into a battery-powered remote for
 [Home Assistant](https://www.home-assistant.io/). It shows your shutters, lights, thermostats and
 sensors, sends your taps to Home Assistant, and sleeps the rest of the time, so the screen always
-shows the last known state without using power. Version 1.2.0, see [CHANGELOG.md](CHANGELOG.md).
+shows the last known state without using power. Version 1.2.1, see [CHANGELOG.md](CHANGELOG.md).
 
 Website: <https://asdwsda.github.io/inkhaus/>
 

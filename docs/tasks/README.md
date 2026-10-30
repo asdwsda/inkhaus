@@ -77,6 +77,7 @@
 | 075 | [Feature tour GIF as the only README image](075-feature-tour-gif.md) | done | 073 |
 | 076 | [Smaller demo (4 tabs)](076-smaller-demo.md) | done | 033, 068, 071 |
 | 077 | [Long press on another sensor breaks the graph widget](077-graph-popup-crosstalk.md) | done | 071, 074 |
+| 078 | [Windows installer opens no console window](078-flasher-no-console.md) | in-progress | 069 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
