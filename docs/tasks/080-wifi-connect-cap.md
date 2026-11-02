@@ -1,6 +1,6 @@
 # 080: Cap the Wi-Fi connect time per session
 
-Status: todo
+Status: testing
 Depends on: 047, 056
 UI spec: none (uses the existing offline/error indicator)
 Needs device: yes (short check)

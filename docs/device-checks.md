@@ -67,3 +67,4 @@ tagged `UNVERIFIED` in code comments and task notes.
 - [x] History from statistics: 7 d line and daily bars, heap_min 124 KB, tap afterwards works (task 055, user 2026-10-30)
 - [x] History over the remote URL (REST and statistics), SD cache after a reset, unavailable marker, modal open/close without shadow (tasks 051, 053, 057, user 2026-10-30)
 - [ ] 082: one night on battery with no graph on the Home tab, hourly refresh; then fetch the wake log (tools/wakelog.py) and compare scheduled-wake awake_ms with the 10-30..11-02 baseline (task 082 Notes).
+- [ ] 080: scheduled wake with AP off: awake_ms <= ~18 s, log reason=budget; interactive with AP off: offline after ~15 s, AP on + tap sends the command; check wifi_ms outliers in the wake log are gone.

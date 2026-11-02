@@ -79,7 +79,7 @@
 | 077 | [Long press on another sensor breaks the graph widget](077-graph-popup-crosstalk.md) | done | 071, 074 |
 | 078 | [Windows installer opens no console window](078-flasher-no-console.md) | in-progress | 069 |
 | 079 | [Learn the battery limits from the wake stats](079-battery-limit-learning.md) | todo | 029, 035 |
-| 080 | [Cap the Wi-Fi connect time per session](080-wifi-connect-cap.md) | todo | 047, 056 |
+| 080 | [Cap the Wi-Fi connect time per session](080-wifi-connect-cap.md) | testing | 047, 056 |
 | 081 | [Stay awake on USB (setting) and manual sleep](081-usb-stay-awake-and-sleep-now.md) | todo | 035 |
 | 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | todo | 029, 071 |
 
