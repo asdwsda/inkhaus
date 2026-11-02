@@ -78,6 +78,10 @@
 | 076 | [Smaller demo (4 tabs)](076-smaller-demo.md) | done | 033, 068, 071 |
 | 077 | [Long press on another sensor breaks the graph widget](077-graph-popup-crosstalk.md) | done | 071, 074 |
 | 078 | [Windows installer opens no console window](078-flasher-no-console.md) | in-progress | 069 |
+| 079 | [Learn the battery limits from the wake stats](079-battery-limit-learning.md) | todo | 029, 035 |
+| 080 | [Cap the Wi-Fi connect time per session](080-wifi-connect-cap.md) | todo | 047, 056 |
+| 081 | [Stay awake on USB (setting) and manual sleep](081-usb-stay-awake-and-sleep-now.md) | todo | 035 |
+| 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | todo | 029, 071 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
