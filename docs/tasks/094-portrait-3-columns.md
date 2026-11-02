@@ -34,3 +34,9 @@ User 2026-11-02: per-tab `portrait_columns: 3` (default 2), analogous to `landsc
   (light, automation) may be 1x1 (icon above name/state, F24 -> F18 -> "…"); weather min 2x1; cover/cover group/climate/vacuum
   always full row (4x1, compact 2x1 not allowed at 4 cols); graph min 2x1, default 4x2. Keep the per-type min/max in one table
   so it is easy to change. (light/automation as 1x1 = architect's reading of "button", confirm with user.)
+- 2026-11-02 firmware-dev: implemented PC-side (no device). Config `portrait_columns` 2|3|4 (cache: high nibble of the landscape byte),
+  `ui::columnsOf`, grids portrait3/portrait4, size table in `sizeLimits`/`graphSizeLimits`, `lib/ui/src/text_fit.*`,
+  render: narrow/tiny toggles, compact cover/vacuum/climate (W<400), sensor 2x1 narrow, graph compact spark at W<400.
+  UNVERIFIED on device: all of it. Device checks: (1) 3-col Home tab vs experiment-portrait-3col-cover3.png; (2) 4-col 1x1 toggles
+  (40 px icon at y 6, name baseline 68, state 91; mockup has 32 px); (3) compact cover/vacuum/climate badge positions (spec silent);
+  (4) sensor 2x1 and weather 2x1 at 334/248 px; (5) graph 2x2 (334) and 2x1 (334/248) spark/ticks; (6) touch on compact buttons.

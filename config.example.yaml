@@ -49,6 +49,9 @@ groups:
 #     decimals: 1
 tabs:
   - title: Living room
+    # landscape_columns: 4   # optional: 4 or 5 (default 5)
+    # portrait_columns: 3    # optional: 2, 3 or 4 (default 2); 3: 161 px cells, 4: 118 px cells (1x1 only for
+    #                        # sensor, binary_sensor, switch, light, automation)
     widgets:
       - entity: cover.living_room_shutter
         name: Shutter            # optional, default: HA friendly_name

@@ -24,7 +24,7 @@ void GraphWidgets::rebuild(const config::Config &cfg, settings::Orientation o, c
     bool any = false;
     for (const config::Widget &w : tab.widgets) any |= config::isGraphWidget(w);
     if (!any) continue;
-    const ui::Flow flow = ui::computeFlow(o, tab.widgets, tab.landscapeColumns);
+    const ui::Flow flow = ui::computeFlow(o, tab.widgets, ui::columnsOf(tab, o));
     for (const ui::Placement &p : flow.placements) {
       const config::Widget &w = tab.widgets[size_t(p.index)];
       if (!config::isGraphWidget(w)) continue;

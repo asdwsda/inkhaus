@@ -53,7 +53,7 @@ GraphLayout widgetGraphLayout(ChartType type, int W, int H, bool landscape) {
   l.listRows = 0;
   if (H < kWidgetFullMinH) {  // compact: spark rect right of the name / value block
     l.labels = false;
-    const int x = landscape ? 164 : 228;
+    const int x = landscape ? 164 : (W < 400 ? 124 : 228);  // portrait 3/4 columns: narrow cells (task 094)
     const Rect spark{x, 20, W - 17 - x, 62};
     if (type == ChartType::Step) {
       l.plot = Rect{spark.x, spark.y + 11, spark.w, 40};

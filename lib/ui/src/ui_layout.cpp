@@ -25,6 +25,24 @@ const Grid &gridFor(Orientation o, int columns) {
       {0, 0, 288, 56}, {412, 0, 112, 56}, {298, 3, 108, 48},
       {{16, 892, 118, 56}, {146, 892, 118, 56}, {276, 892, 118, 56}, {406, 892, 118, 56}, {}},
       4};
+  // Task 094: portrait 3 columns (layout.md 2b): 161/161/162 px, gap 12.
+  static const Grid portrait3 = {
+      Orientation::Portrait, 540, 960, 3, 7, 161,
+      {16, 189, 362, 0, 0},
+      {68, 184, 300, 416, 532, 648, 764},
+      {0, 0, 540, 56}, {0, 880, 540, 80}, {16, 68, 508, 800},
+      {0, 0, 288, 56}, {412, 0, 112, 56}, {298, 3, 108, 48},
+      {{16, 892, 118, 56}, {146, 892, 118, 56}, {276, 892, 118, 56}, {406, 892, 118, 56}, {}},
+      4, 1};
+  // Portrait 4 columns: 118 px cells (experiment-portrait-4col.svg).
+  static const Grid portrait4 = {
+      Orientation::Portrait, 540, 960, 4, 7, 118,
+      {16, 146, 276, 406, 0},
+      {68, 184, 300, 416, 532, 648, 764},
+      {0, 0, 540, 56}, {0, 880, 540, 80}, {16, 68, 508, 800},
+      {0, 0, 288, 56}, {412, 0, 112, 56}, {298, 3, 108, 48},
+      {{16, 892, 118, 56}, {146, 892, 118, 56}, {276, 892, 118, 56}, {406, 892, 118, 56}, {}},
+      4};
   static const Grid landscape = {
       Orientation::Landscape, 960, 540, 5, 4, 176,
       {16, 204, 392, 580, 768},
@@ -41,21 +59,48 @@ const Grid &gridFor(Orientation o, int columns) {
       {16, 4, 144, 56}, {832, 4, 112, 56}, {706, 8, 108, 48},
       {{172, 4, 120, 56}, {304, 4, 120, 56}, {436, 4, 120, 56}, {568, 4, 120, 56}, {700, 4, 120, 56}},
       5};
-  if (o == Orientation::Portrait) return portrait;
+  if (o == Orientation::Portrait) return columns == 3 ? portrait3 : columns == 4 ? portrait4 : portrait;
   return columns == 4 ? landscape4 : landscape;
+}
+
+int columnsOf(const config::Tab &tab, Orientation o) {
+  return o == Orientation::Portrait ? tab.portraitColumns : tab.landscapeColumns;
 }
 
 Rect sleepBadgeRect(Orientation o) { return gridFor(o).sleepBadge; }
 
 Rect cellRect(const Grid &g, int c, int r, int w, int h) {
-  return {g.colX[c], g.rowY[r], w * g.cellW + (w - 1) * kGap, h * kCellH + (h - 1) * kGap};
+  const int last = c + w - 1;
+  const int right = g.colX[last] + g.cellW + (last == g.cols - 1 ? g.lastColExtra : 0);
+  return {g.colX[c], g.rowY[r], right - g.colX[c], h * kCellH + (h - 1) * kGap};
 }
 
 SizeLimits sizeLimits(WidgetType t, Orientation o, int columns) {
   return sizeLimits(t, gridFor(o, columns));
 }
 
+// The per-type size table, one place to change it (user 2026-11-02). Each row: def, min, max.
+// Grid kinds: kWide2 = portrait 2 columns and landscape 4 columns (wide = 2 cells), kWide3 = landscape 5 columns
+// (wide = 3 cells), kP3 = portrait 3 columns, kP4 = portrait 4 columns.
 SizeLimits sizeLimits(WidgetType t, const Grid &g) {
+  const bool p3 = g.orientation == Orientation::Portrait && g.cols == 3;
+  const bool p4 = g.orientation == Orientation::Portrait && g.cols == 4;
+  if (p3 || p4) {
+    const int n = g.cols;
+    switch (t) {
+      case WidgetType::Cover:
+      case WidgetType::Climate:
+      case WidgetType::Vacuum:
+        // 3 columns: full row, or compact 2x1. 4 columns: full row only.
+        return p3 ? SizeLimits{{n, 1}, {2, 1}, {n, 1}} : SizeLimits{{n, 1}, {n, 1}, {n, 1}};
+      case WidgetType::Light:
+      case WidgetType::Switch:
+      case WidgetType::Automation:
+      case WidgetType::BinarySensor: return {{1, 1}, {1, 1}, {1, 1}};
+      case WidgetType::Sensor: return {{1, 1}, {1, 1}, {2, 1}};
+      case WidgetType::Weather: return p3 ? SizeLimits{{2, 1}, {1, 1}, {n, 1}} : SizeLimits{{2, 1}, {2, 1}, {n, 1}};
+    }
+  }
   const int wide = g.cols == 5 ? 3 : 2;
   switch (t) {
     case WidgetType::Cover:
@@ -69,6 +114,11 @@ SizeLimits sizeLimits(WidgetType t, const Grid &g) {
     case WidgetType::Weather: return {{2, 1}, {1, 1}, {2, 1}};
   }
   return {{1, 1}, {1, 1}, {1, 1}};
+}
+
+SizeLimits graphSizeLimits(const Grid &g) {
+  if (g.orientation == Orientation::Portrait && g.cols >= 3) return {{g.cols, 2}, {2, 1}, {g.cols, 2}};
+  return {{2, 2}, {2, 1}, {g.cols, config::kMaxWidgetSize}};  // task 071: wide graph, default 2x2
 }
 
 WidgetSize clampSize(const SizeLimits &lim, WidgetSize req, const Grid &g, unsigned *reasons) {
@@ -89,7 +139,7 @@ WidgetSize clampSize(const SizeLimits &lim, WidgetSize req, const Grid &g, unsig
 WidgetSize resolveSize(WidgetType type, const config::Widget &w, const Grid &g,
                        unsigned *reasons, WidgetSize *requested) {
   SizeLimits lim = sizeLimits(type, g);
-  if (config::isGraphWidget(w)) lim = {{2, 2}, {2, 1}, {g.cols, config::kMaxWidgetSize}};  // task 071: wide graph, default 2x2
+  if (config::isGraphWidget(w)) lim = graphSizeLimits(g);
   WidgetSize req = w.size ? *w.size : lim.def;
   if (requested) *requested = req;
   return clampSize(lim, req, g, reasons);
@@ -195,7 +245,7 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
                      int subPage, int group) {
   const int T = (int)tabs.size();
   const int at = T > 0 ? std::min(std::max(activeTab, 0), T - 1) : 0;
-  const Grid &g = gridFor(o, T > 0 ? tabs[at].landscapeColumns : 5);
+  const Grid &g = gridFor(o, T > 0 ? columnsOf(tabs[at], o) : 0);
   Layout L;
   L.orientation = o;
   L.statusBar = g.statusBar;
@@ -224,7 +274,7 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
     L.tabSlots.push_back(s);
   }
 
-  if (T > 0) L.flow = computeFlow(o, tabs[activeTab].widgets, tabs[activeTab].landscapeColumns);
+  if (T > 0) L.flow = computeFlow(o, tabs[activeTab].widgets, columnsOf(tabs[activeTab], o));
   L.pager.subPageCount = L.flow.pageCount;
   L.pager.subPage = std::min(std::max(subPage, 0), L.flow.pageCount - 1);
   L.pager.visible = L.flow.pagerVisible;
@@ -249,7 +299,7 @@ std::vector<SubRegion> subRegions(WidgetType type, WidgetSize, const Rect &r) {
       out.push_back({3, {r.x + W - 76, y, 64, 64}});
       break;
     case WidgetType::Climate:
-      out.push_back({1, {r.x + W - 276, y, 64, 64}});
+      out.push_back({1, {r.x + (W < 400 ? 94 : W - 276), y, 64, 64}});  // compact 2x1: minus at 94
       out.push_back({2, {r.x + W - 76, y, 64, 64}});
       break;
     default: break;

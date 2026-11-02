@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "text_fit.h"
 #include "widget_view.h"
 
 namespace render {
@@ -141,11 +142,49 @@ void drawBadge(Ctx &x, int dx, int dy, Icon icon, uint32_t color) {
   drawIcon(x.c, icon, 24, x.X(dx), x.Y(dy), color);
 }
 
+// Narrow cells (task 094): F24 -> F18 -> "..." per layout.md 2b. Measured with the real fonts.
+ui::TextMeasure measureOn(M5Canvas &c) {
+  return [&c](bool small, const std::string &t) { return textWidth(c, small ? Font::F18 : Font::F24, t); };
+}
+constexpr const char *kEll = "\xE2\x80\xA6";  // same glyph as draw.cpp
+constexpr int kNarrowW = 200;   // below this a widget uses the 1x1 text fallback (161 px cells, 118 px cells)
+constexpr int kTinyW = 130;     // below this: icon above the text (portrait 4 columns)
+constexpr int kCompactW = 400;  // wide types below this use the compact 2x1 layouts (portrait 3 columns)
+
 uint32_t textColor(Look look, uint32_t normal) { return look == Look::Normal ? normal : OFFGREY; }
 
 // ---- cover, wide ---------------------------------------------------------------------------------
 
+// Compact state text: a trailing "NN%" replaces the whole text ("Opening 40%" -> "40%"), else the short form.
+std::string compactState(const std::string &state) {
+  const size_t sp = state.rfind(' ');
+  if (sp != std::string::npos && !state.empty() && state.back() == '%') return state.substr(sp + 1);
+  return ui::shortState(state, kEll);
+}
+
+// Compact 2x1 (W = 334): F18 name and short state, same buttons (layout.md 2b).
+void drawCoverCompact(Ctx &x, const uistate::WidgetData &d, const std::string &title) {
+  const auto v = uistate::coverView(d.members, d.group);
+  const bool una = v.look == Look::Unavailable;
+  drawFrame(x, PAPER, una);
+  const int W = x.W();
+  drawText(x.c, Font::F18, fitText(x.c, Font::F18, title, 83), x.X(12), x.Y(44), Align::Left,
+           una ? OFFGREY : INK);
+  drawText(x.c, Font::F18, fitText(x.c, Font::F18, compactState(v.state), 83), x.X(12), x.Y(77), Align::Left,
+           INK);
+  if (una) drawBadge(x, 71, 2, Icon::Warn, OFFGREY);  // UNVERIFIED position (spec silent)
+  else if (v.alertBadge || d.failed) drawBadge(x, 71, 2, Icon::Alert, INK);
+  auto subs = ui::subRegions(WidgetType::Cover, config::WidgetSize{}, x.r);
+  const Icon glyphs[3] = {Icon::Up, Icon::Stop, Icon::Down};
+  const bool filled[3] = {v.upFilled, false, v.downFilled};
+  for (int i = 0; i < 3; ++i)
+    drawButton(x, subs[size_t(i)].rect, glyphs[i], filled[i], d.pending && d.pendingSub == i + 1, una,
+               x.innerSub == i + 1);
+  (void)W;
+}
+
 void drawCover(Ctx &x, const uistate::WidgetData &d, const std::string &title) {
+  if (x.W() < kCompactW) { drawCoverCompact(x, d, title); return; }
   const auto v = uistate::coverView(d.members, d.group);
   const bool una = v.look == Look::Unavailable;
   drawFrame(x, PAPER, una);
@@ -180,7 +219,6 @@ void drawToggle(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
   const int W = x.W();
   const uint32_t fg = una ? OFFGREY : (inkFill ? PAPER : INK);
   const uint32_t sub = inkFill ? PAPER : INK;  // dynamic text: pure black (or white on the ink fill)
-  drawText(x.c, Font::F24, fitText(x.c, Font::F24, title, W - 24), x.X(12), x.Y(38), Align::Left, fg);
   Icon icon = Icon::Bulb;
   switch (type) {
     case WidgetType::Light: icon = v.on ? Icon::Bulb : Icon::BulbOff; break;
@@ -189,20 +227,67 @@ void drawToggle(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
     case WidgetType::BinarySensor: icon = stateIcon(v.icon) == Icon::Count ? Icon::DotOff : stateIcon(v.icon); break;
     default: break;
   }
-  if (binary && una) drawIcon(x.c, Icon::Warn, 40, x.X(12), x.Y(49), OFFGREY);
-  else drawIcon(x.c, icon, 40, x.X(12), x.Y(49), fg);
-  drawText(x.c, Font::F24, fitText(x.c, Font::F24, v.state, W - 70), x.X(58), x.Y(77), Align::Left, sub);
-  if (una && !binary) drawBadge(x, W - 36, 57, Icon::Warn, OFFGREY);
-  else if (failed) drawBadge(x, W - 36, 57, Icon::Alert, inkFill ? PAPER : INK);
-  else if (pend) {
-    drawBadge(x, W - 36, 57, Icon::Hourglass, inkFill ? PAPER : INK);
-    drawPendingRing(x, inkFill ? PAPER : INK);
+  const bool binWarn = binary && una;
+  const bool showBadge = (una && !binary) || failed || pend;
+  const Icon badgeIcon = (una && !binary) ? Icon::Warn : failed ? Icon::Alert : Icon::Hourglass;
+  const uint32_t badgeColor = (una && !binary) ? OFFGREY : (inkFill ? PAPER : INK);
+  const bool ring = pend && !failed && !(una && !binary);
+  const Icon glyph = binWarn ? Icon::Warn : icon;
+  const uint32_t glyphColor = binWarn ? OFFGREY : fg;
+  if (W < kTinyW) {
+    // Portrait 4 columns (118 px): icon above name and state, centred. UNVERIFIED: 40 px icon (the mockup shows 32).
+    const auto m = measureOn(x.c);
+    drawIcon(x.c, glyph, 40, x.X((W - 40) / 2), x.Y(6), glyphColor);
+    const ui::TextFit nm = ui::fitName(m, title, W - 16, kEll);
+    drawText(x.c, nm.small ? Font::F18 : Font::F24, nm.text, x.X(W / 2), x.Y(68), Align::Center, fg);
+    const ui::TextFit st = ui::fitState(m, v.state, W - 16, kEll, false);
+    drawText(x.c, Font::F18, st.text, x.X(W / 2), x.Y(91), Align::Center, sub);
+    if (showBadge) drawBadge(x, W - 28, 6, badgeIcon, badgeColor);
+    if (ring) drawPendingRing(x, inkFill ? PAPER : INK);
+    return;
   }
+  if (W < kNarrowW) {
+    // Portrait 3 columns (161 px): name F24 -> F18 -> "...", state beside the icon with the same fallback.
+    const auto m = measureOn(x.c);
+    const ui::TextFit nm = ui::fitName(m, title, W - 24, kEll);
+    drawText(x.c, nm.small ? Font::F18 : Font::F24, nm.text, x.X(12), x.Y(38), Align::Left, fg);
+    drawIcon(x.c, glyph, 40, x.X(12), x.Y(49), glyphColor);
+    const ui::TextFit st = ui::fitState(m, v.state, showBadge ? W - 36 - 8 - 58 : W - 70, kEll, true);
+    drawText(x.c, st.small ? Font::F18 : Font::F24, st.text, x.X(58), st.small ? x.Y(75) : x.Y(77), Align::Left, sub);
+    if (showBadge) drawBadge(x, W - 36, 57, badgeIcon, badgeColor);
+    if (ring) drawPendingRing(x, inkFill ? PAPER : INK);
+    return;
+  }
+  drawText(x.c, Font::F24, fitText(x.c, Font::F24, title, W - 24), x.X(12), x.Y(38), Align::Left, fg);
+  drawIcon(x.c, glyph, 40, x.X(12), x.Y(49), glyphColor);
+  drawText(x.c, Font::F24, fitText(x.c, Font::F24, v.state, W - 70), x.X(58), x.Y(77), Align::Left, sub);
+  if (showBadge) drawBadge(x, W - 36, 57, badgeIcon, badgeColor);
+  if (ring) drawPendingRing(x, inkFill ? PAPER : INK);
 }
 
 // ---- climate, wide -------------------------------------------------------------------------------
 
+// Compact 2x1 (W = 334): F18 name, F18 current temperature, F24 target, no humidity (layout.md 2b).
+void drawClimateCompact(Ctx &x, const uistate::WidgetData &d, const std::string &title) {
+  const EntityState *st = d.members.empty() ? nullptr : d.members[0];
+  const auto v = uistate::climateView(st);
+  const bool una = v.look == Look::Unavailable;
+  drawFrame(x, PAPER, una);
+  drawText(x.c, Font::F18, fitText(x.c, Font::F18, title, 76), x.X(12), x.Y(44), Align::Left, una ? OFFGREY : INK);
+  drawText(x.c, Font::F18, v.temp, x.X(12), x.Y(77), Align::Left, INK);
+  const Icon ai = v.look == Look::Normal ? actionIcon(v.act) : Icon::Count;
+  if (ai != Icon::Count) drawIcon(x.c, ai, 24, x.X(64), x.Y(58), INK);
+  if (una) drawBadge(x, 64, 2, Icon::Warn, OFFGREY);  // UNVERIFIED position (spec silent)
+  else if (d.failed) drawBadge(x, 64, 2, Icon::Alert, INK);
+  else if (d.pending) drawBadge(x, 64, 2, Icon::Hourglass, INK);
+  auto subs = ui::subRegions(WidgetType::Climate, config::WidgetSize{}, x.r);
+  drawButton(x, subs[0].rect, Icon::Minus, false, d.pending && d.pendingSub == 1, una, x.innerSub == 1, false);
+  drawButton(x, subs[1].rect, Icon::Plus, false, d.pending && d.pendingSub == 2, una, x.innerSub == 2, false);
+  drawText(x.c, Font::F24, v.target, x.X(208), x.Y(61), Align::Center, INK);
+}
+
 void drawClimate(Ctx &x, const uistate::WidgetData &d, const std::string &title) {
+  if (x.W() < kCompactW) { drawClimateCompact(x, d, title); return; }
   const EntityState *st = d.members.empty() ? nullptr : d.members[0];
   const auto v = uistate::climateView(st);
   const bool una = v.look == Look::Unavailable;
@@ -252,6 +337,24 @@ void drawSensor(Ctx &x, const ui::Placement &pl, const uistate::WidgetData &d, c
   const uint32_t vc = INK;
   if (pl.cellW >= 2) {
     // 2x1: name left (up to two lines), value right.
+    // Portrait 3/4 columns (W < 400): F40 value, name gets what is left of it. UNVERIFIED.
+    if (W < kCompactW) {
+      std::string unitN = v.unit;
+      const Font vf = Font::F40;
+      const int valW = v.textState ? textWidth(x.c, Font::F24, v.value) : runWidth(x.c, vf, v.value, Font::F24, unitN);
+      const int nameWn = std::max(40, W - 36 - valW);
+      auto ln = wrapText(x.c, Font::F24, title, nameWn, 2);
+      if (ln.size() >= 2) {
+        drawText(x.c, Font::F24, ln[0], x.X(12), x.Y(44), Align::Left, INK);
+        drawText(x.c, Font::F24, ln[1], x.X(12), x.Y(77), Align::Left, INK);
+      } else if (!ln.empty()) {
+        drawText(x.c, Font::F24, ln[0], x.X(12), x.Y(60), Align::Left, INK);
+      }
+      if (v.textState) drawText(x.c, Font::F24, v.value, x.X(W - 12), x.Y(60), Align::Right, vc);
+      else drawRun(x.c, vf, v.value, Font::F24, unitN, x.X(W - 12), x.Y(66), Align::Right, vc);
+      if (una) drawBadge(x, W - 36, 8, Icon::Warn, OFFGREY);
+      return;
+    }
     const int nameW = W - 232;
     auto lines = wrapText(x.c, Font::F24, title, nameW, 2);
     if (lines.size() >= 2) {
@@ -332,18 +435,22 @@ void drawVacuum(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
   const bool una = v.look == Look::Unavailable;
   drawFrame(x, PAPER, una);
   const int W = x.W();
-  drawText(x.c, Font::F24, fitText(x.c, Font::F24, title, W - 252), x.X(12), x.Y(44), Align::Left, una ? OFFGREY : INK);
+  const bool compact = W < kCompactW;  // 2x1: same rules as the compact cover, no battery
+  const Font tf = compact ? Font::F18 : Font::F24;
+  drawText(x.c, tf, fitText(x.c, tf, title, compact ? 83 : W - 252), x.X(12), x.Y(44), Align::Left,
+           una ? OFFGREY : INK);
   const uint32_t sc = INK;
-  const int statusMax = v.error ? W - 284 : W - 284;
-  const std::string status = fitText(x.c, Font::F24, v.status, statusMax);
-  drawText(x.c, Font::F24, status, x.X(12), x.Y(77), Align::Left, sc);
-  if (v.showBattery) {
+  const int statusMax = compact ? 83 : W - 284;
+  const std::string status = fitText(x.c, tf, compact ? compactState(v.status) : v.status, statusMax);
+  drawText(x.c, tf, status, x.X(12), x.Y(77), Align::Left, sc);
+  if (v.showBattery && !compact) {
     const int ix = 12 + textWidth(x.c, Font::F24, status) + 12;
     drawIcon(x.c, v.lowBattery ? Icon::BatteryLow : Icon::Batt, 24, x.X(ix), x.Y(57), INK);
     drawText(x.c, Font::F18, std::to_string(v.battery) + "%", x.X(ix + 28), x.Y(75), Align::Left, INK);
   }
-  if (una) drawBadge(x, W - 264, 57, Icon::Warn, OFFGREY);
-  else if (v.error || d.failed) drawBadge(x, W - 264, 57, Icon::Alert, INK);
+  const int bx = compact ? 71 : W - 264, by = compact ? 2 : 57;  // compact position UNVERIFIED (spec silent)
+  if (una) drawBadge(x, bx, by, Icon::Warn, OFFGREY);
+  else if (v.error || d.failed) drawBadge(x, bx, by, Icon::Alert, INK);
   auto subs = ui::subRegions(WidgetType::Vacuum, config::WidgetSize{}, x.r);
   const Icon glyphs[3] = {Icon::Play, Icon::Pause, Icon::Dock};
   const bool filled[3] = {v.startFilled, v.pauseFilled, v.dockFilled};

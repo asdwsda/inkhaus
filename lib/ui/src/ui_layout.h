@@ -42,9 +42,13 @@ struct Grid {
   Rect refreshHit, settingsHit, sleepBadge;
   Rect slotRect[kMaxTabSlots];  // first tabSlots entries are valid
   int tabSlots;
+  int lastColExtra = 0;  // portrait 3 columns: the last column is 1 px wider (162 vs 161)
 };
-// `columns` (4 or 5) only matters in landscape; anything else gives the 5-column grid.
-const Grid &gridFor(settings::Orientation o, int columns = 5);
+// `columns` is the tab's column count for this orientation: landscape 4 or 5 (anything else gives 5),
+// portrait 2, 3 or 4 (anything else gives 2). Default 0 = the orientation's default grid.
+const Grid &gridFor(settings::Orientation o, int columns = 0);
+// The tab's column count for an orientation (landscape_columns / portrait_columns).
+int columnsOf(const config::Tab &tab, settings::Orientation o);
 
 // Pixel rect of a w x h cell block with top-left cell (c, r).
 Rect cellRect(const Grid &g, int c, int r, int w, int h);
@@ -56,7 +60,9 @@ struct SizeLimits {
 // Per grid (layout.md section 3): wide types are 2 cells in portrait and landscape 4 columns, 3 in
 // landscape 5 columns.
 SizeLimits sizeLimits(config::WidgetType type, const Grid &g);
-SizeLimits sizeLimits(config::WidgetType type, settings::Orientation o, int columns = 5);
+SizeLimits sizeLimits(config::WidgetType type, settings::Orientation o, int columns = 0);
+// Graph widgets (`display: graph`) have their own table.
+SizeLimits graphSizeLimits(const Grid &g);
 
 enum ClampReason : unsigned {
   kClampTypeMin = 1,   // raised to the type minimum
@@ -100,7 +106,7 @@ struct Flow {
 };
 
 Flow computeFlow(settings::Orientation o, const std::vector<config::Widget> &widgets,
-                 int columns = 5);
+                 int columns = 0);
 
 // ---- tab bar groups (section 5) ----
 int tabsPerGroup(settings::Orientation o, int tabCount);  // slots if no overflow, else slots-1

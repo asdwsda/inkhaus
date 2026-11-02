@@ -7,6 +7,7 @@
 #include <unity.h>
 
 #include "ui_layout.h"
+#include "text_fit.h"
 #include "ui_rocker.h"
 
 using namespace ui;
@@ -1121,7 +1122,8 @@ void test_grid_landscape4() {
   TEST_ASSERT_EQUAL_INT(960, 16 + 4 * 223 + 3 * kGap + 16);
   TEST_ASSERT_EQUAL_INT(5, gridFor(L).cols);
   TEST_ASSERT_EQUAL_INT(5, gridFor(L, 7).cols);
-  TEST_ASSERT_EQUAL_INT(2, gridFor(P, 4).cols);  // portrait ignores the option
+  TEST_ASSERT_EQUAL_INT(2, gridFor(P, 7).cols);  // unknown portrait counts give 2 columns
+  TEST_ASSERT_EQUAL_INT(2, gridFor(P).cols);
   eqRect({16, 72, 458, 104}, cellRect(g, 0, 0, 2, 1));
   eqRect({486, 72, 458, 104}, cellRect(g, 2, 0, 2, 1));
   eqRect({721, 304, 223, 104}, cellRect(g, 3, 2, 1, 1));
@@ -1131,7 +1133,7 @@ void test_sizes_landscape4() {
     TEST_ASSERT_EQUAL_INT(2, sizeLimits(t, L, 4).def.w);
     TEST_ASSERT_EQUAL_INT(3, sizeLimits(t, L, 5).def.w);
     TEST_ASSERT_EQUAL_INT(3, sizeLimits(t, L).def.w);
-    TEST_ASSERT_EQUAL_INT(2, sizeLimits(t, P, 4).def.w);
+    TEST_ASSERT_EQUAL_INT(2, sizeLimits(t, P).def.w);
   }
 }
 // Proposal tab: 2 covers (row 0), 2 climates (row 1), 4 toggles (row 2), row 3 free.
@@ -1868,8 +1870,245 @@ void test_push_hold() {
   TEST_ASSERT_TRUE(h.update(20550, false) == Out::LongPush);
 }
 
+// ---- task 094: portrait 3 / 4 columns ----
+static std::vector<Widget> ws094(int ones, int covers, bool graph) {
+  std::vector<Widget> v;
+  for (int i = 0; i < ones; ++i) v.push_back(W(WidgetType::Switch));
+  for (int i = 0; i < covers; ++i) v.push_back(W(WidgetType::Cover));
+  if (graph) {
+    Widget g = W(WidgetType::Sensor);
+    g.display = config::WidgetDisplay::Graph;
+    v.push_back(g);
+  }
+  return v;
+}
+
+void test_grid_portrait3() {
+  const Grid &g = gridFor(P, 3);
+  TEST_ASSERT_EQUAL_INT(3, g.cols);
+  TEST_ASSERT_EQUAL_INT(7, g.rows);
+  eqRect({16, 68, 161, 104}, cellRect(g, 0, 0, 1, 1));
+  eqRect({189, 68, 161, 104}, cellRect(g, 1, 0, 1, 1));
+  eqRect({362, 68, 162, 104}, cellRect(g, 2, 0, 1, 1));
+  eqRect({16, 764, 161, 104}, cellRect(g, 0, 6, 1, 1));
+  eqRect({16, 300, 508, 104}, cellRect(g, 0, 2, 3, 1));
+  eqRect({16, 300, 334, 104}, cellRect(g, 0, 2, 2, 1));
+  eqRect({189, 300, 335, 104}, cellRect(g, 1, 2, 2, 1));
+  eqRect({16, 648, 508, 220}, cellRect(g, 0, 5, 3, 2));
+  // 2 columns unchanged
+  eqRect({276, 68, 248, 104}, cellRect(gridFor(P), 1, 0, 1, 1));
+  eqRect({276, 68, 248, 104}, cellRect(gridFor(P, 2), 1, 0, 1, 1));
+}
+
+void test_grid_portrait4() {
+  const Grid &g = gridFor(P, 4);
+  TEST_ASSERT_EQUAL_INT(4, g.cols);
+  const int xs[4] = {16, 146, 276, 406};
+  for (int c = 0; c < 4; ++c) eqRect({xs[c], 68, 118, 104}, cellRect(g, c, 0, 1, 1));
+  eqRect({16, 184, 508, 104}, cellRect(g, 0, 1, 4, 1));
+  eqRect({276, 184, 248, 104}, cellRect(g, 2, 1, 2, 1));
+  eqRect({16, 648, 508, 220}, cellRect(g, 0, 5, 4, 2));
+}
+
+void test_landscape_ignores_portrait_columns() {
+  Tab t;
+  t.portraitColumns = 3;
+  TEST_ASSERT_EQUAL_INT(5, columnsOf(t, L));
+  TEST_ASSERT_EQUAL_INT(3, columnsOf(t, P));
+  t.widgets = ws094(3, 1, false);
+  Flow a = computeFlow(L, t.widgets, columnsOf(t, L));
+  t.portraitColumns = 2;
+  Flow b = computeFlow(L, t.widgets, columnsOf(t, L));
+  for (size_t i = 0; i < a.placements.size(); ++i) eqRect(a.placements[i].rect, b.placements[i].rect);
+}
+
+void test_sizes_portrait3() {
+  const Grid &g = gridFor(P, 3);
+  auto lim = [&](WidgetType t) { return sizeLimits(t, g); };
+  TEST_ASSERT_EQUAL_INT(3, lim(WidgetType::Cover).def.w);
+  TEST_ASSERT_EQUAL_INT(2, lim(WidgetType::Cover).min.w);
+  TEST_ASSERT_EQUAL_INT(3, lim(WidgetType::Climate).max.w);
+  TEST_ASSERT_EQUAL_INT(3, lim(WidgetType::Vacuum).def.w);
+  TEST_ASSERT_EQUAL_INT(1, lim(WidgetType::Light).max.w);
+  TEST_ASSERT_EQUAL_INT(2, lim(WidgetType::Sensor).max.w);
+  TEST_ASSERT_EQUAL_INT(2, lim(WidgetType::Weather).def.w);
+  // cover: default 3x1, 2x1 honoured, 1x1 clamped to 2x1 and reported
+  Tab t;
+  t.portraitColumns = 3;
+  t.widgets = {W(WidgetType::Cover), W(WidgetType::Cover, 2, 1), W(WidgetType::Cover, 1, 1)};
+  Flow f = computeFlow(P, t.widgets, 3);
+  TEST_ASSERT_EQUAL_INT(3, f.placements[0].cellW);
+  TEST_ASSERT_EQUAL_INT(2, f.placements[1].cellW);
+  TEST_ASSERT_EQUAL_INT(2, f.placements[2].cellW);
+  TEST_ASSERT_EQUAL_INT(1, (int)f.clampReports.size());
+  TEST_ASSERT_EQUAL_INT(2, f.clampReports[0].widgetIndex);
+  // graph: default 3x2, 2x2 / 2x1 allowed, width 1 clamped to 2
+  Widget gw = W(WidgetType::Sensor);
+  gw.display = config::WidgetDisplay::Graph;
+  f = computeFlow(P, {gw}, 3);
+  TEST_ASSERT_EQUAL_INT(3, f.placements[0].cellW);
+  TEST_ASSERT_EQUAL_INT(2, f.placements[0].cellH);
+  gw.size = WidgetSize{2, 1};
+  f = computeFlow(P, {gw}, 3);
+  eqRect({16, 68, 334, 104}, f.placements[0].rect);
+  gw.size = WidgetSize{1, 1};
+  f = computeFlow(P, {gw}, 3);
+  TEST_ASSERT_EQUAL_INT(2, f.placements[0].cellW);
+  // 2x1 cover leaves a 1x1 gap that the next 1x1 widget fills
+  t.widgets = {W(WidgetType::Cover, 2, 1), W(WidgetType::Switch)};
+  f = computeFlow(P, t.widgets, 3);
+  eqRect({362, 68, 162, 104}, f.placements[1].rect);
+  // 2-column portrait unchanged: graph default 2x2 (508 wide), cover 2x1
+  f = computeFlow(P, {gw = W(WidgetType::Cover)}, 2);
+  eqRect({16, 68, 508, 104}, f.placements[0].rect);
+}
+
+void test_sizes_portrait4() {
+  const Grid &g = gridFor(P, 4);
+  for (WidgetType ty : {WidgetType::Cover, WidgetType::Climate, WidgetType::Vacuum}) {
+    SizeLimits l = sizeLimits(ty, g);
+    TEST_ASSERT_EQUAL_INT(4, l.def.w);
+    TEST_ASSERT_EQUAL_INT(4, l.min.w);
+    TEST_ASSERT_EQUAL_INT(4, l.max.w);
+  }
+  for (WidgetType ty : {WidgetType::Light, WidgetType::Switch, WidgetType::Automation, WidgetType::BinarySensor,
+                        WidgetType::Sensor}) {
+    TEST_ASSERT_EQUAL_INT(1, sizeLimits(ty, g).def.w);
+    TEST_ASSERT_EQUAL_INT(1, sizeLimits(ty, g).min.w);
+  }
+  TEST_ASSERT_EQUAL_INT(2, sizeLimits(WidgetType::Weather, g).min.w);
+  // cover 2x1 is raised to 4x1 and reported
+  Flow f = computeFlow(P, {W(WidgetType::Cover, 2, 1)}, 4);
+  TEST_ASSERT_EQUAL_INT(4, f.placements[0].cellW);
+  TEST_ASSERT_EQUAL_INT(1, (int)f.clampReports.size());
+  // weather 1x1 raised to 2x1
+  f = computeFlow(P, {W(WidgetType::Weather, 1, 1)}, 4);
+  TEST_ASSERT_EQUAL_INT(2, f.placements[0].cellW);
+  // graph default 4x2, min 2x1
+  Widget gw = W(WidgetType::Sensor);
+  gw.display = config::WidgetDisplay::Graph;
+  f = computeFlow(P, {gw}, 4);
+  eqRect({16, 68, 508, 220}, f.placements[0].rect);
+  gw.size = WidgetSize{1, 1};
+  f = computeFlow(P, {gw}, 4);
+  eqRect({16, 68, 248, 104}, f.placements[0].rect);
+  // 8 toggles fill two rows of four
+  Tab t;
+  t.widgets = ws094(8, 0, false);
+  f = computeFlow(P, t.widgets, 4);
+  eqRect({406, 184, 118, 104}, f.placements[7].rect);
+}
+
+void test_subregions_compact() {
+  // 2x1 cover (334): buttons at 106 / 182 / 258; climate minus at 94, plus at 258
+  auto c = subRegions(WidgetType::Cover, {2, 1}, {16, 68, 334, 104});
+  eqRect({16 + 106, 88, 64, 64}, c[0].rect);
+  eqRect({16 + 182, 88, 64, 64}, c[1].rect);
+  eqRect({16 + 258, 88, 64, 64}, c[2].rect);
+  auto k = subRegions(WidgetType::Climate, {2, 1}, {16, 68, 334, 104});
+  eqRect({16 + 94, 88, 64, 64}, k[0].rect);
+  eqRect({16 + 258, 88, 64, 64}, k[1].rect);
+  // wide climate unchanged
+  auto kw = subRegions(WidgetType::Climate, {2, 1}, {16, 68, 508, 104});
+  eqRect({16 + 508 - 276, 88, 64, 64}, kw[0].rect);
+}
+
+void test_property_portrait_grids() {
+  std::mt19937 rng(94);
+  const WidgetType types[] = {WidgetType::Cover, WidgetType::Climate, WidgetType::Light, WidgetType::Sensor,
+                              WidgetType::Weather, WidgetType::Switch, WidgetType::Vacuum};
+  for (int cols : {2, 3, 4}) {
+    for (int iter = 0; iter < 200; ++iter) {
+      std::vector<Tab> t = tabsOf(1);
+      t[0].portraitColumns = cols;
+      int n = int(rng() % 20);
+      for (int i = 0; i < n; ++i) {
+        Widget w = W(types[rng() % 7]);
+        if (rng() % 3 == 0) w.size = WidgetSize{int(rng() % 4) + 1, int(rng() % 3) + 1};
+        if (rng() % 8 == 0) w.display = config::WidgetDisplay::Graph;
+        t[0].widgets.push_back(w);
+      }
+      for (int page = 0; page < 3; ++page) checkLayoutInvariants(computeLayout(P, t, 0, page));
+    }
+  }
+}
+
+void test_user_home_tab_portrait3() {
+  std::ifstream f("config.yaml");
+  if (!f) TEST_IGNORE_MESSAGE("no config.yaml in the repo root (gitignored)");
+  std::stringstream ss;
+  ss << f.rdbuf();
+  if (ss.str().find("connection:") != std::string::npos) TEST_IGNORE_MESSAGE("old-format config.yaml");
+  config::ParseResult r = config::parseConfig(ss.str());
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_TRUE(r.config.tabs.size() >= 1);
+  Tab home = r.config.tabs[0];
+  home.portraitColumns = 3;  // the user's setting (set in config.yaml by the architect)
+  Flow fl = computeFlow(P, home.widgets, 3);
+  TEST_ASSERT_EQUAL_INT(1, fl.pageCount);
+  TEST_ASSERT_FALSE(fl.pagerVisible);
+  TEST_ASSERT_EQUAL_INT(0, (int)fl.clampReports.size());
+  int maxRow = 0;
+  for (const auto &p : fl.placements) maxRow = std::max(maxRow, p.cellY + p.cellH);
+  TEST_ASSERT_EQUAL_INT(7, maxRow);
+}
+
+// ---- task 094: text fit ----
+// Fake font: F24 = 14 px per char, F18 = 10 px per char; "~" is the ellipsis (1 char).
+static int fakeMeasure(bool small, const std::string &s) { return int(s.size()) * (small ? 10 : 14); }
+
+void test_fit_name_fallback() {
+  TextFit f = fitName(fakeMeasure, "Moon", 137, "~");
+  TEST_ASSERT_FALSE(f.small);
+  TEST_ASSERT_EQUAL_STRING("Moon", f.text.c_str());
+  f = fitName(fakeMeasure, "Livingroom", 137, "~");  // 140 at F24, 100 at F18
+  TEST_ASSERT_TRUE(f.small);
+  TEST_ASSERT_EQUAL_STRING("Livingroom", f.text.c_str());
+  f = fitName(fakeMeasure, "Livingroom lamp left", 137, "~");  // 200 at F18
+  TEST_ASSERT_TRUE(f.small);
+  TEST_ASSERT_EQUAL_STRING("Livingroom l~", f.text.c_str());
+  TEST_ASSERT_TRUE(fakeMeasure(true, f.text) <= 137);
+  f = fitName(fakeMeasure, "Livingroom lamp", 5, "~");
+  TEST_ASSERT_EQUAL_STRING("~", f.text.c_str());
+}
+
+void test_fit_state_fallback() {
+  TextFit f = fitState(fakeMeasure, "On", 91, "~", true);
+  TEST_ASSERT_FALSE(f.small);
+  f = fitState(fakeMeasure, "On", 91, "~", false);  // 4-column cells: F18 only
+  TEST_ASSERT_TRUE(f.small);
+  f = fitState(fakeMeasure, "Detected", 91, "~", true);  // 112 F24, 80 F18
+  TEST_ASSERT_TRUE(f.small);
+  TEST_ASSERT_EQUAL_STRING("Detected", f.text.c_str());
+  f = fitState(fakeMeasure, "Unavailable", 60, "~", true);  // 110 F18 -> short form "n/a"
+  TEST_ASSERT_EQUAL_STRING("n/a", f.text.c_str());
+  f = fitState(fakeMeasure, "Opening", 50, "~", true);  // 70 F18 -> "Open~"
+  TEST_ASSERT_EQUAL_STRING("Open~", f.text.c_str());
+  f = fitState(fakeMeasure, "Opening 40%", 50, "~", true);  // no short form: truncated
+  TEST_ASSERT_EQUAL_STRING("Open~", f.text.c_str());
+}
+
+void test_fit_short_forms() {
+  TEST_ASSERT_EQUAL_STRING("n/a", shortState("Unavailable", "~").c_str());
+  TEST_ASSERT_EQUAL_STRING("?", shortState("Unknown", "~").c_str());
+  TEST_ASSERT_EQUAL_STRING("Close~", shortState("Closing", "~").c_str());
+  TEST_ASSERT_EQUAL_STRING("Locked", shortState("Locked", "~").c_str());
+}
+
+
 int main(int, char **) {
   UNITY_BEGIN();
+  RUN_TEST(test_fit_name_fallback);
+  RUN_TEST(test_fit_state_fallback);
+  RUN_TEST(test_fit_short_forms);
+  RUN_TEST(test_grid_portrait3);
+  RUN_TEST(test_grid_portrait4);
+  RUN_TEST(test_landscape_ignores_portrait_columns);
+  RUN_TEST(test_sizes_portrait3);
+  RUN_TEST(test_sizes_portrait4);
+  RUN_TEST(test_subregions_compact);
+  RUN_TEST(test_property_portrait_grids);
+  RUN_TEST(test_user_home_tab_portrait3);
   RUN_TEST(test_areas_portrait);
   RUN_TEST(test_areas_landscape);
   RUN_TEST(test_closing_sums);

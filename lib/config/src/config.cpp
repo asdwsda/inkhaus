@@ -573,6 +573,13 @@ class Validator {
         else err(path + ".landscape_columns", "must be 4 or 5");
       }
     }
+    {
+      std::string pc;
+      if (str(o, "portrait_columns", path, false, pc)) {
+        if (pc == "2" || pc == "3" || pc == "4") tb.portraitColumns = pc[0] - '0';
+        else err(path + ".portrait_columns", "must be 2, 3 or 4");
+      }
+    }
     JsonVariantConst w = o["widgets"];
     const std::string wpath = path + ".widgets";
     if (w.isNull()) {

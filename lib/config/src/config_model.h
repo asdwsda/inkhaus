@@ -122,11 +122,13 @@ struct Widget {
 inline bool isGraphWidget(const Widget &w) { return w.display == WidgetDisplay::Graph; }
 
 constexpr int kDefaultLandscapeColumns = 5;
+constexpr int kDefaultPortraitColumns = 2;
 
 struct Tab {
   std::string title;
   std::vector<Widget> widgets;
   int landscapeColumns = kDefaultLandscapeColumns;  // 4 or 5 (landscape grid only)
+  int portraitColumns = kDefaultPortraitColumns;    // 2, 3 or 4 (portrait grid only, task 094)
 };
 
 struct Config {

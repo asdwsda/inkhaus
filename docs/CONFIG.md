@@ -38,6 +38,7 @@ groups:
 tabs:
   - title: Living room
     landscape_columns: 4                   # optional: 4 or 5 (default 5)
+    portrait_columns: 3                    # optional: 2, 3 or 4 (default 2)
     widgets:
       - entity: cover.living_room_shutter
         name: Shutter
@@ -58,7 +59,8 @@ tabs:
 | `timezone` | POSIX TZ string for the clock and wake schedule; default Central Europe (`CET-1CEST,M3.5.0,M10.5.0/3`) |
 | `groups` | optional map `name: [entity, ...]`; names use lowercase letters, digits and `_`; all members share one domain; up to 16 per group |
 | `tabs` | 1 to 16 tabs, each with `title` and `widgets` (up to 24); a tab that overflows the screen splits into sub-pages |
-| `landscape_columns` | per tab, `4` or `5` (default `5`). With 4 columns, wide widgets are 2 cells, so two covers or thermostats fit per row. Portrait always has 2 columns |
+| `landscape_columns` | per tab, `4` or `5` (default `5`). With 4 columns, wide widgets are 2 cells, so two covers or thermostats fit per row. Portrait is not affected |
+| `portrait_columns` | per tab, `2`, `3` or `4` (default `2`); landscape is not affected. 3 columns: cells 161 px wide; cover, climate and vacuum are a full row (3x1) by default, `size: 2x1` gives a compact version; a graph is 3x2 by default (2x1 to 3x2). 1x1 names and states that do not fit are set smaller or shortened (`Open…`, `n/a`). 4 columns: cells 118 px wide with the icon above the text; only sensor, binary_sensor, switch, light and automation may be 1x1, weather is at least 2x1, cover, climate and vacuum are always a full row (4x1), a graph is 4x2 by default (at least 2x1). Other values are a config error |
 | `entity` / `group` | each widget has exactly one of them |
 | `name` | label; default is the Home Assistant friendly name; required for groups |
 | `size` | `WxH` within what the widget type allows (see below); rarely needed |

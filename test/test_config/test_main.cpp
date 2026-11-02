@@ -74,6 +74,26 @@ void test_landscape_columns_errors() {
   }
 }
 
+void test_portrait_columns() {
+  for (const char *v : {"2", "3", "4"}) {
+    std::string y = std::string("version: \"1\"\ntabs:\n  - title: A\n    portrait_columns: ") + v +
+                    "\n    landscape_columns: 4\n    widgets: []\n  - title: B\n    widgets: []\n";
+    ParseResult r = parseConfig(y);
+    TEST_ASSERT_TRUE(r.ok());
+    TEST_ASSERT_EQUAL_INT(v[0] - '0', r.config.tabs[0].portraitColumns);
+    TEST_ASSERT_EQUAL_INT(4, r.config.tabs[0].landscapeColumns);
+    TEST_ASSERT_EQUAL_INT(2, r.config.tabs[1].portraitColumns);
+  }
+  for (const char *bad : {"1", "5", "[3]", "3.5", "0", "x"}) {
+    std::string y = std::string("version: \"1\"\ntabs:\n  - title: A\n    portrait_columns: ") + bad +
+                    "\n    widgets: []\n";
+    ParseResult r = parseConfig(y);
+    const ConfigError *e = findError(r, "tabs[0].portrait_columns");
+    TEST_ASSERT_NOT_NULL(e);
+    TEST_ASSERT_GREATER_THAN_INT(0, e->line);
+  }
+}
+
 void test_example_parses_clean() {
   std::string text = readFile("config.example.yaml");
   TEST_ASSERT_FALSE_MESSAGE(text.empty(), "run tests from the repo root");
@@ -902,6 +922,7 @@ int main(int, char **) {
   RUN_TEST(test_attr_options_parse);
   RUN_TEST(test_landscape_columns);
   RUN_TEST(test_landscape_columns_errors);
+  RUN_TEST(test_portrait_columns);
   RUN_TEST(test_attr_options_absent_by_default);
   RUN_TEST(test_attr_options_errors);
   RUN_TEST(test_attr_errors_do_not_echo_values);

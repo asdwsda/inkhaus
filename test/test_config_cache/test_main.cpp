@@ -152,6 +152,21 @@ void test_more_than_four_profiles_rejected() {
   TEST_ASSERT_EQUAL(4, (int)out.connection.wifiProfiles.size());
 }
 
+void test_roundtrip_portrait_columns() {
+  Config c = fullConfig(), out;
+  c.tabs[0].portraitColumns = 3;
+  c.tabs[0].landscapeColumns = 4;
+  c.tabs[1].portraitColumns = 4;
+  TEST_ASSERT_TRUE(deserializeConfig(serializeConfig(c), out));
+  TEST_ASSERT_EQUAL_INT(3, out.tabs[0].portraitColumns);
+  TEST_ASSERT_EQUAL_INT(4, out.tabs[0].landscapeColumns);
+  TEST_ASSERT_EQUAL_INT(4, out.tabs[1].portraitColumns);
+  TEST_ASSERT_EQUAL_INT(5, out.tabs[1].landscapeColumns);
+  Config d = fullConfig();
+  TEST_ASSERT_TRUE(deserializeConfig(serializeConfig(d), out));
+  TEST_ASSERT_EQUAL_INT(2, out.tabs[0].portraitColumns);
+}
+
 void test_roundtrip_landscape_columns() {
   Config c = fullConfig(), out;
   c.tabs[0].landscapeColumns = 4;
@@ -219,6 +234,7 @@ int main(int, char **) {
   RUN_TEST(test_roundtrip_display);
   RUN_TEST(test_more_than_four_profiles_rejected);
   RUN_TEST(test_roundtrip_landscape_columns);
+  RUN_TEST(test_roundtrip_portrait_columns);
   RUN_TEST(test_roundtrip_example_yaml);
   RUN_TEST(test_roundtrip_default_config);
   RUN_TEST(test_truncated_rejected);

@@ -124,7 +124,7 @@ std::string serializeConfig(const Config &cfg) {
   w.u32(uint32_t(cfg.tabs.size()));
   for (const Tab &t : cfg.tabs) {
     w.str(t.title);
-    w.u8(uint32_t(t.landscapeColumns));
+    w.u8(uint32_t(t.landscapeColumns) | (uint32_t(t.portraitColumns) << 4));  // low nibble landscape, high portrait (0 = 2, old caches)
     w.u32(uint32_t(t.widgets.size()));
     for (const Widget &wd : t.widgets) {
       w.u8(uint32_t(wd.type));
@@ -211,8 +211,11 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
     r.str(t.title);
     uint32_t lcols = 0;
     r.u8(lcols);
-    if (!r.ok || (lcols != 4 && lcols != 5)) return false;
+    const uint32_t pcols = (lcols >> 4) == 0 ? 2 : (lcols >> 4);
+    lcols &= 0x0F;
+    if (!r.ok || (lcols != 4 && lcols != 5) || pcols < 2 || pcols > 4) return false;
     t.landscapeColumns = int(lcols);
+    t.portraitColumns = int(pcols);
     uint32_t nw = 0;
     if (!r.count(nw, kMaxWidgetsPerTab)) return false;
     t.widgets.resize(nw);

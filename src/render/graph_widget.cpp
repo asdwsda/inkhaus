@@ -109,7 +109,7 @@ void drawGraphWidget(M5Canvas &c, const ui::Placement &pl, const uistate::AppSta
 
   // ---- header ----
   if (compact) {
-    const int blockW = landscape ? 140 : 200;
+    const int blockW = landscape ? 140 : (W < 400 ? 100 : 200);
     drawTextCy(c, Font::F24, fitText(c, Font::F24, title, blockW), ox + 12, oy + 36, Align::Left, INK);
     const std::string run = v.unit.empty() ? v.text : v.text + " " + v.unit;
     drawTextCy(c, Font::F24, fitText(c, Font::F24, run, blockW), ox + 12, oy + 69, Align::Left, INK);
