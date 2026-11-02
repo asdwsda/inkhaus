@@ -96,10 +96,7 @@ void test_cold_boot_hourly_cap() {
 void test_suppressed() {
   Manifest m;
   TEST_ASSERT_TRUE(parseManifest(mj("1.3.0", "firmware.bin", "1000"), m));
-  TEST_ASSERT_TRUE(offer("1.2.1", m, 2000, ""));
-  TEST_ASSERT_FALSE(offer("1.2.1", m, 2000, "1.3.0"));  // rolled back / skipped
-  TEST_ASSERT_FALSE(offer("1.2.1", m, 2000, "1.4.0"));
-  TEST_ASSERT_TRUE(offer("1.2.1", m, 2000, "1.2.5"));   // a newer version than the suppressed one
+  TEST_ASSERT_TRUE(offer("1.2.1", m, 2000));   // no suppression: a rolled-back version is offered again
 }
 
 void test_limits() {

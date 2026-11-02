@@ -14,9 +14,8 @@ Result fromUpdate(const settings_ui::Update &u) {
   if (u.action == settings_ui::Action::FirmwareCheck) {
     r.fwCheck = true;
     r.redraw = true;
-  } else if (u.action == settings_ui::Action::FirmwareInstall || u.action == settings_ui::Action::FirmwareSkip) {
-    r.fwInstall = u.action == settings_ui::Action::FirmwareInstall;
-    r.fwSkip = !r.fwInstall;
+  } else if (u.action == settings_ui::Action::FirmwareInstall) {
+    r.fwInstall = true;
     r.pageChanged = true;
     r.redraw = true;
   } else if (u.action == settings_ui::Action::StartRefresh) {

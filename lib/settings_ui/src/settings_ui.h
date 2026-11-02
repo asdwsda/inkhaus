@@ -86,18 +86,18 @@ struct PageLayout {
 };
 PageLayout computePageLayout(Page p, settings::Orientation o);
 
-// Confirm page (spec 8.6): the page layout's three stops are the buttons Yes / No / Skip.
+// Confirm page (spec 8.6): the page layout's two stops are the buttons Yes / No.
 struct ConfirmLayout {
   Rect title;           // text box of "Install 1.3.0?" (F40, centred vertically)
   Rect infoRows[3];     // Installed / New / Download
   int lineCy[3] = {0, 0, 0};
   Rect note;
-  Rect buttons[3];      // Yes, No, Skip
+  Rect buttons[2];      // Yes, No
 };
 ConfirmLayout computeConfirmLayout(settings::Orientation o);
-constexpr int kConfirmYes = 0, kConfirmNo = 1, kConfirmSkip = 2;
-constexpr const char* kConfirmLabels[3] = {"Yes, install", "No, cancel", "Skip"};
-constexpr const char* kConfirmKeys[3] = {"UP", "DOWN", "PUSH"};
+constexpr int kConfirmYes = 0, kConfirmNo = 1;
+constexpr const char* kConfirmLabels[2] = {"Yes, install", "No, cancel"};
+constexpr const char* kConfirmKeys[2] = {"UP", "DOWN"};
 constexpr const char* kConfirmLines[3] = {"Takes about a minute, then the", "device restarts. Your settings and",
                                           "config are kept."};
 constexpr const char* kConfirmNote1 = "Keep it on USB or charged.";
@@ -330,7 +330,6 @@ enum class Action {
   SleepNow,      // overview "Sleep now": the caller runs the normal sleep path (it leaves Settings itself)
   FirmwareCheck,    // Check now (the row went to its Checking look): the caller checks, then setFirmware()
   FirmwareInstall,  // confirm "Yes": back on the Tools page, the row is downloading; the caller installs
-  FirmwareSkip,     // confirm "Skip": the caller suppresses the offered version, then setFirmware()
 };
 
 struct Update {

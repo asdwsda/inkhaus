@@ -1030,7 +1030,7 @@ void test_fw_demo_in_edit_buffer_refuses() {
   TEST_ASSERT_TRUE(s.firmwareRow().look == FwLook::Refused);
 }
 
-void test_fw_confirm_yes_no_skip() {
+void test_fw_confirm_yes_no() {
   auto open = [](SettingsScreen& s) {
     FirmwareInfo f = fwInfo();
     f.available = "1.3.0";
@@ -1040,7 +1040,7 @@ void test_fw_confirm_yes_no_skip() {
     Update u = touchCentre(s, s.pageLayout().rows[2]);
     TEST_ASSERT_TRUE(u.action == Action::PageChange);
     TEST_ASSERT_TRUE(s.page() == Page::Confirm);
-    TEST_ASSERT_EQUAL_INT(3, s.stopCount());
+    TEST_ASSERT_EQUAL_INT(2, s.stopCount());
   };
   {  // rocker: UP yes
     SettingsScreen s(Settings(), Orientation::Portrait, true);
@@ -1057,17 +1057,18 @@ void test_fw_confirm_yes_no_skip() {
     Update u = s.onKey(LogicalKey::Next);
     TEST_ASSERT_TRUE(u.action == Action::PageChange && s.page() == Page::Tools && !s.firmware().downloading);
   }
-  {  // PUSH and touch on Skip
+  {  // PUSH = No (as does LONG_PUSH): back on Tools, nothing started
     SettingsScreen s(Settings(), Orientation::Portrait, true);
     open(s);
-    TEST_ASSERT_TRUE(s.onKey(LogicalKey::Push).action == Action::FirmwareSkip);
+    Update u = s.onKey(LogicalKey::Push);
+    TEST_ASSERT_TRUE(u.action == Action::PageChange && s.page() == Page::Tools && !s.firmware().downloading);
     SettingsScreen t(Settings(), Orientation::Landscape, true);
     open(t);
-    const Rect b = computeConfirmLayout(Orientation::Landscape).buttons[2];
-    TEST_ASSERT_TRUE(t.onTouch({b.x + 10, b.y + 10}).action == Action::FirmwareSkip);
+    const Rect b = computeConfirmLayout(Orientation::Landscape).buttons[1];
+    TEST_ASSERT_TRUE(t.onTouch({b.x + 10, b.y + 10}).action == Action::PageChange && t.page() == Page::Tools);
   }
   expectRect(16, 696, 508, 64, computeConfirmLayout(Orientation::Portrait).buttons[0]);
-  expectRect(488, 352, 456, 64, computeConfirmLayout(Orientation::Landscape).buttons[2]);
+  expectRect(488, 276, 456, 64, computeConfirmLayout(Orientation::Landscape).buttons[1]);
   TEST_ASSERT_EQUAL_STRING("1.6 MB", formatSize(1700000).c_str());
   TEST_ASSERT_EQUAL_STRING("420 KB", formatSize(430000).c_str());
 }
@@ -1114,6 +1115,6 @@ int main() {
   RUN_TEST(test_fw_progress_look);
   RUN_TEST(test_fw_tools_page_focus_and_summary);
   RUN_TEST(test_fw_demo_in_edit_buffer_refuses);
-  RUN_TEST(test_fw_confirm_yes_no_skip);
+  RUN_TEST(test_fw_confirm_yes_no);
   return UNITY_END();
 }

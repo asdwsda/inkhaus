@@ -30,7 +30,7 @@ bool g_began = false;  // first frame drawn
 bool g_loopSeen = false;
 uint32_t g_loopStartMs = 0;
 uint32_t g_availSize = 0;
-std::string g_skip, g_from, g_updatedFrom, g_rolledBack;
+std::string g_from, g_updatedFrom, g_rolledBack;
 Failure g_failure = Failure::None;
 CheckResult g_failKind = CheckResult::NoServer;
 void (*g_quiesce)() = nullptr;
@@ -54,13 +54,6 @@ std::string baseUrl() {
   return OTA_RELEASE_BASE;
 }
 
-bool suppressed(const std::string &v) {
-  ota_logic::Manifest m;
-  m.version = v;
-  m.size = 1;
-  return !ota_logic::offer(FW_VERSION, m, 1, g_skip);
-}
-
 void loadState() {
   Preferences p;
   if (!p.begin("ota", true)) return;
@@ -68,12 +61,11 @@ void loadState() {
   g_sched.lastSuccess = (int64_t)p.getUInt("last_ok", 0);
   g_avail = p.getString("avail", "").c_str();
   g_availSize = p.getUInt("avail_sz", 0);
-  g_skip = p.getString("skip", "").c_str();
   g_from = p.getString("from", "").c_str();
   g_rolledBack = p.getString("rb", "").c_str();
   p.end();
-  // A stored offer that is no longer newer (we were updated) or is suppressed is dropped.
-  if (!g_avail.empty() && (!ota_logic::isNewer(FW_VERSION, g_avail) || suppressed(g_avail))) g_avail.clear();
+  // A stored offer that is no longer newer (we were updated) is dropped.
+  if (!g_avail.empty() && (!ota_logic::isNewer(FW_VERSION, g_avail))) g_avail.clear();
   if (!g_from.empty() && g_from != FW_VERSION) g_updatedFrom = g_from;
 }
 
@@ -203,7 +195,7 @@ bool runCheck(int64_t epoch, CheckResult &result) {
   ota_logic::Manifest m;
   bool ok = fetchManifest(m);
   if (ok) {
-    g_avail = ota_logic::offer(FW_VERSION, m, maxImageSize(), g_skip) ? m.version : std::string();
+    g_avail = ota_logic::offer(FW_VERSION, m, maxImageSize()) ? m.version : std::string();
     g_availSize = g_avail.empty() ? 0 : m.size;
     result = g_avail.empty() ? CheckResult::UpToDate : CheckResult::Newer;
     wakelog::logf("OTA: check ok latest=%s offer=%d\n", m.version.c_str(), (int)!g_avail.empty());
@@ -221,8 +213,7 @@ void rollback() {
   const esp_partition_t *prev = esp_ota_get_next_update_partition(nullptr);
   {
     Preferences p;
-    if (p.begin("ota", false)) {  // the failed version is suppressed until a newer one is released
-      p.putString("skip", FW_VERSION);
+    if (p.begin("ota", false)) {  // the failed version is only noted (rb); it is offered again
       p.putString("rb", FW_VERSION);
       p.remove("from");
       p.end();
@@ -230,13 +221,17 @@ void rollback() {
   }
   setPending(false);
   if (prev && esp_ota_set_boot_partition(prev) == ESP_OK) {
+    Serial.begin(115200);  // earlyBoot() runs before boot::begin(): Serial is not up yet
     Serial.println("OTA: rollback to previous slot (3 boots without health mark)");
     Serial.flush();
     boot::endBurstRead();
     ESP.restart();
   }
+  Serial.begin(115200);
   Serial.println("OTA: rollback failed, previous slot not bootable");
 }
+
+char g_early[48] = "";  // earlyBoot() result, printed by logEarly() once Serial is up
 
 void markHealthy() {
   if (!g_pending || g_healthyDone) return;
@@ -253,7 +248,7 @@ void earlyBoot() {
   g_pending = p.getUChar("pend", 0) != 0;
   if (g_pending) {
     const int earlier = p.getUChar("boots", 0);  // boots of this firmware without a health mark so far
-    Serial.printf("OTA: pending boots_before=%d\n", earlier);
+    snprintf(g_early, sizeof g_early, "OTA: pending boots_before=%d\n", earlier);
     if (ota_logic::rollbackNow(earlier)) {
       p.end();
       rollback();
@@ -264,10 +259,16 @@ void earlyBoot() {
   p.end();
 }
 
+void logEarly() {
+  if (g_early[0]) Serial.print(g_early);
+  g_early[0] = 0;
+}
+
 void begin(bool coldBoot) {
   g_cold = coldBoot;
   g_began = true;
   loadState();
+  if (!g_rolledBack.empty()) wakelog::logf("OTA: rolled back, failed version %s\n", g_rolledBack.c_str());
 }
 
 void setQuiesce(void (*fn)()) { g_quiesce = fn; }
@@ -318,18 +319,6 @@ void clearNotices() {
 }
 uint32_t availableSize() { return g_availSize; }
 int64_t lastCheckEpoch() { return g_sched.lastSuccess; }
-void skipAvailable() {
-  if (g_avail.empty()) return;
-  g_skip = g_avail;
-  g_avail.clear();
-  g_availSize = 0;
-  Preferences p;
-  if (p.begin("ota", false)) {
-    p.putString("skip", g_skip.c_str());
-    p.putString("avail", "");
-    p.end();
-  }
-}
 Failure failure() { return g_failure; }
 
 const char *currentVersion() { return FW_VERSION; }

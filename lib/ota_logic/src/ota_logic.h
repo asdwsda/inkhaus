@@ -25,8 +25,8 @@ struct Manifest {
 // Reads manifest.json (task 061 + "ota" object). False if any field is missing or malformed.
 bool parseManifest(const std::string &json, Manifest &out);
 // Offer only when the version is a newer release and the size is plausible (0 < size <= maxSize).
-// `suppressed` = a version the user skipped or that rolled back: offer again only for a strictly newer one.
-bool offer(const std::string &current, const Manifest &m, uint32_t maxSize, const std::string &suppressed = "");
+// No suppression: a rolled-back version is offered again (installing needs an explicit Yes).
+bool offer(const std::string &current, const Manifest &m, uint32_t maxSize);
 
 // A manifest is small; anything above 8 KB (also when chunked, so the length is unknown) is rejected.
 constexpr uint32_t kMaxManifestBytes = 8192;

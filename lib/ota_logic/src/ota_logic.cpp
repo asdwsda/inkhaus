@@ -85,15 +85,8 @@ bool parseManifest(const std::string &json, Manifest &out) {
   return true;
 }
 
-bool offer(const std::string &current, const Manifest &m, uint32_t maxSize, const std::string &suppressed) {
-  if (!(m.size > 0 && m.size <= maxSize && isNewer(current, m.version))) return false;
-  Version s;
-  if (!suppressed.empty() && parseVersion(suppressed, s)) {
-    Version v;
-    parseVersion(m.version, v);
-    if (compare(v, s) <= 0) return false;
-  }
-  return true;
+bool offer(const std::string &current, const Manifest &m, uint32_t maxSize) {
+  return m.size > 0 && m.size <= maxSize && isNewer(current, m.version);
 }
 
 bool manifestLenOk(int64_t contentLen) { return contentLen <= (int64_t)kMaxManifestBytes; }

@@ -849,11 +849,6 @@ static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
     fwInstall(now);
     return;
   }
-  if (r.fwSkip) {
-    ota::skipAvailable();
-    g_fwDlErr = settings_ui::FwDlErr::None;
-    settings_flow::setFirmware(fwSnapshot());
-  }
   if (r.refresh) {
     if (g_real && g_drv && !g_sessionOver) {
       g_refreshSeq = g_drv->fetchSeq();
@@ -976,6 +971,7 @@ static uint32_t firmwareId() {
 void setup() {
   ota::earlyBoot();  // task 087: count a boot of a just-installed firmware first, so a crash in setup() counts
   boot::begin();
+  ota::logEarly();
   present::setFirmwareId(firmwareId());
   g_wake = sleepwake::detect();
   settings::Settings &s = g_settings;

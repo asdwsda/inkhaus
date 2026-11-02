@@ -232,7 +232,7 @@ void drawHeader(M5Canvas &c, const sui::SettingsScreen &s, const char *title, co
   c.fillRect(rule.x, rule.y, rule.w, rule.h, INK);
 }
 
-// Confirm page (spec 8.6): title, three info rows, the explanation, the alert note, Yes / No / Skip.
+// Confirm page (spec 8.6): title, three info rows, the explanation, the alert note, Yes / No.
 void drawConfirmPage(M5Canvas &c, const sui::SettingsScreen &s) {
   const sui::PageLayout &P = s.pageLayout();
   const sui::ConfirmLayout C = sui::computeConfirmLayout(P.orientation);
@@ -249,7 +249,7 @@ void drawConfirmPage(M5Canvas &c, const sui::SettingsScreen &s) {
   }
   for (int i = 0; i < 3; ++i) drawTextCy(c, Font::F18, sui::kConfirmLines[i], C.infoRows[0].x, C.lineCy[i], Align::Left, INK);
   drawNote(c, C.note, sui::kConfirmNote1, sui::kConfirmNote2);
-  for (int i = 0; i < 3; ++i) {
+  for (int i = 0; i < 2; ++i) {
     const Rect &b = C.buttons[i];
     drawBox(c, b, PAPER, INK);
     drawTextCy(c, Font::F24, sui::kConfirmLabels[i], b.x + 16, b.y + 32, Align::Left, INK);

@@ -13,7 +13,6 @@ struct Result {
   bool sleepNow = false;  // overview "Sleep now": the caller goes to sleep (leaving Settings through its normal path)
   bool fwCheck = false;    // Check now tapped (the row shows Checking): check, then setFirmware()
   bool fwInstall = false;  // confirm "Yes": the Tools page is redrawn (pageChanged), then install
-  bool fwSkip = false;     // confirm "Skip": suppress the offered version, setFirmware(), pageChanged redraw
   bool left = false;     // the screen closed; `leave` says what to save and apply
   settings_ui::LeaveResult leave;
 };

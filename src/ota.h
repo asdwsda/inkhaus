@@ -2,7 +2,7 @@
 // Task 087: firmware self-update. Logic (versions, schedule, health) is lib/ota_logic; this file is the
 // hardware side (HTTPS, esp_ota, NVS namespace "ota") and the small interface the Settings UI uses.
 // NVS keys: last_try, last_ok (epoch), avail, avail_sz (offer), pend (0/1), boots (boots without health mark),
-// from (version before the update), skip (suppressed version: skipped or rolled back), rb (rolled-back notice).
+// from (version before the update), rb (rolled-back notice).
 // Trust model: GitHub (latest release of asdwsda/inkhaus) + TLS (embedded CA bundle) + the SHA-256 in the release
 // manifest. There is no firmware signature: whoever controls the release controls the device.
 #include <stdint.h>
@@ -17,6 +17,7 @@ namespace ota {
 // FIRST call of setup(), before anything that can crash: counts a boot of a freshly installed firmware; on the 4th
 // start without a health mark it switches back to the previous slot and restarts (does not return then).
 void earlyBoot();
+void logEarly();  // print earlyBoot()'s result; call once Serial is up (after boot::begin())
 // After the first frame: loads the state. coldBoot = the splash path.
 void begin(bool coldBoot);
 // Called before a due check / a download: close the HA socket (frees ~40 KB of heap). May block briefly.
@@ -33,7 +34,6 @@ bool available();                        // a newer, not suppressed release was 
 const std::string &availableVersion();   // "1.3.0" or ""
 uint32_t availableSize();                // bytes of the offered image (from the manifest), 0 unknown
 int64_t lastCheckEpoch();                // last successful check, 0 never
-void skipAvailable();                    // "Skip": suppress the offered version until a newer one appears
 // Notices for the first Settings visit: "1.2.1" after an update, "1.3.0" after a rollback, else "".
 const std::string &updatedFrom();
 const std::string &rolledBack();

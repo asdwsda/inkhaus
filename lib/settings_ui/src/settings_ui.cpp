@@ -160,8 +160,8 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
     case Page::Confirm: {
       const ConfirmLayout C = computeConfirmLayout(o);
       L.rowCount = 0;
-      for (int i = 0; i < 3; ++i) L.stops[i] = C.buttons[i];
-      L.stopCount = 3;
+      for (int i = 0; i < 2; ++i) L.stops[i] = C.buttons[i];
+      L.stopCount = 2;
       L.backButton = {0, 0, 0, 0};
       return L;
     }
@@ -182,14 +182,14 @@ ConfirmLayout computeConfirmLayout(settings::Orientation o) {
     const int ly[3] = {330, 354, 378};
     for (int i = 0; i < 3; ++i) C.lineCy[i] = ly[i];
     C.note = {16, 410, 508, 64};
-    for (int i = 0; i < 3; ++i) C.buttons[i] = {16, 696 + 76 * i, 508, 64};
+    for (int i = 0; i < 2; ++i) C.buttons[i] = {16, 696 + 76 * i, 508, 64};
   } else {
     C.title = {16, 90 - 27, 456, 54};
     for (int i = 0; i < 3; ++i) C.infoRows[i] = {16, 124 + 44 * i, 456, 44};
     const int ly[3] = {282, 306, 330};
     for (int i = 0; i < 3; ++i) C.lineCy[i] = ly[i];
     C.note = {16, 364, 456, 64};
-    for (int i = 0; i < 3; ++i) C.buttons[i] = {488, 200 + 76 * i, 456, 64};
+    for (int i = 0; i < 2; ++i) C.buttons[i] = {488, 200 + 76 * i, 456, 64};
   }
   return C;
 }
@@ -762,8 +762,6 @@ Update SettingsScreen::activateConfirm(int stop) {
     fw_.dlErr = FwDlErr::None;
     u.action = Action::FirmwareInstall;
     u.dirty.push_back(pageLayout().rows[2]);
-  } else if (stop == kConfirmSkip) {
-    u.action = Action::FirmwareSkip;
   }
   return u;
 }
@@ -782,11 +780,11 @@ Update SettingsScreen::onTouch(Point p) {
 Update SettingsScreen::onKey(ui::LogicalKey key) {
   Update u;
   if (fw_.checking || fw_.downloading) return u;
-  if (page_ == Page::Confirm) {  // rocker yes/no rule: UP yes, DOWN no, PUSH skip (no focus ring)
+  if (page_ == Page::Confirm) {  // rocker yes/no rule: UP yes, DOWN no, PUSH / LONG_PUSH no (no focus ring)
     switch (key) {
       case ui::LogicalKey::Prev: return activateConfirm(kConfirmYes);
       case ui::LogicalKey::Next: return activateConfirm(kConfirmNo);
-      default: return activateConfirm(kConfirmSkip);
+      default: return activateConfirm(kConfirmNo);
     }
   }
   const int n = stopCount();
