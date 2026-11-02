@@ -34,8 +34,9 @@ double averageMa(const settings::Settings& s, const settings::Capabilities& c) {
 int batteryUseLevel(const settings::Settings& s, const settings::Capabilities& c) {
     if (s.keep_awake == settings::KeepAwake::Always) return 10;
     const double best = sleepingMa(settings::SleepSetting::PowerOff, 0, settings::kIdleTimeoutSValues[0]);
-    const double t = std::log(averageMa(s, c) / best) / std::log(kAlwaysAwakeMa / best);
-    return std::clamp(1 + static_cast<int>(std::lround(9.0 * t)), 1, 9);
+    const double worst = sleepingMa(settings::SleepSetting::TouchAndRocker, 30, settings::kIdleTimeoutSValues.back());
+    const double t = std::log(averageMa(s, c) / best) / std::log(worst / best);
+    return std::clamp(1 + static_cast<int>(std::lround(8.0 * t)), 1, 9);
 }
 
 }  // namespace est

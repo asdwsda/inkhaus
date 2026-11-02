@@ -20,8 +20,8 @@ constexpr double kAlwaysAwakeMa = 80.0;     // Keep awake Always
 
 // Model: average current in mA (forced-Off updates respected).
 double averageMa(const settings::Settings& s, const settings::Capabilities& c = settings::kCapabilities);
-// Level 1..10: log scale between the best case (Power off, updates Off, Keep awake Off, = 1) and Keep awake
-// Always (= 10); every other configuration is 1..9.
+// Level 1..10: Keep awake Always = 10; sleeping setups: log scale over 1..9 from the best (Power off, Updates Off,
+// idle 10 s = 1) to the worst (Touch & rocker, 30 min, idle 60 s = 9).
 int batteryUseLevel(const settings::Settings& s, const settings::Capabilities& c = settings::kCapabilities);
 
 }  // namespace est

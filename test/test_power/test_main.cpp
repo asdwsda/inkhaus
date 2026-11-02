@@ -387,8 +387,22 @@ void test_battery_level() {
     TEST_ASSERT_EQUAL_INT(10, batteryUseLevel(al));
     // Power off: Updates Off vs 30 min differ by at least one level
     TEST_ASSERT_TRUE(batteryUseLevel(mk(SleepSetting::PowerOff, 30)) >= batteryUseLevel(mk(SleepSetting::PowerOff, 0)) + 1);
+    Settings worst = mk(SleepSetting::TouchAndRocker, 30);
+    worst.idle_timeout_s = 60;
+    TEST_ASSERT_EQUAL_INT(9, batteryUseLevel(worst));
+    {
+        Settings a = mk(SleepSetting::PowerOff, 0), b = a;
+        a.idle_timeout_s = 10;
+        b.idle_timeout_s = 60;
+        TEST_ASSERT_TRUE(batteryUseLevel(b) >= batteryUseLevel(a) + 1);
+        Settings h = mk(SleepSetting::PowerOff, 60);
+        h.idle_timeout_s = 10;
+        Settings o = h;
+        o.refresh_interval_min = 0;
+        TEST_ASSERT_TRUE(batteryUseLevel(h) >= batteryUseLevel(o) + 1);
+    }
     // defaults
-    TEST_ASSERT_EQUAL_INT(7, batteryUseLevel(Settings{}));
+    TEST_ASSERT_EQUAL_INT(9, batteryUseLevel(Settings{}));
     // monotonic in sleep mode, interval (shorter never lower), idle timeout, keep awake
     for (int32_t iv : settings::kRefreshIntervalMinValues) {
         int prev = 0;
