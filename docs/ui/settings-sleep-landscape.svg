@@ -68,11 +68,18 @@
 <g id="w-7">
 <rect id="w-7-frame" x="488" y="328" width="456" height="124" fill="#fff"/>
 <rect x="488" y="328" width="456" height="1" fill="#888"/>
-<text id="w-7-cap" x="504" y="352" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Estimated battery life</text>
-<text id="w-7-main" x="504" y="388" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">About 9 days</text>
-<rect id="w-7-gauge" x="505" y="421" width="278" height="14" rx="4" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect id="w-7-fill-btn" x="508" y="424" width="27" height="8" rx="2" fill="#000"/>
-<text id="w-7-best" x="796" y="428" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">of best case</text>
+<text id="w-7-cap" x="504" y="352" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Battery use</text>
+<text id="w-7-main" x="504" y="388" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">7/10</text>
+<rect id="w-7-seg1" x="504" y="420" width="38" height="16" fill="#000"/>
+<rect id="w-7-seg2" x="546" y="420" width="38" height="16" fill="#000"/>
+<rect id="w-7-seg3" x="588" y="420" width="38" height="16" fill="#000"/>
+<rect id="w-7-seg4" x="630" y="420" width="38" height="16" fill="#000"/>
+<rect id="w-7-seg5" x="672" y="420" width="38" height="16" fill="#000"/>
+<rect id="w-7-seg6" x="714" y="420" width="38" height="16" fill="#000"/>
+<rect id="w-7-seg7" x="756" y="420" width="38" height="16" fill="#000"/>
+<rect id="w-7-seg8" x="799" y="421" width="36" height="14" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="w-7-seg9" x="841" y="421" width="36" height="14" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="w-7-seg10" x="883" y="421" width="36" height="14" fill="#fff" stroke="#000" stroke-width="2"/>
 </g>
 <g id="w-8">
 <rect id="w-8-frame" x="722" y="464" width="222" height="64" rx="8" fill="#fff"/>
