@@ -56,6 +56,15 @@ SleepPlan plan_sleep(const settings::Settings& s, Session session, int64_t now,
 
 // ---- USB power / stay awake (task 081) ----
 
+// Task 084: true if the last power-off attempt found the board still running (GPIO2 low did not cut the power):
+// USB supplies it. Set by sleepwake::enter(), restored after a deep sleep; false when unknown (never tested).
+inline bool& usb_at_sleep_ref() {
+    static bool v = false;
+    return v;
+}
+inline bool usbAtSleep() { return usb_at_sleep_ref(); }
+inline void set_usb_at_sleep(bool v) { usb_at_sleep_ref() = v; }
+
 // Idle sleep is held off only when the setting is on AND the device is on USB power.
 inline bool stay_awake(const settings::Settings& s, bool usb_powered) { return s.stay_awake_usb && usb_powered; }
 

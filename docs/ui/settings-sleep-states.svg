@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1064" height="1068" viewBox="0 0 1064 1068" font-family="DejaVu Sans">
+<!-- Sleep and wake row states (task 085). Spec: settings.md 8.2. -->
+<defs>
+<symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
+<symbol id="i-chev-l" viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="2" fill="currentColor"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.00 19.11 A10 10 0 1 1 6.29 3.96 A10 10 0 0 0 19.00 19.11 Z" fill="currentColor"/></symbol>
+<symbol id="i-finger" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="10.8" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="i-power" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3 V12"/><path d="M6.8 6.6 A8.4 8.4 0 1 0 17.2 6.6"/></g></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2.4"/><polygon points="21,3 21,11 13,11" fill="currentColor"/></symbol>
+</defs>
+<rect width="1064" height="1068" fill="#fff"/>
+<text x="16" y="30" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Sleep &amp; wake page: row and block states (portrait widths, 508 px)</text>
+<text x="16" y="68" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Sleep mode: the four values (hint is live)</text>
+<g id="w-1">
+<rect id="w-1-frame" x="16" y="84" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="17" y="85" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-1-label" x="32" y="116" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Sleep mode</text>
+<text id="w-1-hint" x="32" y="146" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Lowest drain</text>
+<text id="w-1-value" x="508" y="128" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Power off</text>
+</g>
+<g id="w-2">
+<rect id="w-2-frame" x="16" y="184" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="17" y="185" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-2-label" x="32" y="216" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Sleep mode</text>
+<text id="w-2-hint" x="32" y="246" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Rocker, faster wake</text>
+<text id="w-2-value" x="508" y="228" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Deep sleep</text>
+</g>
+<g id="w-3">
+<rect id="w-3-frame" x="16" y="284" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="17" y="285" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-3-label" x="32" y="316" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Sleep mode</text>
+<text id="w-3-hint" x="32" y="346" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Tap wakes</text>
+<text id="w-3-value" x="508" y="328" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Touch</text>
+</g>
+<g id="w-4">
+<rect id="w-4-frame" x="16" y="384" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="17" y="385" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-4-label" x="32" y="416" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Sleep mode</text>
+<text id="w-4-hint" x="32" y="446" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Tap or rocker</text>
+<text id="w-4-value" x="508" y="428" font-size="24" fill="#000" text-anchor="end" dominant-baseline="central">Touch &amp; rocker</text>
+</g>
+<text x="16" y="492" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Updates while asleep: normal (6 pips) / forced Off (Power off cannot wake itself)</text>
+<g id="w-5">
+<rect id="w-5-frame" x="16" y="508" width="508" height="72" rx="8" fill="#fff"/>
+<rect x="17" y="509" width="506" height="70" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-5-label" x="32" y="534" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Updates while asleep</text>
+<circle id="w-5-pip0" cx="38" cy="557" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<circle id="w-5-pip1" cx="58" cy="557" r="6" fill="#000"/>
+<circle id="w-5-pip2" cx="78" cy="557" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<circle id="w-5-pip3" cx="98" cy="557" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<circle id="w-5-pip4" cx="118" cy="557" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<circle id="w-5-pip5" cx="138" cy="557" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-5-value" x="508" y="544" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">30 min</text>
+</g>
+<g id="w-6">
+<rect id="w-6-frame" x="16" y="592" width="508" height="72" rx="8" fill="#fff"/>
+<rect x="17" y="593" width="506" height="70" rx="8" fill="none" stroke="#888" stroke-width="2" stroke-dasharray="2 4"/>
+<text id="w-6-label" x="32" y="618" font-size="24" fill="#888" text-anchor="start" dominant-baseline="central">Updates while asleep</text>
+<text id="w-6-value" x="508" y="628" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Off</text>
+</g>
+<g id="w-7">
+<rect id="w-7-frame" x="16" y="676" width="508" height="64" rx="8" fill="#fff"/>
+<rect x="17" y="677" width="506" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<use id="w-7-icon" xlink:href="#i-alert" href="#i-alert" x="28" y="688" width="40" height="40" color="#000"/>
+<text id="w-7-l1" x="80" y="697" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">This device can't power on by</text>
+<text id="w-7-l2" x="80" y="719" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">itself: updates stay Off.</text>
+</g>
+<text x="16" y="760" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Note: touch wake (second note stacks below the first)</text>
+<g id="w-8">
+<rect id="w-8-frame" x="16" y="776" width="508" height="64" rx="8" fill="#fff"/>
+<rect x="17" y="777" width="506" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<use id="w-8-icon" xlink:href="#i-alert" href="#i-alert" x="28" y="788" width="40" height="40" color="#000"/>
+<text id="w-8-l1" x="80" y="797" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Touch wake shortens battery life.</text>
+<text id="w-8-l2" x="80" y="819" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Rocker wake is recommended.</text>
+</g>
+<text x="540" y="68" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake: Off (On USB not offered) / Off (offered) / On USB / Always</text>
+<g id="w-9">
+<rect id="w-9-frame" x="540" y="84" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="541" y="85" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-9-label" x="556" y="116" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Keep awake</text>
+<text id="w-9-hint" x="556" y="146" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">On USB only in Power off</text>
+<text id="w-9-value" x="1032" y="128" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Off</text>
+</g>
+<g id="w-10">
+<rect id="w-10-frame" x="540" y="184" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="541" y="185" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-10-label" x="556" y="216" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Keep awake</text>
+<text id="w-10-hint" x="556" y="246" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Sleeps as set above</text>
+<text id="w-10-value" x="1032" y="228" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Off</text>
+</g>
+<g id="w-11">
+<rect id="w-11-frame" x="540" y="284" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="541" y="285" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-11-label" x="556" y="316" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Keep awake</text>
+<text id="w-11-hint" x="556" y="346" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Awake while on USB</text>
+<text id="w-11-value" x="1032" y="328" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">On USB</text>
+</g>
+<g id="w-12">
+<rect id="w-12-frame" x="540" y="384" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="541" y="385" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-12-label" x="556" y="416" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Keep awake</text>
+<text id="w-12-hint" x="556" y="446" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Never sleeps</text>
+<text id="w-12-value" x="1032" y="428" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Always</text>
+</g>
+<text x="540" y="492" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Estimate block: weeks / days / hours (Always) / more than 6 months</text>
+<g id="w-13">
+<rect id="w-13-frame" x="540" y="508" width="508" height="124" fill="#fff"/>
+<rect x="540" y="508" width="508" height="1" fill="#888"/>
+<text id="w-13-cap" x="556" y="532" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Estimated battery life</text>
+<text id="w-13-main" x="556" y="568" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">About 5 weeks</text>
+<rect id="w-13-gauge" x="557" y="601" width="278" height="14" rx="4" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="w-13-fill-btn" x="560" y="604" width="114" height="8" rx="2" fill="#000"/>
+<text id="w-13-best" x="848" y="608" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">of best case</text>
+</g>
+<g id="w-14">
+<rect id="w-14-frame" x="540" y="644" width="508" height="124" fill="#fff"/>
+<rect x="540" y="644" width="508" height="1" fill="#888"/>
+<text id="w-14-cap" x="556" y="668" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Estimated battery life</text>
+<text id="w-14-main" x="556" y="704" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">About 9 days</text>
+<rect id="w-14-gauge" x="557" y="737" width="278" height="14" rx="4" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="w-14-fill-btn" x="560" y="740" width="27" height="8" rx="2" fill="#000"/>
+<text id="w-14-best" x="848" y="744" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">of best case</text>
+</g>
+<g id="w-15">
+<rect id="w-15-frame" x="540" y="780" width="508" height="124" fill="#fff"/>
+<rect x="540" y="780" width="508" height="1" fill="#888"/>
+<text id="w-15-cap" x="556" y="804" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Estimated battery life</text>
+<text id="w-15-main" x="556" y="840" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">About 14 hours</text>
+<rect id="w-15-gauge" x="557" y="873" width="278" height="14" rx="4" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="w-15-fill-btn" x="560" y="876" width="6" height="8" rx="2" fill="#000"/>
+<text id="w-15-best" x="848" y="880" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">of best case</text>
+</g>
+<g id="w-16">
+<rect id="w-16-frame" x="540" y="916" width="508" height="124" fill="#fff"/>
+<rect x="540" y="916" width="508" height="1" fill="#888"/>
+<text id="w-16-cap" x="556" y="940" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Estimated battery life</text>
+<text id="w-16-main" x="556" y="976" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">Over 6 months</text>
+<rect id="w-16-gauge" x="557" y="1009" width="278" height="14" rx="4" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="w-16-fill-btn" x="560" y="1012" width="272" height="8" rx="2" fill="#000"/>
+<text id="w-16-best" x="848" y="1016" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">of best case</text>
+</g>
+</svg>

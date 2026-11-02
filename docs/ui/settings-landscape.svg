@@ -24,7 +24,7 @@
 <rect id="w-2-frame" x="16" y="172" width="456" height="96" rx="8" fill="#fff"/>
 <rect x="17" y="173" width="454" height="94" rx="8" fill="none" stroke="#000" stroke-width="2"/>
 <text id="w-2-label" x="32" y="206" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Sleep &amp; wake</text>
-<text id="w-2-sub" x="32" y="238" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Touch, 60 min, 20 s</text>
+<text id="w-2-sub" x="32" y="238" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Power off, updates 3 h</text>
 <use id="w-2-icon" xlink:href="#i-chev-r" href="#i-chev-r" x="420" y="200" width="40" height="40" color="#000"/>
 </g>
 <rect x="11.5" y="275.5" width="465" height="105" rx="12.5" fill="none" stroke="#000" stroke-width="3"/>

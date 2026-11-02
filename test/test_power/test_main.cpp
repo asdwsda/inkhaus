@@ -382,6 +382,14 @@ void test_low_battery_helper() {
     TEST_ASSERT_FALSE(below_low_battery(kLowBatteryMv));
 }
 
+void test_usb_at_sleep_flag() {
+    TEST_ASSERT_FALSE(power::usbAtSleep());
+    power::set_usb_at_sleep(true);
+    TEST_ASSERT_TRUE(power::usbAtSleep());
+    power::set_usb_at_sleep(false);
+    TEST_ASSERT_FALSE(power::usbAtSleep());
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_session_table);
@@ -415,5 +423,6 @@ int main() {
     RUN_TEST(test_usb_detector_in_between_keeps_state_and_hold_cap);
     RUN_TEST(test_usb_detector_charging_trusted);
     RUN_TEST(test_low_battery_helper);
+    RUN_TEST(test_usb_at_sleep_flag);
     return UNITY_END();
 }

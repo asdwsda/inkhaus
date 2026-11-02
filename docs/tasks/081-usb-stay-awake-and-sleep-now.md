@@ -64,3 +64,5 @@ Pure decision logic ("stay awake?", hold-duration handling) goes in lib/ with na
   should read low with a pull-down. Probe: read GPIO3 with the pull-down for a few ms at wake (restore UART after),
   log `usb_rx=<0|1>` to serial and debug.log; user plugs/unplugs to verify. If reliable, it replaces the voltage
   heuristic (instant, no extra awake time). Risk to check: back-powering of the CH9102 through ESP32 TX (GPIO1).
+- 2026-11-02 (084 build): the `usb_rx` probe is implemented in src/sleep.cpp (WAKE line + SLEEP line, serial and debug.log).
+  USB present: usb_rx=1. Battery value pending the 084 unplug test (a 0 means usable; a 1 means back-powering).

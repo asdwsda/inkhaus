@@ -83,7 +83,7 @@
 | 081 | [Stay awake on USB (setting) and manual sleep](081-usb-stay-awake-and-sleep-now.md) | testing | 035 |
 | 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | todo | 029, 071 |
 | 083 | [Screen greys out while sleeping](083-panel-grey-drift.md) | testing | 035, 082 |
-| 084 | [Make full power-off sleep work on battery](084-power-off-sleep.md) | todo | 035 |
+| 084 | [Make full power-off sleep work on battery](084-power-off-sleep.md) | testing | 035 |
 | 085 | [Power settings: sleep mode, updates, keep awake, estimate, indicators](085-power-settings.md) | todo | 084, 081, 079 |
 
 ## Open items (not yet tasks, 2026-10-30)

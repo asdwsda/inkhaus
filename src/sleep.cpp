@@ -22,10 +22,14 @@ namespace {
 constexpr gpio_num_t kPinMainPower = GPIO_NUM_2;
 constexpr gpio_num_t kPinTouchInt = GPIO_NUM_36;   // GT911 INT, low = touch (Power_Class.inl:644)
 constexpr gpio_num_t kPinRockerPush = GPIO_NUM_38;  // BtnB, external pull-up, low = pressed
-constexpr uint32_t kPowerOffWaitMs = 400;           // still running after this: the board is on USB
+constexpr uint32_t kPowerOffWaitMs = 700;           // still running after this: the board is on USB (rail decay on battery is slower than 400 ms)
+constexpr gpio_num_t kPinUartRx = GPIO_NUM_3;       // ESP32 RX = CH9102 TX; the CH9102 is powered from USB VBUS
 
 const char *kNs = "slp";
-const char *kKeyMarker = "m", *kKeyInd = "ind";
+const char *kKeyMarker = "m", *kKeyInd = "ind", *kKeyPath = "sp";
+
+// Survives deep sleep (not a power-off): the last sleep found the board still powered (USB).
+RTC_DATA_ATTR int8_t g_usbAtSleepRtc = -1;
 
 app_logic::Indicator g_stored = app_logic::Indicator::None;
 bool g_badgeOnPanel = false;
@@ -91,9 +95,22 @@ void releaseTouchInt() {
   }
 }
 
+// Task 081: USB sense through the USB-serial chip. With USB present the CH9102 TX line (our RX) idles high;
+// on battery the chip is unpowered and the internal pull-down wins. Short probe, UART pull-up restored.
+// Back-powering of the CH9102 through our TX (GPIO1) would show as 1 on battery: that is what the test checks.
+int probeUsbRx() {
+  gpio_set_pull_mode(kPinUartRx, GPIO_PULLDOWN_ONLY);
+  delay(3);
+  const int v = gpio_get_level(kPinUartRx);
+  gpio_set_pull_mode(kPinUartRx, GPIO_PULLUP_ONLY);
+  return v;
+}
+
 }  // namespace
 
 power::WakeReason detect() {
+  const int usbRx = probeUsbRx();
+  power::set_usb_at_sleep(g_usbAtSleepRtc == 1);
   // A deep sleep held GPIO2 high with the pad hold; release it so that a later power-off can work.
   gpio_deep_sleep_hold_dis();
   gpio_hold_dis(kPinMainPower);
@@ -103,10 +120,16 @@ power::WakeReason detect() {
   in.pin = in.reset == app_logic::ResetKind::DeepSleep ? wakePin() : app_logic::WakePin::None;
   in.rtc_alarm_flag = M5.Rtc.isEnabled() && M5.Rtc.getIRQstatus();
   uint8_t ind = 0;
+  std::string slept;
   Preferences p;
   if (p.begin(kNs, false)) {
     in.slept_marker = p.getUChar(kKeyMarker, 0) != 0;
     ind = p.getUChar(kKeyInd, 0);
+    // A power-off loses RTC memory: the sleep path comes from NVS (task 084).
+    if (in.reset == app_logic::ResetKind::PowerOn && in.slept_marker) {
+      slept = p.getString(kKeyPath, "").c_str();
+      if (!slept.empty()) wakelog::setSleptPath(slept.c_str());
+    }
     p.putUChar(kKeyMarker, 0);
     p.end();
   }
@@ -121,16 +144,27 @@ power::WakeReason detect() {
   g_stored = (r == power::WakeReason::RtcAlarm) ? app_logic::indicatorFromByte(ind) : app_logic::Indicator::None;
   g_badgeOnPanel = in.reset == app_logic::ResetKind::DeepSleep && in.slept_marker &&
                    app_logic::indicatorFromByte(ind) == app_logic::Indicator::Badge;
-  wakelog::logf("WAKE: reason=%s reset=%s pin=%s rtc_flag=%d marker=%d indicator_on_panel=%s\n", app_logic::wakeName(r),
-                resetName(in.reset), pinName(in.pin), in.rtc_alarm_flag ? 1 : 0, in.slept_marker ? 1 : 0,
-                app_logic::indicatorName(g_stored));
+  wakelog::logf("WAKE: reason=%s reset=%s pin=%s rtc_flag=%d marker=%d indicator_on_panel=%s usb_rx=%d slept=%s t_ms=%u\n",
+                app_logic::wakeName(r), resetName(in.reset), pinName(in.pin), in.rtc_alarm_flag ? 1 : 0,
+                in.slept_marker ? 1 : 0, app_logic::indicatorName(g_stored), usbRx, slept.empty() ? "-" : slept.c_str(),
+                (unsigned)millis());
   return r;
 }
 
 app_logic::Indicator storedIndicator() { return g_stored; }
 bool badgeOnPanel() { return g_badgeOnPanel; }
 
-void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoch, int32_t batteryMv) {
+void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEpoch, int32_t batteryMv) {
+  power::SleepPlan plan = planIn;
+#ifdef TEST_POWEROFF_ALARM_S
+  // Task 084 battery test: always power off, rocker wake, and a short RTC alarm (rounded up to a minute).
+  if (session != power::Session::LowBattery) {
+    plan.mode = power::SleepMode::PowerOff;
+    plan.button_wake = true;
+    plan.touch_wake = false;
+    plan.rtc_alarm_at = nowEpoch + TEST_POWEROFF_ALARM_S;
+  }
+#endif
   const app_logic::SleepPath sp = app_logic::planSleepPath(plan, session, nowEpoch);
 
   std::string wake;
@@ -145,8 +179,16 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
 
   wakelog::append(session, nowEpoch, batteryMv);  // no-op unless the debug_log setting is on
 
+  const app_logic::SleepExec ex = app_logic::resolveSleepExec(sp.first,
+#ifdef SLEEP_POWER_OFF
+                                                              true
+#else
+                                                              false
+#endif
+  );
   Preferences p;
   if (p.begin(kNs, false)) {
+    p.putString(kKeyPath, ex.gpio2_low ? "poweroff" : "deepsleep");
     p.putUChar(kKeyInd, uint8_t(sp.indicator));
     p.putUChar(kKeyMarker, 1);
     p.end();
@@ -168,17 +210,16 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
     }
   }
 
-  const app_logic::SleepExec ex = app_logic::resolveSleepExec(sp.first,
-#ifdef SLEEP_POWER_OFF
-                                                              true
-#else
-                                                              false
-#endif
-  );
   if (ex.gpio2_low) {
     wakelog::setSleptPath("poweroff");
     Serial.println("SLEEP: path=poweroff (GPIO2 low)");
     Serial.flush();
+    // A pushed rocker keeps the board powered (it is a power-on source): wait for the release first, or the
+    // fallback below would trigger although we are on battery.
+    for (uint32_t t = millis(); digitalRead(kPinRockerPush) == LOW && millis() - t < 3000;) delay(10);
+    Serial.printf("SLEEP: usb_rx=%d\n", probeUsbRx());
+    Serial.flush();
+    delay(10);  // M5EPD shutdown(seconds): alarm set, short settle, then the main power line
     gpio_hold_dis(kPinMainPower);
     pinMode(kPinMainPower, OUTPUT);
     digitalWrite(kPinMainPower, LOW);
@@ -186,11 +227,14 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
     // Still running: USB supplies the board. Take the power hold back and sleep with the same wake
     // sources instead (rocker, and the timer in place of the RTC alarm).
     digitalWrite(kPinMainPower, HIGH);
+    g_usbAtSleepRtc = 1;
+    power::set_usb_at_sleep(true);
     wakelog::setSleptPath("deepsleep_fallback");
     Serial.println("SLEEP: path=deepsleep_fallback (still powered: USB)");
   } else {
     // Task 035: GPIO2 stays high through deep sleep. IT8951 in STANDBY (image memory kept). The GT911
     // stays awake: its wake needs INT driven by the host and GPIO36 is input-only (see SleepExec).
+    g_usbAtSleepRtc = -1;  // not tested on this path
     wakelog::setSleptPath("deepsleep_hold");
 #ifdef EPD_SLEEP_OFF
     const bool epdOk = ex.epd_standby && boot::controllerSleep();

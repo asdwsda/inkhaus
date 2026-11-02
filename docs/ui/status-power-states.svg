@@ -1,0 +1,277 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="1696" viewBox="0 0 960 1696" font-family="DejaVu Sans">
+<!-- Power state indicator sheet (task 085). Spec: STYLE.md 5.6. Greys: #000, #fff only. -->
+<defs>
+<symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
+<symbol id="i-chev-l" viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="2" fill="currentColor"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.00 19.11 A10 10 0 1 1 6.29 3.96 A10 10 0 0 0 19.00 19.11 Z" fill="currentColor"/></symbol>
+<symbol id="i-finger" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="10.8" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="i-power" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3 V12"/><path d="M6.8 6.6 A8.4 8.4 0 1 0 17.2 6.6"/></g></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2.4"/><polygon points="21,3 21,11 13,11" fill="currentColor"/></symbol>
+</defs>
+<rect width="960" height="1696" fill="#fff"/>
+<text x="16" y="30" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Status bar sleep and keep-awake indicators, portrait (540 x 56 strips)</text>
+<g id="w-1" transform="translate(0,82)"><rect id="w-1-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
+<use id="w-1-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
+<text id="w-1-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
+<rect id="w-1-pill-btn" x="300" y="5" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-1-ic" xlink:href="#i-power" href="#i-power" x="310" y="9" width="20" height="20" color="#fff"/>
+<text id="w-1-mode" x="336" y="19" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">OFF</text>
+<use id="w-1-ric" xlink:href="#i-refresh" href="#i-refresh" x="311" y="28" width="18" height="18" color="#fff"/>
+<text id="w-1-upd" x="336" y="37" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+<g id="w-1-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
+<text id="w-1-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/></g>
+<text x="560" y="96" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">1 Power off, next update 15:30</text>
+<g id="w-2" transform="translate(0,158)"><rect id="w-2-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
+<use id="w-2-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
+<text id="w-2-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
+<rect id="w-2-pill-btn" x="300" y="5" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-2-ic" xlink:href="#i-power" href="#i-power" x="310" y="9" width="20" height="20" color="#fff"/>
+<text id="w-2-mode" x="336" y="19" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">OFF</text>
+<use id="w-2-ric" xlink:href="#i-refresh" href="#i-refresh" x="311" y="28" width="18" height="18" color="#fff"/>
+<text id="w-2-upd" x="336" y="37" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">off</text>
+<g id="w-2-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
+<text id="w-2-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/></g>
+<text x="560" y="172" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">2 Power off, updates off</text>
+<g id="w-3" transform="translate(0,234)"><rect id="w-3-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
+<use id="w-3-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
+<text id="w-3-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
+<rect id="w-3-pill-btn" x="300" y="5" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-3-ic" xlink:href="#i-moon" href="#i-moon" x="310" y="9" width="20" height="20" color="#fff"/>
+<text id="w-3-mode" x="336" y="19" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">DEEP</text>
+<use id="w-3-ric" xlink:href="#i-refresh" href="#i-refresh" x="311" y="28" width="18" height="18" color="#fff"/>
+<text id="w-3-upd" x="336" y="37" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+<g id="w-3-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
+<text id="w-3-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/></g>
+<text x="560" y="248" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">3 Deep sleep, next update 15:30</text>
+<g id="w-4" transform="translate(0,310)"><rect id="w-4-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
+<use id="w-4-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
+<text id="w-4-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
+<rect id="w-4-pill-btn" x="300" y="5" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-4-ic" xlink:href="#i-moon" href="#i-moon" x="310" y="9" width="20" height="20" color="#fff"/>
+<text id="w-4-mode" x="336" y="19" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">DEEP</text>
+<use id="w-4-ric" xlink:href="#i-refresh" href="#i-refresh" x="311" y="28" width="18" height="18" color="#fff"/>
+<text id="w-4-upd" x="336" y="37" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">off</text>
+<g id="w-4-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
+<text id="w-4-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/></g>
+<text x="560" y="324" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">4 Deep sleep, updates off</text>
+<g id="w-5" transform="translate(0,386)"><rect id="w-5-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
+<use id="w-5-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
+<text id="w-5-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
+<rect id="w-5-pill-btn" x="300" y="5" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-5-ic" xlink:href="#i-finger" href="#i-finger" x="310" y="9" width="20" height="20" color="#fff"/>
+<text id="w-5-mode" x="336" y="19" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">TAP</text>
+<use id="w-5-ric" xlink:href="#i-refresh" href="#i-refresh" x="311" y="28" width="18" height="18" color="#fff"/>
+<text id="w-5-upd" x="336" y="37" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+<g id="w-5-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
+<text id="w-5-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/></g>
+<text x="560" y="400" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">5 Touch wake (Touch or Touch &amp; rocker), next update 15:30</text>
+<g id="w-6" transform="translate(0,462)"><rect id="w-6-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
+<use id="w-6-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
+<text id="w-6-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
+<rect id="w-6-pill-btn" x="301" y="6" width="102" height="42" rx="11" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-6-mode" x="352" y="19" font-size="18" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">AWAKE</text>
+<text id="w-6-upd" x="352" y="37" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">on USB</text>
+<g id="w-6-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
+<text id="w-6-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/></g>
+<text x="560" y="476" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">6 Keep awake active: On USB (awake, not asleep)</text>
+<g id="w-7" transform="translate(0,538)"><rect id="w-7-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
+<use id="w-7-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
+<text id="w-7-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
+<rect id="w-7-pill-btn" x="301" y="6" width="102" height="42" rx="11" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-7-mode" x="352" y="19" font-size="18" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">AWAKE</text>
+<text id="w-7-upd" x="352" y="37" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">always</text>
+<g id="w-7-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
+<text id="w-7-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="54" width="540" height="2" fill="#000"/></g>
+<text x="560" y="552" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">7 Keep awake active: Always</text>
+<text x="16" y="622" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Landscape (960 x 64 top bar; sleep kinds hide tab slot 5)</text>
+<text x="16" y="658" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Power off, next update 15:30</text>
+<g id="w-8" transform="translate(0,680)"><rect id="w-8-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
+<use id="w-8-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+<text id="w-8-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
+<text id="w-8-l2" x="56" y="43" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">14:05</text>
+<rect x="173" y="5" width="118" height="54" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-8-tab0" x="232" y="32" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home</text>
+<rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-8-tab1" x="364" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Lights</text>
+<rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-8-tab2" x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Climate</text>
+<rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-8-tab3" x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Shutters</text>
+<rect id="w-8-pill-btn" x="708" y="10" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-8-ic" xlink:href="#i-power" href="#i-power" x="718" y="14" width="20" height="20" color="#fff"/>
+<text id="w-8-mode" x="744" y="24" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">OFF</text>
+<use id="w-8-ric" xlink:href="#i-refresh" href="#i-refresh" x="719" y="33" width="18" height="18" color="#fff"/>
+<text id="w-8-upd" x="744" y="42" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+<g id="w-8-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
+<text id="w-8-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="65" width="960" height="2" fill="#000"/></g>
+<text x="16" y="768" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Power off, updates off</text>
+<g id="w-9" transform="translate(0,790)"><rect id="w-9-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
+<use id="w-9-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+<text id="w-9-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
+<text id="w-9-l2" x="56" y="43" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">14:05</text>
+<rect x="173" y="5" width="118" height="54" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-9-tab0" x="232" y="32" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home</text>
+<rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-9-tab1" x="364" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Lights</text>
+<rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-9-tab2" x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Climate</text>
+<rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-9-tab3" x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Shutters</text>
+<rect id="w-9-pill-btn" x="708" y="10" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-9-ic" xlink:href="#i-power" href="#i-power" x="718" y="14" width="20" height="20" color="#fff"/>
+<text id="w-9-mode" x="744" y="24" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">OFF</text>
+<use id="w-9-ric" xlink:href="#i-refresh" href="#i-refresh" x="719" y="33" width="18" height="18" color="#fff"/>
+<text id="w-9-upd" x="744" y="42" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">off</text>
+<g id="w-9-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
+<text id="w-9-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="65" width="960" height="2" fill="#000"/></g>
+<text x="16" y="878" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Deep sleep, next update 15:30</text>
+<g id="w-10" transform="translate(0,900)"><rect id="w-10-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
+<use id="w-10-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+<text id="w-10-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
+<text id="w-10-l2" x="56" y="43" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">14:05</text>
+<rect x="173" y="5" width="118" height="54" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-10-tab0" x="232" y="32" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home</text>
+<rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-10-tab1" x="364" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Lights</text>
+<rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-10-tab2" x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Climate</text>
+<rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-10-tab3" x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Shutters</text>
+<rect id="w-10-pill-btn" x="708" y="10" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-10-ic" xlink:href="#i-moon" href="#i-moon" x="718" y="14" width="20" height="20" color="#fff"/>
+<text id="w-10-mode" x="744" y="24" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">DEEP</text>
+<use id="w-10-ric" xlink:href="#i-refresh" href="#i-refresh" x="719" y="33" width="18" height="18" color="#fff"/>
+<text id="w-10-upd" x="744" y="42" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+<g id="w-10-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
+<text id="w-10-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="65" width="960" height="2" fill="#000"/></g>
+<text x="16" y="988" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Deep sleep, updates off</text>
+<g id="w-11" transform="translate(0,1010)"><rect id="w-11-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
+<use id="w-11-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+<text id="w-11-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
+<text id="w-11-l2" x="56" y="43" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">14:05</text>
+<rect x="173" y="5" width="118" height="54" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-11-tab0" x="232" y="32" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home</text>
+<rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-11-tab1" x="364" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Lights</text>
+<rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-11-tab2" x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Climate</text>
+<rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-11-tab3" x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Shutters</text>
+<rect id="w-11-pill-btn" x="708" y="10" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-11-ic" xlink:href="#i-moon" href="#i-moon" x="718" y="14" width="20" height="20" color="#fff"/>
+<text id="w-11-mode" x="744" y="24" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">DEEP</text>
+<use id="w-11-ric" xlink:href="#i-refresh" href="#i-refresh" x="719" y="33" width="18" height="18" color="#fff"/>
+<text id="w-11-upd" x="744" y="42" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">off</text>
+<g id="w-11-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
+<text id="w-11-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="65" width="960" height="2" fill="#000"/></g>
+<text x="16" y="1098" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Touch wake (Touch or Touch &amp; rocker), next update 15:30</text>
+<g id="w-12" transform="translate(0,1120)"><rect id="w-12-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
+<use id="w-12-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+<text id="w-12-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
+<text id="w-12-l2" x="56" y="43" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">14:05</text>
+<rect x="173" y="5" width="118" height="54" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-12-tab0" x="232" y="32" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home</text>
+<rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-12-tab1" x="364" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Lights</text>
+<rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-12-tab2" x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Climate</text>
+<rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-12-tab3" x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Shutters</text>
+<rect id="w-12-pill-btn" x="708" y="10" width="104" height="44" rx="12" fill="#000"/>
+<use id="w-12-ic" xlink:href="#i-finger" href="#i-finger" x="718" y="14" width="20" height="20" color="#fff"/>
+<text id="w-12-mode" x="744" y="24" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">TAP</text>
+<use id="w-12-ric" xlink:href="#i-refresh" href="#i-refresh" x="719" y="33" width="18" height="18" color="#fff"/>
+<text id="w-12-upd" x="744" y="42" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+<g id="w-12-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
+<text id="w-12-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<rect x="0" y="65" width="960" height="2" fill="#000"/></g>
+<text x="16" y="1208" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake active: On USB (awake, not asleep)</text>
+<g id="w-13" transform="translate(0,1230)"><rect id="w-13-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
+<use id="w-13-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+<text id="w-13-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
+<text id="w-13-l2" x="56" y="43" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">14:05</text>
+<rect x="173" y="5" width="118" height="54" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-13-tab0" x="232" y="32" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home</text>
+<rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-13-tab1" x="364" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Lights</text>
+<rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-13-tab2" x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Climate</text>
+<rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-13-tab3" x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Shutters</text>
+<rect x="701" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-13-tab4" x="760" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">More</text>
+<g id="w-13-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
+<text id="w-13-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<text id="w-13-awake" x="944" y="53" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">USB awake</text>
+<rect x="0" y="65" width="960" height="2" fill="#000"/></g>
+<text x="16" y="1318" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake active: Always</text>
+<g id="w-14" transform="translate(0,1340)"><rect id="w-14-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
+<use id="w-14-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
+<text id="w-14-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
+<text id="w-14-l2" x="56" y="43" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">14:05</text>
+<rect x="173" y="5" width="118" height="54" rx="8" fill="#000" stroke="#000" stroke-width="2"/>
+<text id="w-14-tab0" x="232" y="32" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home</text>
+<rect x="305" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-14-tab1" x="364" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Lights</text>
+<rect x="437" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-14-tab2" x="496" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Climate</text>
+<rect x="569" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-14-tab3" x="628" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">Shutters</text>
+<rect x="701" y="5" width="118" height="54" rx="8" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-14-tab4" x="760" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">More</text>
+<g id="w-14-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
+<text id="w-14-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
+<text id="w-14-awake" x="944" y="53" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">always on</text>
+<rect x="0" y="65" width="960" height="2" fill="#000"/></g>
+<text x="16" y="1436" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Indicators at 2x (same drawing, for inspection)</text>
+<g transform="translate(16,1456) scale(2)"><rect id="z0-pill-btn" x="0" y="0" width="104" height="44" rx="12" fill="#000"/>
+<use id="z0-ic" xlink:href="#i-power" href="#i-power" x="10" y="4" width="20" height="20" color="#fff"/>
+<text id="z0-mode" x="36" y="14" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">OFF</text>
+<use id="z0-ric" xlink:href="#i-refresh" href="#i-refresh" x="11" y="23" width="18" height="18" color="#fff"/>
+<text id="z0-upd" x="36" y="32" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+</g>
+<g transform="translate(252,1456) scale(2)"><rect id="z1-pill-btn" x="0" y="0" width="104" height="44" rx="12" fill="#000"/>
+<use id="z1-ic" xlink:href="#i-power" href="#i-power" x="10" y="4" width="20" height="20" color="#fff"/>
+<text id="z1-mode" x="36" y="14" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">OFF</text>
+<use id="z1-ric" xlink:href="#i-refresh" href="#i-refresh" x="11" y="23" width="18" height="18" color="#fff"/>
+<text id="z1-upd" x="36" y="32" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">off</text>
+</g>
+<g transform="translate(488,1456) scale(2)"><rect id="z2-pill-btn" x="0" y="0" width="104" height="44" rx="12" fill="#000"/>
+<use id="z2-ic" xlink:href="#i-moon" href="#i-moon" x="10" y="4" width="20" height="20" color="#fff"/>
+<text id="z2-mode" x="36" y="14" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">DEEP</text>
+<use id="z2-ric" xlink:href="#i-refresh" href="#i-refresh" x="11" y="23" width="18" height="18" color="#fff"/>
+<text id="z2-upd" x="36" y="32" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+</g>
+<g transform="translate(724,1456) scale(2)"><rect id="z3-pill-btn" x="0" y="0" width="104" height="44" rx="12" fill="#000"/>
+<use id="z3-ic" xlink:href="#i-moon" href="#i-moon" x="10" y="4" width="20" height="20" color="#fff"/>
+<text id="z3-mode" x="36" y="14" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">DEEP</text>
+<use id="z3-ric" xlink:href="#i-refresh" href="#i-refresh" x="11" y="23" width="18" height="18" color="#fff"/>
+<text id="z3-upd" x="36" y="32" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">off</text>
+</g>
+<g transform="translate(16,1568) scale(2)"><rect id="z4-pill-btn" x="0" y="0" width="104" height="44" rx="12" fill="#000"/>
+<use id="z4-ic" xlink:href="#i-finger" href="#i-finger" x="10" y="4" width="20" height="20" color="#fff"/>
+<text id="z4-mode" x="36" y="14" font-size="18" font-weight="bold" fill="#fff" text-anchor="start" dominant-baseline="central">TAP</text>
+<use id="z4-ric" xlink:href="#i-refresh" href="#i-refresh" x="11" y="23" width="18" height="18" color="#fff"/>
+<text id="z4-upd" x="36" y="32" font-size="18" fill="#fff" text-anchor="start" dominant-baseline="central">15:30</text>
+</g>
+<g transform="translate(252,1568) scale(2)"><rect id="z5-pill-btn" x="1" y="1" width="102" height="42" rx="11" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="z5-mode" x="52" y="14" font-size="18" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">AWAKE</text>
+<text id="z5-upd" x="52" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">on USB</text>
+</g>
+<g transform="translate(488,1568) scale(2)"><rect id="z6-pill-btn" x="1" y="1" width="102" height="42" rx="11" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="z6-mode" x="52" y="14" font-size="18" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central">AWAKE</text>
+<text id="z6-upd" x="52" y="32" font-size="18" fill="#000" text-anchor="middle" dominant-baseline="central">always</text>
+</g>
+</svg>

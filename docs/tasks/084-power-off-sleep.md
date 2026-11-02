@@ -1,6 +1,6 @@
 # 084: Make full power-off sleep work on battery
 
-Status: todo
+Status: PC part done (battery test pending)
 Depends on: 035
 UI spec: none
 Needs device: yes (user unplugs USB and presses the rocker; results read from the SD wake log afterwards)
@@ -37,3 +37,23 @@ the ~1 month target.
 ## Notes
 - User 2026-11-02: battery life on battery is the top priority; deep sleep with everything powered is not acceptable
   as the only option.
+- 2026-11-02 PC part done (no schematic or M5EPD source available offline; the following is best explanation, UNVERIFIED
+  until the battery test):
+  - Power-on sources: M5Paper latches its main rail with GPIO2 (M5EPD `M5EPD_MAIN_PWR_PIN`, high = on). From off, the rocker
+    push (its line is also a power-on source, besides GPIO38) and the BM8563 INT (alarm) switch the rail on again; M5EPD
+    `shutdown(seconds)` = clear IRQ, set alarm, short delay, GPIO2 low. Our order was the same.
+  - Likely causes of the 10-28 failure, both fixed in sleep.cpp: (1) a pushed rocker is a power-on source, so GPIO2 low while it
+    was still down kept the board up, and the old 400 ms "still running = USB" check then re-asserted GPIO2 and fell into the
+    deep-sleep fallback or half-collapsed rail; now: wait for rocker release (max 3 s) first, wait 700 ms for rail decay;
+    (2) the sleep path was kept only in RTC memory, which a power-off loses, so the log could not tell; now it is in NVS
+    (`slp/sp`) and the WAKE line prints `slept=poweroff`. A flat battery is not excluded (no voltage logged from that run).
+  - USB signal: `power::usbAtSleep()` (lib/power, tested) is set when GPIO2 low leaves the board running; kept across deep sleep
+    in an RTC var, false when unknown. Checked on USB 2026-11-02: `path=poweroff` -> after 700 ms `path=deepsleep_fallback`,
+    device keeps working (serial log: scratchpad cap1.txt).
+  - 081 item: `usb_rx=<0|1>` (GPIO3 pull-down probe, 3 ms, pull-up restored) is in the WAKE line (serial + debug.log) and
+    in a `SLEEP: usb_rx=` line just before the power-off. On USB: usb_rx=1 at wake and at sleep (verified). Battery value: pending.
+  - Wake time: WAKE line has `t_ms` (since chip reset, includes cold IT8951 start); wakelog.csv has display_ms etc.
+  - Test env `m5paper-poweroff`: -DSLEEP_POWER_OFF -DWAKE_LOG_SD -DTEST_POWEROFF_ALARM_S=180 (always power off, rocker wake,
+    RTC alarm ~3-4 min ahead, whatever the settings say). Flashed. Remove/keep as test env afterwards.
+  - Battery test (user): see report; results: `tools/wakelog.py`, count `reason=button`/`rtc_alarm` after `slept_path=poweroff`.
+  - Open: acceptance 2-5 need the battery test; if the board does not come back, run with the reset button and note.
