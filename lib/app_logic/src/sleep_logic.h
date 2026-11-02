@@ -104,14 +104,15 @@ struct SleepExec {
 };
 SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build);
 
-// ---- periodic full refresh (task 083) ------------------------------------------------------------
-
-// Partial refreshes leave the panel drifting grey over hours; a scheduled wake does one GC16 full refresh
-// when the last full refresh is at least this old.
-constexpr int64_t kPeriodicFullAgeS = 3 * 3600;
-// scheduled: this run is a scheduled refresh. Epochs are UTC seconds; lastFullEpoch 0 = unknown (counts as
-// old). An unset clock (implausible nowEpoch) cannot judge the age: false.
-bool needPeriodicFull(bool scheduled, int64_t nowEpoch, int64_t lastFullEpoch);
+// ---- grey drift: when the panel is refreshed (task 092) ------------------------------------------
+// Every partial refresh darkens the untouched pixels (task 092 stress test); only a GC16 full resets that.
+// "Partial debt" = any partial refresh since the last GC16 full; it is kept across sleep (NVS).
+// Scheduled wake: no partials at all. The session draws nothing; at sleep entry one GC16 full of the whole
+// frame (sleep badge included) if anything changed or debt is pending, else no refresh.
+bool deferRefreshes(bool scheduled);
+bool scheduledSleepFull(bool changed, bool debt);
+// Interactive wake with Updates Off (no scheduled wake will clear the debt): the first frame is a GC16 full.
+bool firstFrameFull(bool scheduled, bool debt, bool updates_on);
 
 // ---- local idle sleep (no session: demo mode, config-error screen) --------------------------------
 

@@ -46,8 +46,15 @@ bool g_readOpen = false;        // a refresh wait left the controller in the rea
 bool g_framesOk = false;
 int g_partialCount = 0;
 long g_partialArea = 0;
+// Task 092: every partial refresh darkens the untouched pixels; only a GC16 full resets that.
+bool g_debt = false;            // partial refreshes since the last GC16 full (kept in NVS across sleep)
+bool g_debtLoaded = false;
+bool g_deferred = false;        // scheduled wake: nothing is refreshed until finishScheduled()
+bool g_deferChanged = false;    // the deferred frames differ from what the panel shows
+bool g_firstFrameFull = false;  // interactive wake with debt and Updates Off: GC16 full instead of the diff
 
 const char *kNs = "diag";
+const char *kKeyDebt = "pdebt";
 const char *kKeyScr = "scr", *kKeyHash = "chash", *kKeySig = "psig", *kKeyTiles = "tiles";
 
 uint32_t g_fwId = 0;  // identifies the running firmware build; a record written by another one is not trusted
@@ -236,6 +243,27 @@ void touchRecord() {
   g_recordDirty = true;
 }
 
+void storeDebt(bool v) {
+  if (g_debtLoaded && g_debt == v) return;  // NVS is written only on change
+  g_debt = v;
+  g_debtLoaded = true;
+  Preferences p;
+  if (p.begin(kNs, false)) {
+    if (p.getUChar(kKeyDebt, 0) != (v ? 1 : 0)) p.putUChar(kKeyDebt, v ? 1 : 0);
+    p.end();
+  }
+}
+
+void loadDebt() {
+  if (g_debtLoaded) return;
+  Preferences p;
+  if (p.begin(kNs, true)) {
+    g_debt = p.getUChar(kKeyDebt, 0) != 0;
+    p.end();
+  }
+  g_debtLoaded = true;
+}
+
 // Full-quality refresh of the whole frame (GC16). `whiteFirst`: wipe an unknown picture first.
 void fullRefresh(bool whiteFirst, const char *why) {
   auto &d = M5.Display;
@@ -255,6 +283,8 @@ void fullRefresh(bool whiteFirst, const char *why) {
   g_partialCount = 0;
   g_partialArea = 0;
   g_havePending = false;
+  g_deferChanged = false;
+  storeDebt(false);
   ++g_fullCount;
 }
 
@@ -268,6 +298,7 @@ screen_track::ModalSettle g_settle(1000);  // popup fastest updates: one quality
 
 void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   auto &d = M5.Display;
+  storeDebt(true);  // before the refresh: a crash in between must not lose it
   const bool grey = unknownPanel || g_modalOpening || panelHasGrey(r);
   const char *reason = unknownPanel ? "boot_unknown_panel" : g_modalOpening ? "modal" : (grey ? "panel_has_grey" : "panel_bw");
   Serial.printf("PRESENT: rect=%d,%d,%d,%d mode=%s reason=%s\n", r.x, r.y, r.w, r.h, grey ? "quality" : "fastest",
@@ -414,6 +445,17 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
   std::vector<uint16_t> stored;
   // A timed-out early clear left the controller memory untrusted (waitAndCheck set g_forceFull).
   if (g_forceFull) forceFull = true;
+  loadDebt();
+  if (g_firstFrameFull && g_debt && !g_deferred && !forceFull) {  // task 092: no scheduled wake will clear the debt
+    boot::log("debt_full", 1);
+    const bool inv = invalidateRecord();
+    fullRefresh(false, "full_debt");
+    if (inv) saveRecordOfCurrent();
+    g_lastShowMs = millis();
+    boot::log("draw", "full");
+    closeRead();
+    return;
+  }
   const bool have = !forceFull && loadRecord(stored);
   boot::log("record", have ? "valid" : (forceFull ? "ignored_forced" : "none_or_other_geometry"));
   const uint32_t t0 = micros();
@@ -432,6 +474,13 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
   }
   g_recordValid = true;
   const auto now = screen_track::tileHashes(buf(g_cur), g_w, g_h, g_w);
+  if (g_deferred) {  // task 092: scheduled wake: no refresh now; one GC16 full at sleep entry if anything changed
+    g_deferChanged = !screen_track::diffTiles(stored, now, g_w, g_h).empty();
+    copyAllToPrev();
+    g_lastShowMs = millis();
+    boot::log("draw", g_deferChanged ? "deferred_changed" : "deferred_none");
+    return;
+  }
   size_t adopted = 0;
   if (early && early->w > 0 && early->h > 0 && early->x >= 0 && early->y >= 0 && early->x + early->w <= g_w &&
       early->y + early->h <= g_h) {
@@ -509,6 +558,16 @@ bool show(Mode mode, uint32_t now) {
   const bool exempt = g_modalOpening;
   const bool closing = g_modalClosing;
   struct Clear { ~Clear() { g_modalOpening = false; g_modalClosing = false; } } clearExempt;
+  if (g_deferred) {  // task 092: remember the change, draw nothing
+    if (mode == Mode::Full || g_forceFull || closing) {
+      g_deferChanged = true;
+    } else {
+      screen_track::DiffOptions dopts;
+      if (!screen_track::diffFrames(buf(g_prev), buf(g_cur), g_w, g_h, g_w, dopts).empty()) g_deferChanged = true;
+    }
+    copyAllToPrev();
+    return false;
+  }
   // Popup close: one full GC16 refresh of the whole screen (greys pushed, ghost debt reset).
   if (mode == Mode::Full || g_forceFull || closing) {
     if (mode != Mode::Full) boot::log("full_after_failure", 1);
@@ -551,6 +610,7 @@ static bool settleModal(uint32_t now) {
   Serial.printf("PRESENT: modal_settle rect=%d,%d,%d,%d\n", r.x, r.y, r.w, r.h);
   auto &d = M5.Display;
   touchRecord();
+  storeDebt(true);
   d.setEpdMode(epd_mode_t::epd_quality);
   pushRegion(r, false);
   refresh(epd_mode_t::epd_quality, &r, "modal_settle");
@@ -585,13 +645,28 @@ bool idle(uint32_t now) {
 
 uint32_t fullCount() { return g_fullCount; }
 
-bool prepareSleep(bool forceFull) {
+void setWakePolicy(bool deferred, bool firstFrameFull) {
+  loadDebt();
+  g_deferred = deferred;
+  g_firstFrameFull = firstFrameFull;
+}
+
+bool finishScheduled(bool full) {
+  if (!g_deferred) return false;
+  g_deferred = false;
+  if (!full) return false;
+  boot::log("scheduled_full", g_deferChanged ? 1L : 0L);
+  fullRefresh(false, "full_scheduled");
+  saveRecordOfCurrent();
+  return true;
+}
+
+bool deferChanged() { return g_deferChanged; }
+bool partialDebt() { loadDebt(); return g_debt; }
+
+bool prepareSleep() {
   bool ran = false;
-  if (forceFull) {
-    boot::log("periodic_full", 1);
-    fullRefresh(false, "full_periodic");
-    ran = true;
-  } else if (g_havePending && ghostDebt(kGhostPartials / 2, kGhostAreaPct / 2)) {
+  if (g_havePending && ghostDebt(kGhostPartials / 2, kGhostAreaPct / 2)) {
     boot::log("ghost_debt_sleep", (long)g_partialCount);
     fullRefresh(false, "full_before_sleep");
     ran = true;

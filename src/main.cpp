@@ -89,7 +89,6 @@ static bool g_stackLogged = false;
 static bool g_firstSession = true;
 static int64_t g_restoredEpoch = 0;  // task 037: when the restored values were last confirmed (0 = none)
 static power::WakeReason g_wake = power::WakeReason::ColdBoot;  // why this run started (sleepwake::detect)
-static RTC_DATA_ATTR int64_t g_rtcLastFullEpoch = 0;           // UTC of the last GC16 full refresh (task 083), 0 = unknown
 static bool g_scheduled = false;                                // scheduled refresh: no touch/rocker input
 static app_logic::WakeInputGuard g_wakeGuard;                   // swallows the press that woke the device
 
@@ -906,15 +905,8 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     plan = app_logic::planForSleep(g_settings, session, epoch, utcOffsetAt(epoch), localIdle);
   }
   if (!low && present::framesOk()) {
-    // Task 083: partial refreshes drift grey over hours; a scheduled wake does a GC16 full refresh when the last one is >= 3 h old.
-    const int64_t fullNow = session_glue::wallClock();
-#ifdef NO_PERIODIC_FULL
-    const bool periodic = false;  // test envs: let the grey drift show
-#else
-    const bool periodic = app_logic::needPeriodicFull(g_scheduled, fullNow, g_rtcLastFullEpoch);
-#endif
-    present::prepareSleep(periodic);  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
-    if (present::fullCount() > 0 && app_logic::plausibleEpoch(fullNow)) g_rtcLastFullEpoch = fullNow;
+    // Task 092: a scheduled wake draws nothing until here (see present::setWakePolicy), then one GC16 full.
+    if (!g_scheduled) present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
     {  // STYLE.md 5.6: the pill shows the sleep mode and the next scheduled update, from the plan about to run
       const int64_t pe = session_glue::wallClock();
       const app_logic::SleepPath pp = app_logic::planSleepPath(plan, session, pe);
@@ -923,7 +915,13 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     }
     composeFrame();
     now = millis();
-    timedShow(present::Mode::Partial, now);
+    if (g_scheduled) {  // the badge is in this frame: the last refresh before sleep is the GC16 full (or none)
+      const uint32_t t0 = millis();
+      if (present::finishScheduled(app_logic::scheduledSleepFull(present::deferChanged(), present::partialDebt())))
+        wakelog::refreshed(millis() - t0);
+    } else {
+      timedShow(present::Mode::Partial, now);  // no flash at sleep entry; the partial debt is cleared by the next full
+    }
     present::prepareSleep();  // saves the record of the frame with the indicator, closes the read state
   }
   if (!low) sleepwake::saveTab(g_app.shownTab());  // task 086: the tab under any popup; Settings was left above
@@ -1117,6 +1115,8 @@ void setup() {
     render::drawSleepBadgeOverlay(c, g_settings.orientation, int(sleepwake::panelIndicator()),
                                   nx > 0 ? app_logic::localMinuteOfDay(nx, utcOffsetAt(nx)) : -1);
   }};
+  present::setWakePolicy(app_logic::deferRefreshes(g_scheduled),
+                         app_logic::firstFrameFull(g_scheduled, present::partialDebt(), s.refresh_interval_min > 0));
   present::bootFrame(boot::fallbackActive() || splashed, earlyClear ? &early : nullptr);  // after the splash: ghost-free full redraw
   // g_keepStatus stays set: updateStatus() clears it once the session leaves Connecting.
   boot::mark("first_draw");

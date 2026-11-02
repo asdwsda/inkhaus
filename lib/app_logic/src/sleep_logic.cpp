@@ -121,11 +121,11 @@ SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build) {
   return e;
 }
 
-bool needPeriodicFull(bool scheduled, int64_t nowEpoch, int64_t lastFullEpoch) {
-  if (!scheduled || !plausibleEpoch(nowEpoch)) return false;
-  if (!plausibleEpoch(lastFullEpoch) || lastFullEpoch > nowEpoch) return true;
-  return nowEpoch - lastFullEpoch >= kPeriodicFullAgeS;
-}
+bool deferRefreshes(bool scheduled) { return scheduled; }
+
+bool scheduledSleepFull(bool changed, bool debt) { return changed || debt; }
+
+bool firstFrameFull(bool scheduled, bool debt, bool updates_on) { return !scheduled && debt && !updates_on; }
 
 bool localIdleSleepWanted(bool session_running) { return !session_running; }
 

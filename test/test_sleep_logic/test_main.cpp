@@ -458,16 +458,19 @@ void test_guard_not_armed_blocks_nothing() {
   TEST_ASSERT_FALSE(g.blocksTouch());
 }
 
-void test_periodic_full() {
-  const int64_t now = 1800000000;
-  TEST_ASSERT_FALSE(needPeriodicFull(true, now, now - 3 * 3600 + 1));
-  TEST_ASSERT_TRUE(needPeriodicFull(true, now, now - 3 * 3600));
-  TEST_ASSERT_TRUE(needPeriodicFull(true, now, now - 5 * 3600));
-  TEST_ASSERT_FALSE(needPeriodicFull(true, now, now - 3600));
-  TEST_ASSERT_TRUE(needPeriodicFull(true, now, 0));        // unknown
-  TEST_ASSERT_TRUE(needPeriodicFull(true, now, now + 10)); // clock went back: unknown
-  TEST_ASSERT_FALSE(needPeriodicFull(false, now, 0));      // interactive wake: never
-  TEST_ASSERT_FALSE(needPeriodicFull(true, 0, 0));         // clock unset: cannot judge
+void test_refresh_decision() {
+  // scheduled wake: nothing during the session; at sleep: full iff changed or debt
+  TEST_ASSERT_TRUE(deferRefreshes(true));
+  TEST_ASSERT_FALSE(deferRefreshes(false));
+  TEST_ASSERT_FALSE(scheduledSleepFull(false, false));  // no change, no debt: no refresh
+  TEST_ASSERT_TRUE(scheduledSleepFull(true, false));
+  TEST_ASSERT_TRUE(scheduledSleepFull(false, true));    // earlier interactive partials get cleared
+  TEST_ASSERT_TRUE(scheduledSleepFull(true, true));
+  // interactive wake: first frame full only with debt and Updates Off
+  TEST_ASSERT_TRUE(firstFrameFull(false, true, false));
+  TEST_ASSERT_FALSE(firstFrameFull(false, true, true));   // a scheduled wake will clear it
+  TEST_ASSERT_FALSE(firstFrameFull(false, false, false));
+  TEST_ASSERT_FALSE(firstFrameFull(true, true, false));   // scheduled wake uses scheduledSleepFull
 }
 
 int main() {
@@ -506,6 +509,6 @@ int main() {
   RUN_TEST(test_guard_boundaries);
   RUN_TEST(test_guard_key_wake_ignores_touch_and_touch_wake_ignores_key);
   RUN_TEST(test_guard_not_armed_blocks_nothing);
-  RUN_TEST(test_periodic_full);
+  RUN_TEST(test_refresh_decision);
   return UNITY_END();
 }

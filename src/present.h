@@ -71,8 +71,15 @@ void setLogTab(int tab);  // tab index shown in the "APP: render" log line
 // record. Returns true if it did something.
 bool idle(uint32_t now);
 // Call right before sleeping: GC16 full refresh if the debt is at least half the limit.
-// forceFull (task 083): the periodic full refresh is due; do it regardless of the debt.
-bool prepareSleep(bool forceFull = false);
+bool prepareSleep();
+// Task 092 (grey drift). Call before bootFrame. deferred (scheduled wake): bootFrame and show() draw nothing and
+// only note whether the frame changed. firstFrameFull: bootFrame does one GC16 full when partial debt is set.
+void setWakePolicy(bool deferred, bool firstFrameFull);
+bool deferChanged();   // the deferred frames differ from the panel
+bool partialDebt();    // partial refreshes since the last GC16 full (NVS, kept across sleep)
+// End of a deferred session: the frame in canvas() (sleep badge included) as one GC16 full if `full`
+// (app_logic::scheduledSleepFull), else nothing. Returns true if it refreshed. No-op if not deferred.
+bool finishScheduled(bool full);
 // Number of GC16 full refreshes in this run (0 after every wake).
 uint32_t fullCount();
 

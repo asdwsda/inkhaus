@@ -71,3 +71,5 @@ Fix by evidence, cheapest first:
      If Updates are Off (no scheduled wake), the next interactive wake's first frame is a GC16 full when debt is set.
   3. Remove the >= 3 h periodic full (needPeriodicFull, g_rtcLastFullEpoch) and the m5paper-nofull env; keep tests consistent.
   Native tests for the refresh decision (wake kind x changed x debt x updates on/off).
+- 2026-11-02 (user): OK to flash on the first interactive wake when Updates are Off and debt is set.
+- 2026-11-02 firmware-dev: DECISION items 1-3 implemented (present.cpp deferred mode + NVS `pdebt`, sleep_logic deferRefreshes/scheduledSleepFull/firstFrameFull, main.cpp, m5paper-nofull + periodic removed). Native + pio run (m5paper, debug, epdoff, batterytest, poweroff) pass. Device: see docs/device-checks.md 092. Pill-only change (next-update time) counts as 'no change', so on a no-change wake the pill on the panel keeps the old next-update time.
