@@ -828,20 +828,20 @@ void test_network_rows_dirty_includes_hint_row_value_only() {
 
 void test_sleep_page_rules() {
   NetworkInfo n;
-  // On USB is not offered outside Power off: the cycle is Off -> Always -> Off
+  // The USB probe is reliable (task 085): On USB is offered in every mode, the cycle is Off -> On USB -> Always -> Off
   Settings d;
   d.sleep_mode = SleepSetting::DeepSleep;
   Settings k = cycleRow(RowId::KeepAwake, d, n);
-  TEST_ASSERT_TRUE(k.keep_awake == settings::KeepAwake::Always);
-  TEST_ASSERT_TRUE(cycleRow(RowId::KeepAwake, k, n).keep_awake == settings::KeepAwake::Off);
-  TEST_ASSERT_EQUAL_STRING("On USB only in Power off", sleepRowHint(RowId::KeepAwake, d).c_str());
-  // changing the mode drops On USB to Off in the buffer; Always stays
+  TEST_ASSERT_TRUE(k.keep_awake == settings::KeepAwake::OnUsb);
+  TEST_ASSERT_TRUE(cycleRow(RowId::KeepAwake, k, n).keep_awake == settings::KeepAwake::Always);
+  TEST_ASSERT_EQUAL_STRING("Awake while on USB", sleepRowHint(RowId::KeepAwake, k).c_str());
+  // changing the mode keeps On USB and Always
   Settings p;
   p.sleep_mode = SleepSetting::PowerOff;
   p.keep_awake = settings::KeepAwake::OnUsb;
   Settings q = cycleRow(RowId::SleepMode, p, n);  // Power off -> Deep sleep
   TEST_ASSERT_TRUE(q.sleep_mode == SleepSetting::DeepSleep);
-  TEST_ASSERT_TRUE(q.keep_awake == settings::KeepAwake::Off);
+  TEST_ASSERT_TRUE(q.keep_awake == settings::KeepAwake::OnUsb);
   p.keep_awake = settings::KeepAwake::Always;
   TEST_ASSERT_TRUE(cycleRow(RowId::SleepMode, p, n).keep_awake == settings::KeepAwake::Always);
   // sleep mode cycle order and wrap

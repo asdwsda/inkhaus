@@ -14,6 +14,9 @@ namespace sleepwake {
 // a deep sleep. Logs "WAKE: reason=...".
 power::WakeReason detect();
 
+// Task 085: GPIO3 pull-down probe of the CH9102 TX line (1 = USB present, 0 = battery), 3 ms, pull-up restored.
+int probeUsbRx();
+
 // Valid after detect(). wokeFromSleep: the frozen panel image is ours (deep-sleep or power-off wake): keep it.
 // splashWanted: reset button or a real cold boot.
 bool wokeFromSleep();

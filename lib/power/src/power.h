@@ -65,6 +65,20 @@ inline bool& usb_at_sleep_ref() {
 inline bool usbAtSleep() { return usb_at_sleep_ref(); }
 inline void set_usb_at_sleep(bool v) { usb_at_sleep_ref() = v; }
 
+// Task 085: the CH9102 RX probe (GPIO3 pull-down, 1 = USB present, 0 = battery, -1 = not probed yet). Taken at
+// wake and re-probed about every 5 s while awake, so an unplug is seen.
+inline int& usb_probe_ref() {
+    static int v = -1;
+    return v;
+}
+inline void set_usb_probe(int v) { usb_probe_ref() = v < 0 ? -1 : (v ? 1 : 0); }
+// The USB signal: the probe when it has a reading, otherwise usbAtSleep() (a power-off attempt that left the
+// board running). usbAtSleep() alone would stay true after an unplug, so it is only the fallback.
+inline bool usbPresent() {
+    const int p = usb_probe_ref();
+    return p >= 0 ? p == 1 : usbAtSleep();
+}
+
 // Keep awake (task 085): Always never idle-sleeps; On USB only while USB power is known (usbAtSleep(), 084) and
 // the sleep mode offers it. The old battery-voltage heuristic (081) is gone.
 inline bool stay_awake(const settings::Settings& s, bool usb_powered) {

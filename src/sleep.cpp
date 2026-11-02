@@ -102,6 +102,8 @@ void releaseTouchInt() {
 // Task 081: USB sense through the USB-serial chip. With USB present the CH9102 TX line (our RX) idles high;
 // on battery the chip is unpowered and the internal pull-down wins. Short probe, UART pull-up restored.
 // Back-powering of the CH9102 through our TX (GPIO1) would show as 1 on battery: that is what the test checks.
+}  // namespace
+
 int probeUsbRx() {
   gpio_set_pull_mode(kPinUartRx, GPIO_PULLDOWN_ONLY);
   delay(3);
@@ -110,11 +112,10 @@ int probeUsbRx() {
   return v;
 }
 
-}  // namespace
-
 power::WakeReason detect() {
   const int usbRx = probeUsbRx();
   wakelog::setUsbRx(usbRx);
+  power::set_usb_probe(usbRx);
   power::set_usb_at_sleep(g_usbAtSleepRtc == 1);
   // A deep sleep held GPIO2 high with the pad hold; release it so that a later power-off can work.
   gpio_deep_sleep_hold_dis();
@@ -216,7 +217,7 @@ void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEp
 #ifdef SLEEP_NO_POWER_OFF
                                                               false  // test builds: keep the deep-sleep hold
 #else
-                                                              true  // task 085: the Power off sleep mode really powers off (UNVERIFIED until the 084 battery test)
+                                                              true  // task 085: the Power off sleep mode really powers off
 #endif
   );
   Preferences p;

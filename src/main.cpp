@@ -184,11 +184,11 @@ static void updateStatus() {
 }
 
 // Keep awake indicator (STYLE.md 5.6): shown while the device will not idle-sleep; never together with the
-// asleep pill. On USB uses power::usbAtSleep() (task 084), the same signal as the idle gate.
+// asleep pill. On USB uses power::usbPresent() (task 085), the same signal as the idle gate.
 static void updateAwakeStatus() {
   g_status.awakeKind = 0;
   if (g_status.sleepKind || g_scheduled || !g_real) return;
-  if (power::stay_awake(g_settings, power::usbAtSleep()))
+  if (power::stay_awake(g_settings, power::usbPresent()))
     g_status.awakeKind = settings::effectiveKeepAwake(g_settings) == settings::KeepAwake::Always ? 2 : 1;
 }
 
@@ -1053,17 +1053,18 @@ void loop() {
     return;
   }
   if (!g_scheduled) {  // keep awake (tasks 081, 085): sample the battery, keep feeding the idle timers
-    const bool usb = power::usbAtSleep();  // task 084: the last power-off attempt found the board still running
     if (!g_usbSampled || now - g_usbSampleMs >= 5000) {
       g_usbSampled = true;
       g_usbSampleMs = now;
+      power::set_usb_probe(sleepwake::probeUsbRx());  // task 085: re-probe to catch an unplug
       const int32_t mv = batteryMv();
       batterylimit::sample(mv);
-      if (power::stay_awake(g_settings, usb) && power::below_low_battery(mv, batteryLimitMv())) {
+      if (power::stay_awake(g_settings, power::usbPresent()) && power::below_low_battery(mv, batteryLimitMv())) {
         lowBatterySleep();  // mid-session guard: stop staying awake (task 081)
         return;
       }
     }
+    const bool usb = power::usbPresent();  // probe (wake + every 5 s), fallback: power-off attempt found the board running
     if (g_stayGate.feed_due(g_settings, usb, now / 1000)) {
       if (g_real && g_drv) {
         if (!g_sessionOver) g_drv->input(now);

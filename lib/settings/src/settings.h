@@ -14,13 +14,13 @@ enum class SleepSetting : int32_t { PowerOff = 0, DeepSleep = 1, Touch = 2, Touc
 // Keep awake (task 085): never idle-sleep. OnUsb only while USB power is detected (see keepAwakeOnUsbOffered).
 enum class KeepAwake : int32_t { Off = 0, OnUsb = 1, Always = 2 };
 
-// What this hardware/firmware can do. UNVERIFIED until task 084's battery test: power-off works, the BM8563 alarm
-// powers the device on again from power-off, and the CH9102 RX probe (task 081) is not reliable enough to
-// offer "On USB" in the deep-sleep modes.
+// What this hardware/firmware can do. Verified by task 084's battery test: power-off works, the BM8563 alarm
+// powers the device on again from power-off, and the CH9102 RX probe (GPIO3, task 081) reads 0 on every battery
+// wake and 1 on every USB wake, so "On USB" is offered in every sleep mode.
 struct Capabilities {
     bool power_off = true;         // Power off sleep mode usable (migration of the old Button wake mode)
     bool rtc_power_on = true;      // the RTC alarm switches the device on from power-off
-    bool usb_probe_reliable = false;
+    bool usb_probe_reliable = true;
 };
 constexpr Capabilities kCapabilities{};
 enum class Orientation : int32_t { Portrait = 0, Landscape = 1 };

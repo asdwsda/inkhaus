@@ -231,7 +231,10 @@ void test_snap_refresh_interval() {
 
 void test_sleep_field_rules() {
     Settings s;  // Power off
+    TEST_ASSERT_TRUE(kCapabilities.usb_probe_reliable);  // verified by the 084 battery test
+    TEST_ASSERT_TRUE(keepAwakeOnUsbOffered(SleepSetting::DeepSleep));
     Capabilities ok;
+    ok.usb_probe_reliable = false;  // a build without a trustworthy probe
     TEST_ASSERT_TRUE(keepAwakeOnUsbOffered(SleepSetting::PowerOff, ok));
     TEST_ASSERT_FALSE(keepAwakeOnUsbOffered(SleepSetting::DeepSleep, ok));
     TEST_ASSERT_FALSE(keepAwakeOnUsbOffered(SleepSetting::Touch, ok));

@@ -261,10 +261,11 @@ void test_stay_awake_needs_setting_and_usb() {
     s.keep_awake = settings::KeepAwake::Always;  // never sleeps, USB or not
     TEST_ASSERT_TRUE(stay_awake(s, false));
     TEST_ASSERT_TRUE(stay_awake(s, true));
-    // On USB stored with a mode that does not offer it counts as Off
+    // The USB probe is reliable (task 085): On USB works in the deep-sleep modes too
     s.keep_awake = settings::KeepAwake::OnUsb;
     s.sleep_mode = SleepSetting::DeepSleep;
-    TEST_ASSERT_FALSE(stay_awake(s, true));
+    TEST_ASSERT_TRUE(stay_awake(s, true));
+    TEST_ASSERT_FALSE(stay_awake(s, false));
 }
 
 void test_plan_per_sleep_mode() {
@@ -361,6 +362,19 @@ void test_usb_at_sleep_flag() {
     TEST_ASSERT_FALSE(power::usbAtSleep());
 }
 
+void test_usb_present_probe_first() {
+    power::set_usb_probe(-1);
+    power::set_usb_at_sleep(true);
+    TEST_ASSERT_TRUE(power::usbPresent());  // no probe reading: fallback
+    power::set_usb_probe(0);
+    TEST_ASSERT_FALSE(power::usbPresent());  // unplug seen although the flag is stale
+    power::set_usb_at_sleep(false);
+    power::set_usb_probe(1);
+    TEST_ASSERT_TRUE(power::usbPresent());
+    power::set_usb_probe(-1);
+    TEST_ASSERT_FALSE(power::usbPresent());
+}
+
 // ---- battery estimate (task 085) ----
 
 void test_battery_level() {
@@ -445,6 +459,7 @@ int main() {
     RUN_TEST(test_gate_feed_rate_limited);
     RUN_TEST(test_low_battery_helper);
     RUN_TEST(test_usb_at_sleep_flag);
+    RUN_TEST(test_usb_present_probe_first);
     RUN_TEST(test_battery_level);
     return UNITY_END();
 }
