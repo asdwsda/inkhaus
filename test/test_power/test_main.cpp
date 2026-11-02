@@ -247,6 +247,141 @@ void test_battery_extremes() {
     TEST_ASSERT_EQUAL(0, battery_percent(-1));
 }
 
+// ---- stay awake on USB (task 081) ----
+
+void test_stay_awake_needs_setting_and_usb() {
+    Settings s;
+    TEST_ASSERT_FALSE(stay_awake(s, true));  // default off
+    s.stay_awake_usb = true;
+    TEST_ASSERT_TRUE(stay_awake(s, true));
+    TEST_ASSERT_FALSE(stay_awake(s, false));
+}
+
+// Drives the idle timer like main does: feed when the gate says so, sleep when the timer says so.
+static int64_t firstSleepAt(const Settings& s, bool (*usbAt)(int64_t), int64_t until) {
+    IdleTimer idle(s.idle_timeout_s);
+    StayAwakeGate gate;
+    idle.start(0);
+    for (int64_t t = 1; t <= until; ++t) {
+        if (gate.feed_due(s, usbAt(t), t)) idle.on_input(t);
+        if (idle.should_sleep(t)) return t;
+    }
+    return -1;
+}
+
+void test_no_idle_sleep_while_on_usb_with_setting() {
+    Settings s;
+    s.idle_timeout_s = 20;
+    s.stay_awake_usb = true;
+    TEST_ASSERT_EQUAL_INT64(-1, firstSleepAt(s, [](int64_t) { return true; }, 20 * 10));  // > 2x timeout
+    s.stay_awake_usb = false;  // setting off: as before
+    TEST_ASSERT_EQUAL_INT64(20, firstSleepAt(s, [](int64_t) { return true; }, 200));
+    s.stay_awake_usb = true;   // no USB: as before
+    TEST_ASSERT_EQUAL_INT64(20, firstSleepAt(s, [](int64_t) { return false; }, 200));
+}
+
+void test_unplug_restarts_idle_timer() {
+    Settings s;
+    s.idle_timeout_s = 20;
+    s.stay_awake_usb = true;
+    // on USB for 100 s, unplugged after that
+    const int64_t at = firstSleepAt(s, [](int64_t t) { return t <= 100; }, 400);
+    TEST_ASSERT_TRUE(at >= 100 + 20 && at <= 100 + 20 + StayAwakeGate::kKeepAliveS + 1);
+}
+
+void test_no_refresh_alarm_while_staying_awake() {
+    // Staying awake never reaches plan_sleep: no sleep is due, so no alarm is armed.
+    Settings s;
+    s.stay_awake_usb = true;
+    s.refresh_interval_min = 60;
+    TEST_ASSERT_EQUAL_INT64(-1, firstSleepAt(s, [](int64_t) { return true; }, 3600));
+    // A manual sleep on USB still plans normally (alarm kept).
+    SleepPlan p = plan_sleep(s, Session::Interactive, kMidnight + 100, 0);
+    TEST_ASSERT_TRUE(p.rtc_alarm_at.has_value());
+}
+
+void test_gate_feed_rate_limited() {
+    Settings s;
+    s.stay_awake_usb = true;
+    StayAwakeGate g;
+    TEST_ASSERT_TRUE(g.feed_due(s, true, 100));
+    TEST_ASSERT_FALSE(g.feed_due(s, true, 100));
+    TEST_ASSERT_TRUE(g.feed_due(s, true, 101));
+    TEST_ASSERT_FALSE(g.feed_due(s, false, 200));
+}
+
+// Feed 5 s samples; value from f(i).
+template <class F>
+static void feed(UsbDetector& d, int64_t& t, int secs, F f) {
+    for (int i = 0; i < secs / 5; ++i) d.update(t += 5, f(i), false);
+}
+
+void test_usb_detector_fresh_battery_not_usb() {
+    UsbDetector d;
+    int64_t t = 0;
+    // fresh cell 4400 mV falling ~30 mV/min while awake
+    feed(d, t, 600, [](int i) { return 4400 - i * 3 / 2; });
+    TEST_ASSERT_FALSE(d.usb());
+    // even a short, nearly flat stretch on a battery before 100 s is not judged
+    UsbDetector e;
+    t = 0;
+    feed(e, t, 60, [](int) { return 4400; });
+    TEST_ASSERT_FALSE(e.usb());
+}
+
+void test_usb_detector_flat_is_usb_then_drop_is_battery() {
+    UsbDetector d;
+    int64_t t = 0;
+    feed(d, t, 90, [](int) { return 4330; });
+    TEST_ASSERT_FALSE(d.usb());  // window not yet 100 s
+    feed(d, t, 60, [](int) { return 4330; });
+    TEST_ASSERT_TRUE(d.usb());
+    feed(d, t, 300, [](int i) { return 4330 + (i % 2 ? 6 : -6); });  // ADC noise
+    TEST_ASSERT_TRUE(d.usb());
+    feed(d, t, 240, [](int i) { return 4330 - i * 2; });  // 24 mV/min: unplugged
+    TEST_ASSERT_FALSE(d.usb());
+}
+
+void test_usb_detector_noise_on_slow_drain_and_low_level() {
+    UsbDetector d;
+    int64_t t = 0;
+    // 40 mV/min drain with +-10 mV noise: the smoothed 2 min drop stays > 20 mV -> never USB
+    feed(d, t, 900, [](int i) { return 4000 - i * 3 + (i % 2 ? 10 : -10); });
+    TEST_ASSERT_FALSE(d.usb());
+    UsbDetector e;
+    t = 0;
+    feed(e, t, 300, [](int) { return 3850; });  // flat but below 3900: not USB
+    TEST_ASSERT_FALSE(e.usb());
+}
+
+void test_usb_detector_in_between_keeps_state_and_hold_cap() {
+    UsbDetector d;
+    int64_t t = 0;
+    feed(d, t, 150, [](int) { return 4330; });
+    TEST_ASSERT_TRUE(d.usb());
+    // 12 mV per 2 min (between 8 and 20): keep USB
+    feed(d, t, 600, [](int i) { return 4330 - i * 7 / 12; });
+    TEST_ASSERT_TRUE(d.usb());
+    // drain stays in the band for > 60 min: hold ends
+    UsbDetector e;
+    t = 0;
+    feed(e, t, 150, [](int) { return 4330; });
+    TEST_ASSERT_TRUE(e.usb());
+    feed(e, t, 3700, [](int i) { return 4330 - i * 7 / 12; });  // ~12 mV/2 min
+    TEST_ASSERT_FALSE(e.usb());
+}
+
+void test_usb_detector_charging_trusted() {
+    UsbDetector c;
+    TEST_ASSERT_FALSE(c.update(0, 4400, false));
+    TEST_ASSERT_TRUE(c.update(5, 3700, true));
+}
+
+void test_low_battery_helper() {
+    TEST_ASSERT_TRUE(below_low_battery(kLowBatteryMv - 1));
+    TEST_ASSERT_FALSE(below_low_battery(kLowBatteryMv));
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_session_table);
@@ -269,5 +404,16 @@ int main() {
     RUN_TEST(test_idle_time_backwards);
     RUN_TEST(test_idle_busy_continuous_input_cap);
     RUN_TEST(test_battery_extremes);
+    RUN_TEST(test_stay_awake_needs_setting_and_usb);
+    RUN_TEST(test_no_idle_sleep_while_on_usb_with_setting);
+    RUN_TEST(test_unplug_restarts_idle_timer);
+    RUN_TEST(test_no_refresh_alarm_while_staying_awake);
+    RUN_TEST(test_gate_feed_rate_limited);
+    RUN_TEST(test_usb_detector_fresh_battery_not_usb);
+    RUN_TEST(test_usb_detector_flat_is_usb_then_drop_is_battery);
+    RUN_TEST(test_usb_detector_noise_on_slow_drain_and_low_level);
+    RUN_TEST(test_usb_detector_in_between_keeps_state_and_hold_cap);
+    RUN_TEST(test_usb_detector_charging_trusted);
+    RUN_TEST(test_low_battery_helper);
     return UNITY_END();
 }

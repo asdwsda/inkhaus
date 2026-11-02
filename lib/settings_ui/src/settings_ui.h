@@ -22,16 +22,17 @@ inline Page categoryPage(int i) { return static_cast<Page>(i + 1); }
 const char* categoryLabel(int i);  // "Display", "Sleep & wake", "Network", "Tools" (also the page title)
 
 // Setting rows, in the edit buffer order of the categories.
-enum class RowId { Orientation, Wake, Refresh, Idle, Wifi, HaLink, Demo, Debug };
-constexpr int kRowIdCount = 8;
-constexpr int kMaxPageRows = 3;
+enum class RowId { Orientation, Wake, Refresh, Idle, Wifi, HaLink, Demo, Debug, StayAwake };
+constexpr int kRowIdCount = 9;
+constexpr int kMaxPageRows = 4;
 bool isPipRow(RowId r);  // Orientation, Wake, Refresh, Idle (2..6 fixed values); the others are hint rows (88 high)
 
 // ---- layout (spec sections 3 and 8) ----
 constexpr int kInfoRowCount = 6;  // Firmware, Battery, HA, Wi-Fi, Config, Errors
-constexpr int kOverviewStops = 6; // 4 category rows, Refresh now, Back
-constexpr int kStopRefresh = 4;   // 0-based focus stop indices (overview)
-constexpr int kStopBack = 5;
+constexpr int kOverviewStops = 7; // 4 category rows, Sleep now, Refresh now, Back
+constexpr int kStopSleepNow = 4;  // 0-based focus stop indices (overview)
+constexpr int kStopRefresh = 5;
+constexpr int kStopBack = 6;
 constexpr int kRingInflate = 6;
 
 enum class InfoId { Firmware, Battery, HomeAssistant, WiFi, Config, Errors };
@@ -56,6 +57,7 @@ struct SettingsLayout {
   Rect headerRule;
   Rect categories[kCategoryCount];
   InfoRow info[kInfoRowCount];
+  Rect sleepNowButton;  // task 081: icon at +12,+12 (button look), right hint "or hold push 2.5 s" (F18)
   Rect refreshButton, backButton;
   Rect stops[kOverviewStops];  // focus order; same rects as categories + buttons
 };
@@ -115,8 +117,8 @@ int hintRowHintCy(const Rect& r);
 int hintRowValueCy(const Rect& r);
 Rect hintRowValueRect(const Rect& r);   // dirty region of a changed value (right 268 px)
 int hintRowValueWidth();                // 252: box 240..492 for profile names (fit rule F40, F24, "...")
-const char* hintRowLabel(RowId r);      // "Wi-Fi", "HA connection", "Demo mode", "Debug log"
-const char* hintRowStaticHint(RowId r); // Demo / Debug hints; "" for the live ones (Wi-Fi, HA connection)
+const char* hintRowLabel(RowId r);      // "Wi-Fi", "HA connection", "Demo mode", "Debug log", "Stay awake on USB"
+const char* hintRowStaticHint(RowId r); // Demo / Debug / Stay awake hints; "" for the live ones (Wi-Fi, HA connection)
 
 // ---- network info (spec 8.3): a snapshot taken when Settings opens ----
 enum class LinkState { Unknown, None, Internal, External };  // the link in use (None = offline)
@@ -155,6 +157,8 @@ struct NoteText {
 // The Network note shows only for a forced profile that is in the list.
 bool pageShowsNote(Page p, const settings::Settings& s, const NetworkInfo& n);
 NoteText pageNote(Page p, bool sdPresent);
+constexpr const char* kSleepNowLabel = "Sleep now";
+constexpr const char* kSleepNowHint = "or hold push 2.5 s";
 constexpr const char* kNoteLine1 = "Touch wake shortens battery life.";
 constexpr const char* kNoteLine2 = "Button wake is recommended.";
 constexpr const char* kNetNoteLine1 = "Forced profile: other Wi-Fi";
@@ -233,6 +237,7 @@ enum class Action {
   Leave,         // caller calls leave()
   PageChange,    // overview <-> category page: the caller draws the new page with a full (GC16) refresh
   StartRefresh,  // caller starts the state fetch, later calls refreshDone()
+  SleepNow,      // overview "Sleep now": the caller runs the normal sleep path (it leaves Settings itself)
 };
 
 struct Update {

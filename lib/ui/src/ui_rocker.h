@@ -1,5 +1,6 @@
 #pragma once
 // Rocker mapping and focus model (docs/ui/layout.md section 7). Pure logic.
+#include <cstdint>
 #include <vector>
 
 #include "ui_layout.h"
@@ -8,6 +9,23 @@ namespace ui {
 
 enum class PhysicalKey { Up, Down, Push, LongPush };
 enum class LogicalKey { Prev, Next, Push, LongPush };
+
+// Rocker push held down (task 081). Feed the raw "is down" state every loop pass.
+//  - released after kLongMs (= the M5 click limit, 500 ms) but before kSleepMs -> LongPush (on release)
+//  - still down at kSleepMs                      -> SleepNow (once, at that moment; no LongPush after)
+//  - released before kLongMs                     -> None (the caller's click handling reports Push)
+class PushHold {
+ public:
+  enum class Out { None, LongPush, SleepNow };
+  static constexpr uint32_t kLongMs = 500;
+  static constexpr uint32_t kSleepMs = 2500;
+  Out update(uint32_t nowMs, bool down);
+
+ private:
+  bool down_ = false;
+  bool consumed_ = false;
+  uint32_t since_ = 0;
+};
 
 // UP -> PREV, DOWN -> NEXT in both orientations; invert swaps PREV and NEXT.
 LogicalKey mapRocker(PhysicalKey key, settings::Orientation o, bool invert);

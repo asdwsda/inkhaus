@@ -10,6 +10,7 @@ struct Result {
   bool refresh = false;  // "Refresh now": the caller starts a state fetch, then calls refreshDone()
   bool pageChanged = false;  // overview <-> category page: draw the new page with a full refresh
   bool toolsOpened = false;  // ... and it is the Tools page (probe the SD card, setSdPresent(), then draw)
+  bool sleepNow = false;  // overview "Sleep now": the caller goes to sleep (leaving Settings through its normal path)
   bool left = false;     // the screen closed; `leave` says what to save and apply
   settings_ui::LeaveResult leave;
 };

@@ -1842,6 +1842,32 @@ static void test_graph_never_focusable() {
   TEST_ASSERT_EQUAL(1, stops[0]);  // the graph at index 0 is skipped
 }
 
+void test_push_hold() {
+  using Out = PushHold::Out;
+  PushHold h;
+  // short click: nothing (the click path reports Push)
+  TEST_ASSERT_TRUE(h.update(0, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(300, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(400, false) == Out::None);
+  // 500 ms (M5 click limit)..2.5 s: LongPush on release only, no gap after the click
+  TEST_ASSERT_TRUE(h.update(1000, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(1700, true) == Out::None);  // no long push while still held
+  TEST_ASSERT_TRUE(h.update(2000, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(2100, false) == Out::LongPush);
+  // 2.5 s: SleepNow once, as soon as reached, and no LongPush on release
+  TEST_ASSERT_TRUE(h.update(5000, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(7499, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(7500, true) == Out::SleepNow);
+  TEST_ASSERT_TRUE(h.update(8000, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(9000, false) == Out::None);
+  // a new press starts fresh
+  TEST_ASSERT_TRUE(h.update(10000, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(10650, false) == Out::LongPush);
+  // 500..600 ms is a LongPush too (was a gap)
+  TEST_ASSERT_TRUE(h.update(20000, true) == Out::None);
+  TEST_ASSERT_TRUE(h.update(20550, false) == Out::LongPush);
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_areas_portrait);
@@ -1924,5 +1950,6 @@ int main(int, char **) {
   RUN_TEST(test_graph_default_size);
   RUN_TEST(test_graph_size_clamp);
   RUN_TEST(test_graph_never_focusable);
+  RUN_TEST(test_push_hold);
   return UNITY_END();
 }

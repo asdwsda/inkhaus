@@ -8,6 +8,7 @@ namespace {
 constexpr int kQueue = 8;
 Event g_queue[kQueue];
 int g_head = 0, g_count = 0;
+ui::PushHold g_hold;
 
 void push(const Event &e) {
   if (g_count == kQueue) return;
@@ -28,8 +29,12 @@ Event poll() {
   M5.update();
   if (M5.BtnA.wasPressed()) { Event e; e.kind = Event::Key; e.key = ui::PhysicalKey::Up; push(e); }
   if (M5.BtnC.wasPressed()) { Event e; e.kind = Event::Key; e.key = ui::PhysicalKey::Down; push(e); }
-  if (M5.BtnB.wasHold()) { Event e; e.kind = Event::Key; e.key = ui::PhysicalKey::LongPush; push(e); }
-  else if (M5.BtnB.wasClicked()) { Event e; e.kind = Event::Key; e.key = ui::PhysicalKey::Push; push(e); }
+  switch (g_hold.update(millis(), M5.BtnB.isPressed())) {
+    case ui::PushHold::Out::LongPush: { Event e; e.kind = Event::Key; e.key = ui::PhysicalKey::LongPush; push(e); break; }
+    case ui::PushHold::Out::SleepNow: { Event e; e.kind = Event::SleepNow; push(e); break; }
+    case ui::PushHold::Out::None: break;
+  }
+  if (M5.BtnB.wasClicked()) { Event e; e.kind = Event::Key; e.key = ui::PhysicalKey::Push; push(e); }
   const auto t = M5.Touch.getDetail();
   if (t.wasPressed()) {
     Event e;

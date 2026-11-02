@@ -16,6 +16,26 @@ LogicalKey mapRocker(PhysicalKey key, settings::Orientation, bool invert) {
   return LogicalKey::Push;
 }
 
+PushHold::Out PushHold::update(uint32_t now, bool down) {
+  if (down) {
+    if (!down_) {
+      down_ = true;
+      consumed_ = false;
+      since_ = now;
+      return Out::None;
+    }
+    if (!consumed_ && now - since_ >= kSleepMs) {
+      consumed_ = true;
+      return Out::SleepNow;
+    }
+    return Out::None;
+  }
+  if (!down_) return Out::None;
+  down_ = false;
+  if (consumed_) return Out::None;
+  return now - since_ >= kLongMs ? Out::LongPush : Out::None;
+}
+
 bool isFocusable(WidgetType t, bool history) {
   switch (t) {
     case WidgetType::Sensor:

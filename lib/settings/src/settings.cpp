@@ -34,6 +34,8 @@ bool isValidDebugLog(int32_t v) { return v == 0 || v == 1; }
 
 bool isValidWifiProfileIndex(int32_t v) { return v >= 0 && v <= kMaxWifiProfileIndex; }
 
+bool isValidStayAwakeUsb(int32_t v) { return v == 0 || v == 1; }
+
 bool isValidHaLink(int32_t v) { return v >= 0 && v <= static_cast<int32_t>(HaLink::External); }
 
 int wifiProfileIndex(const std::string& name, const std::vector<std::string>& names) {
@@ -76,6 +78,7 @@ Settings load(const KeyValueStore& store) {
         s.legacy_wifi_index = v;  // resolved by migrateWifiProfile() once the profile list is known
     }
     if (store.getInt(kKeyHaLink, v) && isValidHaLink(v)) s.ha_link = static_cast<HaLink>(v);
+    if (store.getInt(kKeyStayAwakeUsb, v) && isValidStayAwakeUsb(v)) s.stay_awake_usb = v == 1;
     return s;
 }
 
@@ -90,6 +93,7 @@ void save(KeyValueStore& store, const Settings& s) {
     std::string cur;
     if (!store.getStr(kKeyWifiProfile, cur) || cur != s.wifi_profile) store.setStr(kKeyWifiProfile, s.wifi_profile);
     writeIfChanged(store, kKeyHaLink, static_cast<int32_t>(s.ha_link));
+    writeIfChanged(store, kKeyStayAwakeUsb, s.stay_awake_usb ? 1 : 0);
 }
 
 }  // namespace settings

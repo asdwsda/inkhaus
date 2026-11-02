@@ -36,6 +36,7 @@ void fillInfo(SettingsLayout& L, int infoX, int infoW, const int* infoY, const i
     r.valueWidth = infoW - 158;
   }
   for (int i = 0; i < kCategoryCount; ++i) L.stops[i] = L.categories[i];
+  L.stops[kStopSleepNow] = L.sleepNowButton;
   L.stops[kStopRefresh] = L.refreshButton;
   L.stops[kStopBack] = L.backButton;
 }
@@ -52,10 +53,11 @@ SettingsLayout computeSettingsLayout(settings::Orientation o) {
     L.unsavedChip = {404, 11, 120, 32};
     L.headerRule = {0, 54, 540, 2};
     for (int i = 0; i < kCategoryCount; ++i) L.categories[i] = {16, 68 + 108 * i, 508, 96};
+    L.sleepNowButton = {16, 804, 508, 64};
     L.refreshButton = {16, 880, 248, 64};
     L.backButton = {276, 880, 248, 64};
-    const int ys[kInfoRowCount] = {504, 552, 600, 648, 696, 760};
-    const int hs[kInfoRowCount] = {48, 48, 48, 48, 64, 48};
+    const int ys[kInfoRowCount] = {504, 548, 592, 636, 680, 744};
+    const int hs[kInfoRowCount] = {44, 44, 44, 44, 64, 48};
     fillInfo(L, 16, 508, ys, hs);
   } else {
     L.screenW = 960;
@@ -64,10 +66,11 @@ SettingsLayout computeSettingsLayout(settings::Orientation o) {
     L.unsavedChip = {824, 9, 120, 32};
     L.headerRule = {0, 50, 960, 2};
     for (int i = 0; i < kCategoryCount; ++i) L.categories[i] = {16, 64 + 108 * i, 456, 96};
+    L.sleepNowButton = {488, 388, 456, 64};
     L.refreshButton = {488, 464, 222, 64};
     L.backButton = {722, 464, 222, 64};
-    const int ys[kInfoRowCount] = {64, 120, 176, 232, 288, 360};
-    const int hs[kInfoRowCount] = {56, 56, 56, 56, 72, 56};
+    const int ys[kInfoRowCount] = {64, 112, 160, 208, 256, 328};
+    const int hs[kInfoRowCount] = {48, 48, 48, 48, 72, 48};
     fillInfo(L, 488, 456, ys, hs);
   }
   return L;
@@ -96,12 +99,14 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
     case Page::Sleep: {
       const int pitch = portrait ? 84 : 80;
       const int h = portrait ? 72 : 68;
-      L.rowCount = 3;
+      L.rowCount = 4;
       L.rowIds[0] = RowId::Wake;
       L.rowIds[1] = RowId::Refresh;
       L.rowIds[2] = RowId::Idle;
+      L.rowIds[3] = RowId::StayAwake;
       for (int i = 0; i < 3; ++i) L.rows[i] = {16, y0 + pitch * i, w, h};
-      L.note = portrait ? Rect{16, 320, 508, 64} : Rect{16, 304, 456, 64};
+      L.rows[3] = portrait ? Rect{16, 320, 508, 88} : Rect{488, 64, 456, 88};
+      L.note = portrait ? Rect{16, 420, 508, 64} : Rect{16, 304, 456, 64};
       break;
     }
     case Page::Network:
@@ -166,6 +171,7 @@ const char* hintRowLabel(RowId r) {
     case RowId::HaLink: return "HA connection";
     case RowId::Demo: return "Demo mode";
     case RowId::Debug: return "Debug log";
+    case RowId::StayAwake: return "Stay awake on USB";
     default: return "";
   }
 }
@@ -173,6 +179,7 @@ const char* hintRowStaticHint(RowId r) {
   switch (r) {
     case RowId::Demo: return "Sample dashboard, offline";
     case RowId::Debug: return "Log lines to SD card";
+    case RowId::StayAwake: return "Never sleeps while on USB power";
     default: return "";
   }
 }
@@ -254,6 +261,7 @@ std::string rowValueText(RowId r, const Settings& s, const NetworkInfo& n) {
     case RowId::HaLink: return haLinkName(s.ha_link);
     case RowId::Demo: return s.demo_mode ? "On" : "Off";
     case RowId::Debug: return s.debug_log ? "On" : "Off";
+    case RowId::StayAwake: return s.stay_awake_usb ? "On" : "Off";
   }
   return "";
 }
@@ -283,6 +291,7 @@ Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n) {
       break;
     case RowId::Demo: o.demo_mode = !s.demo_mode; break;
     case RowId::Debug: o.debug_log = !s.debug_log; break;
+    case RowId::StayAwake: o.stay_awake_usb = !s.stay_awake_usb; break;
   }
   return o;
 }
@@ -435,6 +444,8 @@ Update SettingsScreen::activateOverview(int stop) {
   Update u;
   if (stop == kStopBack) {
     u.action = Action::Leave;
+  } else if (stop == kStopSleepNow) {
+    u.action = Action::SleepNow;
   } else if (stop == kStopRefresh) {
     if (refresh_ == RefreshState::Running) return u;
     refresh_ = RefreshState::Running;

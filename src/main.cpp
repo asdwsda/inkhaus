@@ -72,6 +72,10 @@ static std::unique_ptr<session_glue::ArduinoWifi> g_wifi;
 static std::unique_ptr<app_logic::SessionDriver> g_drv;
 static power::IdleTimer g_localIdle;  // sleep timer when no session runs (demo, config error)
 static bool g_localIdleOn = false;
+static power::UsbDetector g_usb;         // task 081: USB power inferred from the battery voltage (UNVERIFIED)
+static power::StayAwakeGate g_stayGate;  // feeds the idle timers while staying awake on USB
+static uint32_t g_usbSampleMs = 0;
+static bool g_usbSampled = false;
 static bool g_sessionOver = false;  // the machine asked to sleep; any input starts a new session
 static bool g_settingsRefreshing = false;
 static uint32_t g_refreshSeq = 0;  // fetchSeq() when the Settings refresh was issued
@@ -707,6 +711,8 @@ static void openSettings(bool ring, uint32_t now) {
   wakelog::logf("APP: settings opened\n");
 }
 
+static void manualSleep();
+
 static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
   if (r.refresh) {
     if (g_real && g_drv && !g_sessionOver) {
@@ -721,6 +727,10 @@ static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
       handleSettingsResult(settings_flow::refreshDone(false), now);
       return;
     }
+  }
+  if (r.sleepNow) {
+    manualSleep();  // leaves Settings through goToSleep's auto-leave, then the normal sleep path
+    return;
   }
   if (r.left) {
     closeSettings(r.leave, now);
@@ -772,6 +782,18 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   // Not asleep (should not happen): carry on as an awake device without the indicator.
   boot::log("sleep_failed", 1);
   g_status.sleepBadge = false;
+}
+
+// Manual sleep (task 081): rocker hold 2.5 s or the Settings "Sleep now" row. Same path as the idle
+// sleep (indicator, wake sources, refresh alarm from the settings in effect); also while staying awake on USB.
+static void manualSleep() {
+  if (g_scheduled) return;  // a scheduled refresh has no input
+  const bool local = !(g_real && g_drv);  // demo / config error: no refresh alarm
+  const int64_t epoch = session_glue::wallClock();
+  boot::log("manual_sleep", 1);
+  goToSleep(app_logic::planForSleep(g_settings, power::Session::Interactive, epoch, utcOffsetAt(epoch), local),
+            power::Session::Interactive, local);
+  g_localIdle.on_input(millis() / 1000);  // sleeping failed: carry on
 }
 
 // Battery below the limit at wake: no session, no network. A plain notice, no alarm, power off.
@@ -969,9 +991,33 @@ void loop() {
   input::Event e = g_scheduled ? input::Event() : input::poll();
   if (!g_scheduled) {
     g_wakeGuard.observe(now, M5.BtnB.isPressed(), M5.Touch.getCount() > 0);
-    if ((e.kind == input::Event::Key && g_wakeGuard.blocksKey()) ||
+    if (((e.kind == input::Event::Key || e.kind == input::Event::SleepNow) && g_wakeGuard.blocksKey()) ||
         (e.kind == input::Event::Touch && g_wakeGuard.blocksTouch()))
       e = input::Event();  // the press that woke the device
+  }
+  if (e.kind == input::Event::SleepNow) {  // rocker held 2.5 s: any screen, any popup (task 081)
+    manualSleep();
+    return;
+  }
+  if (!g_scheduled) {  // stay awake on USB (task 081): sample the battery, keep feeding the idle timers
+    if (!g_usbSampled || now - g_usbSampleMs >= 5000) {
+      g_usbSampled = true;
+      g_usbSampleMs = now;
+      const bool was = g_usb.usb();
+      g_usb.update(now / 1000, batteryMv(), M5.Power.isCharging() == M5.Power.is_charging);
+      if (g_usb.usb() != was) boot::log("usb_power", g_usb.usb() ? 1 : 0);
+    }
+    if (power::stay_awake(g_settings, g_usb.usb()) && power::below_low_battery(g_usb.smoothed_mv())) {
+      lowBatterySleep();  // mid-session guard: stop staying awake (task 081)
+      return;
+    }
+    if (g_stayGate.feed_due(g_settings, g_usb.usb(), now / 1000)) {
+      if (g_real && g_drv) {
+        if (!g_sessionOver) g_drv->input(now);
+      } else {
+        g_localIdle.on_input(now / 1000);
+      }
+    }
   }
   const bool popupOpen = g_app.brightnessOpen() || g_app.historyPopup().fetching();  // activity: brightness closes itself after 10 s; an open history popup only counts while it fetches, then the idle timer closes it (goToSleep)
   if ((e.kind != input::Event::None || popupOpen) && g_real && g_drv) {

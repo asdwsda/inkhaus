@@ -14,6 +14,8 @@ Result fromUpdate(const settings_ui::Update &u) {
   if (u.action == settings_ui::Action::StartRefresh) {
     r.refresh = true;
     r.redraw = true;
+  } else if (u.action == settings_ui::Action::SleepNow) {
+    r.sleepNow = true;
   } else if (u.action == settings_ui::Action::PageChange) {
     r.pageChanged = true;
     r.redraw = true;

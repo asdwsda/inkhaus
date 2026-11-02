@@ -353,6 +353,24 @@ void test_wifi_profile_by_name_and_ha_link() {
     TEST_ASSERT_TRUE(strlen(kKeyWifiProfile) <= 15 && strlen(kKeyHaLink) <= 15 && strlen(kKeyWifiProfileLegacy) <= 15);
 }
 
+void test_stay_awake_usb_persists() {
+    FakeStore st;
+    TEST_ASSERT_FALSE(load(st).stay_awake_usb);  // absent = off
+    st.data[kKeyStayAwakeUsb] = 7;               // invalid -> default
+    TEST_ASSERT_FALSE(load(st).stay_awake_usb);
+    Settings s;
+    s.stay_awake_usb = true;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT32(1, st.data[kKeyStayAwakeUsb]);
+    TEST_ASSERT_TRUE(load(st).stay_awake_usb);
+    TEST_ASSERT_TRUE(load(st) == s);
+    TEST_ASSERT_FALSE(Settings() == s);
+    const int w = st.writes;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT(w, st.writes);
+    TEST_ASSERT_TRUE(strlen(kKeyStayAwakeUsb) <= 15);
+}
+
 void test_wifi_profile_index_lookup() {
     const std::vector<std::string> names = {"Home", "Hotspot"};
     TEST_ASSERT_EQUAL_INT(0, wifiProfileIndex("", names));
@@ -411,6 +429,7 @@ int main(int, char**) {
     RUN_TEST(test_keys_fit_nvs_limit_and_lists_are_valid);
     RUN_TEST(test_wake_mode_migration_and_roundtrip);
     RUN_TEST(test_wifi_profile_by_name_and_ha_link);
+    RUN_TEST(test_stay_awake_usb_persists);
     RUN_TEST(test_wifi_profile_index_lookup);
     RUN_TEST(test_wifi_profile_legacy_index_migrates_once);
     return UNITY_END();

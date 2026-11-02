@@ -1,6 +1,6 @@
 # 081: Stay awake on USB (setting) and a manual "sleep now"
 
-Status: todo
+Status: PC part done (device check pending)
 Depends on: 035 (sleep), 080 not required
 UI spec: docs/ui/settings.md section 9 (done)
 Needs device: yes
@@ -47,3 +47,14 @@ Pure decision logic ("stay awake?", hold-duration handling) goes in lib/ with na
 ## Notes
 - User 2026-11-02: 2.5 s hold + "Sleep now" row approved; skip the hourly refresh alarm while staying awake on USB.
 - Long push today: opens/leaves Settings, closes popups (app_state.cpp, settings_ui.cpp).
+- PC part done. USB detection: M5Unified has no VBUS/charge signal for the M5Paper (isCharging/getVBUSVoltage
+  documented as non-functioning), so `power::UsbDetector` (lib/power) infers USB from the battery voltage: full cell
+  (superseded, see next note). UNVERIFIED (device-checks.md).
+- Detector v2 (architect, after tester: fresh cell reads 4.39-4.41 V, above USB 4.32-4.35 V): wake starts "not USB";
+  isCharging true => USB; else 2 min window of smoothed samples: drop <= 8 mV and >= 3900 mV => USB, drop >= 20 mV
+  => battery, in between keeps state (max 60 min since the last flat verdict). Mid-session guard:
+  `power::below_low_battery(smoothed mV)` while staying awake => `lowBatterySleep()` (task 079 swaps the limit there).
+  PushHold kLongMs 600 -> 500 (M5 click limit), no 500-600 ms gap. UNVERIFIED.
+- Idle hold: `power::StayAwakeGate` feeds the idle timers (g_drv->input / g_localIdle) once a second while setting
+  on AND USB; no sleep happens, so no alarm. Hold: `ui::PushHold` (lib/ui): LongPush now fires on release
+  (600 ms..2.5 s), `input::Event::SleepNow` at 2.5 s. Manual sleep = `manualSleep()` in main.cpp (goToSleep path).

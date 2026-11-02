@@ -169,15 +169,18 @@ void test_overview_layout_both_orientations() {
   expectRect(16, 176, 508, 96, p.categories[1]);
   expectRect(16, 284, 508, 96, p.categories[2]);
   expectRect(16, 392, 508, 96, p.categories[3]);
-  expectRect(16, 504, 508, 48, p.info[0].rect);
-  expectRect(16, 696, 508, 64, p.info[4].rect);
-  TEST_ASSERT_EQUAL_INT(808, p.info[5].rect.y + p.info[5].rect.h);
+  expectRect(16, 504, 508, 44, p.info[0].rect);
+  expectRect(16, 680, 508, 64, p.info[4].rect);
+  TEST_ASSERT_EQUAL_INT(792, p.info[5].rect.y + p.info[5].rect.h);
+  expectRect(16, 804, 508, 64, p.sleepNowButton);
   expectRect(16, 880, 248, 64, p.refreshButton);
   expectRect(276, 880, 248, 64, p.backButton);
   SettingsLayout l = computeSettingsLayout(Orientation::Landscape);
   expectRect(16, 64, 456, 96, l.categories[0]);
   expectRect(16, 388, 456, 96, l.categories[3]);
-  expectRect(488, 64, 456, 56, l.info[0].rect);
+  expectRect(488, 64, 456, 48, l.info[0].rect);
+  TEST_ASSERT_EQUAL_INT(376, l.info[5].rect.y + l.info[5].rect.h);
+  expectRect(488, 388, 456, 64, l.sleepNowButton);
   expectRect(722, 464, 222, 64, l.backButton);
   expectRect(16 + 456 - 52, 64 + 28, 40, 40, categoryChevronRect(l.categories[0]));
   TEST_ASSERT_EQUAL_INT(64 + 34, categoryLabelCy(l.categories[0]));
@@ -199,9 +202,13 @@ void test_page_layouts() {
   expectRect(16, 68, 508, 72, s.rows[0]);
   expectRect(16, 152, 508, 72, s.rows[1]);
   expectRect(16, 236, 508, 72, s.rows[2]);
-  expectRect(16, 320, 508, 64, s.note);
+  expectRect(16, 320, 508, 88, s.rows[3]);
+  TEST_ASSERT_TRUE(s.rowIds[3] == RowId::StayAwake);
+  TEST_ASSERT_EQUAL_INT(5, s.stopCount);
+  expectRect(16, 420, 508, 64, s.note);
   PageLayout sl = computePageLayout(Page::Sleep, Orientation::Landscape);
   expectRect(16, 144, 456, 68, sl.rows[1]);
+  expectRect(488, 64, 456, 88, sl.rows[3]);
   expectRect(16, 304, 456, 64, sl.note);
 
   PageLayout n = computePageLayout(Page::Network, Orientation::Portrait);
@@ -406,22 +413,22 @@ void test_rocker_focus_orders_and_wrap() {
   SettingsScreen s(Settings(), Orientation::Portrait, true);
   s.setNetwork(twoProfiles());
   TEST_ASSERT_EQUAL_INT(0, s.focus());
-  for (int i = 1; i <= 6; ++i) {  // 6 stops: Display, Sleep, Network, Tools, Refresh, Back
+  for (int i = 1; i <= 7; ++i) {  // 7 stops: Display, Sleep, Network, Tools, Sleep now, Refresh, Back
     s.onKey(LogicalKey::Next);
-    TEST_ASSERT_EQUAL_INT(i % 6, s.focus());
+    TEST_ASSERT_EQUAL_INT(i % 7, s.focus());
   }
   s.onKey(LogicalKey::Prev);
   TEST_ASSERT_EQUAL_INT(kStopBack, s.focus());
-  // enter Sleep & wake: 3 rows + Back
+  // enter Sleep & wake: 4 rows + Back
   s.onKey(LogicalKey::Next);  // 0
   s.onKey(LogicalKey::Next);  // 1 Sleep
   Update u = s.onKey(LogicalKey::Push);
   TEST_ASSERT_TRUE(u.action == Action::PageChange);
   TEST_ASSERT_TRUE(s.page() == Page::Sleep);
-  TEST_ASSERT_EQUAL_INT(4, s.stopCount());
+  TEST_ASSERT_EQUAL_INT(5, s.stopCount());
   TEST_ASSERT_EQUAL_INT(0, s.focus());
   s.onKey(LogicalKey::Prev);
-  TEST_ASSERT_EQUAL_INT(3, s.focus());  // Back
+  TEST_ASSERT_EQUAL_INT(4, s.focus());  // Back
   // Push on a row cycles the buffer
   s.onKey(LogicalKey::Next);
   s.onKey(LogicalKey::Push);  // Wake mode Button -> Touch
@@ -432,6 +439,38 @@ void test_rocker_focus_orders_and_wrap() {
   TEST_ASSERT_TRUE(s.page() == Page::Main);
   TEST_ASSERT_EQUAL_INT(1, s.focus());
   TEST_ASSERT_TRUE(s.dirty());  // going up saves/applies nothing: still buffered
+}
+
+void test_stay_awake_row_and_sleep_now() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  touchCentre(s, s.layout().categories[1]);  // Sleep & wake
+  TEST_ASSERT_TRUE(s.page() == Page::Sleep);
+  const Rect row = s.pageLayout().rows[3];
+  TEST_ASSERT_EQUAL_STRING("Off", rowValueText(RowId::StayAwake, s.edit(), NetworkInfo()).c_str());
+  TEST_ASSERT_EQUAL_STRING("Stay awake on USB", rowLabel(RowId::StayAwake));
+  TEST_ASSERT_EQUAL_STRING("Never sleeps while on USB power", hintRowStaticHint(RowId::StayAwake));
+  Update u = touchCentre(s, row);
+  TEST_ASSERT_TRUE(s.edit().stay_awake_usb);
+  TEST_ASSERT_TRUE(s.dirty());
+  TEST_ASSERT_TRUE(u.action == Action::None);
+  bool valueDirty = false, chip = false;
+  for (const Rect& d : u.dirty) {
+    if (d == hintRowValueRect(row)) valueDirty = true;
+    if (d == s.pageLayout().unsavedChip) chip = true;
+  }
+  TEST_ASSERT_TRUE(valueDirty && chip);
+  TEST_ASSERT_TRUE(s.leave().save);
+  TEST_ASSERT_FALSE(s.leave().networkChanged);
+  touchCentre(s, row);
+  TEST_ASSERT_FALSE(s.edit().stay_awake_usb);
+  TEST_ASSERT_FALSE(s.dirty());
+
+  // Sleep now: a tap on the overview row and PUSH with the focus on it
+  SettingsScreen o(Settings(), Orientation::Landscape, true);
+  u = touchCentre(o, o.layout().sleepNowButton);
+  TEST_ASSERT_TRUE(u.action == Action::SleepNow);
+  for (int i = 0; i < kStopSleepNow; ++i) o.onKey(LogicalKey::Next);
+  TEST_ASSERT_TRUE(o.onKey(LogicalKey::Push).action == Action::SleepNow);
 }
 
 void test_long_push_is_one_level_back() {
@@ -512,8 +551,8 @@ void test_pip_rows_cycle_full_circle() {
 // ---- restored coverage (review of task 047 UI) ----
 
 void test_info_rows_rects_and_hairlines() {
-  const int py[] = {504, 552, 600, 648, 696, 760};
-  const int ph[] = {48, 48, 48, 48, 64, 48};
+  const int py[] = {504, 548, 592, 636, 680, 744};
+  const int ph[] = {44, 44, 44, 44, 64, 48};
   SettingsLayout P = computeSettingsLayout(Orientation::Portrait);
   expectRect(16, 0, 200, 54, P.title);
   for (int i = 0; i < kInfoRowCount; ++i) {
@@ -526,8 +565,8 @@ void test_info_rows_rects_and_hairlines() {
   }
   TEST_ASSERT_EQUAL_INT(P.info[4].cy - 14, P.info[4].cyLine1);
   TEST_ASSERT_EQUAL_INT(P.info[4].cy + 14, P.info[4].cyLine2);
-  const int ly[] = {64, 120, 176, 232, 288, 360};
-  const int lh[] = {56, 56, 56, 56, 72, 56};
+  const int ly[] = {64, 112, 160, 208, 256, 328};
+  const int lh[] = {48, 48, 48, 48, 72, 48};
   SettingsLayout L = computeSettingsLayout(Orientation::Landscape);
   expectRect(16, 0, 200, 50, L.title);
   for (int i = 0; i < kInfoRowCount; ++i) {
@@ -767,6 +806,7 @@ int main() {
   RUN_TEST(test_value_fit_level);
   RUN_TEST(test_overview_layout_both_orientations);
   RUN_TEST(test_page_layouts);
+  RUN_TEST(test_stay_awake_row_and_sleep_now);
   RUN_TEST(test_page_targets_size_gaps_and_screen_bounds);
   RUN_TEST(test_summaries);
   RUN_TEST(test_wifi_and_ha_cycling);

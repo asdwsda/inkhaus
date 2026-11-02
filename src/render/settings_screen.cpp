@@ -213,6 +213,9 @@ void drawSettings(M5Canvas &c, const sui::SettingsScreen &s, const SettingsInfo 
   const Icon rg = rs == sui::RefreshState::Running ? Icon::Hourglass
                   : rs == sui::RefreshState::Failed ? Icon::Alert
                                                     : Icon::Refresh;
+  drawButtonBox(c, L.sleepNowButton, Icon::Moon, sui::kSleepNowLabel, false);
+  drawTextCy(c, Font::F18, sui::kSleepNowHint, L.sleepNowButton.x + L.sleepNowButton.w - 16,
+             L.sleepNowButton.y + L.sleepNowButton.h / 2, Align::Right, INK);
   drawButtonBox(c, L.refreshButton, rg, "Refresh now", rs == sui::RefreshState::Running);
   drawButtonBox(c, L.backButton, Icon::ChevL, "Back", false);
 }
