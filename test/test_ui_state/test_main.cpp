@@ -1300,6 +1300,20 @@ void test_deferred_tap_machine() {
   TEST_ASSERT_EQUAL(R::None, d.longPress().kind);
 }
 
+void test_restore_tab() {
+  AppState a;
+  a.init(exampleConfig(), P, true);
+  const int n = int(a.config().tabs.size());
+  TEST_ASSERT_TRUE(n >= 2);
+  TEST_ASSERT_TRUE(a.restoreTab(1));
+  TEST_ASSERT_EQUAL(1, a.shownTab());
+  a.init(exampleConfig(), P, true);
+  TEST_ASSERT_FALSE(a.restoreTab(n));  // removed tab
+  TEST_ASSERT_FALSE(a.restoreTab(-1));
+  TEST_ASSERT_FALSE(a.restoreTab(200));
+  TEST_ASSERT_EQUAL(0, a.shownTab());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_fmt_number);
@@ -1368,5 +1382,6 @@ int main() {
   RUN_TEST(test_app_brightness_unavailable_closes_without_sending);
   RUN_TEST(test_app_close_before_sleep_flushes);
   RUN_TEST(test_deferred_tap_machine);
+  RUN_TEST(test_restore_tab);
   return UNITY_END();
 }

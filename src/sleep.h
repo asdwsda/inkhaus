@@ -32,6 +32,11 @@ int64_t panelNextAt();
 // or reset). Valid after detect(). Task 058: the early wake feedback clears it.
 bool badgeOnPanel();
 
+// Task 086: the tab shown at the last sleep (NVS, so it survives deep sleep and power-off). saveTab writes only
+// when the value changed. UNVERIFIED on the device.
+int savedTab();
+void saveTab(int tab);
+
 // Last step of a session. Persists the marker and the indicator variant, arms the BM8563 alarm, then
 // either releases the main power hold (PowerOff; on battery the device is off after this call) or
 // enters ESP32 deep sleep (Touch mode, and the USB-powered fallback of PowerOff). Does not return

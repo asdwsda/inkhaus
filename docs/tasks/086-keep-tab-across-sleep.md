@@ -1,6 +1,6 @@
 # 086: Keep the current tab across sleep
 
-Status: todo
+Status: testing
 Depends on: 071 (graphs), 084 (power-off wake)
 UI spec: none
 Needs device: yes

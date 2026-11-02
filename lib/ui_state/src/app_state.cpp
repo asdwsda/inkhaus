@@ -152,6 +152,18 @@ int AppState::focusedWidgetIndex() const {
   return ui::focusedWidget(focus_, focusEnv());
 }
 
+bool AppState::restoreTab(int tab) {
+  const int n = int(cfg_.tabs.size());
+  if (tab <= 0 || tab >= n || screen_ != Screen::Tabs) return false;
+  ui::focusTouchTab(focus_, orientation_, n, tab);
+  refreshFocusFlow();
+  shownTab_ = focus_.tab;
+  shownSubPage_ = 0;
+  relayout();
+  rebuildGraphs();
+  return true;
+}
+
 bool AppState::takeFull() {
   const bool f = full_;
   full_ = false;

@@ -77,6 +77,12 @@ void test_entries_built_for_graph_widgets_only() {
   TEST_ASSERT_TRUE(g.tabHasGraphs(0) && !g.tabHasGraphs(1) && g.tabHasGraphs(2));
 }
 
+void test_restored_tab_fetches_only_its_graphs() {
+  AppState a = makeApp();
+  TEST_ASSERT_TRUE(a.restoreTab(2));
+  TEST_ASSERT_EQUAL(1, a.graphs().requestSession(a.shownTab(), kGraphFetchAllTabs));  // tab C: c1 only
+}
+
 void test_columns_follow_widget_size() {
   AppState p = makeApp();
   TEST_ASSERT_EQUAL(424, p.graphs().find(0, 0)->spec.columns);  // 2x2 portrait: 508 - 84
@@ -259,6 +265,7 @@ int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_entries_built_for_graph_widgets_only);
   RUN_TEST(test_columns_follow_widget_size);
+  RUN_TEST(test_restored_tab_fetches_only_its_graphs);
   RUN_TEST(test_session_requests_only_visible_tab);
   RUN_TEST(test_tab_without_graphs_requests_nothing);
   RUN_TEST(test_tab_switch_requests_new_tab_and_drops_old);

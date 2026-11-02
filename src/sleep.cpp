@@ -26,7 +26,7 @@ constexpr uint32_t kPowerOffWaitMs = 700;           // still running after this:
 constexpr gpio_num_t kPinUartRx = GPIO_NUM_3;       // ESP32 RX = CH9102 TX; the CH9102 is powered from USB VBUS
 
 const char *kNs = "slp";
-const char *kKeyMarker = "m", *kKeyInd = "ind", *kKeyPath = "sp", *kKeyNext = "nx";
+const char *kKeyMarker = "m", *kKeyInd = "ind", *kKeyPath = "sp", *kKeyNext = "nx", *kKeyTab = "tab";
 
 // Survives deep sleep (not a power-off): the last sleep found the board still powered (USB).
 RTC_DATA_ATTR int8_t g_usbAtSleepRtc = -1;
@@ -169,6 +169,23 @@ app_logic::Indicator storedIndicator() { return g_stored; }
 app_logic::Indicator panelIndicator() { return g_panelInd; }
 int64_t panelNextAt() { return g_panelNext; }
 bool badgeOnPanel() { return g_badgeOnPanel; }
+
+int savedTab() {
+  Preferences p;
+  if (!p.begin(kNs, true)) return 0;
+  const int t = p.getUChar(kKeyTab, 0);
+  p.end();
+  return t;
+}
+
+void saveTab(int tab) {
+  if (tab < 0 || tab > 255 || tab == savedTab()) return;
+  Preferences p;
+  if (p.begin(kNs, false)) {
+    p.putUChar(kKeyTab, uint8_t(tab));
+    p.end();
+  }
+}
 
 void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEpoch, int32_t batteryMv) {
   power::SleepPlan plan = planIn;

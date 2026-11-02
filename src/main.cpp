@@ -810,6 +810,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     timedShow(present::Mode::Partial, now);
     present::prepareSleep();  // saves the record of the frame with the indicator, closes the read state
   }
+  if (!low) sleepwake::saveTab(g_app.shownTab());  // task 086: the tab under any popup; Settings was left above
   if (g_real) state_cache::save(g_app.store(), g_drv ? g_drv->lastOkEpoch() : 0);
   net::powerDown();
   boot::endBurstRead();
@@ -938,6 +939,7 @@ void setup() {
     g_demoMode = app_logic::isDemoRun(s, cfg.demo, cfg.cfg.hasConnection);
     g_real = !g_demoMode;
     g_app.init(cfg.cfg, s.orientation, g_demoMode);
+    if (sleepwake::wokeFromSleep() && g_app.restoreTab(sleepwake::savedTab())) boot::log("tab_restored", (long)g_app.shownTab());  // task 086
     g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
     g_app.setMarksDriven(g_real);

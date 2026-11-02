@@ -102,6 +102,9 @@ class AppState {
 
   // The content (not only chrome) changed in a way that needs a full-quality refresh (tab or
   // sub-page change). Cleared by takeFull().
+  // Task 086: after init(), show `tab` (saved across a sleep). Out of range (config changed) -> stays on the first tab.
+  // Returns true if the shown tab changed. Sub-page is not kept (page 0).
+  bool restoreTab(int tab);
   bool takeFull();
 
   void setActionSink(ActionSink s) { sink_ = std::move(s); }
