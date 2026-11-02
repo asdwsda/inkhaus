@@ -58,3 +58,9 @@ Pure decision logic ("stay awake?", hold-duration handling) goes in lib/ with na
 - Idle hold: `power::StayAwakeGate` feeds the idle timers (g_drv->input / g_localIdle) once a second while setting
   on AND USB; no sleep happens, so no alarm. Hold: `ui::PushHold` (lib/ui): LongPush now fires on release
   (600 ms..2.5 s), `input::Event::SleepNow` at 2.5 s. Manual sleep = `manualSleep()` in main.cpp (goToSleep path).
+- 2026-11-02 (user): battery life on battery comes first; no extra awake time to detect USB. The "stay up to 2 min"
+  idea is rejected. Next (after the 083 look test frees the device): try the USB-serial chip as the USB sense.
+  The CH9102 is powered from USB VBUS; with USB present its TX line (ESP32 RX, GPIO3) idles high, on battery it
+  should read low with a pull-down. Probe: read GPIO3 with the pull-down for a few ms at wake (restore UART after),
+  log `usb_rx=<0|1>` to serial and debug.log; user plugs/unplugs to verify. If reliable, it replaces the voltage
+  heuristic (instant, no extra awake time). Risk to check: back-powering of the CH9102 through ESP32 TX (GPIO1).
