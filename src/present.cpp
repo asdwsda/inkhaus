@@ -136,8 +136,19 @@ void waitAndCheck(const char *what) {
   }
 }
 
+// Task 093: the library's own BUSY waits last up to 4 s each and are not fed to the task watchdog; a stuck
+// controller turns a whole-frame write into a TASK_WDT reset. Check BUSY first (300 ms, fed); if stuck,
+// recover (reset + init, logged) and make the next frame a full one.
+void guardController(const char *what) {
+  if (!boot::waitBusyHigh(300, what)) {
+    boot::ensureControllerReady(what);
+    g_forceFull = true;
+  }
+}
+
 void refresh(epd_mode_t mode, const Rect *r, const char *what) {
   auto &d = M5.Display;
+  guardController(what);
   d.setEpdMode(mode);
   const uint32_t t0 = micros();
   if (r) d.display(r->x, r->y, r->w, r->h);
@@ -153,6 +164,7 @@ void refresh(epd_mode_t mode, const Rect *r, const char *what) {
 // white (what epd_fastest shows; the panel would otherwise dither the greys).
 void pushRegion(const Rect &r, bool bw) {
   auto &d = M5.Display;
+  guardController("push");
   d.startWrite();
   if (bw) {
     uint8_t *tmp = (uint8_t *)heap_caps_malloc(size_t(r.w) * size_t(r.h), MALLOC_CAP_SPIRAM);
@@ -237,7 +249,7 @@ void fullRefresh(bool whiteFirst, const char *why) {
     refresh(epd_mode_t::epd_quality, nullptr, "full_white");
   }
   d.setEpdMode(epd_mode_t::epd_quality);
-  pushRegion(whole(), false);
+  pushRegion(whole(), false);  // guardController inside
   refresh(epd_mode_t::epd_quality, nullptr, why);
   copyAllToPrev();
   g_partialCount = 0;
@@ -452,7 +464,7 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
   // whole frame into it without refreshing, then refresh only what differs from the panel.
   const uint32_t t1 = micros();
   d.setEpdMode(epd_mode_t::epd_quality);
-  pushRegion(whole(), false);
+  pushRegion(whole(), false);  // guardController inside
   // The write grew the panel's pending refresh range to the whole screen; drop it (task 014:
   // Panel::init(false) resets the range and leaves the image memory alone).
   d.getPanel()->init(false);

@@ -6,6 +6,7 @@
 #include <esp_task_wdt.h>
 
 #include "crash_guard.h"
+#include "bounded_wait.h"
 
 #include <esp_sleep.h>
 #include <driver/gpio.h>
@@ -255,15 +256,12 @@ void feed() { esp_task_wdt_reset(); }
 
 bool waitBusyHigh(uint32_t timeoutMs, const char* what) {
     pinMode(kPinEpdBusy, INPUT_PULLUP);  // keep the pull-up Panel_IT8951::init() set
-    const uint32_t t = millis();
-    while (digitalRead(kPinEpdBusy) == LOW) {
-        if (millis() - t >= timeoutMs) {
-            log("busy_timeout", what);
-            return false;
-        }
-        delay(1);
-    }
-    return true;
+    // Task 093: feeds the task watchdog while polling, so a chain of bounded waits never adds up to the 15 s.
+    const bool ok = screen_track::boundedWait([] { return digitalRead(kPinEpdBusy) != LOW; },
+                                              [] { return (uint32_t)millis(); },
+                                              [] { feed(); delay(1); }, timeoutMs);
+    if (!ok) log("busy_timeout", what);
+    return ok;
 }
 
 bool endBurstRead() {
@@ -312,6 +310,7 @@ bool ensureControllerReady(const char* where) {
     if (waitBusyHigh(kReadyWaitMs, where)) return true;
     // Stuck: hardware reset of the controller and a full panel init (rotation is restored by it).
     log("controller_recover", where);
+    feed();  // task 093: init(true) runs library waits of up to 4 s each; start it with a full watchdog window
     auto* p = static_cast<lgfx::Panel_IT8951*>(M5.Display.getPanel());
     if (p) p->init(true);
     g_recoveredCold = true;
