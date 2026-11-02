@@ -59,3 +59,4 @@ Pure logic (estimate model, setting migration, mode -> sleep plan) in lib/ with 
   the 1..10 level is shown. Acceptance: "estimate model monotonic" -> "level monotonic, 1 and 10 at the ends".
 - User 2026-11-02: the level must reflect all four inputs: Sleep mode, Updates while asleep (interval), Keep awake, Idle timeout. Native test: shorter update interval never gives a lower level; Updates Off vs 30 min differ by at least 1 level in Power off.
 - User 2026-11-02, defaults: Sleep mode Deep sleep (rocker wake, no power off), Updates every 1 h, Idle timeout 20 s, Keep awake Off. (Overrides 'Power off default' in Scope.)
+- User 2026-11-02: Keep awake Always stays 10; the sleeping setups map over 1..9 on a log scale from the best (Power off, Updates Off, idle 10 s) to the worst sleeping setup (Touch & rocker, 30 min, idle 60 s), so idle timeout and update interval move the bar visibly in Power off.
