@@ -45,3 +45,13 @@ Fix by evidence, cheapest first:
   N partial refreshes of one small rect (toggle a box), awake, on USB. Phase A: N=100 with DU4 (= 100 hourly wakes).
   Pause for a photo (serial prompt or rocker). Phase B: GC16 full, N=100 with GC16 partials. Phase C (time control): GC16 full,
   same duration, no refreshes. If A greys and B/C don't -> (c) confirmed, fix = GC16 on scheduled-wake partials.
+- 2026-11-02 18:10 stress run 1 (drifttest e662c34, USB, awake): A 100x DU4 avg 140 ms, B 100x GC16 avg 452 ms, C 200 s idle.
+  Photos assets/092-stress-{A-du4,B-gc16,C-idle}.jpg. Inconclusive: user thought B maybe darker; lighting/exposure differs per
+  photo, all three backgrounds look similar light grey. No clear drift from 100 refreshes of one small rect in 200 s.
+- Architect: the 16:10 look-test run was in Power off mode (board unpowered between 30 min wakes), and (a) is ruled out
+  (power-off without wakes keeps the image). So between wakes nothing drives the panel; the drift must come from what each
+  wake does: (c) partial refreshes, or (d) the IT8951/TPS65185 power-up + init on every wake. 100 refreshes in one powered
+  session do not exercise (d) or the time between refreshes.
+- Run 2 plan (drifttest v2): every phase ends with a GC16 redraw of the right half only -> one photo compares drifted left
+  vs fresh right under the same light. Phases: A many DU4 zones across the screen (user idea), B same with GC16,
+  D N controller power cycles (IT8951 SLEEP + hw reset re-init, and TPS65185 rails up/down if reachable) with no pixel change.
