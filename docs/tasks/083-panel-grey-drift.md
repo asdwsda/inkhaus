@@ -1,6 +1,6 @@
 # 083: Screen greys out while sleeping
 
-Status: todo
+Status: testing
 Depends on: 035 (sleep), 082
 UI spec: none
 Needs device: yes
