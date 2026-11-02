@@ -371,6 +371,53 @@ void test_per_profile_cache_is_tied_to_its_ssid() {
     TEST_ASSERT_TRUE(cacheUsable(home, "home", false));      // the other profile is untouched
 }
 
+void test_budget_caps_total_and_limits_attempts() {  // task 080
+    ConnectBudget b;
+    b.start(1000);
+    TEST_ASSERT_EQUAL_UINT32(kSessionBudgetMs, b.remainingMs(1000));
+    TEST_ASSERT_EQUAL_UINT32(kTotalTimeoutMs, b.attemptLimitMs(1000));
+    TEST_ASSERT_EQUAL_UINT32(kSessionBudgetMs - 10000, b.remainingMs(11000));
+    TEST_ASSERT_EQUAL_UINT32(5000, b.attemptLimitMs(11000));  // cut to what is left
+    TEST_ASSERT_FALSE(b.expired(1000 + kSessionBudgetMs - 1));
+    TEST_ASSERT_TRUE(b.expired(1000 + kSessionBudgetMs));
+    TEST_ASSERT_EQUAL_UINT32(0, b.attemptLimitMs(1000 + kSessionBudgetMs + 50));
+    b.start(1000 + kSessionBudgetMs + 50);  // a new begin() = a fresh budget
+    TEST_ASSERT_FALSE(b.expired(1000 + kSessionBudgetMs + 51));
+}
+void test_budget_wraps() {
+    ConnectBudget b;
+    b.start(0xFFFFFF00u);
+    TEST_ASSERT_FALSE(b.expired(100));
+    TEST_ASSERT_TRUE(b.expired(0xFFFFFF00u + kSessionBudgetMs));
+}
+void test_connector_limit_cut_by_budget() {
+    Connector c;
+    Attempt n;
+    c.start(0, false, 2000);
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(1999, LinkStatus::Connecting, n));
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(2000, LinkStatus::Connecting, n));
+    c.start(0, false, 60000);  // never above the per-attempt 8 s
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(kTotalTimeoutMs, LinkStatus::Connecting, n));
+    c.start(0, true);  // default unchanged; cached still falls back at 3 s
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(kCachedAttemptMs, LinkStatus::Connecting, n));
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+}
+void test_stacked_stages_stay_within_budget() {
+    // scan 6 s + attempt (cut to 8 s) + fallback scan: the attempt limit never lets the sum pass 15 s.
+    ConnectBudget b;
+    b.start(0);
+    uint32_t t = 6000;  // first scan used its whole timeout
+    Connector c;
+    Attempt n;
+    c.start(t, false, b.attemptLimitMs(t));
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(t + 8000, LinkStatus::Connecting, n));
+    t += 8000;  // 14 s: 1 s left, a further attempt would be cut to 1 s
+    TEST_ASSERT_EQUAL_UINT32(1000, b.attemptLimitMs(t));
+    c.start(t, false, b.attemptLimitMs(t));
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(t + 1000, LinkStatus::Connecting, n));
+    TEST_ASSERT_TRUE(b.expired(t + 1000));
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(test_select_no_scan_cases);
@@ -413,5 +460,9 @@ int main() {
     RUN_TEST(test_auth_reasons);
     RUN_TEST(test_auth_failed_not_cache_failure);
     RUN_TEST(test_start_failed_cached_goes_to_scan_then_failed);
+    RUN_TEST(test_budget_caps_total_and_limits_attempts);
+    RUN_TEST(test_budget_wraps);
+    RUN_TEST(test_connector_limit_cut_by_budget);
+    RUN_TEST(test_stacked_stages_stay_within_budget);
     return UNITY_END();
 }

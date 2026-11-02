@@ -7,6 +7,7 @@
 namespace netpolicy {
 
 constexpr uint32_t kTotalTimeoutMs = 8000;     // overall connect budget
+constexpr uint32_t kSessionBudgetMs = 15000;   // total connect time per net::begin (scan + attempts, all profiles)
 constexpr uint32_t kCachedAttemptMs = 3000;    // cached BSSID/channel attempt before scan fallback
 constexpr uint8_t kMaxCacheFailures = 2;       // cache invalidated at this many failures
 
@@ -63,11 +64,32 @@ enum class Attempt { None, Cached, Scan };
 enum class LinkStatus { Idle, Connecting, Connected, Failed, AuthFailed };
 enum class Phase { Connecting, Connected, Failed };
 
+// Total connect time per begin() (task 080). Each stage (scan, attempt, fallback scan, next profile) has
+// its own limit, but together they may not exceed kSessionBudgetMs. Monotonic ms, wrap-safe.
+class ConnectBudget {
+public:
+    void start(uint32_t nowMs) { t0_ = nowMs; }
+    uint32_t elapsedMs(uint32_t nowMs) const { return nowMs - t0_; }
+    uint32_t remainingMs(uint32_t nowMs) const {
+        const uint32_t e = nowMs - t0_;
+        return e >= kSessionBudgetMs ? 0 : kSessionBudgetMs - e;
+    }
+    bool expired(uint32_t nowMs) const { return remainingMs(nowMs) == 0; }
+    // Limit for the next attempt: its own 8 s, cut to what is left of the budget.
+    uint32_t attemptLimitMs(uint32_t nowMs) const {
+        const uint32_t r = remainingMs(nowMs);
+        return r < kTotalTimeoutMs ? r : kTotalTimeoutMs;
+    }
+private:
+    uint32_t t0_ = 0;
+};
+
 // Connect state machine. Time is passed in (ms, monotonic); no waiting inside.
 class Connector {
 public:
-    // Starts the first attempt: Cached if useCache else Scan.
-    Attempt start(uint32_t nowMs, bool useCache);
+    // Starts the first attempt: Cached if useCache else Scan. limitMs caps the overall timeout
+    // (default and maximum kTotalTimeoutMs).
+    Attempt start(uint32_t nowMs, bool useCache, uint32_t limitMs = kTotalTimeoutMs);
     // Call periodically. `startNew` is set to the attempt the caller must start now
     // (Attempt::None otherwise). Returns the overall phase.
     Phase step(uint32_t nowMs, LinkStatus link, Attempt &startNew);
@@ -86,7 +108,7 @@ private:
     Phase phase_ = Phase::Failed;
     bool cachedFailed_ = false;
     bool authFailed_ = false;
-    uint32_t t0_ = 0, attemptT0_ = 0;
+    uint32_t t0_ = 0, attemptT0_ = 0, limit_ = kTotalTimeoutMs;
 };
 
 }  // namespace netpolicy

@@ -177,6 +177,8 @@ void SessionMachine::on_refresh(int64_t now, std::vector<Command>& out) {
 void SessionMachine::on_user_action(const Event& e, int64_t now, std::vector<Command>& out) {
   if (kind_ != power::Session::Interactive) return;
   idle_.on_input((now - start_ms_) / 1000);
+  // Task 080: after giving up on Wi-Fi a tap starts one fresh connect (own budget) and is queued.
+  if (dead_ && status_ == Status::Offline && flight_ == Flight::None && !online_) on_refresh(now, out);
   if (dead_) {  // nothing can be sent any more
     mark(e.ids, Mark::Failed, out);
     return;

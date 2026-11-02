@@ -90,7 +90,8 @@ CacheRecord afterCachedFailure(CacheRecord r) {
     return r;
 }
 
-Attempt Connector::start(uint32_t nowMs, bool useCache) {
+Attempt Connector::start(uint32_t nowMs, bool useCache, uint32_t limitMs) {
+    limit_ = limitMs < kTotalTimeoutMs ? limitMs : kTotalTimeoutMs;
     t0_ = attemptT0_ = nowMs;
     cachedFailed_ = false;
     authFailed_ = false;
@@ -108,7 +109,7 @@ Phase Connector::step(uint32_t nowMs, LinkStatus link, Attempt &startNew) {
         current_ = Attempt::None;
         return phase_ = Phase::Failed;
     }
-    if (nowMs - t0_ >= kTotalTimeoutMs) {
+    if (nowMs - t0_ >= limit_) {
         if (current_ == Attempt::Cached) cachedFailed_ = true;
         current_ = Attempt::None;
         return phase_ = Phase::Failed;

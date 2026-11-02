@@ -61,6 +61,7 @@ uint32_t nowEpoch() { return plausibleEpoch((int64_t)time(nullptr)); }
 bool g_usingCache = false;
 uint32_t g_connectMs = 0;
 uint32_t g_startMs = 0;
+ConnectBudget g_budget;  // task 080: total connect time per begin(), over all stages
 
 void logSsid(const char *phase) {  // length + first 2 chars only
     // SSID only as length + first 2 chars; never the password.
@@ -226,10 +227,16 @@ void connectActive() {
                   (unsigned)g_cache.failures);
     g_startMs = millis();
     g_state = net::State::Connecting;
-    if (launch(g_conn.start(g_startMs, use)) == Phase::Failed) {
+    if (g_budget.expired(g_startMs)) {  // scan used up the budget
+        wakelog::logf("NET: phase=failed reason=budget" "\n");
+        g_state = net::State::Failed;
+        return;
+    }
+    if (launch(g_conn.start(g_startMs, use, g_budget.attemptLimitMs(g_startMs))) == Phase::Failed) {
         wakelog::logf("NET: phase=failed reason=begin" "\n");
         g_state = net::State::Failed;
-        if (netselect::scanAfterDirectFailure((int)g_profiles.size(), g_forced, g_directTry, g_scanned)) {
+        if (!g_budget.expired(millis()) &&
+            netselect::scanAfterDirectFailure((int)g_profiles.size(), g_forced, g_directTry, g_scanned)) {
             g_exclude = g_active;
             g_directTry = false;
             startScan();
@@ -311,6 +318,7 @@ void begin(const config::WifiConfig &wifi) {
     if (g_state == State::Connected || WiFi.status() == WL_CONNECTED) WiFi.disconnect(false, false);
     g_connectMs = 0;
     g_scanning = false;
+    g_budget.start(millis());  // every begin() (session start, user retry) gets a fresh budget
     publishLink(false);
     if (g_profiles.empty() || g_profiles[0].ssid.empty()) {
         wakelog::logf("NET: phase=failed reason=no_ssid" "\n");
@@ -360,7 +368,7 @@ State poll() {
     if (g_state != State::Connecting) return g_state;
     if (g_scanning) {
         const bool running = WiFi.scanComplete() == WIFI_SCAN_RUNNING;
-        if (running && millis() - g_scanT0 < kScanTimeoutMs) return g_state;
+        if (running && millis() - g_scanT0 < kScanTimeoutMs && !g_budget.expired(millis())) return g_state;
         finishScan();
         if (g_state != State::Connecting) return g_state;
     }
@@ -398,7 +406,8 @@ State poll() {
         }
         wakelog::logf("NET: phase=failed connect_ms=%u\n", (unsigned)(now - g_startMs));
         WiFi.disconnect(false, false);
-        if (netselect::scanAfterDirectFailure((int)g_profiles.size(), g_forced, g_directTry, g_scanned)) {
+        if (!g_budget.expired(now) &&
+            netselect::scanAfterDirectFailure((int)g_profiles.size(), g_forced, g_directTry, g_scanned)) {
             // Direct connect to the last profile failed (moved away from it): scan once, pick another.
             wakelog::logf("NET: direct_failed profile=%d fallback=scan\n", g_active);
             g_exclude = g_active;

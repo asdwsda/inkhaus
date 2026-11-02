@@ -716,14 +716,38 @@ void test_auth_error_on_fetch_no_retry_and_marks_queue_failed() {
   TEST_ASSERT_EQUAL(0, outstanding_delta(c));
 }
 
-void test_user_action_after_offline_marks_failed_sends_nothing() {
+void test_user_action_after_wifi_offline_starts_new_connect() {  // task 080
   Driver d;
   d.start();
   d.send(Event::wifi(false));
   auto c = d.send(Event::user_action({"light.a"}, Action::LightToggle));
-  TEST_ASSERT_EQUAL(0, outstanding_delta(c));
+  TEST_ASSERT_EQUAL(1, count(c, C::ConnectWifi));
+  TEST_ASSERT_EQUAL((int)Status::Connecting, (int)d.m.status());
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Failed, "light.a"));
+  TEST_ASSERT_EQUAL(1, (int)d.m.queued());
+  // Gives up again: the action fails and no connect loop starts by itself.
+  c = d.send(Event::wifi(false));
+  TEST_ASSERT_EQUAL((int)Status::Offline, (int)d.m.status());
   TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.a"));
-  TEST_ASSERT_EQUAL(0, (int)d.m.queued());
+  TEST_ASSERT_EQUAL(0, count(c, C::ConnectWifi));
+}
+
+void test_user_action_after_auth_error_marks_failed_no_connect() {
+  Driver d;
+  d.start();
+  d.send(Event::wifi(true));
+  d.send(Event::fetch_done(HaError::Auth));
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightToggle));
+  TEST_ASSERT_EQUAL(0, count(c, C::ConnectWifi));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.a"));
+}
+
+void test_scheduled_wake_wifi_failure_no_retry_on_action() {
+  Driver d;
+  d.start(WakeReason::RtcAlarm);
+  auto c = d.send(Event::wifi(false));
+  TEST_ASSERT_EQUAL(1, count(c, C::Sleep));
+  TEST_ASSERT_EQUAL(0, count(c, C::ConnectWifi));
 }
 
 void test_action_during_confirm_supersedes_it() {
@@ -999,7 +1023,6 @@ int main(int, char**) {
   RUN_TEST(test_hard_cap_in_every_state);
   RUN_TEST(test_hard_cap_with_continuous_input_is_not_hit);
   RUN_TEST(test_auth_error_on_fetch_no_retry_and_marks_queue_failed);
-  RUN_TEST(test_user_action_after_offline_marks_failed_sends_nothing);
   RUN_TEST(test_action_during_confirm_supersedes_it);
   RUN_TEST(test_fuzz_invariants);
   RUN_TEST(test_t019_opposite_tap_while_first_call_in_flight);
@@ -1010,6 +1033,9 @@ int main(int, char**) {
   RUN_TEST(test_t019_automation_cancel);
   RUN_TEST(test_t019_group_partial_cancel);
   RUN_TEST(test_t019_service_done_before_first_fetch_confirmed_by_fetch);
+  RUN_TEST(test_user_action_after_wifi_offline_starts_new_connect);
+  RUN_TEST(test_user_action_after_auth_error_marks_failed_no_connect);
+  RUN_TEST(test_scheduled_wake_wifi_failure_no_retry_on_action);
   RUN_TEST(test_t019_initial_fetch_stale_state_retries);
   RUN_TEST(test_t019_tap_during_initial_fetch);
   RUN_TEST(test_t019_service_done_wrong_state_first_fetch_error);
