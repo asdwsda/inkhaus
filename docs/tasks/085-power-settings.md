@@ -51,7 +51,7 @@ Pure logic (estimate model, setting migration, mode -> sleep plan) in lib/ with 
   wake_mode/stayusb/old intervals), lib/power/estimate.{h,cpp} (model + formatting), plan_sleep per mode, pill indicators
   (STYLE 5.6, region now 108 wide), Sleep & wake page with notes and estimate block, 081 UsbDetector removed (On USB =
   power::usbAtSleep()). Capabilities in settings.h (power_off, rtc_power_on, usb_probe_reliable) are compile-time and
-  UNVERIFIED pending 084's battery test. src/sleep.cpp: Power off now powers off (no build flag), stores the next update
+  verified by 084's battery test (usb_probe_reliable = true: GPIO3 probe, 2026-11-02). src/sleep.cpp: Power off now powers off (no build flag), stores the next update
   epoch for the pill. Device checks in docs/device-checks.md.
 - User 2026-11-02 (replaces Scope item 4): no battery-life estimate (no days/weeks; we don't know it precisely).
   Instead a simple "Battery use" bar on a 1..10 scale for the current set of settings (1 = Power off, Updates
