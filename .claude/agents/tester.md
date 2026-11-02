@@ -2,7 +2,7 @@
 name: tester
 description: Writes and runs tests, builds, flashes, reads serial logs, reports pass/fail.
 model: claude-sonnet-5-5
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, Grep, Glob, Monitor
 skills:
   - m5paper-device
 ---

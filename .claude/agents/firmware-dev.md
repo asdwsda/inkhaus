@@ -2,7 +2,7 @@
 name: firmware-dev
 description: Implements one task file from docs/tasks/ in the firmware.
 model: claude-sonnet-5-5
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, Grep, Glob, Monitor
 memory: project
 skills:
   - m5paper-device
