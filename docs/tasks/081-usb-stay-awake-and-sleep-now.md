@@ -1,6 +1,6 @@
 # 081: Stay awake on USB (setting) and a manual "sleep now"
 
-Status: PC part done (device check pending)
+Status: done
 Depends on: 035 (sleep), 080 not required
 UI spec: docs/ui/settings.md section 9 (done)
 Needs device: yes

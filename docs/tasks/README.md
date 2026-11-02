@@ -80,12 +80,12 @@
 | 078 | [Windows installer opens no console window](078-flasher-no-console.md) | in-progress | 069 |
 | 079 | [Learn the battery limits from the wake stats](079-battery-limit-learning.md) | testing | 029, 035 |
 | 080 | [Cap the Wi-Fi connect time per session](080-wifi-connect-cap.md) | testing | 047, 056 |
-| 081 | [Stay awake on USB (setting) and manual sleep](081-usb-stay-awake-and-sleep-now.md) | testing | 035 |
-| 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | todo | 029, 071 |
+| 081 | [Stay awake on USB (setting) and manual sleep](081-usb-stay-awake-and-sleep-now.md) | done | 035 |
+| 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | testing (night run after release) | 029, 071 |
 | 083 | [Screen greys out while sleeping](083-panel-grey-drift.md) | deferred (next release) | 035, 082 |
-| 084 | [Make full power-off sleep work on battery](084-power-off-sleep.md) | testing | 035 |
-| 085 | [Power settings: sleep mode, updates, keep awake, estimate, indicators](085-power-settings.md) | testing | 084, 081, 079 |
-| 086 | [Keep the current tab across sleep](086-keep-tab-across-sleep.md) | testing | 071, 084 |
+| 084 | [Make full power-off sleep work on battery](084-power-off-sleep.md) | done | 035 |
+| 085 | [Power settings: sleep mode, updates, keep awake, estimate, indicators](085-power-settings.md) | done | 084, 081, 079 |
+| 086 | [Keep the current tab across sleep](086-keep-tab-across-sleep.md) | done | 071, 084 |
 | 087 | [Firmware self-update](087-self-update.md) | testing | 061, 084, 085 |
 
 ## Open items (not yet tasks, 2026-10-30)

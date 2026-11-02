@@ -1,6 +1,6 @@
 # 085: Power settings: sleep mode, updates, keep awake, battery estimate, state indicators
 
-Status: PC part done (device check pending)
+Status: done
 Depends on: 084 (power-off), 081 (stay awake), 079
 UI spec: docs/ui/settings.md (Sleep & wake page, new revision) + docs/ui/STYLE.md (status bar indicators) — ui-designer
 Needs device: yes

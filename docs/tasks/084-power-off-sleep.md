@@ -1,6 +1,6 @@
 # 084: Make full power-off sleep work on battery
 
-Status: PC part done (battery test pending)
+Status: done
 Depends on: 035
 UI spec: none
 Needs device: yes (user unplugs USB and presses the rocker; results read from the SD wake log afterwards)
