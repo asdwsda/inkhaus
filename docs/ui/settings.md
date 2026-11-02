@@ -76,7 +76,7 @@ Settings is a two-level system: the **overview** (main page) lists four **catego
 | Category | Settings (edit buffer fields) |
 |----------|-------------------------------|
 | Display | Orientation |
-| Sleep & wake | Wake mode, Refresh every, Idle timeout |
+| Sleep & wake | Wake mode, Refresh every, Idle timeout, Stay awake on USB (9.1) |
 | Network | Wi-Fi (`Auto` / profile names from secrets.yaml), HA connection (`Auto` / `Internal` / `External`) |
 | Tools | Demo mode, Debug log |
 
@@ -222,3 +222,39 @@ Rocker: focus stops on a category page = its rows top to bottom (landscape Netwo
 
 States on category pages: Normal as the mockups; Loading none; Network offline: hint `Link: none (offline)` and the rows stay editable; entity unavailable: not relevant.
 Refresh: entering and leaving a page = GC16 full; row toggles = one partial of the row (INK only, `epd_fastest`); note appear/clear = partial of the note rect.
+
+
+## 9. Stay awake on USB and Sleep now (revision 8, task 081)
+
+Mockups: `settings-portrait.svg` / `settings-landscape.svg` (overview, Sleep now row), `settings-sleep-portrait.svg` / `settings-sleep-landscape.svg` (toggle row, shown On, unsaved). Placement decision: the toggle is a sleep setting, so it lives on the **Sleep & wake** page (not the overview, which has no room for two more rows); only the action **Sleep now** is on the overview.
+
+### 9.1 Stay awake on USB (Sleep & wake page)
+Data: `settings::Settings.stay_awake_usb` (bool, default Off, saved on leaving like all settings; task 081 persists it in NVS). Hint row type (3.1), 88 high, `Off` / `On` cycle, value F40 INK.
+
+| Element | Portrait | Landscape | Font |
+|---------|----------|-----------|------|
+| Row | (16, 320, 508, 88), border 2 INK, radius 8, PAPER | (488, 64, 456, 88) (right column, top) | |
+| Label `Stay awake on USB` | x 32, cy 352 | x 504, cy 96 | F24 INK |
+| Hint `Never sleeps while on USB power` (static) | x 32, cy 382 | x 504, cy 126 | F18 INK |
+| Value `Off` / `On` | right edge x 508, cy 364 | right edge x 928, cy 108 | F40 INK |
+
+Touch-wake note slot moves below it in portrait: (16, 420, 508, 64) (landscape unchanged, (16, 304, 456, 64)). Ids: w-4 = this row, w-5 = note, w-6 = Back. Rocker focus order: Wake mode, Refresh every, Idle timeout, Stay awake on USB, Back. PUSH or tap toggles in the shared buffer; redraw = the row only (one partial, `epd_fastest`), plus the `unsaved` chip if the dirty flag flipped. Takes effect when Settings is left (the idle decision reads the saved value). Off = idle sleep exactly as today. On with no USB power: nothing changes visibly; battery sleep is unchanged. No separate "USB detected" indicator (OPEN-S7).
+
+### 9.2 Sleep now (overview)
+| Element | Portrait | Landscape | Font / grey |
+|---------|----------|-----------|-------------|
+| Row (button look, as Refresh now) | (16, 804, 508, 64) | (488, 388, 456, 64) | border 2 INK, radius 8, PAPER |
+| moon icon (M, 40 x 40) | (28, 816) | (500, 400) | INK |
+| Label `Sleep now` | x 76, cy 836 | x 548, cy 420 | F24 INK |
+| Right hint `or hold push 2.5 s` (static) | right edge x 508, cy 836 | right edge x 928, cy 420 | F18 INK |
+
+The hint teaches the rocker shortcut (hold PUSH >= 2.5 s sleeps from anywhere, also main screen and popups). Because the row had to fit, the info block is tighter: portrait rows 44/44/44/44/64/48 from y = 504 (ends 792; Sleep now follows at +12); landscape rows 48/48/48/48/72/48 from y = 64 (ends 376). Info text positions stay row-centred (3.3 rules), Config two lines at cy -14 / +14. Footer buttons unchanged. Ids: w-5 = Sleep now, w-6 Refresh now, w-7 Back.
+
+Interactions: tap or PUSH on the row = the same path as the idle auto-leave (rule 5): leave Settings (save if dirty, apply orientation/demo/network), draw the tab screen with a full refresh, then the normal sleep path (sleep badge, wake sources, refresh alarm per wake settings; the refresh alarm is skipped only while idling on USB with the setting On; Sleep now itself always sleeps normally). No confirm dialog (waking is cheap, a hold is as unguarded). Rocker focus order on the overview: 1 Display, 2 Sleep & wake, 3 Network, 4 Tools, 5 Sleep now, 6 Refresh now, 7 Back (landscape: left column, then Sleep now, Refresh now, Back). No pending look (the device is sleeping within about 2 s). States: demo mode, offline, etc. do not change the row; it is always enabled.
+
+### 9.3 Hold-to-sleep feedback
+No on-screen countdown (partial refresh while holding would ghost and cost battery). Feedback is the sleep sequence itself: tab screen full refresh + sleep badge. Holds of 600 ms to < 2.5 s keep the long-push meaning (open/leave Settings, close popups).
+
+### 9.4 OPEN
+- OPEN-S7: no USB-power indicator on the toggle row; Battery info row already shows the bolt icon when charging. Add a hint `USB power detected` only if task 081 finds a reliable signal (architect).
+- OPEN-S8: toggle placed on the Sleep & wake page, not on the overview (coordinator's wording suggested the overview).

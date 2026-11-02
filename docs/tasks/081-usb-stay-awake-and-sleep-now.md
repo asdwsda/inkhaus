@@ -2,7 +2,7 @@
 
 Status: todo
 Depends on: 035 (sleep), 080 not required
-UI spec: docs/ui/ (ui-designer: Settings toggle row, "Sleep now" row, hint text) — to be written
+UI spec: docs/ui/settings.md section 9 (done)
 Needs device: yes
 
 ## Scope
