@@ -223,6 +223,13 @@ void fetchDone(uint32_t nowMs, bool ok) {
   g_rec.fetch_ms = int32_t(nowMs - (g_wifiSeen ? g_wifiMs : g_sessionStartMs));
 }
 
+void historyFetched(uint32_t fetchMs, uint32_t parseMs, uint32_t bytes) {
+  if (!g_enabled) return;
+  ++g_rec.hist_n;
+  g_rec.hist_ms += int32_t(fetchMs + parseMs);
+  g_rec.hist_bytes += int32_t(bytes);
+}
+
 void refreshed(uint32_t durationMs) {
   if (!g_enabled) return;
   ++g_refreshes;

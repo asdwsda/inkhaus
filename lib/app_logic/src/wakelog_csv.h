@@ -24,6 +24,9 @@ struct WakeRecord {
   std::string ext1_mask;        // hex of esp_sleep_get_ext1_wakeup_status()
   int32_t rtc_boot_count = 0;   // RTC counter, +1 per boot; 1 after a power loss
   std::string slept_path;       // sleep path used before this boot (RTC memory)
+  int32_t hist_n = 0;           // history fetches this wake
+  int32_t hist_ms = 0;          // sum of their fetch+parse time
+  int32_t hist_bytes = 0;       // sum of their response bytes
 };
 
 constexpr size_t kWakeLogMaxBytes = 1024 * 1024;
