@@ -46,3 +46,14 @@ Pure logic (record events, compute the limit, bounds, decay) goes in lib/ so it 
 - Data: scratchpad wakelog of 2026-11-02 (brownouts at 3864, 3894, 3852, 3780, 3746 mV; last row 3726 mV).
 - Architect consult before implementation (power + persistence): margin size, decay rule, where to keep the
   "last mV" so it survives a brownout, and whether the percent curve should change too.
+- Decisions (architect, 2026-11-02; user approved defaults):
+  - Setting default on. Learned limit is shown read-only in Settings (battery/info row).
+  - Limit = max(brownout mV of events in the last 3 charge cycles) + 100 mV, clamped to [3300, 3900].
+    No events in a cycle: limit -= 20 mV per charge cycle (floor 3300). A charge cycle = battery seen >= 4150 mV
+    after having been below 3900 mV.
+  - "Last mV" must survive a brownout: keep it in RTC_NOINIT and also in NVS, written at most once per wake and
+    only when it dropped >= 20 mV below the stored value and is < 4000 mV (limits flash wear). Tag the RTC part
+    UNVERIFIED (unknown whether RTC memory survives a brownout on this board).
+  - Events: reset reason BROWNOUT, or TASK_WDT/PANIC with last mV < 3950 (not on USB). Keep the last 8.
+  - Check the limit also right before Wi-Fi starts in each session (that's when the brownouts hit), not only at boot.
+  - Percent scale: 0 % = learned limit (only when learning is on).

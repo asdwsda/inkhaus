@@ -27,3 +27,5 @@ extra awake time (history fetch + parse + graph draw) per wake.
       awake_ms of scheduled wakes and mV/h. Result recorded in Notes.
 
 ## Notes
+- User 2026-11-02: baseline = 10-30..11-02 run (graph on Home; scheduled wakes median awake 6674 ms, p90 8435,
+  9.8 mV/h over 67 h). Only the "no graph on Home" night is still needed; compare scheduled-wake awake_ms.
