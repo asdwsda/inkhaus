@@ -9,7 +9,7 @@ Needs device: yes
 User 2026-11-02: full control over how much battery to trade for convenience; battery life first.
 
 Sleep & wake page (replaces Wake mode, Refresh every and the Stay awake toggle):
-1. **Sleep mode**, ordered by cost: `Power off` (rocker wakes; lowest; default once 084 works) / `Deep sleep`
+1. **Sleep mode**, ordered by cost: `Power off` (rocker wakes; lowest) / `Deep sleep`
    (rocker wakes, faster) / `Touch` (tap wakes) / `Touch & rocker`. Migrates the existing wake_mode setting.
 2. **Updates while asleep**: `Off` / 30 min / 1 h / 3 h / 6 h / 12 h (existing refresh_interval; 0 = Off).
    In Power off it uses the RTC power-on from 084; if 084 can't make that work, Power off forces Off (shown).
@@ -52,3 +52,4 @@ Pure logic (estimate model, setting migration, mode -> sleep plan) in lib/ with 
   Off, Keep awake Off; 10 = Keep awake Always). The lib model still ranks configurations (monotonic), but only
   the 1..10 level is shown. Acceptance: "estimate model monotonic" -> "level monotonic, 1 and 10 at the ends".
 - User 2026-11-02: the level must reflect all four inputs: Sleep mode, Updates while asleep (interval), Keep awake, Idle timeout. Native test: shorter update interval never gives a lower level; Updates Off vs 30 min differ by at least 1 level in Power off.
+- User 2026-11-02, defaults: Sleep mode Deep sleep (rocker wake, no power off), Updates every 1 h, Idle timeout 20 s, Keep awake Off. (Overrides 'Power off default' in Scope.)
