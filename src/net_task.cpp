@@ -11,6 +11,7 @@
 #include "net.h"
 #include "session_glue.h"
 #include "url_plan.h"
+#include "wakelog.h"
 
 namespace {
 // What the device learned per Wi-Fi network (task 047): which side answered, when (wall clock and session
@@ -131,6 +132,7 @@ void NetTask::loop() {
                     e.ev.stats ? "stats" : "history", (unsigned)e.ev.fetchMs, (unsigned)e.ev.parseMs,
                     (unsigned)e.ev.bytes, (unsigned)e.ev.points, (unsigned)e.ev.heapMin, (int)e.ev.error,
                     e.ev.noStatistics ? " none=1" : "");
+      wakelog::historyFetched(e.ev.fetchMs, e.ev.parseMs, e.ev.bytes);
     }
     if (e.ev.type != app_logic::NetEvent::Type::Closed && e.ev.http_status != 0)
       Serial.printf("HTTP: ms=%u reused=%d link=%s\n", (unsigned)e.ev.ms, e.ev.reused ? 1 : 0,

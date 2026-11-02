@@ -27,6 +27,7 @@ void writeDeferred();
 void sessionStarted(uint32_t nowMs);
 void wifiUp(uint32_t nowMs);
 void fetchDone(uint32_t nowMs, bool ok);
+void historyFetched(uint32_t fetchMs, uint32_t parseMs, uint32_t bytes);  // one history/stats fetch finished
 void refreshed(uint32_t durationMs);  // one display refresh took this long
 // Remember (in RTC memory) the sleep path about to be used: "deepsleep_hold", "poweroff", ...
 void setSleptPath(const char *path);
