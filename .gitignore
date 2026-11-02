@@ -10,3 +10,6 @@ __pycache__/
 a.out
 tools/flasher/target/
 test-firmware/
+
+# Agent progress files (user-visible status)
+.progress/

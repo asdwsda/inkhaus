@@ -18,7 +18,7 @@ You have a shell ONLY for the mockup tools. Use it on every revision before you 
 - `inkscape --query-all <svg>` for exact bounding boxes, and ImageMagick (`convert`,
   `montage`) for crops and side-by-side comparisons in the scratchpad.
 Don't run anything else with the shell (no builds, no git, no device access), and only
-write under docs/ui/ and the scratchpad. Report "check_mockups: 0 problems" and the PNG
+write under docs/ui/, the scratchpad and your .progress/ file. Report "check_mockups: 0 problems" and the PNG
 paths you looked at.
 
 ## Device constraints
@@ -54,3 +54,10 @@ Write `docs/ui/<screen-name>.md` with:
 Keep shared values (grid, margins, fonts, icon sizes) in docs/ui/STYLE.md and
 reuse them in every screen. Ask the architect when entity choices or user
 preferences are unclear.
+
+## Progress file (user 2026-11-02)
+The user wants to see how much work is left. At the start, write a step checklist to
+`/home/petersz/priv/m5paper-ha-remote/.progress/<task NNN or topic>-<your role>.md` (absolute path, also from a
+worktree): one line per step, `[x]` done / `[ ]` left, plus `Now:` (current step) and `Left: ~N min`
+(rough guess). Update it after each step and when the plan changes; mark it `Finished` at the end.
+Keep it under 15 lines. It is gitignored; never put secrets in it.

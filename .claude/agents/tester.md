@@ -44,3 +44,10 @@ file in the scratchpad and link it.
 - For anything that flashes the device, reads serial, touches boot or display code, or
   needs the user to look at the screen, follow the `m5paper-device` skill
   (.claude/skills/m5paper-device/SKILL.md; read it if it isn't already loaded).
+
+## Progress file (user 2026-11-02)
+The user wants to see how much work is left. At the start, write a step checklist to
+`/home/petersz/priv/m5paper-ha-remote/.progress/<task NNN or topic>-<your role>.md` (absolute path, also from a
+worktree): one line per step, `[x]` done / `[ ]` left, plus `Now:` (current step) and `Left: ~N min`
+(rough guess). Update it after each step and when the plan changes; mark it `Finished` at the end.
+Keep it under 15 lines. It is gitignored; never put secrets in it.
