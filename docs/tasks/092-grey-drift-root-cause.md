@@ -55,3 +55,11 @@ Fix by evidence, cheapest first:
 - Run 2 plan (drifttest v2): every phase ends with a GC16 redraw of the right half only -> one photo compares drifted left
   vs fresh right under the same light. Phases: A many DU4 zones across the screen (user idea), B same with GC16,
   D N controller power cycles (IT8951 SLEEP + hw reset re-init, and TPS65185 rails up/down if reachable) with no pixel change.
+- 2026-11-02 run 2 phase A (8 zones x 150 DU4, 1200 refreshes): user: left (test) half definitely darker than the fresh right half. Supports (c).
+- run 2 phase B (8 zones x 150 GC16): user: left half still darker. So any partial refresh drifts the untouched pixels, not only DU4.
+- run 2 phase D (150 IT8951 SLEEP + hw reset/init cycles, no pixel change): user: even. Wake power-up/init is not a cause.
+- CONCLUSION (architect, 2026-11-02): cause = (c). Every partial refresh, DU4 or GC16, darkens the pixels outside its rect;
+  it accumulates over refreshes. (a), (b), (d) ruled out. Fix direction: the panel should go to sleep right after a full
+  GC16 refresh, never after partials: scheduled wake that changes anything -> one GC16 full instead of partials (unseen, ~0.5 s);
+  sleep entry after partials (interactive session, sleep badge) -> GC16 full incl. the badge (pending user OK: one visible flash).
+  Then the >= 3 h periodic full (083) is redundant -> remove.
