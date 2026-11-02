@@ -90,6 +90,7 @@
 | 089 | [OTA install crashes in the TLS handshake](089-ota-tls-stack.md) | done | 087 |
 | 090 | [Total time cap for an OTA job](090-ota-job-deadline.md) | PC done | 089 |
 | 091 | [Scheduled wake switches back to the first tab](091-tab-lost-on-scheduled-wake.md) | in-progress | 086, 083 |
+| 092 | [Grey drift: find the cause](092-grey-drift-root-cause.md) | todo | 083, 091 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
