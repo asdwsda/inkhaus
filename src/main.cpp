@@ -915,9 +915,9 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     }
     composeFrame();
     now = millis();
-    if (g_scheduled) {  // the badge is in this frame: the last refresh before sleep is the GC16 full (or none)
+    if (g_scheduled) {  // the badge is in this frame: the last refresh before sleep is always the GC16 full
       const uint32_t t0 = millis();
-      if (present::finishScheduled(app_logic::scheduledSleepFull(present::deferChanged(), present::partialDebt())))
+      if (present::finishScheduled(true))
         wakelog::refreshed(millis() - t0);
     } else {
       timedShow(present::Mode::Partial, now);  // no flash at sleep entry; the partial debt is cleared by the next full

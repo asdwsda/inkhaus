@@ -108,9 +108,8 @@ SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build);
 // Every partial refresh darkens the untouched pixels (task 092 stress test); only a GC16 full resets that.
 // "Partial debt" = any partial refresh since the last GC16 full; it is kept across sleep (NVS).
 // Scheduled wake: no partials at all. The session draws nothing; at sleep entry one GC16 full of the whole
-// frame (sleep badge included) if anything changed or debt is pending, else no refresh.
+// frame (sleep badge included), always (so the pill's next-update time is current).
 bool deferRefreshes(bool scheduled);
-bool scheduledSleepFull(bool changed, bool debt);
 // Interactive wake with Updates Off (no scheduled wake will clear the debt): the first frame is a GC16 full.
 bool firstFrameFull(bool scheduled, bool debt, bool updates_on);
 

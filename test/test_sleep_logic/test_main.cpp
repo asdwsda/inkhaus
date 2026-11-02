@@ -459,18 +459,14 @@ void test_guard_not_armed_blocks_nothing() {
 }
 
 void test_refresh_decision() {
-  // scheduled wake: nothing during the session; at sleep: full iff changed or debt
+  // scheduled wake: nothing during the session; the GC16 full at sleep is unconditional
   TEST_ASSERT_TRUE(deferRefreshes(true));
   TEST_ASSERT_FALSE(deferRefreshes(false));
-  TEST_ASSERT_FALSE(scheduledSleepFull(false, false));  // no change, no debt: no refresh
-  TEST_ASSERT_TRUE(scheduledSleepFull(true, false));
-  TEST_ASSERT_TRUE(scheduledSleepFull(false, true));    // earlier interactive partials get cleared
-  TEST_ASSERT_TRUE(scheduledSleepFull(true, true));
   // interactive wake: first frame full only with debt and Updates Off
   TEST_ASSERT_TRUE(firstFrameFull(false, true, false));
   TEST_ASSERT_FALSE(firstFrameFull(false, true, true));   // a scheduled wake will clear it
   TEST_ASSERT_FALSE(firstFrameFull(false, false, false));
-  TEST_ASSERT_FALSE(firstFrameFull(true, true, false));   // scheduled wake uses scheduledSleepFull
+  TEST_ASSERT_FALSE(firstFrameFull(true, true, false));   // scheduled wake always ends with the full
 }
 
 int main() {

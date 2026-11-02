@@ -123,7 +123,6 @@ SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build) {
 
 bool deferRefreshes(bool scheduled) { return scheduled; }
 
-bool scheduledSleepFull(bool changed, bool debt) { return changed || debt; }
 
 bool firstFrameFull(bool scheduled, bool debt, bool updates_on) { return !scheduled && debt && !updates_on; }
 

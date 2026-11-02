@@ -170,6 +170,8 @@ bool probeController(lgfx::Bus_SPI& bus, uint32_t& idOut) {
 
 // Gives M5.Display the panel. Mirrors M5GFX::autodetect (panel/touch settings) and
 // LGFX_Device::init_impl (state set-up after panel init), without the reset pulse.
+constexpr uint32_t kPanelInitWdtS = 60, kPanelInitSlowMs = 2000;
+
 bool attachNoResetDisplay() {
     preparePins();
     g_parts = new NoResetParts();
@@ -226,7 +228,23 @@ bool attachNoResetDisplay() {
         g_recoveredCold = true;
     }
     wakelog::logf("BOOT: dbg_before_panel_init reset=%d %u\n",(int)useReset,(unsigned)millis());
-    if (!g_parts->panel.init(useReset)) return false;  // init(false): no reset pulse
+    // Task 093: the library init runs ~8 commands with unfed 4 s BUSY waits each; a controller that drops
+    // into a stuck BUSY after the pre-check (seen after a USB deep-sleep wake) would end in TASK_WDT.
+    // Give it a long watchdog window, and if it was slow, redo it with the hardware reset (cold).
+    esp_task_wdt_init(kPanelInitWdtS, true);
+    esp_task_wdt_reset();
+    const uint32_t initT0 = millis();
+    bool initOk = g_parts->panel.init(useReset);  // init(false): no reset pulse
+    const uint32_t initMs = millis() - initT0;
+    if (initMs > kPanelInitSlowMs && !useReset) {
+        wakelog::logf("BOOT: panel_init_slow ms=%u busy=%d\n", (unsigned)initMs, (int)digitalRead(kPinEpdBusy));
+        esp_task_wdt_reset();
+        initOk = g_parts->panel.init(true);
+        g_recoveredCold = true;
+    }
+    esp_task_wdt_init(kWatchdogS, true);
+    esp_task_wdt_reset();
+    if (!initOk) return false;
     wakelog::logf("BOOT: dbg_after_panel_init %u\n",(unsigned)millis());
     d.startWrite();
     d.invertDisplay(g_parts->panel.getInvert());
