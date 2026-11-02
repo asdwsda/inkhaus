@@ -60,3 +60,9 @@ Pure logic (estimate model, setting migration, mode -> sleep plan) in lib/ with 
 - User 2026-11-02: the level must reflect all four inputs: Sleep mode, Updates while asleep (interval), Keep awake, Idle timeout. Native test: shorter update interval never gives a lower level; Updates Off vs 30 min differ by at least 1 level in Power off.
 - User 2026-11-02, defaults: Sleep mode Deep sleep (rocker wake, no power off), Updates every 1 h, Idle timeout 20 s, Keep awake Off. (Overrides 'Power off default' in Scope.)
 - User 2026-11-02: Keep awake Always stays 10; the sleeping setups map over 1..9 on a log scale from the best (Power off, Updates Off, idle 10 s) to the worst sleeping setup (Touch & rocker, 30 min, idle 60 s), so idle timeout and update interval move the bar visibly in Power off.
+- Architect 2026-11-02 (replaces the log mapping): the physical model puts every deep-sleep setup at 9 (13 mA rest
+  dwarfs wake costs), so the bar is a banded ranking instead: level = mode base + updates points + idle points.
+  Bases: Power off 1, Deep sleep 5, Touch / Touch & rocker 6. Updates: Off 0, 3-12 h 1, 30 min-1 h 2.
+  Idle: 10-20 s 0, 30-60 s 1. Keep awake Always = 10; On USB adds nothing. Ranges: Power off 1-4, Deep 5-8,
+  Touch 6-9; defaults (Deep sleep, 1 h, 20 s) = 7. Power off always ranks below any deep-sleep setup (true
+  physically); within a mode every setting moves the bar. The mA model stays only as a documented rationale.
