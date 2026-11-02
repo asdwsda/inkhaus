@@ -3,7 +3,7 @@
 **Inkhaus** turns an **M5Stack M5Paper** e-ink touch screen into a battery-powered remote for
 [Home Assistant](https://www.home-assistant.io/). It shows your shutters, lights, thermostats and
 sensors, sends your taps to Home Assistant, and sleeps the rest of the time, so the screen always
-shows the last known state without using power. Version 1.3.0, see [CHANGELOG.md](CHANGELOG.md).
+shows the last known state without using power. Version 1.3.1, see [CHANGELOG.md](CHANGELOG.md).
 
 Website: <https://asdwsda.github.io/inkhaus/>
 
@@ -108,8 +108,8 @@ All options: [docs/CONFIG.md](docs/CONFIG.md).
 - **Update the firmware:** Settings > Tools shows "Update available" when a newer release exists (checked
   about weekly, never interrupts you). Open the row, Check now, confirm with Yes (rocker up) or No. Keep the
   device on USB or above 50 % battery. If the new version does not start, the old one is restored
-  automatically. Version 1.3.0 itself is installed with the installer once; later versions can come from the
-  device. The installer still works for a manual update.
+  automatically. Version 1.3.1 itself is installed with the installer once (1.3.0 cannot install updates);
+  later versions can come from the device. The installer still works for a manual update.
 
 ## Troubleshooting
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1 - 2026-11-02
+
+### Fixes
+- Installing a firmware update from the device crashed and restarted it (the secure download ran out of memory). Devices on 1.3.0 need the installer once to get 1.3.1; later updates install from the device.
+
 ## 1.3.0 - 2026-11-02
 
 ### Power and sleep
