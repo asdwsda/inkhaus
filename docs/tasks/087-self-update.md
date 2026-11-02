@@ -49,3 +49,4 @@ Architecture (architect, 2026-11-02):
 - [ ] `pio run` and `pio test -e native` pass; release workflow builds the new manifest (dry run).
 
 ## Notes
+- Architect 2026-11-02 (OPEN-S12): a version that rolled back is suppressed; offer again only for a newer version.

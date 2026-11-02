@@ -4,7 +4,7 @@ System screen (not config-driven). Opened by a **long push of the rocker at TAB
 level** (layout.md 7.2) or by a **tap on the battery cluster** in the status bar
 (hit kind `settings`, layout.md section 6). Shown in the current orientation; no
 tab bar, no status bar. Values from `docs/ui/STYLE.md` (revision 3: touch targets
-64, gaps 12, every text and icon placed by its centre line `cy`). Mockups (revision 7, task 047): overview `settings-portrait.svg` / `settings-landscape.svg`; category pages `settings-display-*.svg`, `settings-sleep-*.svg`, `settings-network-*.svg`, `settings-tools-*.svg` (each `-portrait` / `-landscape`). The old `tools-*.svg` are removed. Rect = (x, y, w, h); screen
+64, gaps 12, every text and icon placed by its centre line `cy`). Mockups (revision 7, task 047): overview `settings-portrait.svg` / `settings-landscape.svg`; category pages `settings-display-*.svg`, `settings-sleep-*.svg`, `settings-network-*.svg`, `settings-tools-*.svg` (each `-portrait` / `-landscape`; plus `settings-tools-states.svg`, task 087). The old `tools-*.svg` are removed. Rect = (x, y, w, h); screen
 coordinates unless it says "row-relative".
 
 ## 1. Purpose and data sources
@@ -78,7 +78,7 @@ Settings is a two-level system: the **overview** (main page) lists four **catego
 | Display | Orientation |
 | Sleep & wake | Sleep mode, Updates while asleep, Keep awake, Idle timeout, Learn battery limits; battery use bar (8.2, revision 10, task 085) |
 | Network | Wi-Fi (`Auto` / profile names from secrets.yaml), HA connection (`Auto` / `Internal` / `External`) |
-| Tools | Demo mode, Debug log |
+| Tools | Demo mode, Debug log, Firmware (update row, 8.6; not part of the edit buffer) |
 
 Rule changes: rule 1a now reads "one edit buffer for all pages"; the `unsaved` chip (header, same place) shows on the overview and on every category page; moving between levels (category row, Back, LONG_PUSH on a category page) saves and applies nothing. Rules 2 to 7 are unchanged, with these additions: **Wi-Fi / HA connection** changes apply on leaving Settings (the network session restarts once, after the tab screen is drawn; Demo mode On starts none). The idle auto-leave (60 s) fires from any page and leaves Settings entirely, saving the buffer. **Value cycling** for Wi-Fi: `Auto` -> profile 1 -> ... -> profile N -> `Auto` (list order of secrets.yaml); HA connection `Auto` -> `Internal` -> `External` -> `Auto`.
 
@@ -97,7 +97,7 @@ Shared geometry (unchanged from revision 6): margins 16, gaps 12, header 54 (por
 | Refresh now | (16, 880, 248, 64) | 912 | 3.4 |
 | Back | (276, 880, 248, 64) | 912 | 3.4 |
 
-Category row (row-relative, 508 x 96): label F24 INK left at x = 16, cy = 34; **one-line summary** F18 INK left at x = 16, cy = 66; chevron_right icon (M, 40 x 40) at (W - 52, 28), cy = 48. Summaries (from the edit buffer, so they follow unsaved changes; fit rule F18 then `...`): Display `Portrait` / `Landscape`; Sleep & wake `<Sleep mode>, updates <X>` plus `, USB awake` / `, always awake` when Keep awake is On USB / Always, e.g. `Power off, updates 3 h`, `Deep sleep, updates off`, `Touch & rocker, updates 30 min, always awake` (X = `off` / `30 min` / `1 h` / `3 h` / `6 h` / `12 h`; fit rule: drop the word `updates `, then `...`; revision 10, the idle timeout is no longer in the summary); Network `Wi-Fi <value>, HA <value>` e.g. `Wi-Fi Auto, HA Auto` or `Wi-Fi Hotspot, HA Internal`; Tools `Demo Off, Log Off`. Vertical sums: header 56 +12 = 68; 4 x 96 + 3 x 12 = 420 -> 488; +16 = 504; info 304 -> 808; footer 880 (72 px of free space between).
+Category row (row-relative, 508 x 96): label F24 INK left at x = 16, cy = 34; **one-line summary** F18 INK left at x = 16, cy = 66; chevron_right icon (M, 40 x 40) at (W - 52, 28), cy = 48. Summaries (from the edit buffer, so they follow unsaved changes; fit rule F18 then `...`): Display `Portrait` / `Landscape`; Sleep & wake `<Sleep mode>, updates <X>` plus `, USB awake` / `, always awake` when Keep awake is On USB / Always, e.g. `Power off, updates 3 h`, `Deep sleep, updates off`, `Touch & rocker, updates 30 min, always awake` (X = `off` / `30 min` / `1 h` / `3 h` / `6 h` / `12 h`; fit rule: drop the word `updates `, then `...`; revision 10, the idle timeout is no longer in the summary); Network `Wi-Fi <value>, HA <value>` e.g. `Wi-Fi Auto, HA Auto` or `Wi-Fi Hotspot, HA Internal`; Tools `Demo Off, Log Off`, or `Update available, Demo Off, Log Off` while a newer release is known (task 087; same fit rule, then `...`). Vertical sums: header 56 +12 = 68; 4 x 96 + 3 x 12 = 420 -> 488; +16 = 504; info 304 -> 808; footer 880 (72 px of free space between).
 
 Info rows (3.3 table) change only in wording: HA row `internal, ok 14:05` / `external, ok 14:05` (the link in use; was local / remote); Wi-Fi row shows the SSID of the connected profile.
 
@@ -242,6 +242,8 @@ Effect: Wi-Fi / HA connection are applied on leaving Settings (rule 3 addition);
 ### 8.4 Tools (`settings-tools-*.svg`)
 Hint rows 88 high: Demo mode, Debug log (portrait (16, 68) and (16, 168), landscape (16, 64) and (488, 64)); Debug log note slot (portrait (16, 268, 508, 64), landscape (488, 164, 456, 64)): `Writes /debug.log (max 1 MB).` / `Uses more battery.`, or with no SD card `No SD card: nothing is logged.` / `Insert a card to log.` Hints: `Sample dashboard, offline`, `Log lines to SD card`.
 
+Task 087 adds the **Firmware row** (8.6) as the third row: portrait (16, 268, 508, 88), the Debug log note slot moves to (16, 368, 508, 64); landscape (16, 164, 456, 88) under Demo mode (note slot unchanged). Focus order: Demo mode, Debug log, Firmware (only when actionable), Back. Mockups: portrait shows update available, landscape up to date; all states in `settings-tools-states.svg`.
+
 ### 8.5 Interactions and rocker (all category pages)
 | Target | Action | Redraw |
 |--------|--------|--------|
@@ -284,3 +286,27 @@ No on-screen countdown (partial refresh while holding would ghost and cost batte
 - OPEN-S9: closed (task 085 notes): the estimate is replaced by the 1..10 Battery use bar; architect to confirm lib/power can give a level 1..10.
 - OPEN-S10: On USB falling back to Off when the mode no longer offers it (8.2 row 3) is a proposal; alternative is to keep the stored value and treat it as Off.
 - OPEN-S11: forced-Off Updates (Power off without a working RTC power-on) shows as a dotted row plus note; confirm 084 can report "RTC power-on unsupported" at settings time.
+
+
+## 8.6 Firmware update (revision 11, task 087; `settings-tools-states.svg`, ids w-1..w-N as in the sheet)
+Settings only: nothing on tab screens, no popup. Data: NVS found version / last-check time (lib ota_logic), `FW_VERSION`, battery %, USB (usb_rx), Wi-Fi state, demo flag. No HA entity.
+
+**Firmware row** (hint-row geometry 3.1, 88 high, not edited, never touches the edit buffer or the `unsaved` chip). Label `Firmware` F24 (x 16, cy 32; OFF grey when refused); value = installed version F40 INK right edge W - 16 cy 44 (F24 if a long version would meet the hint); hint F18 INK x 16 cy 62 (x 48 after an alert icon S 24 at (16, 50)); hint at most about 30 characters. Chip `NEW` row-relative (144, 16, 72, 32), F18 PAPER on INK, radius 8, shown whenever a newer release is known. Row looks (shape carries the state):
+| State | Border | Hint | Tap / focus |
+|-------|--------|------|-------------|
+| Up to date / never checked | none, 1 px OFF top hairline (info look) | `Up to date, checked 26.10.` (same day `14:05`) / `Not checked yet` | ignored, no focus stop |
+| Update available | 2 px INK solid, chip | `Update to 1.3.0 available` | opens confirm |
+| Refused | 2 px dotted OFF (STYLE 8 unavailable), chip, label OFF | first reason that applies: `1.3.0: leave demo mode first`, `1.3.0: Wi-Fi not connected`, `1.3.0 needs USB or 50% battery` | ignored, no focus stop (the hint is the explanation) |
+| Failed | as Update available + alert icon | `Download failed, try again` / `File damaged, not installed` (SHA-256); old firmware untouched | opens confirm (retry) |
+| Updated (first Settings visit after the reboot only; cleared when Settings is left) | info look | `Updated from 1.2.1` (value = new version) | ignored |
+| Rolled back (after 3 unhealthy boots) | info look + alert icon | `1.3.0 failed, rolled back` | ignored; that version is not offered again (OPEN-S12) |
+Overview: Tools row summary gains `Update available, ` first (3.0); no other overview change (the Firmware info row keeps `v1.2.1`).
+
+**Confirm step** (full page, replaces the Tools page; header `Update`, `unsaved` chip only if dirty; STYLE 10b). Portrait (origin 0,0): `Install 1.3.0?` F40 (16, cy 100); info rows (3.3 pattern, 48 high, hairline OFF, label F18 DIM x 16, value F24 INK x 174) at y 144 / 192 / 240: `Installed 1.2.1`, `New 1.3.0`, `Download 1.6 MB` (size from the manifest); lines F18 INK at x 16, cy 330 / 354 / 378: `Takes about a minute, then the` / `device restarts. Your settings and` / `config are kept.`; alert note 3.2 at (16, 410, 508, 64): `Keep it on USB or charged.` / `Do not switch it off.`; buttons 508 x 64, border 2 INK, label F24 x 16, key hint F18 right x W - 16, cy 32: `Yes, install` `UP` at (16, 696), `No, cancel` `DOWN` (16, 772), `Skip` `PUSH` (16, 848). Landscape: title cy 90, info rows (16, 124 / 168 / 212, 456, 44), lines cy 282 / 306 / 330, note (16, 364, 456, 64), buttons 456 x 64 at x 488, y 200 / 276 / 352. Touch: the three buttons; rocker: UP yes, DOWN no, PUSH or LONG_PUSH skip (no focus ring). No / Skip = back to the Tools page. Entering and leaving = GC16 full. Yes: if the buffer is dirty it is saved first (the reboot must not lose it), then the Tools page is drawn (GC16 full) with the firmware row in progress look, and the download starts.
+
+**Progress** (the Tools page, nothing else changes; row only). Row border 3 px dashed INK (pending look, STYLE 9). Label F24 cy 32 `Downloading 1.3.0`; value F40 INK right edge, cy 36, `42%`; bar row-relative (16, 56, 476, 16): 2 px INK outline on PAPER, fill INK from x 18, 12 high, width = 472 x percent (shape, no grey). Phases: `Downloading 1.3.0` + percent; `Checking 1.3.0` + `100%` (SHA-256); `Restarting` (no value, bar full) -> reboot. Other rows keep their look but ignore touch and rocker (no Back, no cancel); idle/wake sleep is suspended. Redraw: value + bar region row-relative (16, 14, 476, 58), INK only, `epd_fastest`, one partial per 5 % step (or at most every 2 s); label changes = one partial of the label. No other region is touched.
+Failure: row returns to its Failed look (one partial), then one GC16 clean-up of the page; the running firmware is untouched and input is active again. Success: after `Restarting` the device reboots into the new firmware (normal cold-boot splash path, then the tab screen); the next Settings visit shows `Updated from ...` once.
+
+**States.** Loading: none (row shows the stored result of the weekly check; a check never runs while Settings is open). HA offline: not relevant; Wi-Fi down: Refused look. Demo mode On: Refused (`leave demo mode first`). Unavailable entity: n/a.
+
+**OPEN-S12:** after a rollback the failed version should be suppressed (architect). OPEN-S13: no `Check now` row (weekly check only, per task); add one if the user wants it.
