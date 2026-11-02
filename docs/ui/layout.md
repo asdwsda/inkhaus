@@ -93,6 +93,111 @@ the table above stays except:
 Typical tab: row 1 two covers (x 16, 486), row 2 two climates, row 3 four toggles,
 row 4 free.
 
+### 2b. Portrait variant `portrait_columns: 3` (task 094)
+
+A tab may set `portrait_columns: 3` (default 2, the grid above; only 2 and 3 are valid, anything else is a config error).
+Landscape is not affected. Mockups: `experiment-portrait-3col-cover3.svg` (default: wide widgets 3x1),
+`experiment-portrait-3col.svg` (cover `size: 2x1`), `experiment-portrait-3col-climate2.svg` (climate `size: 2x1`).
+Everything in the portrait column of the table in section 2 stays (status bar, tab bar, content area, row y, 7 rows) except:
+
+| | Portrait, 3 columns |
+|---|---------------------|
+| Columns / rows | 3 / 7 |
+| Cell | 161 x 104 (columns 0 and 1), 162 x 104 (column 2) |
+| Column x | 16, 189, 362 |
+| Gap | 12 |
+| Rows | unchanged (y 68, 184, 300, 416, 532, 648, 764) |
+
+Widget rect width by span and start column: 1 cell = 161 (col 0, 1) or 162 (col 2); 2 cells = 334 (cols 0-1) or 335 (cols 1-2);
+3 cells = 508. Height as before (h*104 + (h-1)*12). Frame inside the rect: 1 px inset, so frame width = rect width - 2
+(159/159/160, 332, 506), as in the mockups.
+
+| Check | Sum |
+|-------|-----|
+| Width | 16 + (161 + 12 + 161 + 12 + 162 = 508) + 16 = 540 |
+| Right edge | 362 + 162 = 524 (same as 2 columns) |
+| 2 cells | 2*161 + 12 = 334; 161 + 12 + 162 = 335 |
+| 3 cells | 161 + 12 + 161 + 12 + 162 = 508 |
+
+**Size table, `portrait_columns: 3`** (w x h in cells; default (min..max)). Clamp rule of section 3 applies unchanged
+(`w` clamped to 3 columns, clamps reported).
+
+| Widget type | Default (min..max) | Layout |
+|-------------|--------------------|--------|
+| cover, cover group | 3x1 (2x1..3x1) | 3x1: the 508 px layout of widgets.md (as 2-column portrait); 2x1: compact layout below |
+| climate | 3x1 (2x1..3x1) | 3x1: wide layout, W = 508 (as 2-column portrait); 2x1: compact layout below |
+| vacuum | 3x1 (2x1..3x1) | 3x1: wide layout; 2x1: compact, same rules as cover |
+| light, switch, automation, binary_sensor | 1x1 (1x1..1x1) | 1x1 text fallback below |
+| sensor | 1x1 (1x1..2x1) | 2x1 = name left, value right, at W = 334 (name F24, falls back per fallback rules) |
+| weather | 2x1 (1x1..3x1) | 3x1 = the 508 px layout |
+| graph (`display: graph`) | 3x2 (2x1..3x2) | 3x2 = 508 x 220 (mockup); 2x2 = 334 x 220; 2x1 = 334 x 104 spark layout (history-widget.md compact). Width 1 is clamped to 2 |
+
+A 3x1 climate or cover leaves no free cells in its row; a 2x1 leaves one 1x1 cell in the row that the flow algorithm
+fills with the next 1x1 widget (section 4), else it stays empty.
+
+**Compact 2x1 cover / vacuum (334 x 104, frame 332 x 102)**: F18 name and state, buttons unchanged in size.
+
+| Element | Rect (x, y, w, h) / baseline | Font / grey |
+|---------|------------------------------|-------------|
+| Name `w-N-name` | box (12, 30, 83, 22), baseline 44 | F18 INK; truncate with "…" to 83 px (e.g. `Living…`) |
+| State `w-N-state` | box (12, 60, 83, 22), baseline 77 | F18 INK; short form only: `Open`, `Closed`, `40%` (percent replaces `Opening 40%`/`Closing`; the moving state is shown by the filled up/down button) |
+| Button up | (107, 21, 62, 62) | glyph M at (118, 32), fill = active |
+| Button stop | (183, 21, 62, 62) | glyph M at (194, 32) |
+| Button down | (259, 21, 62, 62) | glyph M at (270, 32) |
+
+Gaps between buttons 14 px, right margin 332 - 321 = 11 px. Hit regions (widget-relative) are the three 62 px rects
+grown to 64 px by 1 px each side as in widgets.md (touch targets stay >= 62 with 12 px between: 14 - 2 = 12).
+
+**Compact 2x1 climate (334 x 104, frame 332 x 102)**: target value drops to F24; humidity is omitted.
+
+| Element | Rect (x, y, w, h) / baseline | Font / grey |
+|---------|------------------------------|-------------|
+| Name `w-N-name` | box (12, 30, 76, 22), baseline 44 | F18 INK; truncate with "…" to 76 px (e.g. `Bedr…`) |
+| Current temp `w-N-temp` | starts x = 12, baseline 77 | F18 INK, `19.5°` (about 49 px) |
+| Action icon `w-N-act-icon` | (64, 58, 24, 24) | S INK; flame/snow/dry/fan/pause as widgets.md; omitted if unknown |
+| Button "-" | (94, 20, 64, 64) | glyph M at (106, 32) |
+| Target `w-N-target` | centred at x = 208, baseline 61 | F24 INK, `20.0°` (65 px; room between buttons is 100 px) |
+| Button "+" | (258, 20, 64, 64) | glyph M at (270, 32) |
+
+Between "-" (ends 158) and "+" (starts 258) there are 100 px; `-12.5°` at F24 is 74 px, fits. Gap button to left block
+6 px (88 to 94): left block never exceeds x = 88.
+
+**1x1 text fallback (161 px cell; name room x 12..149 = 137 px; state room x 58..149 = 91 px, or x 12..149 beside no icon)**
+Applies to light, switch, automation, binary_sensor (and sensor 1x1 name line). Measure with the real font (DejaVu widths):
+1. Name: F24 if it fits 137 px; else F18 (same baseline 38) if it fits; else F18 truncated with "…" (as many characters as fit
+   with the "…"; never below F18). Names are never stepped to a smaller size than F18 and never wrap.
+2. State text (beside the 40 px icon, room 91 px): F24 if it fits; else F18 (baseline 77); else the **short form**
+   from the table; else F18 truncated with "…".
+3. Fallback is decided per text and per render, so two cells in a row may mix F24 and F18 names. Sensor 1x1 values (F40
+   number + F24 unit) are unchanged from 2 columns (value room 137 px: if the number does not fit F40, use F24, then "…").
+
+| Full state | Short form |
+|------------|------------|
+| On / Off / Open / Closed | unchanged (always fit) |
+| Unavailable | `n/a` |
+| Unknown | `?` |
+| Opening / Closing | `Opening` -> `Open…`, `Closing` -> `Close…` |
+| Locked / Unlocked | unchanged |
+| Pending / failed | the badge (S) replaces text; unchanged |
+
+**Graph defaults, 3 columns.** Default 3x2 (508 x 220), history window 24 h, type `auto`, same layout as
+history-widget.md at W = 508 (identical to the 2-column portrait 2x2 graph; the mockups show it). 2x2 (334 x 220) uses
+x tick labels at 0%, 50%, 100% of the plot (`-24h`, `-12h`, `now`) instead of four. 2x1 (334 x 104) is the compact
+spark layout. A graph 3x2 needs two free rows across all three columns; it flows like any widget (section 4).
+
+**Redraws.** Unchanged principle: a tap redraws only the tapped widget rect (partial refresh); with 3 columns the
+1x1 rects are narrower, so the partial region is smaller. Tab switch: full refresh as before. Ghosting rules of STYLE.md
+section 10 apply per tap as before.
+
+**Rocker.** Focus order is flow order (row by row, left to right), 3 per row; UP/DOWN as in section 7.
+
+**Test vectors.**
+- Cells 3 columns: (0,0) -> (16,68,161,104); (1,0) -> (189,68,161,104); (2,0) -> (362,68,162,104); (0,6) -> (16,764,161,104).
+- Span 3 at (0,r) -> (16, y, 508, 104); span 2 at (0,r) -> (16, y, 334, 104); span 2 at (1,r) -> (189, y, 335, 104).
+- 3x2 graph at (0,5) -> (16, 648, 508, 220).
+- Cover with no `size` -> 3x1; `size: 2x1` -> 2x1; `size: 1x1` -> clamped to 2x1, reported.
+- 7 rows: the user's Home tab (3 + 3 1x1, 3 covers, graph 3x2) fits in 7 rows, no pager.
+
 ## 3. Widget sizes
 
 Size in cells (w x h). "Wide" = 2 cells in portrait, 3 cells in landscape
