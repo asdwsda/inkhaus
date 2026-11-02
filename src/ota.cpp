@@ -173,8 +173,7 @@ bool fetchManifest(ota_logic::Manifest &m) {
 }
 
 // Frees the HA socket, then needs a contiguous block for TLS. False = skip to the next eligible wake.
-bool prepareHeap() {
-  if (g_quiesce) g_quiesce();
+bool prepareHeap() {  // runs inside the job task, after its stack was allocated
   const uint32_t blk = (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
   if (!ota_logic::memoryOk(blk)) {
     g_err = "low memory";
@@ -185,7 +184,7 @@ bool prepareHeap() {
 }
 
 // Returns false if skipped for memory (nothing recorded: the next eligible wake tries again).
-bool runCheck(int64_t epoch, CheckResult &result) {
+bool runCheckBody(int64_t epoch, CheckResult &result) {
   g_err.clear();
   g_failKind = CheckResult::NoServer;
   if (!prepareHeap()) {
@@ -240,6 +239,84 @@ void markHealthy() {
   wakelog::logf("OTA: healthy, pending cleared\n");
 }
 
+
+// Task 089: network jobs run in a one-shot task with a 20 KB stack (the TLS handshake overflows the loop stack).
+// The loop only polls this struct; it does not touch HTTPClient/Update while the job runs.
+constexpr uint32_t kJobStack = 20480;
+struct Job {
+  enum Kind { Check, Install } kind = Check;
+  int64_t epoch = 0;
+  CheckResult result = CheckResult::Skipped;
+  bool checkRan = false;  // false = skipped for memory
+  bool installOk = false;
+  volatile bool done = false;
+  volatile int phase = -1;  // Phase, -1 none yet
+  volatile int pct = 0;
+  volatile uint32_t stackFree = 0;
+};
+Job *g_job = nullptr;
+
+void jobProgress(Phase ph, int pct) {
+  g_job->pct = pct;
+  g_job->phase = (int)ph;
+}
+
+bool installBody(void (*progress)(Phase, int));
+
+void jobEntry(void *arg) {
+  Job *j = (Job *)arg;
+  if (j->kind == Job::Check) {
+    j->checkRan = runCheckBody(j->epoch, j->result);
+  } else {
+    j->installOk = installBody(&jobProgress);
+  }
+  j->stackFree = uxTaskGetStackHighWaterMark(nullptr);
+  j->done = true;
+  vTaskDelete(nullptr);
+}
+
+// Blocking for the caller: starts the task, polls it, forwards install progress from the caller's thread.
+// False = the task could not be created (memory); g_err is set.
+bool runJob(Job &j, void (*progress)(Phase, int)) {
+  g_job = &j;
+  TaskHandle_t h = nullptr;
+  if (heap_caps_get_largest_free_block(MALLOC_CAP_8BIT) < kJobStack + ota_logic::kMinFreeBlock ||
+      xTaskCreate(&jobEntry, "otajob", kJobStack, &j, 1, &h) != pdPASS) {
+    g_err = "low memory";
+    wakelog::logf("OTA: skipped, cannot start job task\n");
+    g_job = nullptr;
+    return false;
+  }
+  int lastPhase = -1, lastPct = -1;
+  while (!j.done) {
+    const int ph = j.phase, pc = j.pct;
+    if (progress && ph >= 0 && (ph != lastPhase || pc != lastPct)) {
+      lastPhase = ph;
+      lastPct = pc;
+      progress((Phase)ph, pc);
+    }
+    delay(20);
+  }
+  const int ph = j.phase;
+  if (progress && ph >= 0 && (ph != lastPhase || j.pct != lastPct)) progress((Phase)ph, j.pct);
+  wakelog::logf("APP: ota_stack_free=%u\n", (unsigned)j.stackFree);
+  g_job = nullptr;
+  return true;
+}
+
+bool runCheck(int64_t epoch, CheckResult &result) {
+  g_err.clear();
+  if (g_quiesce) g_quiesce();  // net-task call: from the loop, before the job task exists
+  Job j;
+  j.kind = Job::Check;
+  j.epoch = epoch;
+  if (!runJob(j, nullptr)) {
+    result = CheckResult::Skipped;
+    return false;
+  }
+  result = j.result;
+  return j.checkRan;
+}
 }  // namespace
 
 void earlyBoot() {
@@ -329,11 +406,9 @@ const char *lastError() { return g_err.c_str(); }
 
 ota_logic::InstallBlock installBlock(bool usb, int batteryPct) { return ota_logic::installAllowed(usb, batteryPct); }
 
-bool install(void (*progress)(Phase, int)) {
-  g_err.clear();
-  g_failure = Failure::Download;
-  if (g_busy) return false;
-  g_busy = true;
+namespace {
+// Install job body (runs in the job task): everything up to and including set_boot_partition.
+bool installBody(void (*progress)(Phase, int)) {
   bool ok = false;
   esp_ota_handle_t handle = 0;
   bool handleOpen = false;
@@ -443,6 +518,19 @@ bool install(void (*progress)(Phase, int)) {
     ok = true;
   } while (false);
   if (handleOpen) esp_ota_abort(handle);
+  return ok;
+}
+}  // namespace
+
+bool install(void (*progress)(Phase, int)) {
+  g_err.clear();
+  g_failure = Failure::Download;
+  if (g_busy) return false;
+  g_busy = true;
+  if (g_quiesce) g_quiesce();  // net-task call: from the loop, before the job task exists
+  Job j;
+  j.kind = Job::Install;
+  const bool ok = runJob(j, progress) && j.installOk;
   g_busy = false;
   if (ok) {
     Serial.println("OTA: installed, restarting");

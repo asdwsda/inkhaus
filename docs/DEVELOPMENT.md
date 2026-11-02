@@ -47,6 +47,11 @@ Dev tip: Settings > Sleep & wake > Keep awake = On USB stays set on the dev devi
   `tools/ota_test_server.py --bin .pio/build/m5paper/firmware.bin --version 9.9.9` (`--corrupt` serves altered
   bytes; the device must reject them).
 - `tools/make_manifest.py` writes `manifest.json` (version, size, sha256).
+- Network jobs (check, download) run in a one-shot 20 KB-stack task (task 089); the loop stack is too small for TLS.
+- Before tagging a release, test the install over real HTTPS from the latest GitHub release: build and flash
+  `PLATFORMIO_BUILD_FLAGS='-DFW_VERSION=\"<older>\"' pio run -e m5paper-debug -t upload` (the `#ifndef` in
+  `include/version.h` lets the flag win), Settings > Tools > Firmware > Yes, install; the device must reboot into the
+  release, log `OTA: healthy` and show "Updated from <older>". The local test server only exercises plain HTTP.
 - Release checklist: bump `include/version.h`, `tools/flasher/Cargo.toml` and CHANGELOG. The release must contain
   `firmware.bin` and `manifest.json`, or devices won't see the update. Pre-releases are ignored by the device.
 

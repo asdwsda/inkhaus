@@ -1,6 +1,6 @@
 # 089: OTA install crashes in the TLS handshake (loop stack overflow)
 
-Status: todo
+Status: done
 Depends on: 087
 UI spec: docs/ui/settings.md §8.6 (unchanged)
 Needs device: yes
@@ -35,3 +35,4 @@ Reason: the TLS stack need is only temporary; raising the Arduino loop stack wou
 - [ ] Debug build with OTA_TEST_URL: `--corrupt` still rejected (quick regression).
 - [ ] Landscape Firmware row look (screenshot).
 - [ ] End: normal m5paper-debug built from main flashed, Keep awake still On USB.
+- Review 2026-11-02 (tester): no blockers. Follow-up later: a total OTA job deadline (~5 min) against a trickling download keeping the device awake.
