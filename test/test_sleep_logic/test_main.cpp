@@ -45,6 +45,21 @@ void test_splash_and_kept_image() {
   TEST_ASSERT_EQUAL(int(power::Session::ScheduledRefresh), int(power::decide_session(w, 4000)));
 }
 
+void test_restore_tab_decision() {
+  // task 091: every sleep wake (timer wake incl. the one with the periodic full, touch, rocker, power-off alarm) restores the tab
+  for (WakeReason w : {WakeReason::RtcAlarm, WakeReason::Touch, WakeReason::Button}) {
+    TEST_ASSERT_TRUE(restoreTabWanted(ResetKind::DeepSleep, w));
+    TEST_ASSERT_TRUE(restoreTabWanted(ResetKind::PowerOn, w));
+  }
+  TEST_ASSERT_TRUE(restoreTabWanted(ResetKind::DeepSleep, classifyWake(in(ResetKind::DeepSleep, WakePin::Timer))));
+  // a restart inside a session (software, crash, brownout = Other) keeps the tab
+  for (ResetKind r : {ResetKind::Software, ResetKind::Crash, ResetKind::Other})
+    TEST_ASSERT_TRUE(restoreTabWanted(r, classifyWake(in(r))));
+  // reset button and real cold boot start on the first tab
+  TEST_ASSERT_FALSE(restoreTabWanted(ResetKind::External, WakeReason::ColdBoot));
+  TEST_ASSERT_FALSE(restoreTabWanted(ResetKind::PowerOn, WakeReason::ColdBoot));
+}
+
 void test_wake_deep_sleep() {
   TEST_ASSERT_EQUAL(int(WakeReason::Touch), int(classifyWake(in(ResetKind::DeepSleep, WakePin::Touch))));
   TEST_ASSERT_EQUAL(int(WakeReason::Button), int(classifyWake(in(ResetKind::DeepSleep, WakePin::Rocker))));
@@ -462,6 +477,7 @@ int main() {
   RUN_TEST(test_wake_power_on);
   RUN_TEST(test_splash_and_kept_image);
   RUN_TEST(test_wake_deep_sleep);
+  RUN_TEST(test_restore_tab_decision);
   RUN_TEST(test_wake_restarts_are_not_wakes);
   RUN_TEST(test_session_kind_from_wake);
   RUN_TEST(test_indicator);

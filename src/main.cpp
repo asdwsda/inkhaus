@@ -298,6 +298,7 @@ static void showFrame(uint32_t now) {
   composeFrame();
   const bool full = g_app.takeFull();
   present::setLogTab(g_app.shownTab());
+  sleepwake::saveTab(g_app.shownTab());  // task 091: a restart before the next sleep keeps the tab (writes only when it changed)
   {
     std::vector<screen_track::Rect> graphs;
     for (const ui::Placement &pl : g_app.layout().widgets)
@@ -1056,7 +1057,7 @@ void setup() {
     g_demoMode = app_logic::isDemoRun(s, cfg.demo, cfg.cfg.hasConnection);
     g_real = !g_demoMode;
     g_app.init(cfg.cfg, s.orientation, g_demoMode);
-    if (sleepwake::wokeFromSleep() && g_app.restoreTab(sleepwake::savedTab())) boot::log("tab_restored", (long)g_app.shownTab());  // task 086
+    if (sleepwake::restoreTabWanted() && g_app.restoreTab(sleepwake::savedTab())) boot::log("tab_restored", (long)g_app.shownTab());  // task 086
     g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
     g_app.setMarksDriven(g_real);

@@ -21,6 +21,7 @@ int probeUsbRx();
 // splashWanted: reset button or a real cold boot.
 bool wokeFromSleep();
 bool splashWanted();
+bool restoreTabWanted();  // task 091: sleep wake or a restart inside a session
 
 // The indicator variant that is on the panel from the previous sleep (None after a cold boot).
 // Valid after detect(); only meaningful for a scheduled-refresh wake (the first frame then keeps it).

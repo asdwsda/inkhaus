@@ -164,6 +164,7 @@ power::WakeReason detect() {
 }
 
 bool wokeFromSleep() { return app_logic::wokeFromSleep(g_resetKind, g_wakeReason); }
+bool restoreTabWanted() { return app_logic::restoreTabWanted(g_resetKind, g_wakeReason); }
 bool splashWanted() { return app_logic::splashWanted(g_resetKind, g_wakeReason); }
 
 app_logic::Indicator storedIndicator() { return g_stored; }

@@ -32,6 +32,10 @@ const char *wakeName(power::WakeReason r);
 // The frozen panel image is ours (deep-sleep wake, or a power-off wake: PowerOn with a wake reason other than
 // ColdBoot, i.e. the sleep marker or the BM8563 alarm flag was set). Such a start keeps the image: no splash.
 bool wokeFromSleep(ResetKind reset, power::WakeReason wake);
+// Task 091: the saved tab is restored after a sleep wake (timer, touch, rocker, RTC alarm, power-off) and also after a
+// restart in the middle of a session (software restart, crash/watchdog, brownout and other resets: ResetKind::Other), which
+// otherwise fell back to the first tab. Not after the reset button or a real cold boot (they start on the first tab).
+bool restoreTabWanted(ResetKind reset, power::WakeReason wake);
 // Splash screen: the reset button, or a real cold boot (first power-up, flashing, USB plugged in).
 bool splashWanted(ResetKind reset, power::WakeReason wake);
 

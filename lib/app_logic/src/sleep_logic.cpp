@@ -28,6 +28,11 @@ bool wokeFromSleep(ResetKind reset, power::WakeReason wake) {
   return reset == ResetKind::PowerOn && wake != power::WakeReason::ColdBoot;
 }
 
+bool restoreTabWanted(ResetKind reset, power::WakeReason wake) {
+  if (wokeFromSleep(reset, wake)) return true;
+  return reset == ResetKind::Software || reset == ResetKind::Crash || reset == ResetKind::Other;
+}
+
 bool splashWanted(ResetKind reset, power::WakeReason wake) {
   return reset == ResetKind::External || (reset == ResetKind::PowerOn && wake == power::WakeReason::ColdBoot);
 }
