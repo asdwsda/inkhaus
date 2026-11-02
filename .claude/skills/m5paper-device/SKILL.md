@@ -19,6 +19,9 @@ the architect.
 - Flash: `pio run -e <env> -t upload --upload-port /dev/ttyUSB0`. Use `-e m5paper-debug` when
   screenshots or serial taps are needed (`shot*`, `tap`, `key`, `pend`, `mem`, `cleanup` exist only
   there); `putfile` and `reboot` are in every build.
+- **Dev setting (user 2026-11-02): Settings > Sleep & wake > Keep awake = On USB** stays set on the dev
+  device (NVS survives flashing), so it is awake whenever plugged in; no wake-up needed. Tests that need
+  sleep on USB: use Sleep now (2.5 s rocker hold) or set Keep awake = Off for the test and back to On USB after.
 - Serial: **`pio device monitor` does not work for agents** (it needs a TTY). Use
   `tools/serial_capture.py`:
   - `tools/serial_capture.py --reset --seconds 15` resets the board, then captures.
