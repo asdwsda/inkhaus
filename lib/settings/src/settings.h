@@ -32,13 +32,14 @@ struct Settings {
     int32_t legacy_wifi_index = 0;
     HaLink ha_link = HaLink::Auto;
     bool stay_awake_usb = false;  // task 081: no idle sleep while on USB power
+    bool learn_battery = true;    // task 079: learn the low-battery limit from brownouts
 
     bool operator==(const Settings& o) const {
         return wake_mode == o.wake_mode && refresh_interval_min == o.refresh_interval_min &&
                idle_timeout_s == o.idle_timeout_s && orientation == o.orientation &&
                demo_mode == o.demo_mode && debug_log == o.debug_log &&
                wifi_profile == o.wifi_profile && ha_link == o.ha_link &&
-               stay_awake_usb == o.stay_awake_usb;
+               stay_awake_usb == o.stay_awake_usb && learn_battery == o.learn_battery;
     }
     bool operator!=(const Settings& o) const { return !(*this == o); }
 };
@@ -65,6 +66,7 @@ constexpr const char* kKeyWifiProfileLegacy = "wifiprof";  // old: 1-based index
 constexpr const char* kKeyWifiProfile = "wifiname";        // profile name (string, "" = Auto); absent = Auto
 constexpr const char* kKeyHaLink = "halink";         // HaLink; absent = Auto
 constexpr const char* kKeyStayAwakeUsb = "stayusb";  // 0 / 1; absent = off (no schema bump)
+constexpr const char* kKeyLearnBattery = "learnbat";  // 0 / 1; absent = on (no schema bump)
 
 // Abstract key-value store of ints.
 class KeyValueStore {
@@ -86,6 +88,7 @@ bool isValidDebugLog(int32_t v);
 bool isValidWifiProfileIndex(int32_t v);  // legacy index: 0..kMaxWifiProfileIndex
 bool isValidHaLink(int32_t v);
 bool isValidStayAwakeUsb(int32_t v);
+bool isValidLearnBattery(int32_t v);
 
 // 1-based position of `name` in `names`, 0 (Auto) for "" or an unknown name.
 int wifiProfileIndex(const std::string& name, const std::vector<std::string>& names);

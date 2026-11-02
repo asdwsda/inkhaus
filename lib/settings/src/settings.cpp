@@ -35,6 +35,7 @@ bool isValidDebugLog(int32_t v) { return v == 0 || v == 1; }
 bool isValidWifiProfileIndex(int32_t v) { return v >= 0 && v <= kMaxWifiProfileIndex; }
 
 bool isValidStayAwakeUsb(int32_t v) { return v == 0 || v == 1; }
+bool isValidLearnBattery(int32_t v) { return v == 0 || v == 1; }
 
 bool isValidHaLink(int32_t v) { return v >= 0 && v <= static_cast<int32_t>(HaLink::External); }
 
@@ -79,6 +80,7 @@ Settings load(const KeyValueStore& store) {
     }
     if (store.getInt(kKeyHaLink, v) && isValidHaLink(v)) s.ha_link = static_cast<HaLink>(v);
     if (store.getInt(kKeyStayAwakeUsb, v) && isValidStayAwakeUsb(v)) s.stay_awake_usb = v == 1;
+    if (store.getInt(kKeyLearnBattery, v) && isValidLearnBattery(v)) s.learn_battery = v == 1;
     return s;
 }
 
@@ -94,6 +96,7 @@ void save(KeyValueStore& store, const Settings& s) {
     if (!store.getStr(kKeyWifiProfile, cur) || cur != s.wifi_profile) store.setStr(kKeyWifiProfile, s.wifi_profile);
     writeIfChanged(store, kKeyHaLink, static_cast<int32_t>(s.ha_link));
     writeIfChanged(store, kKeyStayAwakeUsb, s.stay_awake_usb ? 1 : 0);
+    writeIfChanged(store, kKeyLearnBattery, s.learn_battery ? 1 : 0);
 }
 
 }  // namespace settings

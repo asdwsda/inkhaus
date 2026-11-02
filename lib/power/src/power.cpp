@@ -4,8 +4,8 @@
 
 namespace power {
 
-Session decide_session(WakeReason reason, int32_t battery_mv) {
-    if (battery_mv < kLowBatteryMv) return Session::LowBattery;
+Session decide_session(WakeReason reason, int32_t battery_mv, int32_t limit_mv) {
+    if (below_low_battery(battery_mv, limit_mv)) return Session::LowBattery;
     if (reason == WakeReason::RtcAlarm) return Session::ScheduledRefresh;
     return Session::Interactive;
 }

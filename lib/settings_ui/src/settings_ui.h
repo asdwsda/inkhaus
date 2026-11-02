@@ -22,9 +22,9 @@ inline Page categoryPage(int i) { return static_cast<Page>(i + 1); }
 const char* categoryLabel(int i);  // "Display", "Sleep & wake", "Network", "Tools" (also the page title)
 
 // Setting rows, in the edit buffer order of the categories.
-enum class RowId { Orientation, Wake, Refresh, Idle, Wifi, HaLink, Demo, Debug, StayAwake };
+enum class RowId { Orientation, Wake, Refresh, Idle, Wifi, HaLink, Demo, Debug, StayAwake, LearnBattery };
 constexpr int kRowIdCount = 9;
-constexpr int kMaxPageRows = 4;
+constexpr int kMaxPageRows = 5;
 bool isPipRow(RowId r);  // Orientation, Wake, Refresh, Idle (2..6 fixed values); the others are hint rows (88 high)
 
 // ---- layout (spec sections 3 and 8) ----
@@ -189,6 +189,7 @@ struct BatteryInfo {
   int percent = 0;
   int millivolts = 0;
   bool charging = false;
+  int learnedLimitMv = 0;  // task 079: shown when > 0 (learned limit in force)
 };
 struct HaInfo {
   enum class Link { None, Local, Remote };  // Local = internal URL, Remote = external URL (shown so)

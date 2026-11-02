@@ -353,6 +353,20 @@ void test_wifi_profile_by_name_and_ha_link() {
     TEST_ASSERT_TRUE(strlen(kKeyWifiProfile) <= 15 && strlen(kKeyHaLink) <= 15 && strlen(kKeyWifiProfileLegacy) <= 15);
 }
 
+void test_learn_battery_persists() {
+    FakeStore st;
+    TEST_ASSERT_TRUE(load(st).learn_battery);  // absent = on
+    st.data[kKeyLearnBattery] = 7;             // invalid -> default
+    TEST_ASSERT_TRUE(load(st).learn_battery);
+    Settings s;
+    s.learn_battery = false;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT32(0, st.data[kKeyLearnBattery]);
+    TEST_ASSERT_FALSE(load(st).learn_battery);
+    TEST_ASSERT_TRUE(load(st) == s);
+    TEST_ASSERT_TRUE(strlen(kKeyLearnBattery) <= 15);
+}
+
 void test_stay_awake_usb_persists() {
     FakeStore st;
     TEST_ASSERT_FALSE(load(st).stay_awake_usb);  // absent = off
@@ -430,6 +444,7 @@ int main(int, char**) {
     RUN_TEST(test_wake_mode_migration_and_roundtrip);
     RUN_TEST(test_wifi_profile_by_name_and_ha_link);
     RUN_TEST(test_stay_awake_usb_persists);
+    RUN_TEST(test_learn_battery_persists);
     RUN_TEST(test_wifi_profile_index_lookup);
     RUN_TEST(test_wifi_profile_legacy_index_migrates_once);
     return UNITY_END();

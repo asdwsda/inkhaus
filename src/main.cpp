@@ -12,6 +12,8 @@
 #include "ui_layout.h"
 #include "config_sd.h"
 #include "boot.h"
+#include "battery_learn.h"
+#include "battery_limit.h"
 #include "brightness_intent.h"
 #include "history_cache_sd.h"
 #include "deferred_tap.h"
@@ -60,6 +62,10 @@ static bool timedShow(present::Mode mode, uint32_t now) {
 static uistate::AppState g_app;
 static render::StatusInfo g_status;
 static settings::Settings g_settings;
+static int32_t batteryMv();
+static int32_t batteryLimitMv();
+static bool batteryTooLowForWifi();
+static void lowBatterySleep();
 static app_config::Loaded g_cfg;
 static render::SettingsInfo g_info;  // snapshot taken when Settings opens / after a good refresh
 
@@ -110,6 +116,8 @@ static int batteryPercent() {
 #ifdef TEST_CONFIG_MOCKUP
   return 78;
 #else
+  if (g_settings.learn_battery && batterylimit::learned(true))  // 0 % = learned limit (task 079)
+    return power::battery_percent_scaled(batteryMv(), batteryLimitMv());
   const int v = M5.Power.getBatteryLevel();
   return (v < 0 || v > 100) ? 100 : v;
 #endif
@@ -119,6 +127,9 @@ static int32_t batteryMv() {
   const int mv = M5.Power.getBatteryVoltage();
   return mv < 2500 ? 4000 : mv;  // 0 / garbage must not look like an empty battery
 }
+
+// Effective low-battery limit (learned or the 3300 default), task 079.
+static int32_t batteryLimitMv() { return batterylimit::limit(g_settings.learn_battery); }
 
 static bool landscape() { return g_app.orientation() == settings::Orientation::Landscape; }
 
@@ -190,6 +201,7 @@ static void snapshotInfo() {
   i.firmware = "v" FW_VERSION;
   i.battery.percent = batteryPercent();
   i.battery.millivolts = batteryMv();
+  i.battery.learnedLimitMv = batterylimit::learned(g_settings.learn_battery) ? batteryLimitMv() : 0;
   i.battery.charging = M5.Power.isCharging() == m5::Power_Class::is_charging;
   i.wifi.configured = g_real;
   i.wifi.connected = g_drv && g_drv->wifiUp();
@@ -653,6 +665,7 @@ static void reloadConfigSource(settings::Orientation o) {
   boot::log("mode", g_real ? "real" : "demo");
   if (g_real) {
     session_glue::loadClockFromRtc();
+    if (batteryTooLowForWifi()) lowBatterySleep();  // the brownouts hit when Wi-Fi starts (task 079)
     g_net.begin(g_cfg.cfg.connection.ha.internalUrl, g_cfg.cfg.connection.ha.externalUrl,
                 g_cfg.cfg.connection.ha.token);
     startSession(millis());
@@ -796,6 +809,12 @@ static void manualSleep() {
   g_localIdle.on_input(millis() / 1000);  // sleeping failed: carry on
 }
 
+static bool batteryTooLowForWifi() {
+  const int32_t mv = batteryMv();
+  batterylimit::sample(mv);
+  return power::below_low_battery(mv, batteryLimitMv());
+}
+
 // Battery below the limit at wake: no session, no network. A plain notice, no alarm, power off.
 static void lowBatterySleep() {
   boot::log("low_battery_mv", (long)batteryMv());
@@ -816,8 +835,6 @@ void setup() {
   boot::begin();
   present::setFirmwareId(firmwareId());
   g_wake = sleepwake::detect();
-  const power::Session kind = power::decide_session(g_wake, batteryMv());
-  g_scheduled = kind == power::Session::ScheduledRefresh;
   settings::Settings &s = g_settings;
   {
     NvsSettingsStore store;
@@ -826,6 +843,9 @@ void setup() {
       store.end();
     }
   }
+  batterylimit::begin(s.learn_battery, batteryMv());  // task 079: records a brownout event, logs the limit
+  const power::Session kind = power::decide_session(g_wake, batteryMv(), batteryLimitMv());
+  g_scheduled = kind == power::Session::ScheduledRefresh;
   wakelog::setEnabled(s.debug_log);
   // Early wake feedback (task 058): a touch/rocker wake that finds our sleep badge on the panel clears it
   // at once. The pill is 96x44 centred in the badge rect; its x is 4-aligned in both orientations.
@@ -916,6 +936,7 @@ void setup() {
   // touches neither the display nor the SD card before the first fetch result, which the loop applies.
   if (g_real) {
     session_glue::loadClockFromRtc();
+    if (batteryTooLowForWifi()) lowBatterySleep();  // the brownouts hit when Wi-Fi starts (task 079)
     g_net.begin(cfg.cfg.connection.ha.internalUrl, cfg.cfg.connection.ha.externalUrl, cfg.cfg.connection.ha.token);
     startSession(millis());
   }
@@ -1006,8 +1027,9 @@ void loop() {
       const bool was = g_usb.usb();
       g_usb.update(now / 1000, batteryMv(), M5.Power.isCharging() == M5.Power.is_charging);
       if (g_usb.usb() != was) boot::log("usb_power", g_usb.usb() ? 1 : 0);
+      batterylimit::sample(batteryMv());
     }
-    if (power::stay_awake(g_settings, g_usb.usb()) && power::below_low_battery(g_usb.smoothed_mv())) {
+    if (power::stay_awake(g_settings, g_usb.usb()) && power::below_low_battery(g_usb.smoothed_mv(), batteryLimitMv())) {
       lowBatterySleep();  // mid-session guard: stop staying awake (task 081)
       return;
     }

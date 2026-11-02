@@ -99,14 +99,16 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
     case Page::Sleep: {
       const int pitch = portrait ? 84 : 80;
       const int h = portrait ? 72 : 68;
-      L.rowCount = 4;
+      L.rowCount = 5;
       L.rowIds[0] = RowId::Wake;
       L.rowIds[1] = RowId::Refresh;
       L.rowIds[2] = RowId::Idle;
       L.rowIds[3] = RowId::StayAwake;
+      L.rowIds[4] = RowId::LearnBattery;
       for (int i = 0; i < 3; ++i) L.rows[i] = {16, y0 + pitch * i, w, h};
       L.rows[3] = portrait ? Rect{16, 320, 508, 88} : Rect{488, 64, 456, 88};
-      L.note = portrait ? Rect{16, 420, 508, 64} : Rect{16, 304, 456, 64};
+      L.rows[4] = portrait ? Rect{16, 420, 508, 88} : Rect{488, 164, 456, 88};  // task 079 (UNVERIFIED pitch)
+      L.note = portrait ? Rect{16, 520, 508, 64} : Rect{16, 304, 456, 64};
       break;
     }
     case Page::Network:
@@ -172,6 +174,7 @@ const char* hintRowLabel(RowId r) {
     case RowId::Demo: return "Demo mode";
     case RowId::Debug: return "Debug log";
     case RowId::StayAwake: return "Stay awake on USB";
+    case RowId::LearnBattery: return "Learn battery limits";
     default: return "";
   }
 }
@@ -180,6 +183,7 @@ const char* hintRowStaticHint(RowId r) {
     case RowId::Demo: return "Sample dashboard, offline";
     case RowId::Debug: return "Log lines to SD card";
     case RowId::StayAwake: return "Never sleeps while on USB power";
+    case RowId::LearnBattery: return "Raise low limit after brownouts";
     default: return "";
   }
 }
@@ -262,6 +266,7 @@ std::string rowValueText(RowId r, const Settings& s, const NetworkInfo& n) {
     case RowId::Demo: return s.demo_mode ? "On" : "Off";
     case RowId::Debug: return s.debug_log ? "On" : "Off";
     case RowId::StayAwake: return s.stay_awake_usb ? "On" : "Off";
+    case RowId::LearnBattery: return s.learn_battery ? "On" : "Off";
   }
   return "";
 }
@@ -292,6 +297,7 @@ Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n) {
     case RowId::Demo: o.demo_mode = !s.demo_mode; break;
     case RowId::Debug: o.debug_log = !s.debug_log; break;
     case RowId::StayAwake: o.stay_awake_usb = !s.stay_awake_usb; break;
+    case RowId::LearnBattery: o.learn_battery = !s.learn_battery; break;
   }
   return o;
 }
@@ -377,7 +383,12 @@ std::string formatTime(const WallTime& t, const WallTime& now) {
 InfoText batteryText(const BatteryInfo& b) {
   char buf[32];
   int v = (b.millivolts + 5) / 10;  // 10 mV steps
-  std::snprintf(buf, sizeof buf, "%d%%, %d.%02d V", b.percent, v / 100, v % 100);
+  if (b.learnedLimitMv > 0) {  // task 079: "78%, 3.92 V, min 3.80 V" (UNVERIFIED: fits the value column)
+    const int l = (b.learnedLimitMv + 5) / 10;
+    std::snprintf(buf, sizeof buf, "%d%%, %d.%02d V, min %d.%02d V", b.percent, v / 100, v % 100, l / 100, l % 100);
+  } else {
+    std::snprintf(buf, sizeof buf, "%d%%, %d.%02d V", b.percent, v / 100, v % 100);
+  }
   InfoText r;
   r.text = buf;
   if (b.charging) r.icon = Icon::Bolt;

@@ -16,7 +16,7 @@ constexpr int32_t kIdleHardCapS = 120;
 constexpr int64_t kMinAlarmLeadS = 60;
 
 // Battery below kLowBatteryMv -> LowBattery; RtcAlarm -> ScheduledRefresh; else Interactive.
-Session decide_session(WakeReason reason, int32_t battery_mv);
+Session decide_session(WakeReason reason, int32_t battery_mv, int32_t limit_mv = kLowBatteryMv);
 
 // Idle timer. Feed it the current time on every call (fake time friendly).
 // Sleep is due when:
@@ -71,8 +71,8 @@ private:
     int64_t last_feed_ = -1000000;
 };
 
-// Low-battery limit used while staying awake (one place, so task 079 can swap in the learned limit).
-inline bool below_low_battery(int32_t mv) { return mv < kLowBatteryMv; }
+// The one place for the low-battery test. limit_mv is the effective (learned or default) limit, task 079.
+inline bool below_low_battery(int32_t mv, int32_t limit_mv = kLowBatteryMv) { return mv < limit_mv; }
 
 // No VBUS or charger-status signal is readable on the M5Paper (M5Unified isCharging/getVBUSVoltage are
 // unsupported for it), so USB power is inferred from the battery voltage (UNVERIFIED heuristic). A fresh

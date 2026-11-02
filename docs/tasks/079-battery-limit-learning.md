@@ -1,6 +1,6 @@
 # 079: Learn the battery limits from the wake stats
 
-Status: todo
+Status: testing
 Depends on: 029 (wake log), 035 (sleep)
 UI spec: none (one Settings toggle row, same style as the existing on/off rows)
 Needs device: yes (final check: a full discharge on battery)

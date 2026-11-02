@@ -6,6 +6,7 @@
 // NVS backend (namespace "settings") of the settings key-value interface.
 class NvsSettingsStore : public settings::KeyValueStore {
 public:
+    explicit NvsSettingsStore(const char* ns = "settings") : ns_(ns) {}
     bool begin();  // opens the namespace; false on failure
     void end();
     bool getInt(const char* key, int32_t& out) const override;
@@ -16,4 +17,5 @@ public:
 private:
     mutable Preferences prefs_;
     bool open_ = false;
+    const char* ns_;
 };

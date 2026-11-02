@@ -1,7 +1,7 @@
 #include "settings_nvs.h"
 
 bool NvsSettingsStore::begin() {
-    open_ = prefs_.begin("settings", false);
+    open_ = prefs_.begin(ns_, false);
     return open_;
 }
 

@@ -103,6 +103,7 @@ void test_info_edge_cases() {
   TEST_ASSERT_EQUAL_STRING("100%, 4.20 V", batteryText({100, 4200, false}).text.c_str());
   TEST_ASSERT_EQUAL_STRING("50%, 4.00 V", batteryText({50, 3996, false}).text.c_str());
   TEST_ASSERT_EQUAL_STRING("50%, 3.99 V", batteryText({50, 3994, false}).text.c_str());
+  TEST_ASSERT_EQUAL_STRING("50%, 3.99 V, min 3.88 V", batteryText({50, 3994, false, 3880}).text.c_str());
   TEST_ASSERT_TRUE(batteryText({5, 3300, true}).icon == Icon::Bolt);
   // HA offline, last link remote does not leak into the text
   HaInfo h;
@@ -204,11 +205,14 @@ void test_page_layouts() {
   expectRect(16, 236, 508, 72, s.rows[2]);
   expectRect(16, 320, 508, 88, s.rows[3]);
   TEST_ASSERT_TRUE(s.rowIds[3] == RowId::StayAwake);
-  TEST_ASSERT_EQUAL_INT(5, s.stopCount);
-  expectRect(16, 420, 508, 64, s.note);
+  expectRect(16, 420, 508, 88, s.rows[4]);
+  TEST_ASSERT_TRUE(s.rowIds[4] == RowId::LearnBattery);
+  TEST_ASSERT_EQUAL_INT(6, s.stopCount);
+  expectRect(16, 520, 508, 64, s.note);
   PageLayout sl = computePageLayout(Page::Sleep, Orientation::Landscape);
   expectRect(16, 144, 456, 68, sl.rows[1]);
   expectRect(488, 64, 456, 88, sl.rows[3]);
+  expectRect(488, 164, 456, 88, sl.rows[4]);
   expectRect(16, 304, 456, 64, sl.note);
 
   PageLayout n = computePageLayout(Page::Network, Orientation::Portrait);
@@ -419,16 +423,16 @@ void test_rocker_focus_orders_and_wrap() {
   }
   s.onKey(LogicalKey::Prev);
   TEST_ASSERT_EQUAL_INT(kStopBack, s.focus());
-  // enter Sleep & wake: 4 rows + Back
+  // enter Sleep & wake: 5 rows + Back
   s.onKey(LogicalKey::Next);  // 0
   s.onKey(LogicalKey::Next);  // 1 Sleep
   Update u = s.onKey(LogicalKey::Push);
   TEST_ASSERT_TRUE(u.action == Action::PageChange);
   TEST_ASSERT_TRUE(s.page() == Page::Sleep);
-  TEST_ASSERT_EQUAL_INT(5, s.stopCount());
+  TEST_ASSERT_EQUAL_INT(6, s.stopCount());
   TEST_ASSERT_EQUAL_INT(0, s.focus());
   s.onKey(LogicalKey::Prev);
-  TEST_ASSERT_EQUAL_INT(4, s.focus());  // Back
+  TEST_ASSERT_EQUAL_INT(5, s.focus());  // Back
   // Push on a row cycles the buffer
   s.onKey(LogicalKey::Next);
   s.onKey(LogicalKey::Push);  // Wake mode Button -> Touch
@@ -439,6 +443,14 @@ void test_rocker_focus_orders_and_wrap() {
   TEST_ASSERT_TRUE(s.page() == Page::Main);
   TEST_ASSERT_EQUAL_INT(1, s.focus());
   TEST_ASSERT_TRUE(s.dirty());  // going up saves/applies nothing: still buffered
+}
+
+void test_learn_battery_row() {
+  Settings d;
+  TEST_ASSERT_EQUAL_STRING("On", rowValueText(RowId::LearnBattery, d, NetworkInfo()).c_str());
+  TEST_ASSERT_EQUAL_STRING("Learn battery limits", rowLabel(RowId::LearnBattery));
+  Settings o = cycleRow(RowId::LearnBattery, d, NetworkInfo());
+  TEST_ASSERT_FALSE(o.learn_battery);
 }
 
 void test_stay_awake_row_and_sleep_now() {
@@ -807,6 +819,7 @@ int main() {
   RUN_TEST(test_overview_layout_both_orientations);
   RUN_TEST(test_page_layouts);
   RUN_TEST(test_stay_awake_row_and_sleep_now);
+  RUN_TEST(test_learn_battery_row);
   RUN_TEST(test_page_targets_size_gaps_and_screen_bounds);
   RUN_TEST(test_summaries);
   RUN_TEST(test_wifi_and_ha_cycling);
