@@ -1,4 +1,4 @@
-<!-- Sleep and wake page, landscape (task 085). Spec: settings.md section 8.2. Shown: Touch & rocker, updates 30 min, keep awake Off (On USB not offered), focus on Updates. Widgets: w-1..w-5 rows, w-6 touch note, w-7 estimate, w-8 Back. -->
+<!-- Sleep and wake page, landscape (task 085). Spec: settings.md section 8.2. Shown: Touch & rocker, updates 30 min, keep awake Off, focus on Updates. Widgets: w-1..w-5 rows, w-6 touch note, w-7 estimate, w-8 Back. -->
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
 <defs>
 <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
@@ -38,7 +38,7 @@
 <rect id="w-3-frame" x="16" y="244" width="456" height="88" rx="8" fill="#fff"/>
 <rect x="17" y="245" width="454" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
 <text id="w-3-label" x="32" y="276" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Keep awake</text>
-<text id="w-3-hint" x="32" y="306" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">On USB only in Power off</text>
+<text id="w-3-hint" x="32" y="306" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Sleeps as set above</text>
 <text id="w-3-value" x="456" y="288" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Off</text>
 </g>
 <g id="w-4">

@@ -199,7 +199,7 @@ All pages: header (title = category name, chip when the buffer is dirty), no tab
 Portrait: Orientation pip row (16, 68, 508, 72). Below it a static caption F18 DIM at (16, 152) cy 168: `Applied when Settings is left.` Landscape: row (16, 64, 456, 68), caption at (16, 132) cy 148. Mockup shows the changed value (unsaved), focus on the row.
 
 ### 8.2 Sleep & wake (`settings-sleep-*.svg`, revision 10, task 085)
-Replaces Wake mode, Refresh every and Stay awake on USB (old 9.1). Mockups: `settings-sleep-portrait.svg` (Power off, updates 3 h, Keep awake Off, focus on Keep awake), `settings-sleep-landscape.svg` (Touch & rocker, 30 min, On USB not offered, touch note, focus on Updates), `settings-sleep-states.svg` (every value of the mode and Keep awake rows, forced-Off row, notes, four battery use looks (1, 3, 7, 10)). Row types as 3.1; values F40 INK right edge W - 16; labels F24 INK at x = 16 (row-relative); ids w-N as listed.
+Replaces Wake mode, Refresh every and Stay awake on USB (old 9.1). Mockups: `settings-sleep-portrait.svg` (Power off, updates 3 h, Keep awake Off, focus on Keep awake), `settings-sleep-landscape.svg` (Touch & rocker, 30 min, Keep awake Off, touch note, focus on Updates), `settings-sleep-states.svg` (every value of the mode and Keep awake rows, forced-Off row, notes, four battery use looks (1, 3, 7, 10)). Row types as 3.1; values F40 INK right edge W - 16; labels F24 INK at x = 16 (row-relative); ids w-N as listed.
 
 | # | Row (id) | Type | Portrait rect | Landscape rect |
 |---|----------|------|---------------|----------------|
@@ -218,7 +218,7 @@ Vertical check (portrait): 68 + 88 + 12 + 72 + 12 + 88 + 12 + 72 + 12 + 88 = 524
 
 **Row 2, Updates while asleep** (pip row, 6 pips): `Off` / `30 min` / `1 h` / `3 h` / `6 h` / `12 h` (cycle, wraps; 0 = Off). **Forced Off**: when Sleep mode is `Power off` and 084 cannot make the RTC power-on work, the row takes the unavailable look (STYLE.md section 8: 2 px dotted OFF border, label in OFF grey, no pips, value `Off` INK), ignores tap and PUSH, is skipped by the rocker focus, and the note `This device can't power on by` / `itself: updates stay Off.` shows (first slot). The stored value is kept and returns when the mode changes.
 
-**Row 3, Keep awake** (hint row, value F40): `Off` / `On USB` / `Always`. Live hint: Off `Sleeps as set above`; On USB `Awake while on USB`; Always `Never sleeps`. **On USB not offered** (Deep sleep, Touch, Touch & rocker unless the CH9102 RX probe of task 081 proves reliable; always offered in Power off via the power-off fallback): the cycle is `Off` -> `Always` -> `Off`, and while the value is Off the hint reads `On USB only in Power off` (no extra row, no note). If the user changes Sleep mode to one that does not offer it while the value is `On USB`, the buffer value becomes `Off` (the chip shows if that makes the buffer differ). Takes effect when Settings is left.
+**Row 3, Keep awake** (hint row, value F40): `Off` / `On USB` / `Always`. Live hint: Off `Sleeps as set above`; On USB `Awake while on USB`; Always `Never sleeps`. The cycle is `Off` -> `On USB` -> `Always` -> `Off` in every Sleep mode (task 085: the USB probe is reliable); no mode-dependent hint or fallback. Takes effect when Settings is left.
 
 **Row 4, Idle timeout**: unchanged (4 pips, `10 s` / `20 s` / `30 s` / `60 s`). Unused while Keep awake is Always (the row stays editable, no special look).
 
@@ -284,7 +284,6 @@ No on-screen countdown (partial refresh while holding would ghost and cost batte
 
 ### 10. OPEN (revision 10, task 085)
 - OPEN-S9: closed (task 085 notes): the estimate is replaced by the 1..10 Battery use bar; architect to confirm lib/power can give a level 1..10.
-- OPEN-S10: On USB falling back to Off when the mode no longer offers it (8.2 row 3) is a proposal; alternative is to keep the stored value and treat it as Off.
 - OPEN-S11: forced-Off Updates (Power off without a working RTC power-on) shows as a dotted row plus note; confirm 084 can report "RTC power-on unsupported" at settings time.
 
 
