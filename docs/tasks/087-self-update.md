@@ -1,6 +1,6 @@
 # 087: Firmware self-update (check weekly, offer in Settings)
 
-Status: testing
+Status: done
 Depends on: 061 (release manifest), 084/085 (power, usb sense)
 UI spec: docs/ui/settings.md (new section: firmware row on Tools + overview hint) — ui-designer
 Needs device: yes (OTA from a local test server, then from a real GitHub release)
@@ -66,3 +66,4 @@ Architecture (architect, 2026-11-02):
   Remove the NVS "skip" store entirely: the device always offers the latest release that is newer than the running firmware,
   including one that was rolled back (harmless: install needs an explicit Yes in Settings). After a rollback, the Firmware row
   shows the existing rolled-back note once; no version is suppressed.
+- 2026-11-02: real GitHub HTTPS install verified after task 089 (1.2.9 -> 1.3.0 debug test); the user installed 1.3.1 with the installer. Battery gate and Wi-Fi-down text stay open in docs/device-checks.md.
