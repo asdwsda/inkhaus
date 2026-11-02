@@ -7,12 +7,12 @@
 </defs>
 <rect width="1652" height="1532" fill="#fff"/>
 <text x="16" y="24" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Tools page: firmware row, install and update states (task 087)</text>
-<text x="16" y="58" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Up to date (info look: hairline, not tappable)</text>
+<text x="16" y="58" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Up to date (solid border, no chip: tap = Check now)</text>
 <g id="w-1">
 <rect id="w-1-frame" x="16" y="74" width="508" height="88" rx="8" fill="#fff"/>
-<rect x="16" y="74" width="508" height="1" fill="#888"/>
+<rect x="17" y="75" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
 <text id="w-1-label" x="32" y="106" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Firmware</text>
-<text id="w-1-hint" x="32" y="136" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Up to date, checked 26.10.</text>
+<text id="w-1-hint" x="32" y="136" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Checked 26.10. Tap to check</text>
 <text id="w-1-value" x="508" y="118" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">1.2.1</text>
 </g>
 <text x="16" y="182" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Update available (solid border, NEW chip)</text>
@@ -203,4 +203,30 @@
 <text id="w-20-label" x="520" y="1360" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Skip</text>
 <text id="w-20-key" x="944" y="1360" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">PUSH</text>
 </g>
+<text x="1096" y="1060" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Check now: Checking (dashed pending border, input ignored)</text>
+<g id="w-21">
+<rect id="w-21-frame" x="1096" y="1076" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="1097.5" y="1077.5" width="505" height="85" rx="8" fill="none" stroke="#000" stroke-width="3" stroke-dasharray="8 6"/>
+<text id="w-21-label" x="1112" y="1108" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Firmware</text>
+<text id="w-21-hint" x="1112" y="1138" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Checking...</text>
+<text id="w-21-value" x="1588" y="1120" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">1.2.1</text>
+</g>
+<text x="1096" y="1184" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Check result: up to date (back to tappable look)</text>
+<g id="w-22">
+<rect id="w-22-frame" x="1096" y="1200" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="1097" y="1201" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-22-label" x="1112" y="1232" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Firmware</text>
+<text id="w-22-hint" x="1112" y="1262" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Up to date, checked 14:05</text>
+<text id="w-22-value" x="1588" y="1244" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">1.2.1</text>
+</g>
+<text x="1096" y="1308" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Check result: failed (tap retries; reasons: no Wi-Fi, no server, timeout)</text>
+<g id="w-23">
+<rect id="w-23-frame" x="1096" y="1324" width="508" height="88" rx="8" fill="#fff"/>
+<rect x="1097" y="1325" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-23-label" x="1112" y="1356" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Firmware</text>
+<use id="w-23-icon" xlink:href="#i-alert" href="#i-alert" x="1112" y="1374" width="24" height="24" color="#000"/>
+<text id="w-23-hint" x="1144" y="1386" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Check failed: no Wi-Fi</text>
+<text id="w-23-value" x="1588" y="1368" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">1.2.1</text>
+</g>
+<text x="1096" y="1432" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Check result: update available = look of the 2nd row (NEW chip)</text>
 </svg>

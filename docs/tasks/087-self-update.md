@@ -51,3 +51,9 @@ Architecture (architect, 2026-11-02):
 ## Notes
 - Architect 2026-11-02 (OPEN-S12): a version that rolled back is suppressed; offer again only for a newer version.
 - User 2026-11-02 (OPEN-S13): add "Check now": tapping the up-to-date Firmware row runs a manual check (needs Wi-Fi; shows Checking..., then the result in the hint). Spec: ui-designer to add the row state.
+- Review fixes (architect 2026-11-02): (1) count the boot at the very top of setup() and let the crash guard roll
+  back while an update is pending; (2) healthy = setup finished, first frame drawn and 10 s in loop() without a
+  crash — network/HA state doesn't matter (a router outage must not roll back a good firmware); (3) close the HA
+  socket before the check/download and require >= 40 KB largest free block, else skip to the next eligible wake;
+  (4) cap a chunked manifest at 8 KB; (5) doc: trust = GitHub + TLS + manifest SHA-256, no signature;
+  (6) cold-boot check at most once per hour.
