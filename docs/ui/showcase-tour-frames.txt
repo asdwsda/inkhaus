@@ -14,4 +14,5 @@ showcase-tour-13.svg	1800
 showcase-tour-14.svg	900
 showcase-tour-15.svg	1800
 showcase-tour-16.svg	2400
-showcase-tour-17.svg	2400
+showcase-tour-17.svg	2800
+showcase-tour-18.svg	2400

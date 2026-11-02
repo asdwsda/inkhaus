@@ -85,37 +85,45 @@ def build_states():
             im.paste(Image.eval(im.convert("L"), lambda v: 255 - v).convert("RGB"), (0, 0), m)
             ImageDraw.Draw(im).rounded_rectangle(t, radius=10, outline=(0, 0, 0), width=2)
         im.save(UI + f"png/showcase-tour-src-gtab-{o[0]}.png")
-    for o, ori, fw, cfg, clr, bdg, vx in (("portrait", 0, (170, 512, 260, 542), (155, 698, 520, 758), (0, 762, 540, 812), (396, 4, 530, 50), 174),
-                                          ("landscape", 1, (644, 72, 760, 108), (628, 290, 958, 358), (480, 364, 958, 412), (816, 4, 950, 46), 646)):
-        im = Image.open(PNG + f"settings-{o}.png").convert("RGB"); d = ImageDraw.Draw(im)
-        retext(im, fw, "v0.3.1", "1.2.0")
-        # value font size taken from the Wi-Fi value ("HomeNet-5G")
-        wb, _ = ink(im, (vx - 4, 640, vx + 200, 690)) if o == "portrait" else ink(im, (vx - 4, 236, vx + 200, 280))
-        fz = min(range(14, 40), key=lambda z: abs(ImageFont.truetype(FONT, z).getbbox("HomeNet-5G")[2] - (wb[2] - wb[0])))
-        fz = 24 if o == "portrait" else fz
-        f = ImageFont.truetype(FONT, fz)
-        d.rectangle(cfg, fill=(255, 255, 255)); d.rectangle(clr, fill=(255, 255, 255)); d.rectangle(bdg, fill=(255, 255, 255))
-        cy = (cfg[1] + cfg[3]) // 2 + (0 if o == "portrait" else -2)
-        d.text((vx, cy), "ok", font=f, fill=(0, 0, 0), anchor="lm")
+    # Settings overview and Sleep & wake page: the mockups as they are, plus small retexts so the demo values are
+    # the ones the tour talks about (Keep awake On USB -> summary ", USB awake", hint "Awake while on USB").
+    def retext_r(img, box, old, new):          # right-aligned value (keeps the right ink edge)
+        (x0, y0, x1, y1), bg = ink(img, box)
+        best = min(range(10, 90), key=lambda z: (lambda bb: abs(bb[2]-bb[0]-(x1-x0)) + abs(bb[3]-bb[1]-(y1-y0)))(ImageFont.truetype(FONT, z).getbbox(old)))
+        f = ImageFont.truetype(FONT, best); d = ImageDraw.Draw(img); d.rectangle(box, fill=bg)
+        nb = f.getbbox(new); d.text((x1-nb[2], y0-nb[1]), new, font=f, fill=(0, 0, 0))
+    for o, ori, fw, sub in (("portrait", 0, (170, 512, 260, 542), (24, 230, 420, 254)),
+                            ("landscape", 1, (644, 72, 760, 108), (24, 226, 420, 250))):
+        im = Image.open(PNG + f"settings-{o}.png").convert("RGB")
+        retext(im, fw, "v0.3.1", "v" + FW)
+        retext(im, sub, "Power off, updates 3 h", "Power off, updates 3 h, USB awake" if o == "portrait" else "Touch & rocker, 30 min, USB awake")
         fn = f"png/showcase-tour-src-set-{o[0]}.png"; im.save(UI + fn); st.setdefault("set", [None, None])[ori] = fn
+        im = Image.open(PNG + f"settings-sleep-{o}.png").convert("RGB")
+        if o == "portrait":
+            retext_r(im, (420, 266, 514, 322), "Off", "On USB"); retext(im, (28, 300, 330, 326), "Sleeps as set above", "Awake while on USB")
+        else:
+            retext_r(im, (380, 262, 462, 312), "Off", "On USB"); retext(im, (28, 292, 300, 318), "Sleeps as set above", "Awake while on USB")
+        fn = f"png/showcase-tour-src-sleep-{o[0]}.png"; im.save(UI + fn); st.setdefault("sleep", [None, None])[ori] = fn
     st["hist"] = ["png/showcase-popup-portrait.png", "png/showcase-popup-landscape.png"]
     return st
+import re
+FW = re.search(r'FW_VERSION "([^"]+)"', open(os.path.join(HERE, "..", "..", "include", "version.h")).read()).group(1)
 S = build_states()
 # tap targets in screen px: (portrait (x,y), landscape (x,y))
 T = {"wake": ((270, 480), (480, 270)), "ceiling": ((140, 352), (668, 124)),
      "shutter": ((328, 120), (372, 124)), "climate": ((480, 584), (524, 356)),
      "tabslot": ((205, 920), (364, 32)), "graph": ((270, 150), (198, 180)),
-     "network": ((270, 333), (247, 342))}
+     "sleepw": ((400, 224), (392, 220)), "sleepmode": ((262, 98), (228, 94))}
 CAP = ["Asleep: the last state stays on screen", "Wake: fresh states",
        "Tap a light: on", "Long press: brightness", "Shutters: open, stop or close",
        "Climate: set the temperature", "Graph widgets on the tab", "Long press a sensor: 24 h history",
-       "Settings on the device", "Back to sleep"]
+       "Settings on the device", "Sleep &amp; wake: choose how it sleeps", "Back to sleep"]
 # frames: (step, screen, ring key or None, ms); a tap frame is followed by its "after" frame
 F = [(1, "asleep0", None, 2400), (2, "asleep0", "wake", 700), (2, "t0", None, 1800),
      (3, "t0", "ceiling", 1000), (3, "t1", None, 1500), (4, "t1", ("ceiling", 1), 900), (4, "pop", None, 1800),
      (5, "t1", "shutter", 1000), (5, "t2", None, 1500), (6, "t2", "climate", 1000), (6, "t3", None, 1500),
      (7, "t3", "tabslot", 700), (7, "gtab", None, 1800), (8, "gtab", ("graph", 1), 900), (8, "hist", None, 1800),
-     (9, "set", "network", 2400), (10, "asleep3", None, 2400)]
+     (9, "set", "sleepw", 2400), (10, "sleep", "sleepmode", 2800), (11, "asleep3", None, 2400)]
 
 def ring(cx, cy, long):
     s = f'<circle cx="{cx}" cy="{cy}" r="27" fill="#000" fill-opacity="0.28" stroke="#fff" stroke-width="11"/>\n'
@@ -141,7 +149,7 @@ for i, (step, scr, tap, ms) in enumerate(F):
         out += ring(PX+PAD+round(a*PS), PY+PAD+round(b*PS), long) + ring(LX+PAD+round(c*LS), LY+PAD+round(d*LS), long)
     cx = (PX + LX + bw2) // 2
     out += f'<text x="{cx}" y="826" font-size="38" fill="#111" text-anchor="middle">{CAP[step-1]}</text>\n'
-    dots = "".join(f'<circle cx="{cx-117+26*k}" cy="866" r="{7 if k+1==step else 5}" fill="{"#111" if k+1==step else "#a8a8a6"}"/>' for k in range(10))
+    dots = "".join(f'<circle cx="{cx-130+26*k}" cy="866" r="{7 if k+1==step else 5}" fill="{"#111" if k+1==step else "#a8a8a6"}"/>' for k in range(11))
     out += dots + "\n</svg>\n"
     frames.append((f"showcase-tour-{i+1:02d}.svg", ms))
     open(UI + frames[-1][0], "w").write(out)

@@ -18,8 +18,14 @@ long press adds a dashed outer ring. Progress dots under the caption. GIF: 1000 
 | 6 | Climate: set the temperature | tab + ring on the climate + button (2400) |
 | 7 | Graph widgets on the tab | tab + ring on tab slot 2 (700), graph tab (2000) |
 | 8 | Long press a sensor: 24 h history | graph tab + long-press ring (900), history popup (2400) |
-| 9 | Settings on the device | settings + ring on Network (2400) |
-| 10 | Back to sleep | asleep (2400) |
+| 9 | Settings on the device | settings overview + ring on Sleep & wake (2400) |
+| 10 | Sleep & wake: choose how it sleeps | Sleep & wake page + ring on Sleep mode (2800) |
+| 11 | Back to sleep | asleep (2400) |
+
+Asleep frames (steps 1, 2, 11) show the STYLE 5.6 status pill (moon + OFF + refresh time), not the old Zz badge.
+Settings frames use the current mockups; patched only: firmware version (from include/version.h), Keep awake shown as
+On USB (overview summary gets ", USB awake"; landscape summary and page show Touch & rocker, 30 min as in its mockup).
+Not in the tour: Firmware update row / Tools page, AWAKE indicator (GIF size; mentioned in the README text).
 
 Known gaps: the mockups have no separate "after" state for steps 3, 5, 6 (the ring marks the target);
 the landscape brightness mockup shows a different dashboard than the other landscape frames.
