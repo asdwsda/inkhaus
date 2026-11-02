@@ -51,3 +51,4 @@ Pure logic (estimate model, setting migration, mode -> sleep plan) in lib/ with 
   Instead a simple "Battery use" bar on a 1..10 scale for the current set of settings (1 = Power off, Updates
   Off, Keep awake Off; 10 = Keep awake Always). The lib model still ranks configurations (monotonic), but only
   the 1..10 level is shown. Acceptance: "estimate model monotonic" -> "level monotonic, 1 and 10 at the ends".
+- User 2026-11-02: the level must reflect all four inputs: Sleep mode, Updates while asleep (interval), Keep awake, Idle timeout. Native test: shorter update interval never gives a lower level; Updates Off vs 30 min differ by at least 1 level in Power off.
