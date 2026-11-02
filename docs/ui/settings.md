@@ -126,7 +126,7 @@ fitting rule: F24, then F18, then `…`.
 | Row | Rect | cy | Label | Value |
 |-----|------|----|-------|-------|
 | Firmware | (16, 504, 508, 48) | 528 | `Firmware` | `v0.3.1` |
-| Battery | (16, 552, 508, 48) | 576 | `Battery` | `78%, 3.92 V` (alert icon if <= 15 %, bolt icon if charging) |
+| Battery | (16, 552, 508, 48) | 576 | `Battery` | `78%, 3.92 V`; with a learned limit (task 079) `78%, 3.92 V, min 3.88 V`. Fit rule: worst case `100%, 3.92 V, min 3.88 V` is 308 px at F24 (column x 174..524 = 350, or 334 with the icon at x 190 + text at 206: fits in portrait), 229 px at F18 (landscape column x 646..944 = 298 with icon 314: F24 does not fit, so F18 is used by the fit rule). Shorter fallback if ever needed: `78%, 3.92 V, min 3.88` (drop the last `V`). (alert icon if <= 15 %, bolt icon if charging) |
 | HA | (16, 600, 508, 48) | 624 | `Home Assistant` | `Demo mode` (demo mode On) / `internal, ok 14:05` / `external, ok 14:05` / alert icon + `offline, last ok 13:05` / alert icon + `offline, never ok` / `-` before the first session |
 | Wi-Fi | (16, 648, 508, 48) | 672 | `Wi-Fi` | `Demo mode` (demo mode On), or SSID, or `SSID (not connected)` (SSID of the connected profile), or `-` |
 | Config | (16, 696, 508, 64) | 728 (lines 714 / 742) | `Config` | `OK`; or alert icon (cy 702) + first error up to 2 lines: `tabs[0].widgets[2].entity (line 34)`; or warn icon + `no config.yaml on SD`; `built-in demo` while demo mode is On (the SD config is not read; OPEN-S4) |
@@ -200,6 +200,8 @@ Portrait: Orientation pip row (16, 68, 508, 72). Below it a static caption F18 D
 
 ### 8.2 Sleep & wake (`settings-sleep-*.svg`)
 Pip rows Wake mode (68), Refresh every (152), Idle timeout (236), then the touch-wake note slot (16, 320, 508, 64) (empty with Button). Landscape: rows at y = 64, 144, 224 (h 68), note (16, 304, 456, 64). Mockups: Wake Touch (note visible), focus on Refresh every.
+
+**Learn battery limits (task 079, revision 9).** Fifth row, hint-row type like 9.1 (88 high, `Off` / `On` F40 INK, label `Learn battery limits` F24, hint `Raise low limit after brownouts` F18 INK, label cy +32, hint cy +62, value cy +44 from row top). Portrait (16, 420, 508, 88) (12 below Stay awake, ends 508); touch-wake note moves to (16, 520, 508, 64). Landscape (488, 164, 456, 88) (right column, 12 below Stay awake); note unchanged (16, 304, 456, 64). Ids: w-5 = this row, w-6 = note, w-7 = Back. Rocker focus order: Wake mode, Refresh every, Idle timeout, Stay awake on USB, Learn battery limits, Back. PUSH or tap toggles in the shared buffer (partial of the row, `unsaved` chip if dirty flipped). Mockups show it On.
 
 ### 8.3 Network (`settings-network-*.svg`)
 Hint rows, 88 high. Portrait: Wi-Fi (16, 68, 508, 88), HA connection (16, 168, 508, 88), note slot (16, 268, 508, 64). Landscape: Wi-Fi (16, 64, 456, 88), HA connection (488, 64, 456, 88), note (16, 164, 456, 64) (under Wi-Fi). Hints are live, read from the network state, never edited:

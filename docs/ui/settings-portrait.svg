@@ -47,7 +47,7 @@
 <text x="174" y="526" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">v0.3.1</text>
 <rect x="16" y="548" width="508" height="1" fill="#888"/>
 <text x="16" y="570" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Battery</text>
-<text x="174" y="570" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">78%, 3.92 V</text>
+<text x="174" y="570" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">78%, 3.92 V, min 3.88 V</text>
 <rect x="16" y="592" width="508" height="1" fill="#888"/>
 <text x="16" y="614" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Home Assistant</text>
 <text x="174" y="614" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">internal, ok 14:05</text>
