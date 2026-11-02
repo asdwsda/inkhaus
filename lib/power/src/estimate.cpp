@@ -1,7 +1,5 @@
 #include "estimate.h"
 
-#include <algorithm>
-#include <cmath>
 
 namespace power {
 namespace est {
@@ -33,10 +31,17 @@ double averageMa(const settings::Settings& s, const settings::Capabilities& c) {
 
 int batteryUseLevel(const settings::Settings& s, const settings::Capabilities& c) {
     if (s.keep_awake == settings::KeepAwake::Always) return 10;
-    const double best = sleepingMa(settings::SleepSetting::PowerOff, 0, settings::kIdleTimeoutSValues[0]);
-    const double worst = sleepingMa(settings::SleepSetting::TouchAndRocker, 30, settings::kIdleTimeoutSValues.back());
-    const double t = std::log(averageMa(s, c) / best) / std::log(worst / best);
-    return std::clamp(1 + static_cast<int>(std::lround(8.0 * t)), 1, 9);
+    int base = 5;
+    switch (s.sleep_mode) {
+        case settings::SleepSetting::PowerOff: base = 1; break;
+        case settings::SleepSetting::DeepSleep: base = 5; break;
+        case settings::SleepSetting::Touch:
+        case settings::SleepSetting::TouchAndRocker: base = 6; break;
+    }
+    const int32_t iv = settings::effectiveRefreshMin(s, c);
+    const int updates = iv <= 0 ? 0 : (iv <= 60 ? 2 : 1);
+    const int idle = s.idle_timeout_s >= 30 ? 1 : 0;
+    return base + updates + idle;
 }
 
 }  // namespace est

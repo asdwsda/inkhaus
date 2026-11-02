@@ -379,40 +379,52 @@ void test_usb_present_probe_first() {
 
 void test_battery_level() {
     using namespace power::est;
-    Settings best = mk(SleepSetting::PowerOff, 0);
-    best.idle_timeout_s = 10;
-    TEST_ASSERT_EQUAL_INT(1, batteryUseLevel(best));
-    Settings al = mk(SleepSetting::PowerOff, 0);
-    al.keep_awake = settings::KeepAwake::Always;
-    TEST_ASSERT_EQUAL_INT(10, batteryUseLevel(al));
-    // Power off: Updates Off vs 30 min differ by at least one level
-    TEST_ASSERT_TRUE(batteryUseLevel(mk(SleepSetting::PowerOff, 30)) >= batteryUseLevel(mk(SleepSetting::PowerOff, 0)) + 1);
-    Settings worst = mk(SleepSetting::TouchAndRocker, 30);
-    worst.idle_timeout_s = 60;
-    TEST_ASSERT_EQUAL_INT(9, batteryUseLevel(worst));
-    {
-        Settings a = mk(SleepSetting::PowerOff, 0), b = a;
-        a.idle_timeout_s = 10;
-        b.idle_timeout_s = 60;
-        TEST_ASSERT_TRUE(batteryUseLevel(b) >= batteryUseLevel(a) + 1);
-        Settings h = mk(SleepSetting::PowerOff, 60);
-        h.idle_timeout_s = 10;
-        Settings o = h;
-        o.refresh_interval_min = 0;
-        TEST_ASSERT_TRUE(batteryUseLevel(h) >= batteryUseLevel(o) + 1);
+    const int32_t ivs[] = {0, 180, 60, 30};
+    const int32_t idles[] = {10, 20, 30, 60};
+    const int base[] = {1, 5, 6, 6};
+    const SleepSetting modes[] = {SleepSetting::PowerOff, SleepSetting::DeepSleep, SleepSetting::Touch,
+                                  SleepSetting::TouchAndRocker};
+    const int upd[] = {0, 1, 2, 2};
+    for (int m = 0; m < 4; ++m)
+        for (int i = 0; i < 4; ++i)
+            for (int d = 0; d < 4; ++d) {
+                Settings x = mk(modes[m], ivs[i]);
+                x.idle_timeout_s = idles[d];
+                TEST_ASSERT_EQUAL_INT(base[m] + upd[i] + (idles[d] >= 30 ? 1 : 0), batteryUseLevel(x));
+            }
+    // spot checks
+    Settings x = mk(SleepSetting::PowerOff, 0);
+    x.idle_timeout_s = 10;
+    TEST_ASSERT_EQUAL_INT(1, batteryUseLevel(x));
+    x = mk(SleepSetting::TouchAndRocker, 30);
+    x.idle_timeout_s = 60;
+    TEST_ASSERT_EQUAL_INT(9, batteryUseLevel(x));
+    x = mk(SleepSetting::PowerOff, 30);
+    x.idle_timeout_s = 60;
+    TEST_ASSERT_EQUAL_INT(4, batteryUseLevel(x));
+    x = mk(SleepSetting::DeepSleep, 0);
+    x.idle_timeout_s = 10;
+    TEST_ASSERT_EQUAL_INT(5, batteryUseLevel(x));
+    // defaults (Deep sleep, 1 h, 20 s)
+    TEST_ASSERT_EQUAL_INT(7, batteryUseLevel(Settings{}));
+    // Always = 10 in every mode
+    for (auto m : modes) {
+        Settings a = mk(m, 60);
+        a.keep_awake = settings::KeepAwake::Always;
+        TEST_ASSERT_EQUAL_INT(10, batteryUseLevel(a));
+        Settings u = mk(m, 60);
+        const int off = batteryUseLevel(u);
+        u.keep_awake = settings::KeepAwake::OnUsb;
+        TEST_ASSERT_EQUAL_INT(off, batteryUseLevel(u));
     }
-    // defaults
-    TEST_ASSERT_EQUAL_INT(9, batteryUseLevel(Settings{}));
-    // monotonic in sleep mode, interval (shorter never lower), idle timeout, keep awake
-    for (int32_t iv : settings::kRefreshIntervalMinValues) {
-        int prev = 0;
-        for (auto m : settings::kSleepModeValues) {
-            const int l = batteryUseLevel(mk(m, iv));
-            TEST_ASSERT_TRUE(l >= prev);
-            prev = l;
-        }
-    }
-    for (auto m : settings::kSleepModeValues) {
+    // Power off max < Deep sleep min
+    Settings po = mk(SleepSetting::PowerOff, 30);
+    po.idle_timeout_s = 60;
+    Settings ds = mk(SleepSetting::DeepSleep, 0);
+    ds.idle_timeout_s = 10;
+    TEST_ASSERT_TRUE(batteryUseLevel(po) < batteryUseLevel(ds));
+    // monotonic per input
+    for (auto m : modes) {
         int prev = 0;
         for (int32_t iv : {0, 720, 360, 180, 60, 30}) {
             const int l = batteryUseLevel(mk(m, iv));
@@ -420,22 +432,14 @@ void test_battery_level() {
             prev = l;
         }
         prev = 0;
-        for (int32_t idle : settings::kIdleTimeoutSValues) {
-            Settings x = mk(m, 60);
-            x.idle_timeout_s = idle;
-            const int l = batteryUseLevel(x);
+        for (int32_t idle : idles) {
+            Settings y = mk(m, 60);
+            y.idle_timeout_s = idle;
+            const int l = batteryUseLevel(y);
             TEST_ASSERT_TRUE(l >= prev);
             prev = l;
         }
-        Settings x = mk(m, 60);
-        const int off = batteryUseLevel(x);
-        x.keep_awake = settings::KeepAwake::OnUsb;
-        TEST_ASSERT_TRUE(batteryUseLevel(x) >= off);
-        x.keep_awake = settings::KeepAwake::Always;
-        TEST_ASSERT_EQUAL_INT(10, batteryUseLevel(x));
     }
-    // every non-Always configuration stays below 10 and within 1..9
-    TEST_ASSERT_TRUE(batteryUseLevel(mk(SleepSetting::TouchAndRocker, 30)) <= 9);
     // forced-Off updates: same as Off
     settings::Capabilities noRtc;
     noRtc.rtc_power_on = false;
