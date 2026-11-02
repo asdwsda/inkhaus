@@ -82,6 +82,7 @@
 | 080 | [Cap the Wi-Fi connect time per session](080-wifi-connect-cap.md) | testing | 047, 056 |
 | 081 | [Stay awake on USB (setting) and manual sleep](081-usb-stay-awake-and-sleep-now.md) | testing | 035 |
 | 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | todo | 029, 071 |
+| 083 | [Screen greys out while sleeping](083-panel-grey-drift.md) | todo | 035, 082 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
