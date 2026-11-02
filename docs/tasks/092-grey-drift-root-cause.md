@@ -76,3 +76,4 @@ Fix by evidence, cheapest first:
 - 2026-11-02 (user): every scheduled wake does the GC16 full (also when only the sleep pill's next-update time changed), so the pill time is always current.
 - 2026-11-02 firmware-dev: scheduledSleepFull removed; main.cpp calls finishScheduled(true) on every scheduled wake.
 - 2026-11-02 evening: overnight run started (normal m5paper build cc62829, user settings, battery). Photo + wake log (TASK_WDT / panel_init_slow) in the morning.
+- Overnight run uses build 2166bd9 (092+093+094) with portrait_columns: 3 on Home; starts when unplugged.

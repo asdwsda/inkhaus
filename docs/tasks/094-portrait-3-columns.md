@@ -41,3 +41,4 @@ User 2026-11-02: per-tab `portrait_columns: 3` (default 2), analogous to `landsc
   (40 px icon at y 6, name baseline 68, state 91; mockup has 32 px); (3) compact cover/vacuum/climate badge positions (spec silent);
   (4) sensor 2x1 and weather 2x1 at 334/248 px; (5) graph 2x2 (334) and 2x1 (334/248) spark/ticks; (6) touch on compact buttons.
 - 2026-11-02 (user): confirmed light + automation may be 1x1 at 4 columns.
+- 2026-11-02 late (user): 3-col Home on device matches experiment-portrait-3col-cover3.png. 4-col, compact widgets, landscape still unchecked.
