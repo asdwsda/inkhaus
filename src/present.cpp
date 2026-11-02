@@ -661,6 +661,14 @@ bool finishScheduled(bool full) {
   return true;
 }
 
+void idleFull() {
+  fullRefresh(false, "full_idle");
+  saveRecordOfCurrent();
+  closeRead();
+  boot::endBurstRead();
+  g_lastShowMs = millis();
+}
+
 bool deferChanged() { return g_deferChanged; }
 bool partialDebt() { loadDebt(); return g_debt; }
 

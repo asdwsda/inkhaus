@@ -469,6 +469,15 @@ void test_refresh_decision() {
   TEST_ASSERT_FALSE(firstFrameFull(true, true, false));   // scheduled wake always ends with the full
 }
 
+void test_idle_full_due() {
+  const uint32_t t = kIdleFullMs;
+  TEST_ASSERT_TRUE(idleFullDue(true, t, false, false));
+  TEST_ASSERT_FALSE(idleFullDue(true, t - 1, false, false));  // input restarted the timer
+  TEST_ASSERT_FALSE(idleFullDue(false, t * 3, false, false)); // no debt: no repeat after the full
+  TEST_ASSERT_FALSE(idleFullDue(true, t, true, false));       // popup / Settings / OTA
+  TEST_ASSERT_FALSE(idleFullDue(true, t, false, true));       // input pending
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_ext1_empty_mask_is_rocker);
@@ -506,5 +515,6 @@ int main() {
   RUN_TEST(test_guard_key_wake_ignores_touch_and_touch_wake_ignores_key);
   RUN_TEST(test_guard_not_armed_blocks_nothing);
   RUN_TEST(test_refresh_decision);
+  RUN_TEST(test_idle_full_due);
   return UNITY_END();
 }

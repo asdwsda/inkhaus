@@ -112,6 +112,11 @@ SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build);
 bool deferRefreshes(bool scheduled);
 // Interactive wake with Updates Off (no scheduled wake will clear the debt): the first frame is a GC16 full.
 bool firstFrameFull(bool scheduled, bool debt, bool updates_on);
+// Task 095: awake for long (USB / Keep awake Always): one GC16 full of the current frame when partial debt is set
+// and there was no input for kIdleFullMs. Not under a popup / Settings / OTA, not with input pending. The full
+// clears the debt, so it does not repeat; input restarts the 5 min (the caller passes ms since the last input).
+constexpr uint32_t kIdleFullMs = 5u * 60u * 1000u;
+bool idleFullDue(bool debt, uint32_t idle_ms, bool modal, bool input_pending);
 
 // ---- local idle sleep (no session: demo mode, config-error screen) --------------------------------
 

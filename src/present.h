@@ -75,6 +75,8 @@ bool prepareSleep();
 // Task 092 (grey drift). Call before bootFrame. deferred (scheduled wake): bootFrame and show() draw nothing and
 // only note whether the frame changed. firstFrameFull: bootFrame does one GC16 full when partial debt is set.
 void setWakePolicy(bool deferred, bool firstFrameFull);
+// Task 095: one GC16 full of the current frame now (log `full_idle`), clears the debt. Call only when idle.
+void idleFull();
 bool deferChanged();   // the deferred frames differ from the panel
 bool partialDebt();    // partial refreshes since the last GC16 full (NVS, kept across sleep)
 // End of a deferred session: the frame in canvas() (sleep badge included) as one GC16 full if `full`

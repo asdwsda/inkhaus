@@ -126,6 +126,10 @@ bool deferRefreshes(bool scheduled) { return scheduled; }
 
 bool firstFrameFull(bool scheduled, bool debt, bool updates_on) { return !scheduled && debt && !updates_on; }
 
+bool idleFullDue(bool debt, uint32_t idle_ms, bool modal, bool input_pending) {
+  return debt && !modal && !input_pending && idle_ms >= kIdleFullMs;
+}
+
 bool localIdleSleepWanted(bool session_running) { return !session_running; }
 
 power::SleepPlan localIdlePlan(const settings::Settings &s, int64_t now_epoch, int32_t utc_offset_s) {

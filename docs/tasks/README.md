@@ -93,7 +93,7 @@
 | 092 | [Grey drift: find the cause](092-grey-drift-root-cause.md) | in-progress | 083, 091 |
 | 093 | [Task watchdog restart on a scheduled wake](093-wake-task-wdt.md) | todo | 083, 091 |
 | 094 | [Portrait 3-column grid](094-portrait-3-columns.md) | in-progress | 043 |
-| 095 | [Clear grey drift during long awake sessions](095-awake-drift-cleanup.md) | todo | 092 |
+| 095 | [Clear grey drift during long awake sessions](095-awake-drift-cleanup.md) | in progress | 092 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.

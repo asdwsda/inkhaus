@@ -79,6 +79,7 @@ static std::unique_ptr<session_glue::ArduinoWifi> g_wifi;
 static std::unique_ptr<app_logic::SessionDriver> g_drv;
 static power::IdleTimer g_localIdle;  // sleep timer when no session runs (demo, config error)
 static bool g_localIdleOn = false;
+static uint32_t g_lastInputMs = 0;       // task 095: last user input (touch / key / popup activity)
 static power::StayAwakeGate g_stayGate;  // feeds the idle timers while staying awake on USB
 static uint32_t g_usbSampleMs = 0;
 static bool g_usbSampled = false;
@@ -1338,6 +1339,12 @@ void loop() {
   }
   changed |= g_app.tick(now);
   if (changed) showFrame(now);
+  if (e.kind != input::Event::None || popupOpen) g_lastInputMs = now;
+  if (!g_scheduled && g_real && !ota::busy() &&
+      app_logic::idleFullDue(present::partialDebt(), now - g_lastInputMs,
+                             settings_flow::active() || g_app.brightnessOpen() || g_app.historyPopup().visible(),
+                             g_defer.armed()))  // task 095: grey drift in a long awake session
+    present::idleFull();
   present::idle(millis());
   delay(10);
 }
