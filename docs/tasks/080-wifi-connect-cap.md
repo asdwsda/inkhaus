@@ -30,3 +30,7 @@ median 4 s) and 4/117 failed fetches: retries keep the radio on. Cap the total t
 
 ## Notes
 - First find out where the 80 s came from (retry loop, scan fallback, or the TLS/WS step counted in wifi_ms).
+- 2026-11-02: wifi_ms was measured until the session went Online (HA WebSocket up), not until Wi-Fi associated;
+  fixed (now first Wi-Fi association). So the 80 s outlier was most likely the HA connect/retries, not Wi-Fi,
+  and the Wi-Fi budget may not shorten such sessions. fetch_ms now includes the HA WebSocket connect.
+  Watch fetch_ms outliers in the wake log; open a task for an HA connect cap if they persist.
