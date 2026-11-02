@@ -153,12 +153,6 @@
 <text id="w-15-label" x="1128" y="880" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">No, cancel</text>
 <text id="w-15-key" x="1604" y="880" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">DOWN</text>
 </g>
-<g id="w-16">
-<rect id="w-16-frame" x="1112" y="924" width="508" height="64" rx="8" fill="#fff"/>
-<rect x="1113" y="925" width="506" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<text id="w-16-label" x="1128" y="956" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Skip</text>
-<text id="w-16-key" x="1604" y="956" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">PUSH</text>
-</g>
 <text x="16" y="958" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Confirm step, landscape</text>
 <rect x="15" y="975" width="962" height="542" fill="none" stroke="#888" stroke-width="1"/>
 <text x="32" y="1001" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">Update</text>
@@ -196,12 +190,6 @@
 <rect x="505" y="1253" width="454" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
 <text id="w-19-label" x="520" y="1284" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">No, cancel</text>
 <text id="w-19-key" x="944" y="1284" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">DOWN</text>
-</g>
-<g id="w-20">
-<rect id="w-20-frame" x="504" y="1328" width="456" height="64" rx="8" fill="#fff"/>
-<rect x="505" y="1329" width="454" height="62" rx="8" fill="none" stroke="#000" stroke-width="2"/>
-<text id="w-20-label" x="520" y="1360" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Skip</text>
-<text id="w-20-key" x="944" y="1360" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">PUSH</text>
 </g>
 <text x="1096" y="1060" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Check now: Checking (dashed pending border, input ignored)</text>
 <g id="w-21">

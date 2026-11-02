@@ -48,7 +48,7 @@ Architecture (architect, 2026-11-02):
 - [ ] Wake log shows no extra awake time on wakes without a due check.
 - [ ] `pio run` and `pio test -e native` pass; release workflow builds the new manifest (dry run).
 
-## Notes
+- Architect 2026-11-02 (OPEN-S12): a version that rolled back is suppressed. Superseded 2026-11-02 by the user: no suppression, no Skip (see the last bullet).
 - Architect 2026-11-02 (OPEN-S12): a version that rolled back is suppressed; offer again only for a newer version.
 - User 2026-11-02 (OPEN-S13): add "Check now": tapping the up-to-date Firmware row runs a manual check (needs Wi-Fi; shows Checking..., then the result in the hint). Spec: ui-designer to add the row state.
 - Review fixes (architect 2026-11-02): (1) count the boot at the very top of setup() and let the crash guard roll
@@ -62,3 +62,7 @@ Architecture (architect, 2026-11-02):
   first frame (a short scheduled wake must not count as unhealthy); a rolled-back or skipped version is stored in NVS "skip" and offered
   again only for a newer one; USB for installBlock is `power::usbAtSleep()` (helper `usbNow()` in main.cpp, swap to `power::usbPresent()`
   when the 085 probe is merged); trust model (GitHub + TLS + manifest SHA-256, no signature) is in src/ota.h.
+- Change 2026-11-02 (user): no Skip. The confirm page has only `Yes, install` (UP) and `No, cancel` (DOWN; PUSH/LONG_PUSH = No).
+  Remove the NVS "skip" store entirely: the device always offers the latest release that is newer than the running firmware,
+  including one that was rolled back (harmless: install needs an explicit Yes in Settings). After a rollback, the Firmware row
+  shows the existing rolled-back note once; no version is suppressed.
