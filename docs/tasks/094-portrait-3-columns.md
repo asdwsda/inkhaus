@@ -28,3 +28,4 @@ User 2026-11-02: per-tab `portrait_columns: 3` (default 2), analogous to `landsc
 - [ ] `pio run` and `pio test -e native` pass.
 
 ## Notes
+- 2026-11-02 (user): also experiment with portrait_columns: 4 (mockup docs/ui/experiment-portrait-4col*.svg pending). Allowed values 2..4 if the 4-col mockup is accepted, else 2..3.
