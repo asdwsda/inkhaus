@@ -46,8 +46,8 @@ void test_areas_portrait() {
   eqRect({16, 68, 508, 800}, l.content);
   eqRect({0, 0, 288, 56}, l.refreshHit);
   eqRect({412, 0, 112, 56}, l.settingsHit);
-  eqRect({298, 3, 100, 48}, l.sleepBadge);
-  eqRect({298, 3, 100, 48}, sleepBadgeRect(P));
+  eqRect({298, 3, 108, 48}, l.sleepBadge);
+  eqRect({298, 3, 108, 48}, sleepBadgeRect(P));
   const Grid &g = gridFor(P);
   TEST_ASSERT_EQUAL_INT(2, g.cols);
   TEST_ASSERT_EQUAL_INT(7, g.rows);
@@ -64,8 +64,8 @@ void test_areas_landscape() {
   eqRect({16, 72, 928, 452}, l.content);
   eqRect({16, 4, 144, 56}, l.refreshHit);
   eqRect({832, 4, 112, 56}, l.settingsHit);
-  eqRect({710, 8, 100, 48}, l.sleepBadge);
-  eqRect({710, 8, 100, 48}, sleepBadgeRect(L));
+  eqRect({706, 8, 108, 48}, l.sleepBadge);
+  eqRect({706, 8, 108, 48}, sleepBadgeRect(L));
   const Grid &g = gridFor(L);
   TEST_ASSERT_EQUAL_INT(5, g.cols);
   TEST_ASSERT_EQUAL_INT(4, g.rows);

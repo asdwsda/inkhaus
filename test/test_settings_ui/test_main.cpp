@@ -6,7 +6,7 @@
 using namespace settings_ui;
 using settings::Orientation;
 using settings::Settings;
-using settings::WakeMode;
+using settings::SleepSetting;
 using ui::LogicalKey;
 
 void setUp() {}
@@ -200,20 +200,27 @@ void test_page_layouts() {
   TEST_ASSERT_EQUAL_INT(132, dl.caption.y);
 
   PageLayout s = computePageLayout(Page::Sleep, Orientation::Portrait);
-  expectRect(16, 68, 508, 72, s.rows[0]);
-  expectRect(16, 152, 508, 72, s.rows[1]);
-  expectRect(16, 236, 508, 72, s.rows[2]);
-  expectRect(16, 320, 508, 88, s.rows[3]);
-  TEST_ASSERT_TRUE(s.rowIds[3] == RowId::StayAwake);
-  expectRect(16, 420, 508, 88, s.rows[4]);
+  expectRect(16, 68, 508, 88, s.rows[0]);
+  TEST_ASSERT_TRUE(s.rowIds[0] == RowId::SleepMode);
+  expectRect(16, 168, 508, 72, s.rows[1]);
+  TEST_ASSERT_TRUE(s.rowIds[1] == RowId::Updates);
+  expectRect(16, 252, 508, 88, s.rows[2]);
+  TEST_ASSERT_TRUE(s.rowIds[2] == RowId::KeepAwake);
+  expectRect(16, 352, 508, 72, s.rows[3]);
+  TEST_ASSERT_TRUE(s.rowIds[3] == RowId::Idle);
+  expectRect(16, 436, 508, 88, s.rows[4]);
   TEST_ASSERT_TRUE(s.rowIds[4] == RowId::LearnBattery);
   TEST_ASSERT_EQUAL_INT(6, s.stopCount);
-  expectRect(16, 520, 508, 64, s.note);
+  expectRect(16, 536, 508, 64, s.note);
+  expectRect(16, 612, 508, 64, s.note2);
+  expectRect(16, 744, 508, 124, s.estimate);
   PageLayout sl = computePageLayout(Page::Sleep, Orientation::Landscape);
-  expectRect(16, 144, 456, 68, sl.rows[1]);
-  expectRect(488, 64, 456, 88, sl.rows[3]);
-  expectRect(488, 164, 456, 88, sl.rows[4]);
-  expectRect(16, 304, 456, 64, sl.note);
+  expectRect(16, 164, 456, 68, sl.rows[1]);
+  expectRect(16, 244, 456, 88, sl.rows[2]);
+  expectRect(16, 344, 456, 68, sl.rows[3]);
+  expectRect(488, 64, 456, 88, sl.rows[4]);
+  expectRect(488, 164, 456, 64, sl.note);
+  expectRect(488, 328, 456, 124, sl.estimate);
 
   PageLayout n = computePageLayout(Page::Network, Orientation::Portrait);
   expectRect(16, 68, 508, 88, n.rows[0]);
@@ -262,13 +269,17 @@ void test_summaries() {
   TEST_ASSERT_EQUAL_STRING("Portrait", categorySummary(0, s, n).c_str());
   s.orientation = Orientation::Landscape;
   TEST_ASSERT_EQUAL_STRING("Landscape", categorySummary(0, s, n).c_str());
-  s.wake_mode = WakeMode::Touch;
+  s.sleep_mode = SleepSetting::Touch;
   s.refresh_interval_min = 60;
   s.idle_timeout_s = 20;
-  TEST_ASSERT_EQUAL_STRING("Touch, 60 min, 20 s", categorySummary(1, s, n).c_str());
-  s.wake_mode = WakeMode::TouchAndButton;
-  TEST_ASSERT_EQUAL_STRING("Touch & Button, 60 min, 20 s", categorySummary(1, s, n).c_str());
-  TEST_ASSERT_EQUAL_STRING("Both, 60 min, 20 s", categorySummary(1, s, n, true).c_str());
+  TEST_ASSERT_EQUAL_STRING("Touch, 1 h, 20 s", categorySummary(1, s, n).c_str());
+  s.sleep_mode = SleepSetting::TouchAndRocker;
+  s.refresh_interval_min = 30;
+  TEST_ASSERT_EQUAL_STRING("Touch & rocker, 30 min, 20 s", categorySummary(1, s, n).c_str());
+  TEST_ASSERT_EQUAL_STRING("Touch+rocker, 30 min, 20 s", categorySummary(1, s, n, true).c_str());
+  s.sleep_mode = SleepSetting::PowerOff;
+  s.refresh_interval_min = 0;
+  TEST_ASSERT_EQUAL_STRING("Power off, Off, 20 s", categorySummary(1, s, n).c_str());
   TEST_ASSERT_EQUAL_STRING("Wi-Fi Auto, HA Auto", categorySummary(2, s, n).c_str());
   s.wifi_profile = "Hotspot";
   s.ha_link = settings::HaLink::Internal;
@@ -330,7 +341,7 @@ void test_notes_per_page() {
   Settings s;
   const NetworkInfo n = twoProfiles();
   TEST_ASSERT_FALSE(pageShowsNote(Page::Sleep, s, n));
-  s.wake_mode = WakeMode::Touch;
+  s.sleep_mode = SleepSetting::Touch;
   TEST_ASSERT_TRUE(pageShowsNote(Page::Sleep, s, n));
   TEST_ASSERT_FALSE(pageShowsNote(Page::Network, s, n));
   s.wifi_profile = "Home";
@@ -435,8 +446,8 @@ void test_rocker_focus_orders_and_wrap() {
   TEST_ASSERT_EQUAL_INT(5, s.focus());  // Back
   // Push on a row cycles the buffer
   s.onKey(LogicalKey::Next);
-  s.onKey(LogicalKey::Push);  // Wake mode Button -> Touch
-  TEST_ASSERT_TRUE(s.edit().wake_mode == WakeMode::Touch);
+  s.onKey(LogicalKey::Push);  // Sleep mode Deep sleep -> Touch
+  TEST_ASSERT_TRUE(s.edit().sleep_mode == SleepSetting::Touch);
   // Push on Back goes up, focus on the Sleep row
   s.onKey(LogicalKey::Prev);
   u = s.onKey(LogicalKey::Push);
@@ -453,28 +464,34 @@ void test_learn_battery_row() {
   TEST_ASSERT_FALSE(o.learn_battery);
 }
 
-void test_stay_awake_row_and_sleep_now() {
-  SettingsScreen s(Settings(), Orientation::Portrait, true);
+void test_keep_awake_row_and_sleep_now() {
+  Settings st0;
+  st0.sleep_mode = SleepSetting::PowerOff;
+  SettingsScreen s(st0, Orientation::Portrait, true);
   touchCentre(s, s.layout().categories[1]);  // Sleep & wake
   TEST_ASSERT_TRUE(s.page() == Page::Sleep);
-  const Rect row = s.pageLayout().rows[3];
-  TEST_ASSERT_EQUAL_STRING("Off", rowValueText(RowId::StayAwake, s.edit(), NetworkInfo()).c_str());
-  TEST_ASSERT_EQUAL_STRING("Stay awake on USB", rowLabel(RowId::StayAwake));
-  TEST_ASSERT_EQUAL_STRING("Never sleeps while on USB power", hintRowStaticHint(RowId::StayAwake));
-  Update u = touchCentre(s, row);
-  TEST_ASSERT_TRUE(s.edit().stay_awake_usb);
+  const Rect row = s.pageLayout().rows[2];
+  TEST_ASSERT_EQUAL_STRING("Off", rowValueText(RowId::KeepAwake, s.edit(), NetworkInfo()).c_str());
+  TEST_ASSERT_EQUAL_STRING("Keep awake", rowLabel(RowId::KeepAwake));
+  TEST_ASSERT_EQUAL_STRING("Sleeps as set above", sleepRowHint(RowId::KeepAwake, s.edit()).c_str());
+  Update u = touchCentre(s, row);  // Power off offers On USB: Off -> On USB
+  TEST_ASSERT_TRUE(s.edit().keep_awake == settings::KeepAwake::OnUsb);
+  TEST_ASSERT_EQUAL_STRING("Awake while on USB", sleepRowHint(RowId::KeepAwake, s.edit()).c_str());
   TEST_ASSERT_TRUE(s.dirty());
   TEST_ASSERT_TRUE(u.action == Action::None);
-  bool valueDirty = false, chip = false;
+  bool rowDirty = false, chip = false, est = false;
   for (const Rect& d : u.dirty) {
-    if (d == hintRowValueRect(row)) valueDirty = true;
+    if (d == row) rowDirty = true;
     if (d == s.pageLayout().unsavedChip) chip = true;
+    if (d == estimateLiveRect(s.pageLayout().estimate)) est = true;
   }
-  TEST_ASSERT_TRUE(valueDirty && chip);
+  TEST_ASSERT_TRUE(rowDirty && chip && est);
   TEST_ASSERT_TRUE(s.leave().save);
   TEST_ASSERT_FALSE(s.leave().networkChanged);
-  touchCentre(s, row);
-  TEST_ASSERT_FALSE(s.edit().stay_awake_usb);
+  touchCentre(s, row);  // On USB -> Always
+  TEST_ASSERT_TRUE(s.edit().keep_awake == settings::KeepAwake::Always);
+  touchCentre(s, row);  // Always -> Off
+  TEST_ASSERT_TRUE(s.edit().keep_awake == settings::KeepAwake::Off);
   TEST_ASSERT_FALSE(s.dirty());
 
   // Sleep now: a tap on the overview row and PUSH with the focus on it
@@ -548,7 +565,7 @@ void test_tools_toggles_and_values() {
 
 void test_pip_rows_cycle_full_circle() {
   NetworkInfo n;
-  const RowId pips[] = {RowId::Orientation, RowId::Wake, RowId::Refresh, RowId::Idle};
+  const RowId pips[] = {RowId::Orientation, RowId::Updates, RowId::Idle};
   for (RowId r : pips) {
     Settings s;
     TEST_ASSERT_TRUE(isPipRow(r));
@@ -609,8 +626,8 @@ void test_row_internals_pips_notes_buttons() {
   TEST_ASSERT_EQUAL_INT(16 + 22 + 100, pipCentre(row, 5).x);
   TEST_ASSERT_EQUAL_INT(68 + 49, pipCentre(row, 0).y);
   TEST_ASSERT_EQUAL_INT(2, pipCount(RowId::Orientation));
-  TEST_ASSERT_EQUAL_INT(3, pipCount(RowId::Wake));
-  TEST_ASSERT_EQUAL_INT(6, pipCount(RowId::Refresh));
+  TEST_ASSERT_EQUAL_INT(0, pipCount(RowId::SleepMode));
+  TEST_ASSERT_EQUAL_INT(6, pipCount(RowId::Updates));
   TEST_ASSERT_EQUAL_INT(4, pipCount(RowId::Idle));
   TEST_ASSERT_EQUAL_INT(0, pipCount(RowId::Wifi));
   Rect note{16, 320, 508, 64};
@@ -809,6 +826,94 @@ void test_network_rows_dirty_includes_hint_row_value_only() {
   TEST_ASSERT_TRUE(u.dirty[0] == hintRowValueRect(P.rows[1]));
 }
 
+void test_sleep_page_rules() {
+  NetworkInfo n;
+  // On USB is not offered outside Power off: the cycle is Off -> Always -> Off
+  Settings d;
+  d.sleep_mode = SleepSetting::DeepSleep;
+  Settings k = cycleRow(RowId::KeepAwake, d, n);
+  TEST_ASSERT_TRUE(k.keep_awake == settings::KeepAwake::Always);
+  TEST_ASSERT_TRUE(cycleRow(RowId::KeepAwake, k, n).keep_awake == settings::KeepAwake::Off);
+  TEST_ASSERT_EQUAL_STRING("On USB only in Power off", sleepRowHint(RowId::KeepAwake, d).c_str());
+  // changing the mode drops On USB to Off in the buffer; Always stays
+  Settings p;
+  p.sleep_mode = SleepSetting::PowerOff;
+  p.keep_awake = settings::KeepAwake::OnUsb;
+  Settings q = cycleRow(RowId::SleepMode, p, n);  // Power off -> Deep sleep
+  TEST_ASSERT_TRUE(q.sleep_mode == SleepSetting::DeepSleep);
+  TEST_ASSERT_TRUE(q.keep_awake == settings::KeepAwake::Off);
+  p.keep_awake = settings::KeepAwake::Always;
+  TEST_ASSERT_TRUE(cycleRow(RowId::SleepMode, p, n).keep_awake == settings::KeepAwake::Always);
+  // sleep mode cycle order and wrap
+  Settings m;
+  const SleepSetting want[] = {SleepSetting::Touch, SleepSetting::TouchAndRocker, SleepSetting::PowerOff, SleepSetting::DeepSleep};
+  for (SleepSetting w : want) {
+    m = cycleRow(RowId::SleepMode, m, n);
+    TEST_ASSERT_TRUE(m.sleep_mode == w);
+  }
+  TEST_ASSERT_EQUAL_STRING("Touch & rocker", rowValueText(RowId::SleepMode, [] { Settings x; x.sleep_mode = SleepSetting::TouchAndRocker; return x; }(), n).c_str());
+  // updates values
+  const char* upd[] = {"Off", "30 min", "1 h", "3 h", "6 h", "12 h"};
+  Settings u;
+  u.refresh_interval_min = 0;
+  for (int i = 0; i < 6; ++i) {
+    TEST_ASSERT_EQUAL_STRING(upd[i], rowValueText(RowId::Updates, u, n).c_str());
+    u = cycleRow(RowId::Updates, u, n);
+  }
+  TEST_ASSERT_EQUAL_INT32(0, u.refresh_interval_min);
+  // notes: forced Off first, then the touch note
+  settings::Capabilities noRtc;
+  noRtc.rtc_power_on = false;
+  Settings f;
+  f.sleep_mode = SleepSetting::PowerOff;
+  SleepNotes sn = sleepNotes(f, noRtc);
+  TEST_ASSERT_EQUAL_INT(1, sn.count);
+  TEST_ASSERT_EQUAL_STRING(kForcedNoteLine1, sn.note[0].line1);
+  f.sleep_mode = SleepSetting::Touch;
+  sn = sleepNotes(f, noRtc);
+  TEST_ASSERT_EQUAL_INT(1, sn.count);
+  TEST_ASSERT_EQUAL_STRING(kNoteLine1, sn.note[0].line1);
+  TEST_ASSERT_EQUAL_INT(0, sleepNotes(Settings()).count);
+  // forced row: tap and PUSH ignored, skipped by the rocker, value reads Off, stored value kept
+  Settings fs;
+  fs.sleep_mode = SleepSetting::PowerOff;
+  fs.refresh_interval_min = 360;
+  SettingsScreen sc(fs, Orientation::Portrait, true);
+  sc.setCapabilities(noRtc);
+  touchCentre(sc, sc.layout().categories[1]);
+  const Rect updRow = sc.pageLayout().rows[1];
+  TEST_ASSERT_TRUE(sc.rowForced(RowId::Updates));
+  Update tu = touchCentre(sc, updRow);
+  TEST_ASSERT_TRUE(tu.dirty.empty());
+  TEST_ASSERT_EQUAL_INT32(360, sc.edit().refresh_interval_min);
+  sc.onKey(LogicalKey::Next);  // focus 0 -> would be 1 (Updates): skipped to Keep awake
+  TEST_ASSERT_EQUAL_INT(2, sc.focus());
+  sc.onKey(LogicalKey::Prev);  // back over the forced row
+  TEST_ASSERT_EQUAL_INT(0, sc.focus());
+  // changing the sleep mode redraws the three top rows, the estimate and the note area
+  Update mu = sc.onKey(LogicalKey::Push);  // Power off -> Deep sleep
+  TEST_ASSERT_FALSE(sc.rowForced(RowId::Updates));
+  int rows = 0;
+  bool noteArea = false;
+  for (const Rect& r : mu.dirty) {
+    for (int i = 0; i < 3; ++i) if (r == sc.pageLayout().rows[i]) ++rows;
+    if (r.x == sc.pageLayout().note.x && r.y == sc.pageLayout().note.y && r.h > 64) noteArea = true;
+  }
+  TEST_ASSERT_EQUAL_INT(3, rows);
+  TEST_ASSERT_TRUE(noteArea);  // the forced note went away
+}
+
+void test_estimate_view() {
+  Settings s;
+  const EstimateView a = estimateView(s);
+  TEST_ASSERT_TRUE(a.level >= 1 && a.level <= 10);
+  s.keep_awake = settings::KeepAwake::Always;
+  TEST_ASSERT_EQUAL_STRING("10/10", estimateView(s).text.c_str());
+  const Rect live = estimateLiveRect({16, 744, 508, 124});
+  TEST_ASSERT_EQUAL_INT(780, live.y);
+  TEST_ASSERT_EQUAL_INT(88, live.h);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_info_texts);
@@ -818,7 +923,9 @@ int main() {
   RUN_TEST(test_value_fit_level);
   RUN_TEST(test_overview_layout_both_orientations);
   RUN_TEST(test_page_layouts);
-  RUN_TEST(test_stay_awake_row_and_sleep_now);
+  RUN_TEST(test_keep_awake_row_and_sleep_now);
+  RUN_TEST(test_sleep_page_rules);
+  RUN_TEST(test_estimate_view);
   RUN_TEST(test_learn_battery_row);
   RUN_TEST(test_page_targets_size_gaps_and_screen_bounds);
   RUN_TEST(test_summaries);

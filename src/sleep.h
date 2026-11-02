@@ -18,6 +18,11 @@ power::WakeReason detect();
 // Valid after detect(); only meaningful for a scheduled-refresh wake (the first frame then keeps it).
 app_logic::Indicator storedIndicator();
 
+// The pill that was drawn before the previous sleep (task 085): its indicator and the epoch of the next scheduled
+// update shown on line 2 (0 = "off"). Valid after detect(); None after a cold boot with nothing stored.
+app_logic::Indicator panelIndicator();
+int64_t panelNextAt();
+
 // True if the panel still shows the sleep badge of our previous deep sleep (any wake kind except a power-up
 // or reset). Valid after detect(). Task 058: the early wake feedback clears it.
 bool badgeOnPanel();

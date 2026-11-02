@@ -61,3 +61,8 @@ the ~1 month target.
   hardware power-on latch). Reset button does not boot it while off (expected: no power). TODO: a power-off wake
   must not show the splash screen; keep the frozen image and redraw only what changed (like a deep-sleep wake).
   The power-off sleep indicator / Settings hint should say "hold 3 s" (085).
+- Wake log of the user's test (scratchpad wl084.csv): unplug 11:21:36; power-off wakes 11:23:05/29/48, 11:24:16
+  (rocker), then 11:28:15, 11:32:16, 11:36:15 = the 4-min RTC alarm: RTC power-on WORKS (3/3). But those wakes log
+  as `button`/POWERON and run an interactive session: a power-on by the BM8563 can't be told from the rocker by
+  reset reason. Fix: read the BM8563 alarm flag (AF) at boot -> scheduled session. usb_rx on battery is unknown
+  (debug.log off; the CSV has no usb_rx column): add it to the wake log.

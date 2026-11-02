@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "estimate.h"
 #include "settings.h"
 #include "ui_layout.h"
 #include "ui_rocker.h"
@@ -22,10 +23,10 @@ inline Page categoryPage(int i) { return static_cast<Page>(i + 1); }
 const char* categoryLabel(int i);  // "Display", "Sleep & wake", "Network", "Tools" (also the page title)
 
 // Setting rows, in the edit buffer order of the categories.
-enum class RowId { Orientation, Wake, Refresh, Idle, Wifi, HaLink, Demo, Debug, StayAwake, LearnBattery };
+enum class RowId { Orientation, SleepMode, Updates, Idle, Wifi, HaLink, Demo, Debug, KeepAwake, LearnBattery };
 constexpr int kRowIdCount = 9;
 constexpr int kMaxPageRows = 5;
-bool isPipRow(RowId r);  // Orientation, Wake, Refresh, Idle (2..6 fixed values); the others are hint rows (88 high)
+bool isPipRow(RowId r);  // Orientation, Updates, Idle (2..6 fixed values); the others are hint rows (88 high)
 
 // ---- layout (spec sections 3 and 8) ----
 constexpr int kInfoRowCount = 6;  // Firmware, Battery, HA, Wi-Fi, Config, Errors
@@ -74,6 +75,8 @@ struct PageLayout {
   RowId rowIds[kMaxPageRows];
   Rect rows[kMaxPageRows];
   Rect note;     // w == 0: the page has no note slot
+  Rect note2;    // Sleep page only (w == 0 elsewhere): second stacked note slot (pitch 76)
+  Rect estimate; // Sleep page only: battery estimate block (not a focus stop)
   Rect caption;  // Display only (w == 0 elsewhere): text box of the static caption, F18 DIM, cy = y + h / 2
   Rect backButton;
   int stopCount = 0;  // rowCount + 1
@@ -118,7 +121,9 @@ int hintRowValueCy(const Rect& r);
 Rect hintRowValueRect(const Rect& r);   // dirty region of a changed value (right 268 px)
 int hintRowValueWidth();                // 252: box 240..492 for profile names (fit rule F40, F24, "...")
 const char* hintRowLabel(RowId r);      // "Wi-Fi", "HA connection", "Demo mode", "Debug log", "Stay awake on USB"
-const char* hintRowStaticHint(RowId r); // Demo / Debug / Stay awake hints; "" for the live ones (Wi-Fi, HA connection)
+const char* hintRowStaticHint(RowId r); // Demo / Debug / Learn hints; "" for the live ones (Wi-Fi, HA connection, Sleep mode, Keep awake)
+// Live hint of the Sleep mode and Keep awake rows (spec 8.2); "" for other rows.
+std::string sleepRowHint(RowId r, const settings::Settings& s, const settings::Capabilities& c = settings::kCapabilities);
 
 // ---- network info (spec 8.3): a snapshot taken when Settings opens ----
 enum class LinkState { Unknown, None, Internal, External };  // the link in use (None = offline)
@@ -136,9 +141,10 @@ const char* rowLabel(RowId r);
 std::string rowValueText(RowId r, const settings::Settings& s, const NetworkInfo& n);
 // Index of the current value in its allowed-values array (-1 if not allowed / not a pip row).
 int rowValueIndex(RowId r, const settings::Settings& s);
-int pipCount(RowId r);  // 2, 3, 6, 4 for pip rows, else 0
+int pipCount(RowId r);  // 2, 6, 4 for pip rows, else 0
 // Next allowed value, wrapping last -> first. An unknown value goes to the first. Wi-Fi: Auto -> 1..N -> Auto.
-settings::Settings cycleRow(RowId r, const settings::Settings& s, const NetworkInfo& n);
+settings::Settings cycleRow(RowId r, const settings::Settings& s, const NetworkInfo& n,
+                            const settings::Capabilities& c = settings::kCapabilities);
 
 // Hints of the Network rows (live snapshot): "Connected: Home", "Not connected", "Link: external (profile)",
 // "Link: none (offline)", "Not used (demo mode)".
@@ -147,7 +153,8 @@ std::string haLinkHint(const settings::Settings& edit, const NetworkInfo& n);
 
 // Overview summaries from the edit buffer (spec 3.0): "Portrait", "Touch, 60 min, 20 s",
 // "Wi-Fi Auto, HA Auto", "Demo Off, Log Off". shortWake: "Touch & Button" -> "Both" (when it does not fit).
-std::string categorySummary(int category, const settings::Settings& s, const NetworkInfo& n, bool shortWake = false);
+std::string categorySummary(int category, const settings::Settings& s, const NetworkInfo& n, bool shortWake = false,
+                            const settings::Capabilities& c = settings::kCapabilities);
 
 // Note slot of a page (spec 8): visible? and its two lines.
 struct NoteText {
@@ -160,7 +167,27 @@ NoteText pageNote(Page p, bool sdPresent);
 constexpr const char* kSleepNowLabel = "Sleep now";
 constexpr const char* kSleepNowHint = "or hold push 2.5 s";
 constexpr const char* kNoteLine1 = "Touch wake shortens battery life.";
-constexpr const char* kNoteLine2 = "Button wake is recommended.";
+constexpr const char* kNoteLine2 = "Rocker wake is recommended.";
+constexpr const char* kForcedNoteLine1 = "This device can't power on by";
+constexpr const char* kForcedNoteLine2 = "itself: updates stay Off.";
+
+// Sleep page notes (spec 8.2), stacked from the top in priority order: forced-Off updates, touch wake.
+struct SleepNotes {
+  int count = 0;
+  NoteText note[2];
+  int key = 0;  // bit mask of the shown notes: differs when the note area must be redrawn
+};
+SleepNotes sleepNotes(const settings::Settings& s, const settings::Capabilities& c = settings::kCapabilities);
+
+// Battery use block (spec 8.2): level text and 10-segment bar from the edit buffer.
+struct EstimateView {
+  std::string text;  // "7/10"
+  int level = 1;     // filled segments of 10
+};
+EstimateView estimateView(const settings::Settings& s, const settings::Capabilities& c = settings::kCapabilities);
+constexpr const char* kEstimateCaption = "Battery use";
+// Live part of the block (value line + gauge), absolute.
+Rect estimateLiveRect(const Rect& block);
 constexpr const char* kNetNoteLine1 = "Forced profile: other Wi-Fi";
 constexpr const char* kNetNoteLine2 = "networks are not tried.";
 constexpr const char* kToolsNoteLine1 = "Writes /debug.log (max 1 MB).";
@@ -274,6 +301,9 @@ class SettingsScreen {
   const NetworkInfo& network() const { return net_; }
   // The SD card state, set by the caller when the Tools page opens (drives the Debug log note).
   void setSdPresent(bool present) { sdPresent_ = present; }
+  void setCapabilities(const settings::Capabilities& c) { caps_ = c; }
+  const settings::Capabilities& capabilities() const { return caps_; }
+  bool rowForced(RowId id) const { return id == RowId::Updates && settings::updatesForcedOff(edit_, caps_); }
   bool sdPresent() const { return sdPresent_; }
   int focus() const { return focus_[static_cast<int>(page_)]; }  // 0-based stop of the current page
   int stopCount() const { return page_ == Page::Main ? kOverviewStops : pageLayout().stopCount; }
@@ -300,6 +330,7 @@ class SettingsScreen {
   Page page_ = Page::Main;
   int focus_[5] = {0, 0, 0, 0, 0};
   bool sdPresent_ = true;
+  settings::Capabilities caps_ = settings::kCapabilities;
   bool ringVisible_ = false;
   RefreshState refresh_ = RefreshState::Idle;
 };

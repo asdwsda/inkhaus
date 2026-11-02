@@ -84,7 +84,7 @@
 | 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | todo | 029, 071 |
 | 083 | [Screen greys out while sleeping](083-panel-grey-drift.md) | testing | 035, 082 |
 | 084 | [Make full power-off sleep work on battery](084-power-off-sleep.md) | testing | 035 |
-| 085 | [Power settings: sleep mode, updates, keep awake, estimate, indicators](085-power-settings.md) | todo | 084, 081, 079 |
+| 085 | [Power settings: sleep mode, updates, keep awake, estimate, indicators](085-power-settings.md) | testing | 084, 081, 079 |
 | 086 | [Keep the current tab across sleep](086-keep-tab-across-sleep.md) | todo | 071, 084 |
 
 ## Open items (not yet tasks, 2026-10-30)

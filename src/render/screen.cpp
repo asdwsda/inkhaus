@@ -1,6 +1,7 @@
 #include "screen.h"
 
 #include <algorithm>
+#include <cstdio>
 
 #include "brightness_screen.h"
 #include "graph_widget.h"
@@ -168,29 +169,87 @@ void drawErrorScreen(M5Canvas &c, const uistate::AppState &app) {
   }
 }
 
-// STYLE.md 5.5: filled INK rounded rect 96x44 r12 centred in the badge region, PAPER "Zz" centred.
-// The built-in fonts have no bold, so the label (DejaVu24, the largest below the spec's 30 px bold) is
-// drawn three times, 1 px apart in x, and twice in y.
-void drawSleepBadge(M5Canvas &c, Orientation o) {
+// Icon from the 24 px bitmap scaled to dst px (area average); the pill icons are 20 and 18 px (STYLE.md 5.6).
+void drawIconScaled(M5Canvas &c, Icon icon, int dst, int x, int y, uint32_t color) {
+  const uint8_t *bmp = iconBitmap(icon, 24);
+  if (!bmp) return;
+  uint8_t *buf = static_cast<uint8_t *>(c.getBuffer());
+  const int W = c.width(), H = c.height();
+  const int target = int(color & 0xFF);
+  for (int row = 0; row < dst; ++row) {
+    const int py = y + row;
+    if (py < 0 || py >= H) continue;
+    const int r0 = row * 24 / dst, r1 = std::max(r0 + 1, (row + 1) * 24 / dst);
+    for (int col = 0; col < dst; ++col) {
+      const int px = x + col;
+      if (px < 0 || px >= W) continue;
+      const int c0 = col * 24 / dst, c1 = std::max(c0 + 1, (col + 1) * 24 / dst);
+      int sum = 0, n = 0;
+      for (int rr = r0; rr < r1; ++rr)
+        for (int cc = c0; cc < c1; ++cc) { sum += bmp[rr * 24 + cc]; ++n; }
+      const int a = sum / n;
+      if (!a) continue;
+      uint8_t &d = buf[py * W + px];
+      d = uint8_t(d + ((target - int(d)) * a + (a >> 1)) / 255);
+    }
+  }
+}
+
+// The built-in fonts have no bold: draw the word twice, 1 px apart in x.
+void drawBold(M5Canvas &c, const std::string &s, int x, int cy, Align al, uint32_t color) {
+  drawTextCy(c, Font::F18, s, x, cy, al, color);
+  drawTextCy(c, Font::F18, s, x + 1, cy, al, color);
+}
+
+// STYLE.md 5.6: pill 104 x 44 (the badge region minus 2 px each side). Asleep: filled INK, icon + mode word on line
+// 1, refresh icon + next update time or "off" on line 2. Awake (portrait): outline pill, AWAKE / on USB | always.
+ui::Rect pillRect(Orientation o) {
   const ui::Rect r = ui::sleepBadgeRect(o);
-  const int cx = r.x + r.w / 2;
-  const int cy = r.y + r.h / 2;
-  c.fillRoundRect(cx - 48, cy - 22, 96, 44, 12, INK);
-  const int w = textWidth(c, Font::F24, "Zz");
-  const int x = cx - w / 2;
-  for (int dx = -1; dx <= 1; ++dx)
-    for (int dy = 0; dy <= 1; ++dy) drawTextCy(c, Font::F24, "Zz", x + dx, cy + 1 + dy - 1, Align::Left, PAPER);
+  return {r.x + 2, r.y + 2, 104, 44};
+}
+
+void drawSleepPill(M5Canvas &c, Orientation o, int kind, int nextMin) {
+  if (kind < 1 || kind > 3) return;
+  const ui::Rect p = pillRect(o);
+  c.fillRoundRect(p.x, p.y, p.w, p.h, 12, INK);
+  const Icon ic = kind == 1 ? Icon::Power : kind == 2 ? Icon::Moon : Icon::Finger;
+  const char *word = kind == 1 ? "OFF" : kind == 2 ? "DEEP" : "TAP";
+  drawIconScaled(c, ic, 20, p.x + 10, p.y + 4, PAPER);
+  drawBold(c, word, p.x + 36, p.y + 14, Align::Left, PAPER);
+  drawIconScaled(c, Icon::Refresh, 18, p.x + 11, p.y + 23, PAPER);
+  char buf[8];
+  if (nextMin >= 0) std::snprintf(buf, sizeof buf, "%02d:%02d", nextMin / 60, nextMin % 60);
+  else std::snprintf(buf, sizeof buf, "off");
+  drawTextCy(c, Font::F18, buf, p.x + 36, p.y + 32, Align::Left, PAPER);
+}
+
+// Keep-awake indicator (device awake, will not idle-sleep). Portrait: outline pill in the badge region.
+// Landscape: caption under the battery cluster (tab slot 5 stays visible); part of the Settings hit area.
+void drawAwake(M5Canvas &c, Orientation o, int kind) {
+  if (kind < 1 || kind > 2) return;
+  if (o == Orientation::Landscape) {
+    drawTextCy(c, Font::F18, kind == 1 ? "USB awake" : "always on", 944, 53, Align::Right, INK);
+    return;
+  }
+  const ui::Rect p = pillRect(o);
+  c.fillRoundRect(p.x, p.y, p.w, p.h, 12, INK);
+  c.fillRoundRect(p.x + 2, p.y + 2, p.w - 4, p.h - 4, 10, PAPER);
+  drawBold(c, "AWAKE", p.x + p.w / 2 - textWidth(c, Font::F18, "AWAKE") / 2, p.y + 14, Align::Left, INK);
+  const char *l2 = kind == 1 ? "on USB" : "always";
+  drawTextCy(c, Font::F18, l2, p.x + p.w / 2, p.y + 32, Align::Center, INK);
 }
 
 }  // namespace
 
-void drawSleepBadgeOverlay(M5Canvas &c, settings::Orientation o) { drawSleepBadge(c, o); }
+void drawSleepBadgeOverlay(M5Canvas &c, settings::Orientation o, int kind, int nextMin) {
+  drawSleepPill(c, o, kind, nextMin);
+}
 
 void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &status) {
   c.fillScreen(PAPER);
   if (app.screen() == uistate::Screen::ConfigError) {
     drawErrorScreen(c, app);
-    if (status.sleepBadge) drawSleepBadge(c, app.orientation());
+    if (status.sleepKind) drawSleepPill(c, app.orientation(), status.sleepKind, status.sleepNextMin);
     return;
   }
   const int ringIdx = app.focusedWidgetIndex();
@@ -212,7 +271,8 @@ void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &s
   drawTabBar(c, app);
   drawBrightnessPopup(c, app);
   drawHistoryPopup(c, app);
-  if (status.sleepBadge) drawSleepBadge(c, app.orientation());
+  if (status.sleepKind) drawSleepPill(c, app.orientation(), status.sleepKind, status.sleepNextMin);
+  else if (status.awakeKind) drawAwake(c, app.orientation(), status.awakeKind);
 }
 
 }  // namespace render

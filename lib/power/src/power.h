@@ -54,7 +54,7 @@ struct SleepPlan {
 SleepPlan plan_sleep(const settings::Settings& s, Session session, int64_t now,
                      int32_t utc_offset_s);
 
-// ---- USB power / stay awake (task 081) ----
+// ---- USB power / keep awake (tasks 081, 085) ----
 
 // Task 084: true if the last power-off attempt found the board still running (GPIO2 low did not cut the power):
 // USB supplies it. Set by sleepwake::enter(), restored after a deep sleep; false when unknown (never tested).
@@ -65,8 +65,12 @@ inline bool& usb_at_sleep_ref() {
 inline bool usbAtSleep() { return usb_at_sleep_ref(); }
 inline void set_usb_at_sleep(bool v) { usb_at_sleep_ref() = v; }
 
-// Idle sleep is held off only when the setting is on AND the device is on USB power.
-inline bool stay_awake(const settings::Settings& s, bool usb_powered) { return s.stay_awake_usb && usb_powered; }
+// Keep awake (task 085): Always never idle-sleeps; On USB only while USB power is known (usbAtSleep(), 084) and
+// the sleep mode offers it. The old battery-voltage heuristic (081) is gone.
+inline bool stay_awake(const settings::Settings& s, bool usb_powered) {
+    const settings::KeepAwake k = settings::effectiveKeepAwake(s);
+    return k == settings::KeepAwake::Always || (k == settings::KeepAwake::OnUsb && usb_powered);
+}
 
 // While staying awake the idle timer is fed (as if the user touched the device) at most once per
 // kKeepAliveS, so the timer never runs out. After an unplug the feeding stops and the normal idle timeout
@@ -82,38 +86,6 @@ private:
 
 // The one place for the low-battery test. limit_mv is the effective (learned or default) limit, task 079.
 inline bool below_low_battery(int32_t mv, int32_t limit_mv = kLowBatteryMv) { return mv < limit_mv; }
-
-// No VBUS or charger-status signal is readable on the M5Paper (M5Unified isCharging/getVBUSVoltage are
-// unsupported for it), so USB power is inferred from the battery voltage (UNVERIFIED heuristic). A fresh
-// cell reads HIGHER (4.39-4.41 V) than USB (~4.32-4.35 V), so no absolute level proves USB. Rule:
-//  - every wake starts as "not USB"; `charging` true is trusted and means USB at once;
-//  - judged over a sliding window of kWindowS seconds of smoothed samples (drop = oldest - newest):
-//    drop <= kFlatMv (flat or rising) and mV >= kMinUsbMv -> USB; drop >= kFallMv -> battery;
-//    in between -> keep the previous state, but at most kHoldCapS since the last "flat" verdict;
-//  - nothing is judged until the window spans >= kMinSpanS. Feed it every few seconds.
-class UsbDetector {
-public:
-    static constexpr int64_t kWindowS = 120;
-    static constexpr int64_t kMinSpanS = 100;
-    static constexpr int32_t kFlatMv = 8;
-    static constexpr int32_t kFallMv = 20;
-    static constexpr int32_t kMinUsbMv = 3900;
-    static constexpr int64_t kHoldCapS = 3600;
-    bool update(int64_t now_s, int32_t battery_mv, bool charging);
-    bool usb() const { return usb_; }
-    int32_t smoothed_mv() const { return smooth_; }
-
-private:
-    static constexpr int kMax = 64;
-    bool usb_ = false;
-    bool have_ = false;
-    int32_t smooth16_ = 0;  // exponentially smoothed mV x16
-    int32_t smooth_ = 0;    // the same, rounded to mV
-    int64_t confirm_t_ = 0;
-    int64_t t_[kMax] = {};
-    int32_t v_[kMax] = {};
-    int n_ = 0;
-};
 
 // Piecewise-linear Li-ion curve, monotonic, clamped to 0..100.
 int battery_percent(int32_t mv);

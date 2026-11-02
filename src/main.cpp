@@ -78,7 +78,6 @@ static std::unique_ptr<session_glue::ArduinoWifi> g_wifi;
 static std::unique_ptr<app_logic::SessionDriver> g_drv;
 static power::IdleTimer g_localIdle;  // sleep timer when no session runs (demo, config error)
 static bool g_localIdleOn = false;
-static power::UsbDetector g_usb;         // task 081: USB power inferred from the battery voltage (UNVERIFIED)
 static power::StayAwakeGate g_stayGate;  // feeds the idle timers while staying awake on USB
 static uint32_t g_usbSampleMs = 0;
 static bool g_usbSampled = false;
@@ -178,14 +177,24 @@ static void updateStatus() {
   }
   const int64_t nowEpoch = session_glue::wallClock();
   const app_logic::Label l = app_logic::statusLabel(phase, lastOk, nowEpoch, utcOffsetAt(nowEpoch),
-                                                    g_settings.refresh_interval_min, failed, landscape());
+                                                    settings::effectiveRefreshMin(g_settings), failed, landscape());
   g_status.label1 = l.line1;
   g_status.label2 = l.line2;
   g_status.outdated = l.stale;
 }
 
+// Keep awake indicator (STYLE.md 5.6): shown while the device will not idle-sleep; never together with the
+// asleep pill. On USB uses power::usbAtSleep() (task 084), the same signal as the idle gate.
+static void updateAwakeStatus() {
+  g_status.awakeKind = 0;
+  if (g_status.sleepKind || g_scheduled || !g_real) return;
+  if (power::stay_awake(g_settings, power::usbAtSleep()))
+    g_status.awakeKind = settings::effectiveKeepAwake(g_settings) == settings::KeepAwake::Always ? 2 : 1;
+}
+
 static void composeFrame() {
   updateStatus();
+  updateAwakeStatus();
   render::renderScreen(present::canvas(), g_app, g_status);
 }
 
@@ -790,7 +799,12 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
 #endif
     present::prepareSleep(periodic);  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
     if (present::fullCount() > 0 && app_logic::plausibleEpoch(fullNow)) g_rtcLastFullEpoch = fullNow;
-    g_status.sleepBadge = true;  // STYLE.md 5.5: one badge for every wake mode and low-battery sleep
+    {  // STYLE.md 5.6: the pill shows the sleep mode and the next scheduled update, from the plan about to run
+      const int64_t pe = session_glue::wallClock();
+      const app_logic::SleepPath pp = app_logic::planSleepPath(plan, session, pe);
+      g_status.sleepKind = int(pp.indicator);
+      g_status.sleepNextMin = app_logic::pillNextMinute(pp.next_update_at, pe, utcOffsetAt(pe));
+    }
     composeFrame();
     now = millis();
     timedShow(present::Mode::Partial, now);
@@ -803,7 +817,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   sleepwake::enter(plan, session, session_glue::wallClock(), batteryMv());
   // Not asleep (should not happen): carry on as an awake device without the indicator.
   boot::log("sleep_failed", 1);
-  g_status.sleepBadge = false;
+  g_status.sleepKind = 0;
 }
 
 // Manual sleep (task 081): rocker hold 2.5 s or the Settings "Sleep now" row. Same path as the idle
@@ -857,13 +871,17 @@ void setup() {
   g_scheduled = kind == power::Session::ScheduledRefresh;
   wakelog::setEnabled(s.debug_log);
   // Early wake feedback (task 058): a touch/rocker wake that finds our sleep badge on the panel clears it
-  // at once. The pill is 96x44 centred in the badge rect; its x is 4-aligned in both orientations.
+  // at once. The pill is 104x44 inside the badge rect (2 px margin); its x is 4-aligned in both orientations.
   const ui::Rect badgeRect = ui::sleepBadgeRect(s.orientation);
-  const ui::Rect pill{badgeRect.x + badgeRect.w / 2 - 48, badgeRect.y + badgeRect.h / 2 - 22, 96, 44};
+  const ui::Rect pill{badgeRect.x + 2, badgeRect.y + 2, 104, 44};
   const bool earlyClear = !g_scheduled && kind == power::Session::Interactive && sleepwake::badgeOnPanel() &&
                           pill.x % 4 == 0;
   wakelog::begin(app_logic::wakeName(g_wake), kind, earlyClear);  // earlyClear: the SD write waits for the first draw
-  if (g_scheduled) g_status.sleepBadge = sleepwake::storedIndicator() == app_logic::Indicator::Badge;
+  if (g_scheduled) {  // the pill of our previous sleep stays on the panel (line 2 is replaced when we sleep again)
+    g_status.sleepKind = int(sleepwake::storedIndicator());
+    const int64_t nx = sleepwake::panelNextAt();
+    g_status.sleepNextMin = nx > 0 ? app_logic::localMinuteOfDay(nx, utcOffsetAt(nx)) : -1;
+  }
 
 #ifdef DEMO_LANDSCAPE
   s.orientation = settings::Orientation::Landscape;
@@ -975,7 +993,11 @@ void setup() {
     boot::feed();
     delay(10);
   }
-  present::EarlyClear early{pill.x, pill.y, pill.w, pill.h, [](M5Canvas &c) { render::drawSleepBadgeOverlay(c, g_settings.orientation); }};
+  present::EarlyClear early{pill.x, pill.y, pill.w, pill.h, [](M5Canvas &c) {
+    const int64_t nx = sleepwake::panelNextAt();
+    render::drawSleepBadgeOverlay(c, g_settings.orientation, int(sleepwake::panelIndicator()),
+                                  nx > 0 ? app_logic::localMinuteOfDay(nx, utcOffsetAt(nx)) : -1);
+  }};
   present::bootFrame(boot::fallbackActive() || splashed, earlyClear ? &early : nullptr);  // after the splash: ghost-free full redraw
   // g_keepStatus stays set: updateStatus() clears it once the session leaves Connecting.
   boot::mark("first_draw");
@@ -1029,20 +1051,19 @@ void loop() {
     manualSleep();
     return;
   }
-  if (!g_scheduled) {  // stay awake on USB (task 081): sample the battery, keep feeding the idle timers
+  if (!g_scheduled) {  // keep awake (tasks 081, 085): sample the battery, keep feeding the idle timers
+    const bool usb = power::usbAtSleep();  // task 084: the last power-off attempt found the board still running
     if (!g_usbSampled || now - g_usbSampleMs >= 5000) {
       g_usbSampled = true;
       g_usbSampleMs = now;
-      const bool was = g_usb.usb();
-      g_usb.update(now / 1000, batteryMv(), M5.Power.isCharging() == M5.Power.is_charging);
-      if (g_usb.usb() != was) boot::log("usb_power", g_usb.usb() ? 1 : 0);
-      batterylimit::sample(batteryMv());
+      const int32_t mv = batteryMv();
+      batterylimit::sample(mv);
+      if (power::stay_awake(g_settings, usb) && power::below_low_battery(mv, batteryLimitMv())) {
+        lowBatterySleep();  // mid-session guard: stop staying awake (task 081)
+        return;
+      }
     }
-    if (power::stay_awake(g_settings, g_usb.usb()) && power::below_low_battery(g_usb.smoothed_mv(), batteryLimitMv())) {
-      lowBatterySleep();  // mid-session guard: stop staying awake (task 081)
-      return;
-    }
-    if (g_stayGate.feed_due(g_settings, g_usb.usb(), now / 1000)) {
+    if (g_stayGate.feed_due(g_settings, usb, now / 1000)) {
       if (g_real && g_drv) {
         if (!g_sessionOver) g_drv->input(now);
       } else {

@@ -35,9 +35,32 @@ const char *wakeName(power::WakeReason r) {
   }
 }
 
-const char *indicatorName(Indicator i) { return i == Indicator::Badge ? "badge" : "none"; }
+const char *indicatorName(Indicator i) {
+  switch (i) {
+    case Indicator::PowerOff: return "off";
+    case Indicator::Deep: return "deep";
+    case Indicator::Tap: return "tap";
+    default: return "none";
+  }
+}
 
-Indicator indicatorFromByte(uint8_t b) { return b == uint8_t(Indicator::Badge) ? Indicator::Badge : Indicator::None; }
+Indicator indicatorFromByte(uint8_t b) { return b >= 1 && b <= 3 ? Indicator(b) : Indicator::None; }
+
+Indicator indicatorForPlan(const power::SleepPlan &plan) {
+  if (plan.touch_wake) return Indicator::Tap;
+  return plan.mode == power::SleepMode::DeepSleep ? Indicator::Deep : Indicator::PowerOff;
+}
+
+int pillNextMinute(std::optional<int64_t> alarm_at, int64_t now_epoch, int32_t utc_offset_s) {
+  if (!alarm_at || *alarm_at <= now_epoch || *alarm_at - now_epoch > kPillMaxAheadS) return -1;
+  return localMinuteOfDay(*alarm_at, utc_offset_s);
+}
+
+int localMinuteOfDay(int64_t epoch, int32_t utc_offset_s) {
+  int64_t local = (epoch + utc_offset_s) % 86400;
+  if (local < 0) local += 86400;
+  return int(local / 60);
+}
 
 std::optional<AlarmFields> alarmFields(std::optional<int64_t> alarm_at, int64_t now_epoch) {
   if (!alarm_at || !plausibleEpoch(now_epoch)) return std::nullopt;
@@ -54,7 +77,7 @@ std::optional<AlarmFields> alarmFields(std::optional<int64_t> alarm_at, int64_t 
 
 SleepPath planSleepPath(const power::SleepPlan &plan, power::Session session, int64_t now_epoch) {
   SleepPath p;
-  p.indicator = Indicator::Badge;  // one badge for every wake mode and low-battery sleep
+  p.indicator = indicatorForPlan(plan);  // the mode as set, also for low-battery sleep
   if (session == power::Session::LowBattery) {
     p.low_battery = true;
     p.first = SleepMethod::PowerOff;
@@ -67,6 +90,7 @@ SleepPath planSleepPath(const power::SleepPlan &plan, power::Session session, in
   p.wake_touch = plan.touch_wake;
   p.alarm = alarmFields(plan.rtc_alarm_at, now_epoch);
   p.arm_rtc_alarm = p.alarm.has_value();
+  if (p.alarm) p.next_update_at = plan.rtc_alarm_at;
   if (p.alarm) {
     int64_t s = *plan.rtc_alarm_at - now_epoch;
     p.wake_timer_s = s < 1 ? 1 : s;

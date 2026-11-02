@@ -45,14 +45,21 @@ void drawRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
   const Rect &r = P.rows[i];
   const sui::RowId id = P.rowIds[i];
   const settings::Settings &e = s.edit();
-  drawBox(c, r, PAPER, INK);
+  const bool forced = s.rowForced(id);  // spec 8.2: unavailable look (dotted OFF border, grey label, no pips)
+  if (forced) {
+    c.fillRoundRect(r.x, r.y, r.w, r.h, 9, PAPER);
+    drawDashedBox(c, float(r.x + 1), float(r.y + 1), float(r.w - 2), float(r.h - 2), 8.0f, 2, 2.0f, 4.0f, OFFGREY);
+  } else {
+    drawBox(c, r, PAPER, INK);
+  }
   const std::string val = sui::rowValueText(id, e, s.network());
   if (sui::isPipRow(id)) {
     const Rect lab = sui::rowLabelRect(r);
-    drawTextCy(c, Font::F24, sui::rowLabel(id), lab.x, sui::rowLabelCy(r), Align::Left, INK);
+    drawTextCy(c, Font::F24, sui::rowLabel(id), lab.x, sui::rowLabelCy(r), Align::Left, forced ? OFFGREY : INK);
     const int rightX = sui::rowValueRightX(r);
     const int freeW = rightX - (lab.x + textWidth(c, Font::F24, sui::rowLabel(id)) + sui::kValueGap);
     drawValue(c, val, rightX, sui::rowValueCy(r), freeW);
+    if (forced) return;
     const int cur = sui::rowValueIndex(id, e);
     for (int k = 0; k < sui::pipCount(id); ++k) {
       const ui::Point p = sui::pipCentre(r, k);
@@ -64,7 +71,9 @@ void drawRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
   drawTextCy(c, Font::F24, sui::hintRowLabel(id), r.x + 16, sui::hintRowLabelCy(r), Align::Left, INK);
   const std::string hint = id == sui::RowId::Wifi     ? sui::wifiHint(s.network())
                            : id == sui::RowId::HaLink ? sui::haLinkHint(e, s.network())
-                                                      : std::string(sui::hintRowStaticHint(id));
+                           : (id == sui::RowId::SleepMode || id == sui::RowId::KeepAwake)
+                               ? sui::sleepRowHint(id, e, s.capabilities())
+                               : std::string(sui::hintRowStaticHint(id));
   drawTextCy(c, Font::F18, fitText(c, Font::F18, hint, r.w - 32 - 140), r.x + 16, sui::hintRowHintCy(r), Align::Left, INK);
   drawValue(c, val, sui::rowValueRightX(r), sui::hintRowValueCy(r), sui::hintRowValueWidth());
 }
@@ -75,6 +84,25 @@ void drawNote(M5Canvas &c, const Rect &n, const char *line1, const char *line2) 
   drawIcon(c, Icon::Alert, 40, ic.x, ic.y, INK);
   drawTextCy(c, Font::F18, line1, sui::noteTextX(n), sui::noteLineCy(n, 0), Align::Left, INK);
   drawTextCy(c, Font::F18, line2, sui::noteTextX(n), sui::noteLineCy(n, 1), Align::Left, INK);
+}
+
+// Battery use block (spec 8.2): hairline, caption (static), level text and bar (live region).
+void drawEstimate(M5Canvas &c, const Rect &b, const settings::Settings &e, const settings::Capabilities &caps) {
+  c.fillRect(b.x, b.y, b.w, 1, OFFGREY);
+  drawTextCy(c, Font::F18, sui::kEstimateCaption, b.x + 16, b.y + 24, Align::Left, DIM);
+  const sui::EstimateView v = sui::estimateView(e, caps);
+  drawTextCy(c, Font::F40, v.text, b.x + 16, b.y + 60, Align::Left, INK);
+  const int pitch = b.w > 480 ? 46 : 42;
+  const int segW = pitch - 4;
+  for (int i = 0; i < 10; i++) {
+    const int x = b.x + 16 + i * pitch;
+    if (i < v.level) {
+      c.fillRect(x, b.y + 92, segW, 16, INK);
+    } else {
+      c.fillRect(x, b.y + 92, segW, 16, INK);
+      c.fillRect(x + 2, b.y + 94, segW - 4, 12, PAPER);
+    }
+  }
 }
 
 // Category row of the overview (spec 3.0): label, one-line summary of the edit buffer, chevron.
@@ -166,7 +194,11 @@ void drawCategoryPage(M5Canvas &c, const sui::SettingsScreen &s) {
   for (int i = 0; i < P.rowCount; ++i) drawRow(c, s, i);
   if (P.caption.w > 0)
     drawTextCy(c, Font::F18, sui::kDisplayCaption, P.caption.x, P.caption.y + P.caption.h / 2, Align::Left, DIM);
-  if (P.note.w > 0 && sui::pageShowsNote(P.page, s.edit(), s.network())) {
+  if (P.page == sui::Page::Sleep) {
+    const sui::SleepNotes n = sui::sleepNotes(s.edit(), s.capabilities());
+    for (int i = 0; i < n.count; ++i) drawNote(c, i == 0 ? P.note : P.note2, n.note[i].line1, n.note[i].line2);
+    drawEstimate(c, P.estimate, s.edit(), s.capabilities());
+  } else if (P.note.w > 0 && sui::pageShowsNote(P.page, s.edit(), s.network())) {
     const sui::NoteText t = sui::pageNote(P.page, s.sdPresent());
     drawNote(c, P.note, t.line1, t.line2);
   }

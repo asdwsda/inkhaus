@@ -8,9 +8,21 @@
 
 namespace settings {
 
-// Button: rocker only; Touch: touch only; TouchAndButton: both (task 039). NVS schema 1 stored 1 = the old
-// "Touch" (which woke on both); load() migrates it to TouchAndButton.
-enum class WakeMode : int32_t { Button = 0, Touch = 1, TouchAndButton = 2 };
+// Sleep mode (task 085), in cost order, cheapest first. PowerOff: main rail off, the rocker (or the RTC alarm)
+// switches the device on. DeepSleep: ESP32 deep sleep, rocker wakes. Touch: a tap wakes. TouchAndRocker: both.
+enum class SleepSetting : int32_t { PowerOff = 0, DeepSleep = 1, Touch = 2, TouchAndRocker = 3 };
+// Keep awake (task 085): never idle-sleep. OnUsb only while USB power is detected (see keepAwakeOnUsbOffered).
+enum class KeepAwake : int32_t { Off = 0, OnUsb = 1, Always = 2 };
+
+// What this hardware/firmware can do. UNVERIFIED until task 084's battery test: power-off works, the BM8563 alarm
+// powers the device on again from power-off, and the CH9102 RX probe (task 081) is not reliable enough to
+// offer "On USB" in the deep-sleep modes.
+struct Capabilities {
+    bool power_off = true;         // Power off sleep mode usable (migration of the old Button wake mode)
+    bool rtc_power_on = true;      // the RTC alarm switches the device on from power-off
+    bool usb_probe_reliable = false;
+};
+constexpr Capabilities kCapabilities{};
 enum class Orientation : int32_t { Portrait = 0, Landscape = 1 };
 
 // Which HA URL to use (task 047). Auto = whatever the connected Wi-Fi profile says.
@@ -18,8 +30,8 @@ enum class HaLink : int32_t { Auto = 0, Internal = 1, External = 2 };
 constexpr int32_t kMaxWifiProfileIndex = 4;  // matches config::kMaxWifiProfiles (legacy index validation)
 
 struct Settings {
-    WakeMode wake_mode = WakeMode::Button;
-    int32_t refresh_interval_min = 60;  // 0 = off
+    SleepSetting sleep_mode = SleepSetting::DeepSleep;
+    int32_t refresh_interval_min = 60;  // updates while asleep; 0 = off
     int32_t idle_timeout_s = 20;
     Orientation orientation = Orientation::Portrait;
     bool demo_mode = false;  // built-in demo showcase instead of config.yaml + Home Assistant
@@ -31,32 +43,36 @@ struct Settings {
     // into a name. Not part of equality.
     int32_t legacy_wifi_index = 0;
     HaLink ha_link = HaLink::Auto;
-    bool stay_awake_usb = false;  // task 081: no idle sleep while on USB power
+    KeepAwake keep_awake = KeepAwake::Off;
     bool learn_battery = true;    // task 079: learn the low-battery limit from brownouts
 
     bool operator==(const Settings& o) const {
-        return wake_mode == o.wake_mode && refresh_interval_min == o.refresh_interval_min &&
+        return sleep_mode == o.sleep_mode && refresh_interval_min == o.refresh_interval_min &&
                idle_timeout_s == o.idle_timeout_s && orientation == o.orientation &&
                demo_mode == o.demo_mode && debug_log == o.debug_log &&
                wifi_profile == o.wifi_profile && ha_link == o.ha_link &&
-               stay_awake_usb == o.stay_awake_usb && learn_battery == o.learn_battery;
+               keep_awake == o.keep_awake && learn_battery == o.learn_battery;
     }
     bool operator!=(const Settings& o) const { return !(*this == o); }
 };
 
 // Allowed values in display order (the settings screen cycles through them).
-constexpr std::array<WakeMode, 3> kWakeModeValues = {WakeMode::Button, WakeMode::Touch,
-                                                         WakeMode::TouchAndButton};
+constexpr std::array<SleepSetting, 4> kSleepModeValues = {SleepSetting::PowerOff, SleepSetting::DeepSleep, SleepSetting::Touch,
+                                                       SleepSetting::TouchAndRocker};
+constexpr std::array<KeepAwake, 3> kKeepAwakeValues = {KeepAwake::Off, KeepAwake::OnUsb, KeepAwake::Always};
 constexpr std::array<Orientation, 2> kOrientationValues = {Orientation::Portrait,
                                                            Orientation::Landscape};
-constexpr std::array<int32_t, 6> kRefreshIntervalMinValues = {0, 15, 30, 60, 120, 240};
+constexpr std::array<int32_t, 6> kRefreshIntervalMinValues = {0, 30, 60, 180, 360, 720};
 constexpr std::array<int32_t, 4> kIdleTimeoutSValues = {10, 20, 30, 60};
 
-constexpr int32_t kSchemaVersion = 2;  // 2: wake_mode 1 = Touch only, 2 = Touch & Button (1: 1 = both)
+// 3: sleep_mode + keepawake replace wake_mode + stayusb; intervals 0/30/60/180/360/720 (task 085).
+// 2: wake_mode 1 = Touch only, 2 = Touch & Button (1: 1 = both).
+constexpr int32_t kSchemaVersion = 3;
 
 // Storage keys (NVS limits keys to 15 chars).
 constexpr const char* kKeySchemaVersion = "schema_version";
-constexpr const char* kKeyWakeMode = "wake_mode";
+constexpr const char* kKeyWakeMode = "wake_mode";  // schema 1/2 only (read for migration)
+constexpr const char* kKeySleepMode = "sleep_mode";  // schema 3
 constexpr const char* kKeyRefreshMin = "refresh_min";
 constexpr const char* kKeyIdleTimeoutS = "idle_s";
 constexpr const char* kKeyOrientation = "orientation";
@@ -65,7 +81,8 @@ constexpr const char* kKeyDebugLog = "dbglog";  // 0 / 1; absent = off (no schem
 constexpr const char* kKeyWifiProfileLegacy = "wifiprof";  // old: 1-based index, 0 = Auto (read once, migrated)
 constexpr const char* kKeyWifiProfile = "wifiname";        // profile name (string, "" = Auto); absent = Auto
 constexpr const char* kKeyHaLink = "halink";         // HaLink; absent = Auto
-constexpr const char* kKeyStayAwakeUsb = "stayusb";  // 0 / 1; absent = off (no schema bump)
+constexpr const char* kKeyStayAwakeUsb = "stayusb";  // old 0 / 1 (read for migration to keep_awake)
+constexpr const char* kKeyKeepAwake = "keepawake";   // KeepAwake; absent = Off
 constexpr const char* kKeyLearnBattery = "learnbat";  // 0 / 1; absent = on (no schema bump)
 
 // Abstract key-value store of ints.
@@ -79,7 +96,8 @@ public:
     virtual void setStr(const char* key, const std::string& value) = 0;
 };
 
-bool isValidWakeMode(int32_t v);
+bool isValidSleepMode(int32_t v);
+bool isValidKeepAwake(int32_t v);
 bool isValidRefreshIntervalMin(int32_t v);
 bool isValidIdleTimeoutS(int32_t v);
 bool isValidOrientation(int32_t v);
@@ -87,8 +105,21 @@ bool isValidDemoMode(int32_t v);
 bool isValidDebugLog(int32_t v);
 bool isValidWifiProfileIndex(int32_t v);  // legacy index: 0..kMaxWifiProfileIndex
 bool isValidHaLink(int32_t v);
-bool isValidStayAwakeUsb(int32_t v);
 bool isValidLearnBattery(int32_t v);
+
+// Nearest allowed update interval (old values 15/120/240 from schema 2); ties go to the longer one.
+int32_t snapRefreshIntervalMin(int32_t v);
+
+// ---- rules between the sleep fields (task 085, pure) ----
+// On USB is offered where USB is detected without extra awake time: in Power off (via the power-off fallback).
+bool keepAwakeOnUsbOffered(SleepSetting m, const Capabilities& c = kCapabilities);
+// Power off without a working RTC power-on cannot wake for updates: they are forced Off (the stored value stays).
+bool updatesForcedOff(const Settings& s, const Capabilities& c = kCapabilities);
+int32_t effectiveRefreshMin(const Settings& s, const Capabilities& c = kCapabilities);
+// OnUsb in a mode that does not offer it counts as Off.
+KeepAwake effectiveKeepAwake(const Settings& s, const Capabilities& c = kCapabilities);
+// Edit-buffer rule: a sleep mode that no longer offers On USB turns the buffer value into Off.
+Settings normalizeSleepFields(Settings s, const Capabilities& c = kCapabilities);
 
 // 1-based position of `name` in `names`, 0 (Auto) for "" or an unknown name.
 int wifiProfileIndex(const std::string& name, const std::vector<std::string>& names);

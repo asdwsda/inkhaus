@@ -35,12 +35,22 @@ WakePin pinForExt1(uint64_t status_mask);
 
 // ---- sleep indicator -----------------------------------------------------------------------------
 
-// STYLE.md 5.5: a single Zz badge for every wake mode and low-battery sleep. The value is persisted
-// (1 = a badge is on the panel).
-enum class Indicator : uint8_t { None = 0, Badge = 1 };
+// STYLE.md 5.6 (task 085): the asleep pill shows the sleep mode: OFF (power off), DEEP (deep sleep, rocker),
+// TAP (touch wake). The value is persisted (non-zero = a pill is on the panel).
+enum class Indicator : uint8_t { None = 0, PowerOff = 1, Deep = 2, Tap = 3 };
 const char *indicatorName(Indicator i);
 // From a persisted byte; anything unknown is None.
 Indicator indicatorFromByte(uint8_t b);
+// Indicator of a sleep plan (mode as set; also used for low-battery sleep).
+Indicator indicatorForPlan(const power::SleepPlan &plan);
+// Line 2 of the pill: local minute of day (0..1439) of the next scheduled update, -1 = off (no alarm, or
+// further away than the 12 h the pill can show without a date).
+constexpr int64_t kPillMaxAheadS = 12 * 3600;
+int pillNextMinute(std::optional<int64_t> alarm_at, int64_t now_epoch, int32_t utc_offset_s);
+// Local minute of day (0..1439) of an epoch (for a stored alarm time that may already be past).
+int localMinuteOfDay(int64_t epoch, int32_t utc_offset_s);
+// Local minute of day (0..1439) of an epoch (for a stored alarm time that may already be past).
+int localMinuteOfDay(int64_t epoch, int32_t utc_offset_s);
 
 // ---- how to sleep --------------------------------------------------------------------------------
 
@@ -65,6 +75,7 @@ struct SleepPath {
   bool wake_touch = false;
   std::optional<int64_t> wake_timer_s;  // ESP32 timer wake-up: stands in for the BM8563 INT (not on a GPIO)
   Indicator indicator = Indicator::None;
+  std::optional<int64_t> next_update_at;  // epoch s of the scheduled wake (pill line 2); unset = updates off
   bool low_battery = false;
 };
 

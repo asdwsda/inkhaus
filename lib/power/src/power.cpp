@@ -32,17 +32,23 @@ static int64_t floor_div(int64_t a, int64_t b) {
 SleepPlan plan_sleep(const settings::Settings& s, Session session, int64_t now,
                      int32_t utc_offset_s) {
     SleepPlan p;
-    if (s.wake_mode == settings::WakeMode::Touch || s.wake_mode == settings::WakeMode::TouchAndButton) {
-        p.mode = SleepMode::DeepSleep;
-        p.touch_wake = true;
-        p.button_wake = s.wake_mode == settings::WakeMode::TouchAndButton;
-    } else {
-        p.mode = SleepMode::PowerOff;
-        p.touch_wake = false;
-        p.button_wake = true;
+    switch (s.sleep_mode) {
+        case settings::SleepSetting::PowerOff:
+            p.mode = SleepMode::PowerOff;
+            break;
+        case settings::SleepSetting::DeepSleep:
+            p.mode = SleepMode::DeepSleep;
+            break;
+        case settings::SleepSetting::Touch:
+        case settings::SleepSetting::TouchAndRocker:
+            p.mode = SleepMode::DeepSleep;
+            p.touch_wake = true;
+            p.button_wake = s.sleep_mode == settings::SleepSetting::TouchAndRocker;
+            break;
     }
-    if (s.refresh_interval_min > 0 && session != Session::LowBattery) {
-        const int64_t iv = static_cast<int64_t>(s.refresh_interval_min) * 60;
+    const int32_t interval_min = settings::effectiveRefreshMin(s);
+    if (interval_min > 0 && session != Session::LowBattery) {
+        const int64_t iv = static_cast<int64_t>(interval_min) * 60;
         const int64_t local = now + utc_offset_s;
         int64_t next = (floor_div(local, iv) + 1) * iv;
         if (next - local < kMinAlarmLeadS) next += iv;
@@ -56,48 +62,6 @@ bool StayAwakeGate::feed_due(const settings::Settings& s, bool usb_powered, int6
     if (now_s - last_feed_ < kKeepAliveS) return false;
     last_feed_ = now_s;
     return true;
-}
-
-bool UsbDetector::update(int64_t now_s, int32_t mv, bool charging) {
-    if (!have_) {
-        have_ = true;
-        smooth16_ = mv * 16;
-    } else {
-        smooth16_ += (mv * 16 - smooth16_) / 4;  // fixed point: integer division would stall on small steps
-    }
-    smooth_ = (smooth16_ + 8) / 16;
-    // drop samples older than the window, then append
-    int k = 0;
-    while (k < n_ && t_[k] < now_s - kWindowS) ++k;
-    if (k > 0) {
-        for (int i = k; i < n_; ++i) { t_[i - k] = t_[i]; v_[i - k] = v_[i]; }
-        n_ -= k;
-    }
-    if (n_ == kMax) {
-        for (int i = 1; i < n_; ++i) { t_[i - 1] = t_[i]; v_[i - 1] = v_[i]; }
-        --n_;
-    }
-    const int64_t first_t = n_ > 0 ? t_[0] : now_s;
-    const int32_t first_v = n_ > 0 ? v_[0] : smooth_;
-    t_[n_] = now_s;
-    v_[n_] = smooth_;
-    ++n_;
-    if (charging) {
-        usb_ = true;
-        confirm_t_ = now_s;
-        return usb_;
-    }
-    if (now_s - first_t >= kMinSpanS) {
-        const int32_t drop = first_v - smooth_;
-        if (drop <= kFlatMv && smooth_ >= kMinUsbMv) {
-            usb_ = true;
-            confirm_t_ = now_s;
-        } else if (drop >= kFallMv) {
-            usb_ = false;
-        }
-    }
-    if (usb_ && now_s - confirm_t_ > kHoldCapS) usb_ = false;
-    return usb_;
 }
 
 int battery_percent(int32_t mv) {

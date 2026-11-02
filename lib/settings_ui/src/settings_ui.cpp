@@ -18,7 +18,7 @@ const char* categoryLabel(int i) {
   return "";
 }
 
-bool isPipRow(RowId r) { return r == RowId::Orientation || r == RowId::Wake || r == RowId::Refresh || r == RowId::Idle; }
+bool isPipRow(RowId r) { return r == RowId::Orientation || r == RowId::Updates || r == RowId::Idle; }
 
 namespace {
 
@@ -97,18 +97,32 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
       L.caption = portrait ? Rect{16, 152, 508, 32} : Rect{16, 132, 456, 32};
       break;
     case Page::Sleep: {
-      const int pitch = portrait ? 84 : 80;
-      const int h = portrait ? 72 : 68;
+      // Spec 8.2: Sleep mode, Updates, Keep awake, Idle, Learn; notes stacked (pitch 76); estimate block 124.
       L.rowCount = 5;
-      L.rowIds[0] = RowId::Wake;
-      L.rowIds[1] = RowId::Refresh;
-      L.rowIds[2] = RowId::Idle;
-      L.rowIds[3] = RowId::StayAwake;
+      L.rowIds[0] = RowId::SleepMode;
+      L.rowIds[1] = RowId::Updates;
+      L.rowIds[2] = RowId::KeepAwake;
+      L.rowIds[3] = RowId::Idle;
       L.rowIds[4] = RowId::LearnBattery;
-      for (int i = 0; i < 3; ++i) L.rows[i] = {16, y0 + pitch * i, w, h};
-      L.rows[3] = portrait ? Rect{16, 320, 508, 88} : Rect{488, 64, 456, 88};
-      L.rows[4] = portrait ? Rect{16, 420, 508, 88} : Rect{488, 164, 456, 88};  // task 079 (UNVERIFIED pitch)
-      L.note = portrait ? Rect{16, 520, 508, 64} : Rect{16, 304, 456, 64};
+      if (portrait) {
+        L.rows[0] = {16, 68, 508, 88};
+        L.rows[1] = {16, 168, 508, 72};
+        L.rows[2] = {16, 252, 508, 88};
+        L.rows[3] = {16, 352, 508, 72};
+        L.rows[4] = {16, 436, 508, 88};
+        L.note = {16, 536, 508, 64};
+        L.note2 = {16, 612, 508, 64};
+        L.estimate = {16, 744, 508, 124};
+      } else {
+        L.rows[0] = {16, 64, 456, 88};
+        L.rows[1] = {16, 164, 456, 68};
+        L.rows[2] = {16, 244, 456, 88};
+        L.rows[3] = {16, 344, 456, 68};
+        L.rows[4] = {488, 64, 456, 88};
+        L.note = {488, 164, 456, 64};
+        L.note2 = {488, 240, 456, 64};
+        L.estimate = {488, 328, 456, 124};
+      }
       break;
     }
     case Page::Network:
@@ -173,7 +187,8 @@ const char* hintRowLabel(RowId r) {
     case RowId::HaLink: return "HA connection";
     case RowId::Demo: return "Demo mode";
     case RowId::Debug: return "Debug log";
-    case RowId::StayAwake: return "Stay awake on USB";
+    case RowId::SleepMode: return "Sleep mode";
+    case RowId::KeepAwake: return "Keep awake";
     case RowId::LearnBattery: return "Learn battery limits";
     default: return "";
   }
@@ -182,10 +197,28 @@ const char* hintRowStaticHint(RowId r) {
   switch (r) {
     case RowId::Demo: return "Sample dashboard, offline";
     case RowId::Debug: return "Log lines to SD card";
-    case RowId::StayAwake: return "Never sleeps while on USB power";
     case RowId::LearnBattery: return "Raise low limit after brownouts";
     default: return "";
   }
+}
+std::string sleepRowHint(RowId r, const Settings& s, const settings::Capabilities& c) {
+  if (r == RowId::SleepMode) {
+    switch (s.sleep_mode) {
+      case settings::SleepSetting::PowerOff: return "Lowest drain, hold 3 s";
+      case settings::SleepSetting::DeepSleep: return "Rocker, faster wake";
+      case settings::SleepSetting::Touch: return "Tap wakes";
+      case settings::SleepSetting::TouchAndRocker: return "Tap or rocker";
+    }
+  }
+  if (r == RowId::KeepAwake) {
+    const bool offered = settings::keepAwakeOnUsbOffered(s.sleep_mode, c);
+    switch (s.keep_awake) {
+      case settings::KeepAwake::Always: return "Never sleeps";
+      case settings::KeepAwake::OnUsb: return offered ? "Awake while on USB" : "On USB only in Power off";
+      default: return offered ? "Sleeps as set above" : "On USB only in Power off";
+    }
+  }
+  return "";
 }
 Point pipCentre(const Rect& r, int k) { return {r.x + 22 + 20 * k, rowHintCy(r)}; }
 Rect noteIconRect(const Rect& n) { return {n.x + 12, n.y + 12, 40, 40}; }
@@ -199,8 +232,7 @@ Rect buttonLabelRect(const Rect& b) { return {b.x + 60, b.y, b.w - 68, b.h}; }
 const char* rowLabel(RowId r) {
   switch (r) {
     case RowId::Orientation: return "Orientation";
-    case RowId::Wake: return "Wake mode";
-    case RowId::Refresh: return "Refresh every";
+    case RowId::Updates: return "Updates while asleep";
     case RowId::Idle: return "Idle timeout";
     default: return hintRowLabel(r);
   }
@@ -229,8 +261,7 @@ std::string wifiValue(const Settings& s, const NetworkInfo& n) {
 int pipCount(RowId r) {
   switch (r) {
     case RowId::Orientation: return static_cast<int>(settings::kOrientationValues.size());
-    case RowId::Wake: return static_cast<int>(settings::kWakeModeValues.size());
-    case RowId::Refresh: return static_cast<int>(settings::kRefreshIntervalMinValues.size());
+    case RowId::Updates: return static_cast<int>(settings::kRefreshIntervalMinValues.size());
     case RowId::Idle: return static_cast<int>(settings::kIdleTimeoutSValues.size());
     default: return 0;
   }
@@ -239,8 +270,9 @@ int pipCount(RowId r) {
 int rowValueIndex(RowId r, const Settings& s) {
   switch (r) {
     case RowId::Orientation: return indexOf(settings::kOrientationValues, s.orientation);
-    case RowId::Wake: return indexOf(settings::kWakeModeValues, s.wake_mode);
-    case RowId::Refresh: return indexOf(settings::kRefreshIntervalMinValues, s.refresh_interval_min);
+    case RowId::SleepMode: return indexOf(settings::kSleepModeValues, s.sleep_mode);
+    case RowId::KeepAwake: return indexOf(settings::kKeepAwakeValues, s.keep_awake);
+    case RowId::Updates: return indexOf(settings::kRefreshIntervalMinValues, s.refresh_interval_min);
     case RowId::Idle: return indexOf(settings::kIdleTimeoutSValues, s.idle_timeout_s);
     default: return -1;
   }
@@ -250,14 +282,18 @@ std::string rowValueText(RowId r, const Settings& s, const NetworkInfo& n) {
   char buf[24];
   switch (r) {
     case RowId::Orientation: return s.orientation == settings::Orientation::Landscape ? "Landscape" : "Portrait";
-    case RowId::Wake:
-      return s.wake_mode == settings::WakeMode::Touch            ? "Touch"
-             : s.wake_mode == settings::WakeMode::TouchAndButton ? "Touch & Button"
-                                                                 : "Button";
-    case RowId::Refresh:
-      if (s.refresh_interval_min == 0) return "Off";
-      std::snprintf(buf, sizeof buf, "%d min", static_cast<int>(s.refresh_interval_min));
+    case RowId::SleepMode:
+      return s.sleep_mode == settings::SleepSetting::PowerOff      ? "Power off"
+             : s.sleep_mode == settings::SleepSetting::DeepSleep   ? "Deep sleep"
+             : s.sleep_mode == settings::SleepSetting::Touch       ? "Touch"
+                                                                : "Touch & rocker";
+    case RowId::Updates:
+      if (s.refresh_interval_min == 0 || settings::updatesForcedOff(s)) return "Off";
+      if (s.refresh_interval_min < 60) std::snprintf(buf, sizeof buf, "%d min", static_cast<int>(s.refresh_interval_min));
+      else std::snprintf(buf, sizeof buf, "%d h", static_cast<int>(s.refresh_interval_min / 60));
       return buf;
+    case RowId::KeepAwake:
+      return s.keep_awake == settings::KeepAwake::Always ? "Always" : s.keep_awake == settings::KeepAwake::OnUsb ? "On USB" : "Off";
     case RowId::Idle:
       std::snprintf(buf, sizeof buf, "%d s", static_cast<int>(s.idle_timeout_s));
       return buf;
@@ -265,19 +301,26 @@ std::string rowValueText(RowId r, const Settings& s, const NetworkInfo& n) {
     case RowId::HaLink: return haLinkName(s.ha_link);
     case RowId::Demo: return s.demo_mode ? "On" : "Off";
     case RowId::Debug: return s.debug_log ? "On" : "Off";
-    case RowId::StayAwake: return s.stay_awake_usb ? "On" : "Off";
     case RowId::LearnBattery: return s.learn_battery ? "On" : "Off";
   }
   return "";
 }
 
-Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n) {
+Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n, const settings::Capabilities& caps) {
   Settings o = s;
   const int cur = rowValueIndex(r, s);
   switch (r) {
     case RowId::Orientation: o.orientation = settings::kOrientationValues[nextIndex(settings::kOrientationValues, cur)]; break;
-    case RowId::Wake: o.wake_mode = settings::kWakeModeValues[nextIndex(settings::kWakeModeValues, cur)]; break;
-    case RowId::Refresh:
+    case RowId::SleepMode:
+      o.sleep_mode = settings::kSleepModeValues[nextIndex(settings::kSleepModeValues, cur)];
+      o = settings::normalizeSleepFields(o, caps);  // On USB drops to Off where the mode does not offer it
+      break;
+    case RowId::KeepAwake:
+      o.keep_awake = settings::kKeepAwakeValues[nextIndex(settings::kKeepAwakeValues, cur)];
+      if (o.keep_awake == settings::KeepAwake::OnUsb && !settings::keepAwakeOnUsbOffered(o.sleep_mode, caps))
+        o.keep_awake = settings::KeepAwake::Always;
+      break;
+    case RowId::Updates:
       o.refresh_interval_min =
           settings::kRefreshIntervalMinValues[nextIndex(settings::kRefreshIntervalMinValues, cur)];
       break;
@@ -296,7 +339,6 @@ Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n) {
       break;
     case RowId::Demo: o.demo_mode = !s.demo_mode; break;
     case RowId::Debug: o.debug_log = !s.debug_log; break;
-    case RowId::StayAwake: o.stay_awake_usb = !s.stay_awake_usb; break;
     case RowId::LearnBattery: o.learn_battery = !s.learn_battery; break;
   }
   return o;
@@ -319,13 +361,14 @@ std::string haLinkHint(const Settings& edit, const NetworkInfo& n) {
   return t;
 }
 
-std::string categorySummary(int category, const Settings& s, const NetworkInfo& n, bool shortWake) {
+std::string categorySummary(int category, const Settings& s, const NetworkInfo& n, bool shortWake,
+                            const settings::Capabilities&) {
   switch (category) {
     case 0: return rowValueText(RowId::Orientation, s, n);
     case 1: {
-      std::string wake = rowValueText(RowId::Wake, s, n);
-      if (shortWake && s.wake_mode == settings::WakeMode::TouchAndButton) wake = "Both";
-      return wake + ", " + rowValueText(RowId::Refresh, s, n) + ", " + rowValueText(RowId::Idle, s, n);
+      std::string mode = rowValueText(RowId::SleepMode, s, n);
+      if (shortWake && s.sleep_mode == settings::SleepSetting::TouchAndRocker) mode = "Touch+rocker";
+      return mode + ", " + rowValueText(RowId::Updates, s, n) + ", " + rowValueText(RowId::Idle, s, n);
     }
     case 2: return "Wi-Fi " + wifiValue(s, n) + ", HA " + haLinkName(s.ha_link);
     case 3: return std::string("Demo ") + (s.demo_mode ? "On" : "Off") + ", Log " + (s.debug_log ? "On" : "Off");
@@ -335,12 +378,34 @@ std::string categorySummary(int category, const Settings& s, const NetworkInfo& 
 
 bool pageShowsNote(Page p, const Settings& s, const NetworkInfo& n) {
   switch (p) {
-    case Page::Sleep: return s.wake_mode != settings::WakeMode::Button;
+    case Page::Sleep: return sleepNotes(s).count > 0;
     case Page::Network: return settings::wifiProfileIndex(s.wifi_profile, n.profiles) != 0;
     case Page::Tools: return s.debug_log;
     default: return false;
   }
 }
+
+SleepNotes sleepNotes(const Settings& s, const settings::Capabilities& c) {
+  SleepNotes n;
+  if (settings::updatesForcedOff(s, c)) {
+    n.note[n.count++] = {kForcedNoteLine1, kForcedNoteLine2};
+    n.key |= 1;
+  }
+  if (s.sleep_mode == settings::SleepSetting::Touch || s.sleep_mode == settings::SleepSetting::TouchAndRocker) {
+    n.note[n.count++] = {kNoteLine1, kNoteLine2};
+    n.key |= 2;
+  }
+  return n;
+}
+
+EstimateView estimateView(const Settings& s, const settings::Capabilities& c) {
+  EstimateView v;
+  v.level = power::est::batteryUseLevel(s, c);
+  v.text = std::to_string(v.level) + "/10";
+  return v;
+}
+
+Rect estimateLiveRect(const Rect& b) { return {b.x, b.y + 36, b.w, 88}; }
 
 NoteText pageNote(Page p, bool sdPresent) {
   switch (p) {
@@ -487,17 +552,33 @@ Update SettingsScreen::activatePage(int stop) {
   if (stop == P.rowCount) return up();
   if (stop < 0 || stop > P.rowCount) return u;
   const RowId id = P.rowIds[stop];
+  if (rowForced(id)) return u;  // forced Off: ignores tap and PUSH
   const Rect& row = P.rows[stop];
   const bool wasDirty = dirty();
   const bool hadNote = pageShowsNote(page_, edit_, net_);
-  edit_ = cycleRow(id, edit_, net_);
-  if (isPipRow(id)) {
-    u.dirty.push_back(rowValueRect(row));
-    u.dirty.push_back(rowHintRect(row));
+  const int oldKey = page_ == Page::Sleep ? sleepNotes(edit_, caps_).key : 0;
+  edit_ = cycleRow(id, edit_, net_, caps_);
+  if (page_ == Page::Sleep) {
+    // Hint rows of this page have live hints; a mode change can flip Updates (forced look) and Keep awake.
+    if (id == RowId::SleepMode) {
+      for (int i = 0; i < 3; ++i) u.dirty.push_back(P.rows[i]);
+    } else {
+      u.dirty.push_back(row);
+    }
+    if (id == RowId::SleepMode || id == RowId::Updates || id == RowId::KeepAwake)
+      u.dirty.push_back(estimateLiveRect(P.estimate));
+    if (oldKey != sleepNotes(edit_, caps_).key) {
+      u.dirty.push_back({P.note.x, P.note.y, P.note.w, P.note2.y + P.note2.h - P.note.y});
+    }
   } else {
-    u.dirty.push_back(hintRowValueRect(row));
+    if (isPipRow(id)) {
+      u.dirty.push_back(rowValueRect(row));
+      u.dirty.push_back(rowHintRect(row));
+    } else {
+      u.dirty.push_back(hintRowValueRect(row));
+    }
+    if (hadNote != pageShowsNote(page_, edit_, net_)) u.dirty.push_back(P.note);
   }
-  if (hadNote != pageShowsNote(page_, edit_, net_)) u.dirty.push_back(P.note);
   if (wasDirty != dirty()) u.dirty.push_back(P.unsavedChip);
   return u;
 }
@@ -521,6 +602,8 @@ Update SettingsScreen::onKey(ui::LogicalKey key) {
       const Rect* stops = page_ == Page::Main ? layout_.stops : pageLayout().stops;
       const int old = f;
       f = key == ui::LogicalKey::Next ? (f + 1) % n : (f + n - 1) % n;
+      if (page_ != Page::Main && f < pageLayout().rowCount && rowForced(pageLayout().rowIds[f]))  // skip a forced row
+        f = key == ui::LogicalKey::Next ? (f + 1) % n : (f + n - 1) % n;
       if (ringVisible_) u.dirty.push_back(ui::inflate(stops[old], kRingInflate));
       u.dirty.push_back(ui::inflate(stops[f], kRingInflate));
       ringVisible_ = true;

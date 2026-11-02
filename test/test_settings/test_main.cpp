@@ -57,9 +57,9 @@ void test_demo_mode_default_old_store_invalid_roundtrip() {
     FakeStore st;
     TEST_ASSERT_FALSE(load(st).demo_mode);
     st.data[kKeySchemaVersion] = kSchemaVersion;
-    st.data[kKeyWakeMode] = 1;  // an old store without "demo"
+    st.data[kKeySleepMode] = 1;  // an old store without "demo"
     TEST_ASSERT_FALSE(load(st).demo_mode);
-    TEST_ASSERT_EQUAL_INT(1, (int)load(st).wake_mode);
+    TEST_ASSERT_EQUAL_INT(1, (int)load(st).sleep_mode);
     st.data[kKeyDemoMode] = 2;
     TEST_ASSERT_FALSE(load(st).demo_mode);
     st.data[kKeyDemoMode] = -1;
@@ -82,7 +82,8 @@ void tearDown() {}
 void test_defaults_with_empty_store() {
     FakeStore st;
     Settings s = load(st);
-    TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Button);
+    TEST_ASSERT_TRUE(s.sleep_mode == SleepSetting::DeepSleep);
+    TEST_ASSERT_TRUE(s.keep_awake == KeepAwake::Off);
     TEST_ASSERT_EQUAL_INT32(60, s.refresh_interval_min);
     TEST_ASSERT_EQUAL_INT32(20, s.idle_timeout_s);
     TEST_ASSERT_TRUE(s.orientation == Orientation::Portrait);
@@ -91,13 +92,13 @@ void test_defaults_with_empty_store() {
 void test_orientation_default_on_pre_orientation_store() {
     FakeStore st;
     st.data[kKeySchemaVersion] = kSchemaVersion;
-    st.data[kKeyWakeMode] = 1;
-    st.data[kKeyRefreshMin] = 15;
+    st.data[kKeySleepMode] = 2;
+    st.data[kKeyRefreshMin] = 30;
     st.data[kKeyIdleTimeoutS] = 10;
     Settings s = load(st);
     TEST_ASSERT_TRUE(s.orientation == Orientation::Portrait);
-    TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Touch);
-    TEST_ASSERT_EQUAL_INT32(15, s.refresh_interval_min);
+    TEST_ASSERT_TRUE(s.sleep_mode == SleepSetting::Touch);
+    TEST_ASSERT_EQUAL_INT32(30, s.refresh_interval_min);
     TEST_ASSERT_EQUAL_INT32(10, s.idle_timeout_s);
 }
 
@@ -111,8 +112,8 @@ void test_orientation_invalid_defaults_only_that_field() {
         st.data[kKeyOrientation] = b;
         Settings s = load(st);
         TEST_ASSERT_TRUE(s.orientation == Orientation::Portrait);
-        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::TouchAndButton);
-        TEST_ASSERT_EQUAL_INT32(15, s.refresh_interval_min);
+        TEST_ASSERT_TRUE(s.sleep_mode == SleepSetting::TouchAndRocker);  // legacy 1 = touch and button
+        TEST_ASSERT_EQUAL_INT32(30, s.refresh_interval_min);          // legacy 15 snaps to 30
         TEST_ASSERT_EQUAL_INT32(10, s.idle_timeout_s);
     }
     FakeStore st;
@@ -126,22 +127,23 @@ void test_invalid_value_defaults_only_that_field() {
     st.data[kKeyIdleTimeoutS] = 30;
     st.data[kKeyWakeMode] = 1;
     Settings s = load(st);
-    TEST_ASSERT_EQUAL_INT32(60, s.refresh_interval_min);
+    TEST_ASSERT_EQUAL_INT32(60, s.refresh_interval_min);  // 7 is no value of any schema: default
     TEST_ASSERT_EQUAL_INT32(30, s.idle_timeout_s);
-    TEST_ASSERT_TRUE(s.wake_mode == WakeMode::TouchAndButton);
+    TEST_ASSERT_TRUE(s.sleep_mode == SleepSetting::TouchAndRocker);
 
     st.data[kKeyWakeMode] = 99;
-    TEST_ASSERT_TRUE(load(st).wake_mode == WakeMode::Button);
+    TEST_ASSERT_TRUE(load(st).sleep_mode == SleepSetting::DeepSleep);
 }
 
 void test_roundtrip_all_allowed_values() {
-    for (WakeMode w : kWakeModeValues)
+    for (SleepSetting w : kSleepModeValues)
         for (int32_t r : kRefreshIntervalMinValues)
             for (int32_t i : kIdleTimeoutSValues)
               for (Orientation o : kOrientationValues) {
                 FakeStore st;
                 Settings in;
-                in.wake_mode = w;
+                in.sleep_mode = w;
+                in.keep_awake = KeepAwake::Always;
                 in.refresh_interval_min = r;
                 in.idle_timeout_s = i;
                 in.orientation = o;
@@ -169,39 +171,99 @@ void test_save_skips_unchanged_fields() {
     TEST_ASSERT_EQUAL_INT32(1, st.data[kKeyOrientation]);
 }
 
-void test_wake_mode_migration_and_roundtrip() {
+void test_schema_migration_keeps_wake_mode_and_interval() {
+    // Schema 2: 0 Button, 1 Touch, 2 Touch & Button.
+    const struct { int32_t wake; SleepSetting want; } w2[] = {
+        {0, SleepSetting::DeepSleep}, {1, SleepSetting::Touch}, {2, SleepSetting::TouchAndRocker}};
+    for (auto& c : w2) {
+        FakeStore st;
+        st.data[kKeySchemaVersion] = 2;
+        st.data[kKeyWakeMode] = c.wake;
+        st.data[kKeyRefreshMin] = 60;
+        st.data[kKeyIdleTimeoutS] = 30;
+        Settings s = load(st);
+        TEST_ASSERT_TRUE(s.sleep_mode == c.want);
+        TEST_ASSERT_EQUAL_INT32(60, s.refresh_interval_min);  // still allowed: kept
+        TEST_ASSERT_EQUAL_INT32(30, s.idle_timeout_s);
+    }
+    // Schema 1: 1 = old Touch (touch and button).
+    FakeStore one;
+    one.data[kKeySchemaVersion] = 1;
+    one.data[kKeyWakeMode] = 1;
+    TEST_ASSERT_TRUE(load(one).sleep_mode == SleepSetting::TouchAndRocker);
+    one.data[kKeyWakeMode] = 0;
+    TEST_ASSERT_TRUE(load(one).sleep_mode == SleepSetting::DeepSleep);
+    // Removed intervals snap: 15 -> 30, 120 -> 180 (tie goes longer), 240 -> 180; 0 stays Off.
+    const int32_t from[] = {0, 15, 30, 60, 120, 240};
+    const int32_t to[] = {0, 30, 30, 60, 180, 180};
+    for (int i = 0; i < 6; ++i) {
+        FakeStore st;
+        st.data[kKeySchemaVersion] = 2;
+        st.data[kKeyRefreshMin] = from[i];
+        TEST_ASSERT_EQUAL_INT32(to[i], load(st).refresh_interval_min);
+    }
+    // stayusb -> Keep awake On USB
+    FakeStore su;
+    su.data[kKeySchemaVersion] = 2;
+    su.data[kKeyStayAwakeUsb] = 1;
+    TEST_ASSERT_TRUE(load(su).keep_awake == KeepAwake::OnUsb);
+    su.data[kKeyStayAwakeUsb] = 0;
+    TEST_ASSERT_TRUE(load(su).keep_awake == KeepAwake::Off);
+    // Saving the migrated settings stamps schema 3 and the new keys; a reload is equal.
     FakeStore st;
-    st.data[kKeySchemaVersion] = 1;  // legacy: 1 = old Touch (touch and button)
+    st.data[kKeySchemaVersion] = 2;
     st.data[kKeyWakeMode] = 1;
-    TEST_ASSERT_TRUE(load(st).wake_mode == WakeMode::TouchAndButton);
-    st.data[kKeyWakeMode] = 0;
-    TEST_ASSERT_TRUE(load(st).wake_mode == WakeMode::Button);
-    st.data[kKeyWakeMode] = 2;  // not valid in schema 1 stores, but harmless
-    FakeStore n;  // current schema: 1 = Touch only, 2 = Touch & Button
-    n.data[kKeySchemaVersion] = kSchemaVersion;
-    n.data[kKeyWakeMode] = 1;
-    TEST_ASSERT_TRUE(load(n).wake_mode == WakeMode::Touch);
-    n.data[kKeyWakeMode] = 2;
-    TEST_ASSERT_TRUE(load(n).wake_mode == WakeMode::TouchAndButton);
-    // After the migration is saved, the value 2 means Touch & Button and a reload keeps it.
+    st.data[kKeyRefreshMin] = 15;
     Settings m = load(st);
-    FakeStore out;
-    save(out, m);
-    TEST_ASSERT_EQUAL_INT32(2, out.data[kKeyWakeMode]);
-    TEST_ASSERT_TRUE(load(out).wake_mode == WakeMode::TouchAndButton);
-    Settings t;
-    t.wake_mode = WakeMode::Touch;
-    save(out, t);
-    TEST_ASSERT_TRUE(load(out).wake_mode == WakeMode::Touch);
-    TEST_ASSERT_EQUAL_INT(3, (int)kWakeModeValues.size());
-    TEST_ASSERT_FALSE(isValidWakeMode(3));
+    save(st, m);
+    TEST_ASSERT_EQUAL_INT32(kSchemaVersion, st.data[kKeySchemaVersion]);
+    TEST_ASSERT_EQUAL_INT32(2, st.data[kKeySleepMode]);
+    TEST_ASSERT_TRUE(load(st) == m);
+}
+
+void test_snap_refresh_interval() {
+    TEST_ASSERT_EQUAL_INT32(30, snapRefreshIntervalMin(15));
+    TEST_ASSERT_EQUAL_INT32(180, snapRefreshIntervalMin(120));
+    TEST_ASSERT_EQUAL_INT32(180, snapRefreshIntervalMin(240));
+    TEST_ASSERT_EQUAL_INT32(720, snapRefreshIntervalMin(100000));
+    TEST_ASSERT_EQUAL_INT32(60, snapRefreshIntervalMin(60));
+}
+
+void test_sleep_field_rules() {
+    Settings s;  // Power off
+    Capabilities ok;
+    TEST_ASSERT_TRUE(keepAwakeOnUsbOffered(SleepSetting::PowerOff, ok));
+    TEST_ASSERT_FALSE(keepAwakeOnUsbOffered(SleepSetting::DeepSleep, ok));
+    TEST_ASSERT_FALSE(keepAwakeOnUsbOffered(SleepSetting::Touch, ok));
+    TEST_ASSERT_FALSE(keepAwakeOnUsbOffered(SleepSetting::TouchAndRocker, ok));
+    Capabilities probe = ok;
+    probe.usb_probe_reliable = true;
+    TEST_ASSERT_TRUE(keepAwakeOnUsbOffered(SleepSetting::DeepSleep, probe));
+    // a mode that does not offer On USB turns the buffer value into Off
+    s.keep_awake = KeepAwake::OnUsb;
+    s.sleep_mode = SleepSetting::Touch;
+    TEST_ASSERT_TRUE(normalizeSleepFields(s, ok).keep_awake == KeepAwake::Off);
+    s.keep_awake = KeepAwake::Always;
+    TEST_ASSERT_TRUE(normalizeSleepFields(s, ok).keep_awake == KeepAwake::Always);
+    // forced Off updates only in Power off without RTC power-on; the stored value stays
+    Capabilities noRtc = ok;
+    noRtc.rtc_power_on = false;
+    s.sleep_mode = SleepSetting::PowerOff;
+    s.refresh_interval_min = 360;
+    TEST_ASSERT_FALSE(updatesForcedOff(s, ok));
+    TEST_ASSERT_TRUE(updatesForcedOff(s, noRtc));
+    TEST_ASSERT_EQUAL_INT32(0, effectiveRefreshMin(s, noRtc));
+    TEST_ASSERT_EQUAL_INT32(360, s.refresh_interval_min);
+    s.sleep_mode = SleepSetting::DeepSleep;
+    TEST_ASSERT_FALSE(updatesForcedOff(s, noRtc));
+    TEST_ASSERT_EQUAL_INT32(360, effectiveRefreshMin(s, noRtc));
 }
 
 void test_unknown_schema_version_loads_defaults() {
     FakeStore st;
     Settings in;
-    in.wake_mode = WakeMode::Touch;
-    in.refresh_interval_min = 15;
+    in.sleep_mode = SleepSetting::Touch;
+    in.refresh_interval_min = 30;
     in.idle_timeout_s = 10;
     save(st, in);
     st.data[kKeySchemaVersion] = kSchemaVersion + 1;
@@ -210,7 +272,7 @@ void test_unknown_schema_version_loads_defaults() {
 
 void test_allowed_value_lists() {
     TEST_ASSERT_EQUAL_INT32(0, kRefreshIntervalMinValues.front());
-    TEST_ASSERT_EQUAL_INT32(240, kRefreshIntervalMinValues.back());
+    TEST_ASSERT_EQUAL_INT32(720, kRefreshIntervalMinValues.back());
     TEST_ASSERT_EQUAL_INT32(10, kIdleTimeoutSValues.front());
     TEST_ASSERT_EQUAL_INT32(60, kIdleTimeoutSValues.back());
 }
@@ -219,27 +281,30 @@ void test_each_field_invalid_keeps_others() {
     const int32_t bad[] = {-1, 7, 1000, INT32_MIN, INT32_MAX};
     for (int32_t b : bad) {
         FakeStore st;
-        st.data[kKeyWakeMode] = 1;
-        st.data[kKeyRefreshMin] = 15;
+        st.data[kKeySchemaVersion] = kSchemaVersion;
+        st.data[kKeySleepMode] = 1;
+        st.data[kKeyRefreshMin] = 30;
         st.data[kKeyIdleTimeoutS] = 10;
-        st.data[kKeyWakeMode] = b;
+        st.data[kKeySleepMode] = b;
         Settings s = load(st);
-        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::Button);
-        TEST_ASSERT_EQUAL_INT32(15, s.refresh_interval_min);
+        TEST_ASSERT_TRUE(s.sleep_mode == SleepSetting::DeepSleep);
+        TEST_ASSERT_EQUAL_INT32(30, s.refresh_interval_min);
         TEST_ASSERT_EQUAL_INT32(10, s.idle_timeout_s);
 
-        st.data[kKeyWakeMode] = 1;
+        st.data[kKeySleepMode] = 1;
         st.data[kKeyRefreshMin] = b;
         s = load(st);
-        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::TouchAndButton);
+        TEST_ASSERT_TRUE(s.sleep_mode == SleepSetting::DeepSleep);
         TEST_ASSERT_EQUAL_INT32(60, s.refresh_interval_min);
         TEST_ASSERT_EQUAL_INT32(10, s.idle_timeout_s);
 
-        st.data[kKeyRefreshMin] = 15;
+        st.data[kKeyRefreshMin] = 30;
         st.data[kKeyIdleTimeoutS] = b;
+        st.data[kKeyKeepAwake] = b;
         s = load(st);
-        TEST_ASSERT_TRUE(s.wake_mode == WakeMode::TouchAndButton);
-        TEST_ASSERT_EQUAL_INT32(15, s.refresh_interval_min);
+        TEST_ASSERT_TRUE(s.sleep_mode == SleepSetting::DeepSleep);
+        TEST_ASSERT_TRUE(s.keep_awake == KeepAwake::Off);
+        TEST_ASSERT_EQUAL_INT32(30, s.refresh_interval_min);
         TEST_ASSERT_EQUAL_INT32(20, s.idle_timeout_s);
     }
 }
@@ -259,7 +324,7 @@ void test_schema_version_variants() {
     for (int32_t v : versions) {
         FakeStore st;
         st.data[kKeyWakeMode] = 1;
-        st.data[kKeyRefreshMin] = 15;
+        st.data[kKeyRefreshMin] = 30;
         st.data[kKeyIdleTimeoutS] = 10;
         st.data[kKeySchemaVersion] = v;
         TEST_ASSERT_TRUE(load(st) == Settings());
@@ -267,7 +332,7 @@ void test_schema_version_variants() {
     // Missing schema_version with valid fields: fields still load (no crash, no reset).
     FakeStore st;
     st.data[kKeyRefreshMin] = 15;
-    TEST_ASSERT_EQUAL_INT32(15, load(st).refresh_interval_min);
+    TEST_ASSERT_EQUAL_INT32(30, load(st).refresh_interval_min);  // legacy value snapped
 }
 
 void test_save_writes_only_changed_field_and_repairs_invalid() {
@@ -275,10 +340,10 @@ void test_save_writes_only_changed_field_and_repairs_invalid() {
     Settings s;
     save(st, s);
     st.writes = 0;
-    s.refresh_interval_min = 240;
+    s.refresh_interval_min = 720;
     save(st, s);
     TEST_ASSERT_EQUAL_INT(1, st.writes);
-    TEST_ASSERT_EQUAL_INT32(240, st.data[kKeyRefreshMin]);
+    TEST_ASSERT_EQUAL_INT32(720, st.data[kKeyRefreshMin]);
 
     // Corrupt stored value gets overwritten by save of the default.
     st.data[kKeyIdleTimeoutS] = 7;
@@ -298,9 +363,9 @@ void test_save_writes_only_changed_field_and_repairs_invalid() {
 void test_save_into_future_schema_store_stamps_current_version() {
     FakeStore st;
     st.data[kKeySchemaVersion] = kSchemaVersion + 1;
-    st.data[kKeyRefreshMin] = 15;
+    st.data[kKeyRefreshMin] = 30;
     Settings s;
-    s.refresh_interval_min = 15;
+    s.refresh_interval_min = 30;
     save(st, s);
     TEST_ASSERT_EQUAL_INT32(kSchemaVersion, st.data[kKeySchemaVersion]);
     TEST_ASSERT_TRUE(load(st) == s);
@@ -308,7 +373,7 @@ void test_save_into_future_schema_store_stamps_current_version() {
 
 void test_keys_fit_nvs_limit_and_lists_are_valid() {
     TEST_ASSERT_TRUE(strlen(kKeySchemaVersion) <= 15);
-    TEST_ASSERT_TRUE(strlen(kKeyWakeMode) <= 15);
+    TEST_ASSERT_TRUE(strlen(kKeyWakeMode) <= 15 && strlen(kKeySleepMode) <= 15 && strlen(kKeyKeepAwake) <= 15);
     TEST_ASSERT_TRUE(strlen(kKeyRefreshMin) <= 15);
     TEST_ASSERT_TRUE(strlen(kKeyIdleTimeoutS) <= 15);
     TEST_ASSERT_TRUE(strlen(kKeyOrientation) <= 15);
@@ -317,7 +382,9 @@ void test_keys_fit_nvs_limit_and_lists_are_valid() {
     for (Orientation o : kOrientationValues)
         TEST_ASSERT_TRUE(isValidOrientation(static_cast<int32_t>(o)));
     TEST_ASSERT_FALSE(isValidOrientation(2));
-    for (WakeMode w : kWakeModeValues) TEST_ASSERT_TRUE(isValidWakeMode(static_cast<int32_t>(w)));
+    for (SleepSetting w : kSleepModeValues) TEST_ASSERT_TRUE(isValidSleepMode(static_cast<int32_t>(w)));
+    TEST_ASSERT_FALSE(isValidSleepMode(4));
+    TEST_ASSERT_FALSE(isValidKeepAwake(3));
     for (int32_t r : kRefreshIntervalMinValues) TEST_ASSERT_TRUE(isValidRefreshIntervalMin(r));
     for (int32_t i : kIdleTimeoutSValues) TEST_ASSERT_TRUE(isValidIdleTimeoutS(i));
     TEST_ASSERT_TRUE(isValidRefreshIntervalMin(Settings().refresh_interval_min));
@@ -367,22 +434,22 @@ void test_learn_battery_persists() {
     TEST_ASSERT_TRUE(strlen(kKeyLearnBattery) <= 15);
 }
 
-void test_stay_awake_usb_persists() {
+void test_keep_awake_persists() {
     FakeStore st;
-    TEST_ASSERT_FALSE(load(st).stay_awake_usb);  // absent = off
-    st.data[kKeyStayAwakeUsb] = 7;               // invalid -> default
-    TEST_ASSERT_FALSE(load(st).stay_awake_usb);
+    TEST_ASSERT_TRUE(load(st).keep_awake == KeepAwake::Off);  // absent = off
+    st.data[kKeySchemaVersion] = kSchemaVersion;
+    st.data[kKeyKeepAwake] = 7;  // invalid -> default
+    TEST_ASSERT_TRUE(load(st).keep_awake == KeepAwake::Off);
     Settings s;
-    s.stay_awake_usb = true;
+    s.keep_awake = KeepAwake::Always;
     save(st, s);
-    TEST_ASSERT_EQUAL_INT32(1, st.data[kKeyStayAwakeUsb]);
-    TEST_ASSERT_TRUE(load(st).stay_awake_usb);
+    TEST_ASSERT_EQUAL_INT32(2, st.data[kKeyKeepAwake]);
+    TEST_ASSERT_TRUE(load(st).keep_awake == KeepAwake::Always);
     TEST_ASSERT_TRUE(load(st) == s);
     TEST_ASSERT_FALSE(Settings() == s);
     const int w = st.writes;
     save(st, s);
     TEST_ASSERT_EQUAL_INT(w, st.writes);
-    TEST_ASSERT_TRUE(strlen(kKeyStayAwakeUsb) <= 15);
 }
 
 void test_wifi_profile_index_lookup() {
@@ -441,9 +508,11 @@ int main(int, char**) {
     RUN_TEST(test_save_writes_only_changed_field_and_repairs_invalid);
     RUN_TEST(test_save_into_future_schema_store_stamps_current_version);
     RUN_TEST(test_keys_fit_nvs_limit_and_lists_are_valid);
-    RUN_TEST(test_wake_mode_migration_and_roundtrip);
+    RUN_TEST(test_schema_migration_keeps_wake_mode_and_interval);
+    RUN_TEST(test_snap_refresh_interval);
+    RUN_TEST(test_sleep_field_rules);
     RUN_TEST(test_wifi_profile_by_name_and_ha_link);
-    RUN_TEST(test_stay_awake_usb_persists);
+    RUN_TEST(test_keep_awake_persists);
     RUN_TEST(test_learn_battery_persists);
     RUN_TEST(test_wifi_profile_index_lookup);
     RUN_TEST(test_wifi_profile_legacy_index_migrates_once);

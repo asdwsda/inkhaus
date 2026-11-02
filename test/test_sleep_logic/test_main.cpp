@@ -50,18 +50,40 @@ void test_session_kind_from_wake() {
 }
 
 void test_indicator() {
-  TEST_ASSERT_EQUAL(int(Indicator::Badge), int(indicatorFromByte(uint8_t(Indicator::Badge))));
+  TEST_ASSERT_EQUAL(int(Indicator::PowerOff), int(indicatorFromByte(1)));
+  TEST_ASSERT_EQUAL(int(Indicator::Deep), int(indicatorFromByte(2)));
+  TEST_ASSERT_EQUAL(int(Indicator::Tap), int(indicatorFromByte(3)));
   TEST_ASSERT_EQUAL(int(Indicator::None), int(indicatorFromByte(0)));
-  TEST_ASSERT_EQUAL(int(Indicator::None), int(indicatorFromByte(2)));  // old "touch" variant byte
   TEST_ASSERT_EQUAL(int(Indicator::None), int(indicatorFromByte(77)));
-  // every mode and the low-battery sleep get the same badge
-  power::SleepPlan b;
+  // the pill follows the sleep mode, also for the low-battery sleep (mode as set)
+  power::SleepPlan b;  // Power off
+  power::SleepPlan d;
+  d.mode = power::SleepMode::DeepSleep;
   power::SleepPlan t;
   t.mode = power::SleepMode::DeepSleep; t.touch_wake = true;
   for (auto sess : {power::Session::Interactive, power::Session::ScheduledRefresh, power::Session::LowBattery}) {
-    TEST_ASSERT_EQUAL(int(Indicator::Badge), int(planSleepPath(b, sess, 1700000000).indicator));
-    TEST_ASSERT_EQUAL(int(Indicator::Badge), int(planSleepPath(t, sess, 1700000000).indicator));
+    TEST_ASSERT_EQUAL(int(Indicator::PowerOff), int(planSleepPath(b, sess, 1700000000).indicator));
+    TEST_ASSERT_EQUAL(int(Indicator::Deep), int(planSleepPath(d, sess, 1700000000).indicator));
+    TEST_ASSERT_EQUAL(int(Indicator::Tap), int(planSleepPath(t, sess, 1700000000).indicator));
   }
+}
+
+void test_pill_next_minute() {
+  const int64_t now = 1767225600 + 10 * 3600;  // 10:00 UTC
+  TEST_ASSERT_EQUAL(-1, pillNextMinute(std::nullopt, now, 0));
+  TEST_ASSERT_EQUAL(10 * 60 + 30, pillNextMinute(now + 1800, now, 0));
+  TEST_ASSERT_EQUAL(12 * 60 + 30, pillNextMinute(now + 1800, now, 7200));  // local = UTC + 2 h
+  TEST_ASSERT_EQUAL(22 * 60, pillNextMinute(now + 12 * 3600, now, 0));
+  TEST_ASSERT_EQUAL(-1, pillNextMinute(now + 12 * 3600 + 1, now, 0));  // beyond 12 h: no date on the pill
+  TEST_ASSERT_EQUAL(-1, pillNextMinute(now - 60, now, 0));
+  TEST_ASSERT_EQUAL(23 * 60 + 30, localMinuteOfDay(1767225600 - 1800, 0));
+  TEST_ASSERT_EQUAL(30, localMinuteOfDay(1767225600 - 1800, 3600));
+  // the path carries the next update only when an alarm is armed
+  power::SleepPlan p;
+  TEST_ASSERT_FALSE(planSleepPath(p, power::Session::Interactive, now).next_update_at.has_value());
+  p.rtc_alarm_at = now + 3600;
+  TEST_ASSERT_EQUAL_INT64(now + 3600, *planSleepPath(p, power::Session::Interactive, now).next_update_at);
+  TEST_ASSERT_FALSE(planSleepPath(p, power::Session::LowBattery, now).next_update_at.has_value());
 }
 
 // 2026-10-28 10:00:00 UTC
@@ -107,7 +129,7 @@ void test_path_button_mode() {
   TEST_ASSERT_FALSE(s.wake_touch);
   TEST_ASSERT_TRUE(s.wake_timer_s.has_value());
   TEST_ASSERT_EQUAL(3600, int(*s.wake_timer_s));
-  TEST_ASSERT_EQUAL(int(Indicator::Badge), int(s.indicator));
+  TEST_ASSERT_EQUAL(int(Indicator::PowerOff), int(s.indicator));
   TEST_ASSERT_FALSE(s.low_battery);
 }
 
@@ -119,7 +141,7 @@ void test_path_touch_mode() {
   TEST_ASSERT_EQUAL(int(SleepMethod::DeepSleep), int(s.first));
   TEST_ASSERT_TRUE(s.wake_touch);
   TEST_ASSERT_TRUE(s.wake_rocker);
-  TEST_ASSERT_EQUAL(int(Indicator::Badge), int(s.indicator));
+  TEST_ASSERT_EQUAL(int(Indicator::Tap), int(s.indicator));
   TEST_ASSERT_EQUAL(600, int(*s.wake_timer_s));
 }
 
@@ -296,7 +318,7 @@ void test_path_scheduled_session_keeps_plan_wake_sources() {
   TEST_ASSERT_EQUAL(int(SleepMethod::PowerOff), int(s.first));
   TEST_ASSERT_TRUE(s.arm_rtc_alarm);
   TEST_ASSERT_FALSE(s.low_battery);
-  TEST_ASSERT_EQUAL(int(Indicator::Badge), int(s.indicator));
+  TEST_ASSERT_EQUAL(int(Indicator::PowerOff), int(s.indicator));
 }
 
 void test_exec_resolution() {
@@ -354,12 +376,12 @@ void test_local_idle_plan() {
   TEST_ASSERT_FALSE(app_logic::localIdleSleepWanted(true));
   settings::Settings s;
   s.refresh_interval_min = 60;
-  s.wake_mode = settings::WakeMode::TouchAndButton;
+  s.sleep_mode = settings::SleepSetting::TouchAndRocker;
   auto p = app_logic::localIdlePlan(s, 1700000000, 3600);
   TEST_ASSERT_FALSE(p.rtc_alarm_at.has_value());
   TEST_ASSERT_TRUE(p.touch_wake);
   TEST_ASSERT_TRUE(p.button_wake);
-  s.wake_mode = settings::WakeMode::Button;
+  s.sleep_mode = settings::SleepSetting::PowerOff;
   p = app_logic::localIdlePlan(s, 1700000000, 0);
   TEST_ASSERT_FALSE(p.rtc_alarm_at.has_value());
   TEST_ASSERT_FALSE(p.touch_wake);
@@ -374,7 +396,7 @@ void test_ext1_empty_mask_is_rocker() {
 void test_sleep_plan_uses_current_settings_and_per_mode_sources() {
   settings::Settings boot;  // boot-time copy: Button
   settings::Settings now = boot;
-  now.wake_mode = settings::WakeMode::Touch;  // changed in Settings during the session
+  now.sleep_mode = settings::SleepSetting::Touch;  // changed in Settings during the session
   auto sess = power::Session::Interactive;
   auto stale = power::plan_sleep(boot, sess, 1700000000, 0);
   auto cur = planForSleep(now, sess, 1700000000, 0, false);
@@ -384,12 +406,12 @@ void test_sleep_plan_uses_current_settings_and_per_mode_sources() {
   auto sp = planSleepPath(cur, sess, 1700000000);
   TEST_ASSERT_TRUE(sp.wake_touch);
   TEST_ASSERT_FALSE(sp.wake_rocker);
-  now.wake_mode = settings::WakeMode::Button;
+  now.sleep_mode = settings::SleepSetting::PowerOff;
   cur = planForSleep(now, sess, 1700000000, 0, false);
   sp = planSleepPath(cur, sess, 1700000000);
   TEST_ASSERT_TRUE(sp.wake_rocker);
   TEST_ASSERT_FALSE(sp.wake_touch);
-  now.wake_mode = settings::WakeMode::TouchAndButton;
+  now.sleep_mode = settings::SleepSetting::TouchAndRocker;
   cur = planForSleep(now, sess, 1700000000, 0, true);
   TEST_ASSERT_FALSE(cur.rtc_alarm_at.has_value());
   sp = planSleepPath(cur, sess, 1700000000);
@@ -425,6 +447,7 @@ int main() {
   RUN_TEST(test_wake_restarts_are_not_wakes);
   RUN_TEST(test_session_kind_from_wake);
   RUN_TEST(test_indicator);
+  RUN_TEST(test_pill_next_minute);
   RUN_TEST(test_alarm_fields);
   RUN_TEST(test_alarm_fields_rejects);
   RUN_TEST(test_path_button_mode);

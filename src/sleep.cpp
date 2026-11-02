@@ -26,13 +26,15 @@ constexpr uint32_t kPowerOffWaitMs = 700;           // still running after this:
 constexpr gpio_num_t kPinUartRx = GPIO_NUM_3;       // ESP32 RX = CH9102 TX; the CH9102 is powered from USB VBUS
 
 const char *kNs = "slp";
-const char *kKeyMarker = "m", *kKeyInd = "ind", *kKeyPath = "sp";
+const char *kKeyMarker = "m", *kKeyInd = "ind", *kKeyPath = "sp", *kKeyNext = "nx";
 
 // Survives deep sleep (not a power-off): the last sleep found the board still powered (USB).
 RTC_DATA_ATTR int8_t g_usbAtSleepRtc = -1;
 
 app_logic::Indicator g_stored = app_logic::Indicator::None;
 bool g_badgeOnPanel = false;
+app_logic::Indicator g_panelInd = app_logic::Indicator::None;
+int64_t g_panelNext = 0;
 
 app_logic::ResetKind resetKind() {
   switch (esp_reset_reason()) {
@@ -120,11 +122,13 @@ power::WakeReason detect() {
   in.pin = in.reset == app_logic::ResetKind::DeepSleep ? wakePin() : app_logic::WakePin::None;
   in.rtc_alarm_flag = M5.Rtc.isEnabled() && M5.Rtc.getIRQstatus();
   uint8_t ind = 0;
+  int64_t nx = 0;
   std::string slept;
   Preferences p;
   if (p.begin(kNs, false)) {
     in.slept_marker = p.getUChar(kKeyMarker, 0) != 0;
     ind = p.getUChar(kKeyInd, 0);
+    nx = p.getLong64(kKeyNext, 0);
     // A power-off loses RTC memory: the sleep path comes from NVS (task 084).
     if (in.reset == app_logic::ResetKind::PowerOn && in.slept_marker) {
       slept = p.getString(kKeyPath, "").c_str();
@@ -142,8 +146,10 @@ power::WakeReason detect() {
   // The first frame only keeps the indicator of the previous sleep for a scheduled wake that
   // follows a sleep of ours; every other start clears it.
   g_stored = (r == power::WakeReason::RtcAlarm) ? app_logic::indicatorFromByte(ind) : app_logic::Indicator::None;
+  g_panelInd = app_logic::indicatorFromByte(ind);
+  g_panelNext = nx;
   g_badgeOnPanel = in.reset == app_logic::ResetKind::DeepSleep && in.slept_marker &&
-                   app_logic::indicatorFromByte(ind) == app_logic::Indicator::Badge;
+                   g_panelInd != app_logic::Indicator::None;
   wakelog::logf("WAKE: reason=%s reset=%s pin=%s rtc_flag=%d marker=%d indicator_on_panel=%s usb_rx=%d slept=%s t_ms=%u\n",
                 app_logic::wakeName(r), resetName(in.reset), pinName(in.pin), in.rtc_alarm_flag ? 1 : 0,
                 in.slept_marker ? 1 : 0, app_logic::indicatorName(g_stored), usbRx, slept.empty() ? "-" : slept.c_str(),
@@ -152,6 +158,8 @@ power::WakeReason detect() {
 }
 
 app_logic::Indicator storedIndicator() { return g_stored; }
+app_logic::Indicator panelIndicator() { return g_panelInd; }
+int64_t panelNextAt() { return g_panelNext; }
 bool badgeOnPanel() { return g_badgeOnPanel; }
 
 void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEpoch, int32_t batteryMv) {
@@ -180,16 +188,17 @@ void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEp
   wakelog::append(session, nowEpoch, batteryMv);  // no-op unless the debug_log setting is on
 
   const app_logic::SleepExec ex = app_logic::resolveSleepExec(sp.first,
-#ifdef SLEEP_POWER_OFF
-                                                              true
+#ifdef SLEEP_NO_POWER_OFF
+                                                              false  // test builds: keep the deep-sleep hold
 #else
-                                                              false
+                                                              true  // task 085: the Power off sleep mode really powers off (UNVERIFIED until the 084 battery test)
 #endif
   );
   Preferences p;
   if (p.begin(kNs, false)) {
     p.putString(kKeyPath, ex.gpio2_low ? "poweroff" : "deepsleep");
     p.putUChar(kKeyInd, uint8_t(sp.indicator));
+    p.putLong64(kKeyNext, sp.next_update_at ? *sp.next_update_at : 0);
     p.putUChar(kKeyMarker, 1);
     p.end();
   }
