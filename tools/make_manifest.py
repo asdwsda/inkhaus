@@ -71,7 +71,10 @@ def build(version, build_dir, boot_app0, parts_csv, out_dir):
         dst = os.path.join(out_dir, name)
         shutil.copyfile(src, dst)
         entries.append({"file": name, "offset": off, "size": os.path.getsize(dst), "sha256": sha256(dst)})
-    manifest = {"version": version, "chip": "esp32", "flash_size": FLASH_SIZE, "segments": entries}
+    fw = next(e for e in entries if e["file"] == "firmware.bin")
+    # Task 087: what the on-device self-update needs (the app image only, fetched from the same directory).
+    ota = {"file": fw["file"], "size": fw["size"], "sha256": fw["sha256"]}
+    manifest = {"version": version, "chip": "esp32", "flash_size": FLASH_SIZE, "ota": ota, "segments": entries}
     with open(os.path.join(out_dir, "manifest.json"), "w") as f:
         json.dump(manifest, f, indent=2)
         f.write("\n")

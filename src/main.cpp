@@ -21,6 +21,7 @@
 #include "input.h"
 #include "net.h"
 #include "net_task.h"
+#include "ota.h"
 #include "present.h"
 #include "render/screen.h"
 #include "render/settings_screen.h"
@@ -580,7 +581,7 @@ static void startSession(uint32_t now, bool restart = false) {
   g_sessionOver = false;
   g_drv->setHistoryHandler(onHistoryDone);
   g_drv->setFetchHook(graphsOnFetch);
-  g_drv->setSleepHold(graphsBusy);
+  g_drv->setSleepHold([] { return graphsBusy() || ota::busy(); });  // task 087: no sleep during a check / download
   g_app.graphs().abortFetch();  // the old net session is gone: a graph result will not arrive
   g_graphBatchMs = 0;
   if (g_app.history().fetching() || g_histWaitNet) {  // the old net session is gone: its result will not arrive
@@ -682,6 +683,105 @@ static void reloadConfigSource(settings::Orientation o) {
   }
 }
 
+// ---- firmware update row (task 087, docs/ui/settings.md 8.6) ----
+
+// UNVERIFIED: main may have power::usbPresent() (task 085 probe); use it there instead of usbAtSleep().
+static bool usbNow() { return power::usbAtSleep(); }
+
+static settings_ui::FwCheckErr g_fwCheckErr = settings_ui::FwCheckErr::None;
+static bool g_fwJustChecked = false;
+static settings_ui::FwDlErr g_fwDlErr = settings_ui::FwDlErr::None;
+
+// The OTA code closes the HA keep-alive socket before a check / download (frees the TLS block).
+static void otaQuiesce() {
+  if (!g_real || !g_net.running()) return;
+  app_logic::NetCommand c;
+  c.type = app_logic::NetCommand::Type::Close;
+  g_net.post(c);
+  for (int i = 0; i < 30; ++i) {  // ~300 ms: the net task closes the socket in order
+    boot::feed();
+    delay(10);
+  }
+}
+
+static settings_ui::FirmwareInfo fwSnapshot() {
+  settings_ui::FirmwareInfo f;
+  f.current = FW_VERSION;
+  f.available = ota::availableVersion();
+  f.sizeBytes = ota::availableSize();
+  f.updatedFrom = ota::updatedFrom();
+  f.rolledBack = ota::rolledBack();
+  f.lastCheck = wallTime(ota::lastCheckEpoch());
+  f.now = wallTime(session_glue::wallClock());
+  f.demo = g_settings.demo_mode || !g_real;
+  f.wifi = g_drv && g_drv->wifiUp();
+  f.blockedBattery = ota::installBlock(usbNow(), batteryPercent()) != ota_logic::InstallBlock::None;
+  f.checkErr = g_fwCheckErr;
+  f.justChecked = g_fwJustChecked;
+  f.dlErr = g_fwDlErr;
+  return f;
+}
+
+// After a blocking step: the Settings idle timer and the session's idle timer restart.
+static void fwResumed() {
+  const uint32_t now = millis();
+  settings_flow::keepAlive(now);
+  if (g_real && g_drv && !g_sessionOver) g_drv->input(now);
+  else g_localIdle.on_input(now / 1000);
+}
+
+static void fwProgress(ota::Phase ph, int pct) {
+  static uint32_t lastDrawMs = 0;
+  static int lastPct = -100;
+  static ota::Phase lastPh = ota::Phase::Restarting;
+  const uint32_t now = millis();
+  const bool phaseChanged = ph != lastPh;
+  if (!phaseChanged && pct < lastPct + 5 && now - lastDrawMs < 2000) return;  // one partial per 5 % or 2 s
+  lastPh = ph;
+  lastPct = pct;
+  lastDrawMs = now;
+  settings_flow::setFirmwareProgress(ph == ota::Phase::Downloading ? settings_ui::FwPhase::Downloading
+                                     : ph == ota::Phase::Verifying ? settings_ui::FwPhase::Verifying
+                                                                   : settings_ui::FwPhase::Restarting, pct);
+  drawSettingsFrame(present::Mode::Partial, now);
+  if (ph == ota::Phase::Restarting) delay(300);  // let the partial finish before the restart
+}
+
+static void fwCheck(uint32_t now) {
+  drawSettingsFrame(present::Mode::Partial, now);  // Checking... look
+  const ota::CheckResult res = ota::checkNow(session_glue::wallClock(), g_drv && g_drv->wifiUp());
+  g_fwJustChecked = res == ota::CheckResult::UpToDate;
+  using E = settings_ui::FwCheckErr;
+  g_fwCheckErr = res == ota::CheckResult::NoWifi    ? E::NoWifi
+                 : res == ota::CheckResult::Timeout ? E::Timeout
+                 : (res == ota::CheckResult::NoServer || res == ota::CheckResult::Skipped) ? E::NoServer
+                                                                                            : E::None;
+  settings_flow::clearFirmwareBusy();
+  settings_flow::setFirmware(fwSnapshot());
+  fwResumed();
+  drawSettingsFrame(present::Mode::Partial, millis());
+}
+
+static void fwInstall(uint32_t now) {
+  if (settings_flow::screen().dirty()) {  // the restart must not lose the edit buffer
+    NvsSettingsStore store;
+    if (store.begin()) {
+      settings::save(store, settings_flow::screen().edit());
+      store.end();
+    }
+  }
+  g_fwDlErr = settings_ui::FwDlErr::None;
+  settings_flow::setFirmware(fwSnapshot());
+  drawSettingsFrame(present::Mode::Full, now);  // Tools page, the row in its downloading look
+  wakelog::logf("OTA: install start version=%s\n", ota::availableVersion().c_str());
+  ota::install(fwProgress);  // returns only on failure; the running firmware is untouched
+  g_fwDlErr = ota::failure() == ota::Failure::Damaged ? settings_ui::FwDlErr::Damaged : settings_ui::FwDlErr::Download;
+  settings_flow::clearFirmwareBusy();
+  settings_flow::setFirmware(fwSnapshot());
+  fwResumed();
+  drawSettingsFrame(present::Mode::Full, millis());  // failed look + one clean-up of the page
+}
+
 static constexpr uint32_t kNetRestartWaitMs = 10000;  // above the HTTP timeouts (4 s connect, 8 s total)
 
 static bool actionPending() {
@@ -692,6 +792,7 @@ static bool actionPending() {
 }
 
 static void closeSettings(const settings_ui::LeaveResult &r, uint32_t now) {
+  ota::clearNotices();  // "Updated from" / "rolled back" show on the first Settings visit only
   g_settingsRefreshing = false;
   if (r.save) {
     NvsSettingsStore store;
@@ -730,6 +831,10 @@ static void openSettings(bool ring, uint32_t now) {
   snapshotInfo();
   settings_flow::open(g_settings, g_app.orientation(), ring, now);
   settings_flow::setNetwork(networkInfo());
+  g_fwCheckErr = settings_ui::FwCheckErr::None;
+  g_fwJustChecked = false;
+  g_fwDlErr = settings_ui::FwDlErr::None;
+  settings_flow::setFirmware(fwSnapshot());
   drawSettingsFrame(present::Mode::Full, now);
   wakelog::logf("APP: settings opened\n");
 }
@@ -737,6 +842,19 @@ static void openSettings(bool ring, uint32_t now) {
 static void manualSleep();
 
 static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
+  if (r.fwCheck) {
+    fwCheck(now);
+    return;
+  }
+  if (r.fwInstall) {
+    fwInstall(now);
+    return;
+  }
+  if (r.fwSkip) {
+    ota::skipAvailable();
+    g_fwDlErr = settings_ui::FwDlErr::None;
+    settings_flow::setFirmware(fwSnapshot());
+  }
   if (r.refresh) {
     if (g_real && g_drv && !g_sessionOver) {
       g_refreshSeq = g_drv->fetchSeq();
@@ -779,6 +897,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   uint32_t now = millis();
   const bool low = session == power::Session::LowBattery;
   session_glue::ntpAbort();
+  ota::beforeSleep();  // task 087: a deliberate sleep after the first frame is not a crash
   if (!low) {
     historyShutdown();
     g_app.closeBrightness(now);  // flush the unsent value; the frozen screen never shows the popup (brightness.md rule 5)
@@ -856,6 +975,7 @@ static uint32_t firmwareId() {
 }
 
 void setup() {
+  ota::earlyBoot();  // task 087: count a boot of a just-installed firmware first, so a crash in setup() counts
   boot::begin();
   present::setFirmwareId(firmwareId());
   g_wake = sleepwake::detect();
@@ -1003,6 +1123,8 @@ void setup() {
   // g_keepStatus stays set: updateStatus() clears it once the session leaves Connecting.
   boot::mark("first_draw");
   wakelog::writeDeferred();
+  ota::begin(splashed);  // task 087: state; splashed = cold boot
+  ota::setQuiesce(otaQuiesce);
 
   boot::log("version", "017");
   boot::log("orientation", (long)rotation);
@@ -1078,7 +1200,7 @@ void loop() {
     if (g_sessionOver) startSession(now);  // a new interactive session (real sleep comes later)
     else g_drv->input(now);
   }
-  if (app_logic::localIdleSleepWanted(g_real && g_drv)) {  // demo / config error: no session machine
+  if (app_logic::localIdleSleepWanted(g_real && g_drv) && !ota::busy()) {  // demo / config error: no session machine
     if (!g_localIdleOn) { g_localIdle = power::IdleTimer(g_settings.idle_timeout_s); g_localIdle.start(now / 1000); g_localIdleOn = true; }
     if (e.kind != input::Event::None || settings_flow::active() || popupOpen) g_localIdle.on_input(now / 1000);
     if (g_localIdle.should_sleep(now / 1000)) {
@@ -1150,6 +1272,7 @@ void loop() {
   if (g_drv) {
     g_drv->tick(now);
     session_glue::ntpPoll(g_drv->wifiUp());
+    ota::tick(now, session_glue::wallClock(), g_drv->wifiUp(), g_drv->sessionDone());  // task 087: due check
     if (g_drv->takeRender()) changed = true;
     logFetchApplied();
     if (g_drv->wifiUp()) wakelog::wifiUp(now);

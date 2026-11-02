@@ -914,6 +914,164 @@ void test_estimate_view() {
   TEST_ASSERT_EQUAL_INT(88, live.h);
 }
 
+
+// ---- task 087: firmware row, confirm page ----
+static FirmwareInfo fwInfo() {
+  FirmwareInfo f;
+  f.current = "1.2.1";
+  f.wifi = true;
+  f.now = {10, 28, 14, 30};
+  return f;
+}
+
+void test_fw_row_looks() {
+  FirmwareInfo f = fwInfo();
+  FirmwareRow r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::UpToDate && r.actionable && !r.chip);
+  TEST_ASSERT_EQUAL_STRING("Not checked. Tap to check", r.hint.c_str());
+  f.lastCheck = {10, 26, 9, 0};
+  TEST_ASSERT_EQUAL_STRING("Checked 26.10. Tap to check", firmwareRow(f).hint.c_str());
+  f.lastCheck = {10, 28, 14, 5};
+  TEST_ASSERT_EQUAL_STRING("Checked 14:05. Tap to check", firmwareRow(f).hint.c_str());
+  f.justChecked = true;
+  TEST_ASSERT_EQUAL_STRING("Up to date, checked 14:05", firmwareRow(f).hint.c_str());
+  f.checkErr = FwCheckErr::NoWifi;
+  r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::CheckFailed && r.alert && r.actionable);
+  TEST_ASSERT_EQUAL_STRING("Check failed: no Wi-Fi", r.hint.c_str());
+  f.checkErr = FwCheckErr::None;
+  f.available = "1.3.0";
+  r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::Available && r.chip && r.actionable);
+  TEST_ASSERT_EQUAL_STRING("Update to 1.3.0 available", r.hint.c_str());
+  f.dlErr = FwDlErr::Damaged;
+  TEST_ASSERT_EQUAL_STRING("File damaged, not installed", firmwareRow(f).hint.c_str());
+  f.dlErr = FwDlErr::Download;
+  r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::Failed && r.alert && r.chip && r.actionable);
+  f.dlErr = FwDlErr::None;
+  f.blockedBattery = true;
+  r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::Refused && r.dotted && r.chip && !r.actionable);
+  TEST_ASSERT_EQUAL_STRING("1.3.0 needs USB or 50% battery", r.hint.c_str());
+  f.wifi = false;
+  TEST_ASSERT_EQUAL_STRING("1.3.0: Wi-Fi not connected", firmwareRow(f).hint.c_str());
+  f.demo = true;
+  TEST_ASSERT_EQUAL_STRING("1.3.0: leave demo mode first", firmwareRow(f).hint.c_str());
+  f = fwInfo();
+  f.updatedFrom = "1.2.0";
+  TEST_ASSERT_TRUE(firmwareRow(f).plain && !firmwareRow(f).actionable);
+  TEST_ASSERT_EQUAL_STRING("Updated from 1.2.0", firmwareRow(f).hint.c_str());
+  f.updatedFrom.clear();
+  f.rolledBack = "1.3.0";
+  TEST_ASSERT_EQUAL_STRING("1.3.0 failed, rolled back", firmwareRow(f).hint.c_str());
+  TEST_ASSERT_TRUE(firmwareRow(f).alert);
+}
+
+void test_fw_progress_look() {
+  FirmwareInfo f = fwInfo();
+  f.available = "1.3.0";
+  f.downloading = true;
+  f.pct = 42;
+  FirmwareRow r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.bar && r.dashed && !r.actionable);
+  TEST_ASSERT_EQUAL_STRING("Downloading 1.3.0", r.label.c_str());
+  TEST_ASSERT_EQUAL_STRING("42%", r.value.c_str());
+  f.phase = FwPhase::Verifying;
+  TEST_ASSERT_EQUAL_STRING("Checking 1.3.0", firmwareRow(f).label.c_str());
+  f.phase = FwPhase::Restarting;
+  TEST_ASSERT_EQUAL_STRING("Restarting", firmwareRow(f).label.c_str());
+}
+
+void test_fw_tools_page_focus_and_summary() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  s.setFirmware(fwInfo());
+  touchCentre(s, s.layout().categories[3]);
+  const PageLayout& P = s.pageLayout();
+  TEST_ASSERT_EQUAL_INT(3, P.rowCount);
+  expectRect(16, 268, 508, 88, P.rows[2]);
+  expectRect(16, 368, 508, 64, P.note);
+  // Up to date: a tap starts Check now, the row is Checking, input is ignored until the caller clears it.
+  Update u = s.onTouch({100, 300});
+  TEST_ASSERT_TRUE(u.action == Action::FirmwareCheck);
+  TEST_ASSERT_TRUE(firmwareRow(s.firmware()).look == FwLook::Checking);
+  TEST_ASSERT_TRUE(s.onTouch({100, 100}).dirty.empty());  // Demo row ignored
+  TEST_ASSERT_FALSE(s.dirty());
+  TEST_ASSERT_TRUE(s.onKey(LogicalKey::Next).dirty.empty());
+  // Refused: not a focus stop, taps ignored.
+  FirmwareInfo f = fwInfo();
+  f.available = "1.3.0";
+  f.blockedBattery = true;
+  s.setFirmware(f);
+  TEST_ASSERT_TRUE(s.onTouch({100, 300}).action == Action::None);
+  s.onKey(LogicalKey::Next);  // 0 -> 1
+  s.onKey(LogicalKey::Next);  // 1 -> Back (Firmware skipped)
+  TEST_ASSERT_EQUAL_INT(3, s.focus());
+  s.onKey(LogicalKey::Prev);
+  TEST_ASSERT_EQUAL_INT(1, s.focus());
+  // Overview summary.
+  SettingsScreen o(Settings(), Orientation::Portrait, false);
+  TEST_ASSERT_EQUAL_STRING("Update available, Demo Off, Log Off",
+                           categorySummary(3, o.edit(), o.network(), false, settings::kCapabilities, true).c_str());
+  TEST_ASSERT_EQUAL_STRING("Demo Off, Log Off", categorySummary(3, o.edit(), o.network()).c_str());
+}
+
+void test_fw_demo_in_edit_buffer_refuses() {
+  SettingsScreen s(Settings(), Orientation::Portrait, true);
+  FirmwareInfo f = fwInfo();
+  f.available = "1.3.0";
+  s.setFirmware(f);
+  touchCentre(s, s.layout().categories[3]);
+  TEST_ASSERT_TRUE(s.firmwareRow().look == FwLook::Available);
+  Update u = s.onTouch({100, 100});  // Demo mode On
+  bool rowDirty = false;
+  for (const Rect& r : u.dirty) rowDirty |= r.y == 268;
+  TEST_ASSERT_TRUE(rowDirty);
+  TEST_ASSERT_TRUE(s.firmwareRow().look == FwLook::Refused);
+}
+
+void test_fw_confirm_yes_no_skip() {
+  auto open = [](SettingsScreen& s) {
+    FirmwareInfo f = fwInfo();
+    f.available = "1.3.0";
+    f.sizeBytes = 1700000;
+    s.setFirmware(f);
+    touchCentre(s, s.layout().categories[3]);
+    Update u = touchCentre(s, s.pageLayout().rows[2]);
+    TEST_ASSERT_TRUE(u.action == Action::PageChange);
+    TEST_ASSERT_TRUE(s.page() == Page::Confirm);
+    TEST_ASSERT_EQUAL_INT(3, s.stopCount());
+  };
+  {  // rocker: UP yes
+    SettingsScreen s(Settings(), Orientation::Portrait, true);
+    open(s);
+    Update u = s.onKey(LogicalKey::Prev);
+    TEST_ASSERT_TRUE(u.action == Action::FirmwareInstall);
+    TEST_ASSERT_TRUE(s.page() == Page::Tools && s.firmware().downloading);
+    TEST_ASSERT_TRUE(s.onKey(LogicalKey::Push).action == Action::None);  // input ignored while downloading
+    TEST_ASSERT_TRUE(s.onTouch({100, 700}).action == Action::None);
+  }
+  {  // DOWN no: back on Tools, nothing started
+    SettingsScreen s(Settings(), Orientation::Portrait, true);
+    open(s);
+    Update u = s.onKey(LogicalKey::Next);
+    TEST_ASSERT_TRUE(u.action == Action::PageChange && s.page() == Page::Tools && !s.firmware().downloading);
+  }
+  {  // PUSH and touch on Skip
+    SettingsScreen s(Settings(), Orientation::Portrait, true);
+    open(s);
+    TEST_ASSERT_TRUE(s.onKey(LogicalKey::Push).action == Action::FirmwareSkip);
+    SettingsScreen t(Settings(), Orientation::Landscape, true);
+    open(t);
+    const Rect b = computeConfirmLayout(Orientation::Landscape).buttons[2];
+    TEST_ASSERT_TRUE(t.onTouch({b.x + 10, b.y + 10}).action == Action::FirmwareSkip);
+  }
+  expectRect(16, 696, 508, 64, computeConfirmLayout(Orientation::Portrait).buttons[0]);
+  expectRect(488, 352, 456, 64, computeConfirmLayout(Orientation::Landscape).buttons[2]);
+  TEST_ASSERT_EQUAL_STRING("1.6 MB", formatSize(1700000).c_str());
+  TEST_ASSERT_EQUAL_STRING("420 KB", formatSize(430000).c_str());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_info_texts);
@@ -952,5 +1110,10 @@ int main() {
   RUN_TEST(test_refresh_completion_does_not_touch_the_edit_buffer);
   RUN_TEST(test_orientation_changed_flag_both_directions);
   RUN_TEST(test_network_rows_dirty_includes_hint_row_value_only);
+  RUN_TEST(test_fw_row_looks);
+  RUN_TEST(test_fw_progress_look);
+  RUN_TEST(test_fw_tools_page_focus_and_summary);
+  RUN_TEST(test_fw_demo_in_edit_buffer_refuses);
+  RUN_TEST(test_fw_confirm_yes_no_skip);
   return UNITY_END();
 }

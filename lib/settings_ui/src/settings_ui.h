@@ -17,14 +17,16 @@ using ui::Rect;
 
 // ---- structure (spec section 3, revision 7) ----
 // Overview (Page::Main) with four category rows, and one page per category.
-enum class Page { Main, Display, Sleep, Network, Tools };
+// Confirm = the firmware install confirmation (task 087, spec 8.6), reached from the Tools page.
+enum class Page { Main, Display, Sleep, Network, Tools, Confirm };
+constexpr int kPageCount = 6;
 constexpr int kCategoryCount = 4;
 inline Page categoryPage(int i) { return static_cast<Page>(i + 1); }
 const char* categoryLabel(int i);  // "Display", "Sleep & wake", "Network", "Tools" (also the page title)
 
 // Setting rows, in the edit buffer order of the categories.
-enum class RowId { Orientation, SleepMode, Updates, Idle, Wifi, HaLink, Demo, Debug, KeepAwake, LearnBattery };
-constexpr int kRowIdCount = 9;
+enum class RowId { Orientation, SleepMode, Updates, Idle, Wifi, HaLink, Demo, Debug, KeepAwake, LearnBattery, Firmware };
+constexpr int kRowIdCount = 11;
 constexpr int kMaxPageRows = 5;
 bool isPipRow(RowId r);  // Orientation, Updates, Idle (2..6 fixed values); the others are hint rows (88 high)
 
@@ -83,6 +85,24 @@ struct PageLayout {
   Rect stops[kMaxPageRows + 1];
 };
 PageLayout computePageLayout(Page p, settings::Orientation o);
+
+// Confirm page (spec 8.6): the page layout's three stops are the buttons Yes / No / Skip.
+struct ConfirmLayout {
+  Rect title;           // text box of "Install 1.3.0?" (F40, centred vertically)
+  Rect infoRows[3];     // Installed / New / Download
+  int lineCy[3] = {0, 0, 0};
+  Rect note;
+  Rect buttons[3];      // Yes, No, Skip
+};
+ConfirmLayout computeConfirmLayout(settings::Orientation o);
+constexpr int kConfirmYes = 0, kConfirmNo = 1, kConfirmSkip = 2;
+constexpr const char* kConfirmLabels[3] = {"Yes, install", "No, cancel", "Skip"};
+constexpr const char* kConfirmKeys[3] = {"UP", "DOWN", "PUSH"};
+constexpr const char* kConfirmLines[3] = {"Takes about a minute, then the", "device restarts. Your settings and",
+                                          "config are kept."};
+constexpr const char* kConfirmNote1 = "Keep it on USB or charged.";
+constexpr const char* kConfirmNote2 = "Do not switch it off.";
+std::string formatSize(uint32_t bytes);  // "1.6 MB", "420 KB", "-" for 0
 constexpr const char* kDisplayCaption = "Applied when Settings is left.";
 
 // Inside one setting row; all results absolute.
@@ -154,7 +174,7 @@ std::string haLinkHint(const settings::Settings& edit, const NetworkInfo& n);
 // Overview summaries from the edit buffer (spec 3.0): "Portrait", "Touch, 60 min, 20 s",
 // "Wi-Fi Auto, HA Auto", "Demo Off, Log Off". shortWake: "Touch & Button" -> "Both" (when it does not fit).
 std::string categorySummary(int category, const settings::Settings& s, const NetworkInfo& n, bool shortWake = false,
-                            const settings::Capabilities& c = settings::kCapabilities);
+                            const settings::Capabilities& c = settings::kCapabilities, bool updateAvailable = false);
 
 // Note slot of a page (spec 8): visible? and its two lines.
 struct NoteText {
@@ -255,6 +275,48 @@ constexpr const char* kDemoHaText = "Demo mode";
 constexpr const char* kDemoWifiText = "Demo mode";
 constexpr const char* kDemoConfigText = "built-in demo";
 
+// ---- firmware row (task 087, spec 8.6) ----
+enum class FwCheckErr { None, NoWifi, NoServer, Timeout };
+enum class FwDlErr { None, Download, Damaged };
+enum class FwPhase { Downloading, Verifying, Restarting };
+struct FirmwareInfo {
+  std::string current;     // "1.2.1"
+  std::string available;   // newer release, "" = none
+  std::string updatedFrom; // first Settings visit after an update
+  std::string rolledBack;  // version that failed and was rolled back
+  uint32_t sizeBytes = 0;  // download size of `available`
+  WallTime lastCheck;      // month == 0: never checked
+  WallTime now;
+  bool demo = false;       // demo mode (saved or in the edit buffer)
+  bool wifi = false;
+  bool blockedBattery = false;  // not on USB and battery < 50 %
+  bool checking = false;
+  bool justChecked = false;     // the last Check now ended "up to date"
+  FwCheckErr checkErr = FwCheckErr::None;
+  FwDlErr dlErr = FwDlErr::None;
+  bool downloading = false;
+  FwPhase phase = FwPhase::Downloading;
+  int pct = 0;
+};
+enum class FwLook { UpToDate, Checking, CheckFailed, Available, Refused, Failed, Updated, RolledBack, Downloading };
+struct FirmwareRow {
+  FwLook look = FwLook::UpToDate;
+  std::string label = "Firmware";
+  std::string hint;
+  std::string value;       // installed version, or "42%" while downloading
+  bool chip = false;       // NEW
+  bool alert = false;      // alert icon before the hint
+  bool actionable = false; // focus stop, reacts to tap / PUSH
+  bool dashed = false;     // pending border (Checking, Downloading)
+  bool dotted = false;     // unavailable border (Refused)
+  bool plain = false;      // info look: no border, hairline on top
+  bool bar = false;        // progress bar row
+};
+// Row look and texts from the snapshot (priority: downloading, checking, notices, refused, failed, available,
+// check failed, up to date). Day format of the hint: "14:05" today, otherwise "26.10.".
+FirmwareRow firmwareRow(const FirmwareInfo& f);
+constexpr const char* kFwNew = "NEW";
+
 // ---- screen state machine (spec sections 2, 5, 6) ----
 constexpr uint32_t kIdleLeaveMs = 60000;  // fixed while Settings is open (rule 5, OPEN-S1)
 
@@ -266,6 +328,9 @@ enum class Action {
   PageChange,    // overview <-> category page: the caller draws the new page with a full (GC16) refresh
   StartRefresh,  // caller starts the state fetch, later calls refreshDone()
   SleepNow,      // overview "Sleep now": the caller runs the normal sleep path (it leaves Settings itself)
+  FirmwareCheck,    // Check now (the row went to its Checking look): the caller checks, then setFirmware()
+  FirmwareInstall,  // confirm "Yes": back on the Tools page, the row is downloading; the caller installs
+  FirmwareSkip,     // confirm "Skip": the caller suppresses the offered version, then setFirmware()
 };
 
 struct Update {
@@ -305,6 +370,13 @@ class SettingsScreen {
   const settings::Capabilities& capabilities() const { return caps_; }
   bool rowForced(RowId id) const { return id == RowId::Updates && settings::updatesForcedOff(edit_, caps_); }
   bool sdPresent() const { return sdPresent_; }
+  // Firmware row snapshot (task 087). The state flags checking / downloading / pct live here; the caller refreshes
+  // the rest with setFirmware() (it keeps checking / downloading / pct / phase unless told otherwise).
+  void setFirmware(const FirmwareInfo& f) { fw_ = f; }
+  const FirmwareInfo& firmware() const { return fw_; }
+  FirmwareInfo& firmwareMut() { return fw_; }
+  FirmwareRow firmwareRow() const;  // with the demo flag of the edit buffer applied
+  bool updateAvailable() const { return !fw_.available.empty(); }
   int focus() const { return focus_[static_cast<int>(page_)]; }  // 0-based stop of the current page
   int stopCount() const { return page_ == Page::Main ? kOverviewStops : pageLayout().stopCount; }
   bool ringVisible() const { return ringVisible_; }
@@ -325,10 +397,14 @@ class SettingsScreen {
 
   settings::Settings saved_, edit_;
   SettingsLayout layout_;
-  PageLayout pages_[5];  // indexed by Page (Main unused)
+  PageLayout pages_[kPageCount];  // indexed by Page (Main unused)
+  FirmwareInfo fw_;
+  bool rowSkipped(int stop) const;  // forced Updates, non-actionable Firmware: no focus stop
+  Update activateConfirm(int stop);
+  Update activateFirmware();
   NetworkInfo net_;
   Page page_ = Page::Main;
-  int focus_[5] = {0, 0, 0, 0, 0};
+  int focus_[kPageCount] = {0, 0, 0, 0, 0, 0};
   bool sdPresent_ = true;
   settings::Capabilities caps_ = settings::kCapabilities;
   bool ringVisible_ = false;

@@ -1,6 +1,6 @@
 # 087: Firmware self-update (check weekly, offer in Settings)
 
-Status: todo
+Status: testing
 Depends on: 061 (release manifest), 084/085 (power, usb sense)
 UI spec: docs/ui/settings.md (new section: firmware row on Tools + overview hint) — ui-designer
 Needs device: yes (OTA from a local test server, then from a real GitHub release)
@@ -57,3 +57,8 @@ Architecture (architect, 2026-11-02):
   socket before the check/download and require >= 40 KB largest free block, else skip to the next eligible wake;
   (4) cap a chunked manifest at 8 KB; (5) doc: trust = GitHub + TLS + manifest SHA-256, no signature;
   (6) cold-boot check at most once per hour.
+- Progress 2026-11-02 (firmware-dev): review fixes 1-6 and the Settings UI (8.6) are in the code, PC build + native tests pass. Next: device
+  tests (local server, bad SHA, rollback after 3 boots, battery refusal). Decisions: health is also marked by a deliberate sleep after the
+  first frame (a short scheduled wake must not count as unhealthy); a rolled-back or skipped version is stored in NVS "skip" and offered
+  again only for a newer one; USB for installBlock is `power::usbAtSleep()` (helper `usbNow()` in main.cpp, swap to `power::usbPresent()`
+  when the 085 probe is merged); trust model (GitHub + TLS + manifest SHA-256, no signature) is in src/ota.h.

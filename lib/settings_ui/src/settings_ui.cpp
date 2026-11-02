@@ -140,19 +140,31 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
       }
       break;
     case Page::Tools:
-      L.rowCount = 2;
+      // Task 087: Firmware is the third row; the Debug log note moves under it (portrait) / stays (landscape).
+      L.rowCount = 3;
       L.rowIds[0] = RowId::Demo;
       L.rowIds[1] = RowId::Debug;
+      L.rowIds[2] = RowId::Firmware;
       if (portrait) {
         L.rows[0] = {16, 68, 508, 88};
         L.rows[1] = {16, 168, 508, 88};
-        L.note = {16, 268, 508, 64};
+        L.rows[2] = {16, 268, 508, 88};
+        L.note = {16, 368, 508, 64};
       } else {
         L.rows[0] = {16, 64, 456, 88};
         L.rows[1] = {488, 64, 456, 88};
+        L.rows[2] = {16, 164, 456, 88};
         L.note = {488, 164, 456, 64};
       }
       break;
+    case Page::Confirm: {
+      const ConfirmLayout C = computeConfirmLayout(o);
+      L.rowCount = 0;
+      for (int i = 0; i < 3; ++i) L.stops[i] = C.buttons[i];
+      L.stopCount = 3;
+      L.backButton = {0, 0, 0, 0};
+      return L;
+    }
     case Page::Main:
       break;
   }
@@ -160,6 +172,34 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
   L.stops[L.rowCount] = L.backButton;
   L.stopCount = L.rowCount + 1;
   return L;
+}
+
+ConfirmLayout computeConfirmLayout(settings::Orientation o) {
+  ConfirmLayout C;
+  if (o == settings::Orientation::Portrait) {
+    C.title = {16, 100 - 27, 508, 54};
+    for (int i = 0; i < 3; ++i) C.infoRows[i] = {16, 144 + 48 * i, 508, 48};
+    const int ly[3] = {330, 354, 378};
+    for (int i = 0; i < 3; ++i) C.lineCy[i] = ly[i];
+    C.note = {16, 410, 508, 64};
+    for (int i = 0; i < 3; ++i) C.buttons[i] = {16, 696 + 76 * i, 508, 64};
+  } else {
+    C.title = {16, 90 - 27, 456, 54};
+    for (int i = 0; i < 3; ++i) C.infoRows[i] = {16, 124 + 44 * i, 456, 44};
+    const int ly[3] = {282, 306, 330};
+    for (int i = 0; i < 3; ++i) C.lineCy[i] = ly[i];
+    C.note = {16, 364, 456, 64};
+    for (int i = 0; i < 3; ++i) C.buttons[i] = {488, 200 + 76 * i, 456, 64};
+  }
+  return C;
+}
+
+std::string formatSize(uint32_t bytes) {
+  char buf[24];
+  if (bytes == 0) return "-";
+  if (bytes >= 1000 * 1000) std::snprintf(buf, sizeof buf, "%.1f MB", bytes / 1048576.0);
+  else std::snprintf(buf, sizeof buf, "%u KB", (unsigned)((bytes + 512) / 1024));
+  return buf;
 }
 
 Rect rowLabelRect(const Rect& r) { return {r.x + 16, r.y + r.h / 2 - 24, 220, 28}; }
@@ -190,6 +230,7 @@ const char* hintRowLabel(RowId r) {
     case RowId::SleepMode: return "Sleep mode";
     case RowId::KeepAwake: return "Keep awake";
     case RowId::LearnBattery: return "Learn battery limits";
+    case RowId::Firmware: return "Firmware";
     default: return "";
   }
 }
@@ -302,6 +343,7 @@ std::string rowValueText(RowId r, const Settings& s, const NetworkInfo& n) {
     case RowId::Demo: return s.demo_mode ? "On" : "Off";
     case RowId::Debug: return s.debug_log ? "On" : "Off";
     case RowId::LearnBattery: return s.learn_battery ? "On" : "Off";
+    case RowId::Firmware: return "";
   }
   return "";
 }
@@ -340,6 +382,7 @@ Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n, const settin
     case RowId::Demo: o.demo_mode = !s.demo_mode; break;
     case RowId::Debug: o.debug_log = !s.debug_log; break;
     case RowId::LearnBattery: o.learn_battery = !s.learn_battery; break;
+    case RowId::Firmware: break;  // not a setting
   }
   return o;
 }
@@ -362,7 +405,7 @@ std::string haLinkHint(const Settings& edit, const NetworkInfo& n) {
 }
 
 std::string categorySummary(int category, const Settings& s, const NetworkInfo& n, bool shortWake,
-                            const settings::Capabilities&) {
+                            const settings::Capabilities&, bool updateAvailable) {
   switch (category) {
     case 0: return rowValueText(RowId::Orientation, s, n);
     case 1: {
@@ -371,7 +414,7 @@ std::string categorySummary(int category, const Settings& s, const NetworkInfo& 
       return mode + ", " + rowValueText(RowId::Updates, s, n) + ", " + rowValueText(RowId::Idle, s, n);
     }
     case 2: return "Wi-Fi " + wifiValue(s, n) + ", HA " + haLinkName(s.ha_link);
-    case 3: return std::string("Demo ") + (s.demo_mode ? "On" : "Off") + ", Log " + (s.debug_log ? "On" : "Off");
+    case 3: return std::string(updateAvailable ? "Update available, " : "") + "Demo " + (s.demo_mode ? "On" : "Off") + ", Log " + (s.debug_log ? "On" : "Off");
   }
   return "";
 }
@@ -508,12 +551,109 @@ std::string errorsText(const ConfigInfo& c) {
   return c.missing ? "-" : std::to_string(c.errorCount);
 }
 
+// ---- firmware row ----
+
+namespace {
+std::string fwDay(const WallTime& t, const WallTime& now) {
+  char buf[16];
+  if (t.day == now.day && t.month == now.month) std::snprintf(buf, sizeof buf, "%02d:%02d", t.hour, t.minute);
+  else std::snprintf(buf, sizeof buf, "%d.%d.", t.day, t.month);
+  return buf;
+}
+}  // namespace
+
+FirmwareRow firmwareRow(const FirmwareInfo& f) {
+  FirmwareRow r;
+  r.value = f.current;
+  if (f.downloading) {
+    r.look = FwLook::Downloading;
+    r.dashed = true;
+    r.bar = true;
+    const std::string v = f.available;
+    switch (f.phase) {
+      case FwPhase::Downloading:
+        r.label = "Downloading " + v;
+        r.value = std::to_string(f.pct) + "%";
+        break;
+      case FwPhase::Verifying:
+        r.label = "Checking " + v;
+        r.value = "100%";
+        break;
+      case FwPhase::Restarting:
+        r.label = "Restarting";
+        r.value = "";
+        break;
+    }
+    return r;
+  }
+  if (f.checking) {
+    r.look = FwLook::Checking;
+    r.dashed = true;
+    r.hint = "Checking...";
+    return r;
+  }
+  if (!f.rolledBack.empty()) {
+    r.look = FwLook::RolledBack;
+    r.plain = true;
+    r.alert = true;
+    r.hint = f.rolledBack + " failed, rolled back";
+    return r;
+  }
+  if (!f.updatedFrom.empty()) {
+    r.look = FwLook::Updated;
+    r.plain = true;
+    r.hint = "Updated from " + f.updatedFrom;
+    return r;
+  }
+  if (!f.available.empty()) {
+    r.chip = true;
+    const std::string v = f.available;
+    if (f.demo || !f.wifi || f.blockedBattery) {
+      r.look = FwLook::Refused;
+      r.dotted = true;
+      r.hint = f.demo ? v + ": leave demo mode first" : !f.wifi ? v + ": Wi-Fi not connected" : v + " needs USB or 50% battery";
+      return r;
+    }
+    r.actionable = true;
+    if (f.dlErr != FwDlErr::None) {
+      r.look = FwLook::Failed;
+      r.alert = true;
+      r.hint = f.dlErr == FwDlErr::Damaged ? "File damaged, not installed" : "Download failed, try again";
+    } else {
+      r.look = FwLook::Available;
+      r.hint = "Update to " + v + " available";
+    }
+    return r;
+  }
+  r.actionable = true;
+  if (f.checkErr != FwCheckErr::None) {
+    r.look = FwLook::CheckFailed;
+    r.alert = true;
+    r.hint = std::string("Check failed: ") + (f.checkErr == FwCheckErr::NoWifi ? "no Wi-Fi" : f.checkErr == FwCheckErr::Timeout ? "timeout" : "no server");
+    return r;
+  }
+  r.look = FwLook::UpToDate;
+  if (f.lastCheck.month == 0) r.hint = "Not checked. Tap to check";
+  else if (f.justChecked) r.hint = "Up to date, checked " + fwDay(f.lastCheck, f.now);
+  else {
+    const bool today = f.lastCheck.day == f.now.day && f.lastCheck.month == f.now.month;
+    r.hint = "Checked " + fwDay(f.lastCheck, f.now) + (today ? "." : "") + " Tap to check";
+  }
+  return r;
+}
+
+FirmwareRow SettingsScreen::firmwareRow() const {
+  FirmwareInfo f = fw_;
+  f.demo = f.demo || edit_.demo_mode;
+  return settings_ui::firmwareRow(f);
+}
+
 // ---- state machine ----
 
 SettingsScreen::SettingsScreen(const Settings& saved, settings::Orientation current,
                                bool ringVisible)
     : saved_(saved), edit_(saved), layout_(computeSettingsLayout(current)), ringVisible_(ringVisible) {
-  for (int i = 1; i < 5; ++i) pages_[i] = computePageLayout(static_cast<Page>(i), current);
+  for (int i = 1; i < kPageCount; ++i) pages_[i] = computePageLayout(static_cast<Page>(i), current);
 }
 
 Update SettingsScreen::activateOverview(int stop) {
@@ -553,6 +693,7 @@ Update SettingsScreen::activatePage(int stop) {
   if (stop < 0 || stop > P.rowCount) return u;
   const RowId id = P.rowIds[stop];
   if (rowForced(id)) return u;  // forced Off: ignores tap and PUSH
+  if (id == RowId::Firmware) return activateFirmware();
   const Rect& row = P.rows[stop];
   const bool wasDirty = dirty();
   const bool hadNote = pageShowsNote(page_, edit_, net_);
@@ -578,22 +719,76 @@ Update SettingsScreen::activatePage(int stop) {
       u.dirty.push_back(hintRowValueRect(row));
     }
     if (hadNote != pageShowsNote(page_, edit_, net_)) u.dirty.push_back(P.note);
+    if (id == RowId::Demo && page_ == Page::Tools) u.dirty.push_back(P.rows[2]);  // Refused look follows demo mode
   }
   if (wasDirty != dirty()) u.dirty.push_back(P.unsavedChip);
   return u;
 }
 
+bool SettingsScreen::rowSkipped(int stop) const {
+  if (page_ == Page::Main || page_ == Page::Confirm || stop >= pageLayout().rowCount) return false;
+  const RowId id = pageLayout().rowIds[stop];
+  return rowForced(id) || (id == RowId::Firmware && !firmwareRow().actionable);
+}
+
+Update SettingsScreen::activateFirmware() {
+  Update u;
+  const FirmwareRow r = firmwareRow();
+  if (!r.actionable) return u;
+  const Rect& row = pageLayout().rows[2];
+  if (r.look == FwLook::UpToDate || r.look == FwLook::CheckFailed) {
+    fw_.checking = true;
+    fw_.checkErr = FwCheckErr::None;
+    fw_.justChecked = false;
+    u.action = Action::FirmwareCheck;
+    u.dirty.push_back(row);
+  } else {  // Available / Failed: the confirm page
+    page_ = Page::Confirm;
+    focus_[static_cast<int>(Page::Confirm)] = 0;
+    ringVisible_ = false;
+    u.action = Action::PageChange;
+  }
+  return u;
+}
+
+Update SettingsScreen::activateConfirm(int stop) {
+  Update u;
+  page_ = Page::Tools;
+  u.action = Action::PageChange;
+  if (stop == kConfirmYes) {
+    fw_.downloading = true;
+    fw_.phase = FwPhase::Downloading;
+    fw_.pct = 0;
+    fw_.dlErr = FwDlErr::None;
+    u.action = Action::FirmwareInstall;
+    u.dirty.push_back(pageLayout().rows[2]);
+  } else if (stop == kConfirmSkip) {
+    u.action = Action::FirmwareSkip;
+  }
+  return u;
+}
+
 Update SettingsScreen::onTouch(Point p) {
+  if (fw_.checking || fw_.downloading) return {};  // all input is ignored until the result
   const int n = stopCount();
   for (int i = 0; i < n; ++i) {
     const Rect& r = page_ == Page::Main ? layout_.stops[i] : pageLayout().stops[i];
-    if (r.contains(p)) return page_ == Page::Main ? activateOverview(i) : activatePage(i);
+    if (r.contains(p))
+      return page_ == Page::Main ? activateOverview(i) : page_ == Page::Confirm ? activateConfirm(i) : activatePage(i);
   }
   return {};
 }
 
 Update SettingsScreen::onKey(ui::LogicalKey key) {
   Update u;
+  if (fw_.checking || fw_.downloading) return u;
+  if (page_ == Page::Confirm) {  // rocker yes/no rule: UP yes, DOWN no, PUSH skip (no focus ring)
+    switch (key) {
+      case ui::LogicalKey::Prev: return activateConfirm(kConfirmYes);
+      case ui::LogicalKey::Next: return activateConfirm(kConfirmNo);
+      default: return activateConfirm(kConfirmSkip);
+    }
+  }
   const int n = stopCount();
   switch (key) {
     case ui::LogicalKey::Prev:
@@ -602,7 +797,7 @@ Update SettingsScreen::onKey(ui::LogicalKey key) {
       const Rect* stops = page_ == Page::Main ? layout_.stops : pageLayout().stops;
       const int old = f;
       f = key == ui::LogicalKey::Next ? (f + 1) % n : (f + n - 1) % n;
-      if (page_ != Page::Main && f < pageLayout().rowCount && rowForced(pageLayout().rowIds[f]))  // skip a forced row
+      if (rowSkipped(f))  // skip a forced / non-actionable row
         f = key == ui::LogicalKey::Next ? (f + 1) % n : (f + n - 1) % n;
       if (ringVisible_) u.dirty.push_back(ui::inflate(stops[old], kRingInflate));
       u.dirty.push_back(ui::inflate(stops[f], kRingInflate));

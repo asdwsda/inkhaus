@@ -47,6 +47,7 @@ class T(unittest.TestCase):
         got = {s["file"]: s for s in m["segments"]}
         self.assertEqual([s["offset"] for s in m["segments"]], [0x1000, 0x8000, 0xE000, 0x10000])
         self.assertEqual(got["firmware.bin"]["size"], 30)
+        self.assertEqual(m["ota"], {"file": "firmware.bin", "size": 30, "sha256": hashlib.sha256(b"f" * 30).hexdigest()})
         self.assertEqual(got["firmware.bin"]["sha256"], hashlib.sha256(b"f" * 30).hexdigest())
 
     def test_tag_mismatch(self):

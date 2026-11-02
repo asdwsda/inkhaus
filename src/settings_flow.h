@@ -11,6 +11,9 @@ struct Result {
   bool pageChanged = false;  // overview <-> category page: draw the new page with a full refresh
   bool toolsOpened = false;  // ... and it is the Tools page (probe the SD card, setSdPresent(), then draw)
   bool sleepNow = false;  // overview "Sleep now": the caller goes to sleep (leaving Settings through its normal path)
+  bool fwCheck = false;    // Check now tapped (the row shows Checking): check, then setFirmware()
+  bool fwInstall = false;  // confirm "Yes": the Tools page is redrawn (pageChanged), then install
+  bool fwSkip = false;     // confirm "Skip": suppress the offered version, setFirmware(), pageChanged redraw
   bool left = false;     // the screen closed; `leave` says what to save and apply
   settings_ui::LeaveResult leave;
 };
@@ -21,6 +24,12 @@ const settings_ui::SettingsScreen &screen();
 
 void setNetwork(const settings_ui::NetworkInfo &n);  // right after open(): profile names + hints (snapshot)
 void setSdPresent(bool present);  // when the Tools page opens (Debug log note variant)
+
+// Task 087: the firmware row snapshot, and the download progress (the caller then redraws).
+void setFirmware(const settings_ui::FirmwareInfo &f);
+void setFirmwareProgress(settings_ui::FwPhase phase, int pct);
+void clearFirmwareBusy();        // check / download ended: input is accepted again
+void keepAlive(uint32_t now);    // after a long blocking step: the 60 s idle timer restarts
 
 Result onTouch(ui::Point p, uint32_t now);
 Result onKey(ui::LogicalKey key, uint32_t now);

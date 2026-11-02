@@ -40,7 +40,51 @@ void drawValue(M5Canvas &c, const std::string &val, int rightX, int cy, int free
   else drawTextCy(c, Font::F24, lvl == 1 ? val : fitText(c, Font::F24, val, freeW), rightX, cy, Align::Right, INK);
 }
 
+// Firmware row (spec 8.6): look from sui::firmwareRow(); progress bar while downloading.
+void drawFirmwareRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
+  const Rect &r = s.pageLayout().rows[i];
+  const sui::FirmwareRow v = s.firmwareRow();
+  if (v.dashed) {
+    c.fillRoundRect(r.x, r.y, r.w, r.h, 9, PAPER);
+    drawDashedBox(c, r.x + 1.5f, r.y + 1.5f, float(r.w - 3), float(r.h - 3), 8.0f, 3, 8.0f, 6.0f, INK);
+  } else if (v.dotted) {
+    c.fillRoundRect(r.x, r.y, r.w, r.h, 9, PAPER);
+    drawDashedBox(c, float(r.x + 1), float(r.y + 1), float(r.w - 2), float(r.h - 2), 8.0f, 2, 2.0f, 4.0f, OFFGREY);
+  } else if (v.plain) {
+    c.fillRect(r.x, r.y, r.w, 1, OFFGREY);
+  } else {
+    drawBox(c, r, PAPER, INK);
+  }
+  const int rightX = sui::rowValueRightX(r);
+  if (v.bar) {  // label + value + bar, nothing else
+    drawTextCy(c, Font::F24, v.label, r.x + 16, sui::hintRowLabelCy(r), Align::Left, INK);
+    if (!v.value.empty()) drawTextCy(c, Font::F40, v.value, rightX, r.y + 36, Align::Right, INK);
+    const int bw = r.w - 32;
+    c.fillRect(r.x + 16, r.y + 56, bw, 16, INK);
+    c.fillRect(r.x + 18, r.y + 58, bw - 4, 12, PAPER);
+    const int pct = s.firmware().phase == sui::FwPhase::Downloading ? s.firmware().pct : 100;
+    c.fillRect(r.x + 18, r.y + 58, (bw - 4) * std::max(0, std::min(100, pct)) / 100, 12, INK);
+    return;
+  }
+  drawTextCy(c, Font::F24, v.label, r.x + 16, sui::hintRowLabelCy(r), Align::Left, v.dotted ? OFFGREY : INK);
+  if (v.chip) {
+    c.fillRoundRect(r.x + 144, r.y + 16, 72, 32, 8, INK);
+    drawTextCy(c, Font::F18, sui::kFwNew, r.x + 144 + 36, r.y + 16 + 16, Align::Center, PAPER);
+  }
+  int hx = r.x + 16;
+  if (v.alert) {
+    drawIcon(c, Icon::Alert, 24, r.x + 16, r.y + 50, INK);
+    hx = r.x + 48;
+  }
+  drawTextCy(c, Font::F18, fitText(c, Font::F18, v.hint, r.x + r.w - 16 - 120 - hx), hx, sui::hintRowHintCy(r), Align::Left, INK);
+  drawValue(c, v.value, rightX, sui::hintRowValueCy(r), 120);
+}
+
 void drawRow(M5Canvas &c, const sui::SettingsScreen &s, int i) {
+  if (s.pageLayout().rowIds[i] == sui::RowId::Firmware) {
+    drawFirmwareRow(c, s, i);
+    return;
+  }
   const sui::PageLayout &P = s.pageLayout();
   const Rect &r = P.rows[i];
   const sui::RowId id = P.rowIds[i];
@@ -111,8 +155,9 @@ void drawCategory(M5Canvas &c, const sui::SettingsScreen &s, int i) {
   drawBox(c, r, PAPER, INK);
   drawTextCy(c, Font::F24, sui::categoryLabel(i), sui::categoryLabelX(r), sui::categoryLabelCy(r), Align::Left, INK);
   const int maxW = sui::categorySummaryMaxWidth(r);
-  std::string sum = sui::categorySummary(i, s.edit(), s.network());
-  if (textWidth(c, Font::F18, sum) > maxW) sum = sui::categorySummary(i, s.edit(), s.network(), true);
+  const bool upd = s.updateAvailable();
+  std::string sum = sui::categorySummary(i, s.edit(), s.network(), false, settings::kCapabilities, upd);
+  if (textWidth(c, Font::F18, sum) > maxW) sum = sui::categorySummary(i, s.edit(), s.network(), true, settings::kCapabilities, upd);
   if (textWidth(c, Font::F18, sum) > maxW) sum = fitText(c, Font::F18, sum, maxW);
   drawTextCy(c, Font::F18, sum, sui::categoryLabelX(r), sui::categorySummaryCy(r), Align::Left, INK);
   const Rect ch = sui::categoryChevronRect(r);
@@ -187,6 +232,31 @@ void drawHeader(M5Canvas &c, const sui::SettingsScreen &s, const char *title, co
   c.fillRect(rule.x, rule.y, rule.w, rule.h, INK);
 }
 
+// Confirm page (spec 8.6): title, three info rows, the explanation, the alert note, Yes / No / Skip.
+void drawConfirmPage(M5Canvas &c, const sui::SettingsScreen &s) {
+  const sui::PageLayout &P = s.pageLayout();
+  const sui::ConfirmLayout C = sui::computeConfirmLayout(P.orientation);
+  const sui::FirmwareInfo &f = s.firmware();
+  drawHeader(c, s, "Update", P.title, P.unsavedChip, P.headerRule);
+  drawTextCy(c, Font::F40, "Install " + f.available + "?", C.title.x, C.title.y + C.title.h / 2, Align::Left, INK);
+  const std::string vals[3] = {f.current, f.available, sui::formatSize(f.sizeBytes)};
+  const char *labels[3] = {"Installed", "New", "Download"};
+  for (int i = 0; i < 3; ++i) {
+    const Rect &r = C.infoRows[i];
+    c.fillRect(r.x, r.y, r.w, 1, OFFGREY);
+    drawTextCy(c, Font::F18, labels[i], r.x, r.y + r.h / 2, Align::Left, DIM);
+    drawTextCy(c, Font::F24, vals[i], r.x + 158, r.y + r.h / 2, Align::Left, INK);
+  }
+  for (int i = 0; i < 3; ++i) drawTextCy(c, Font::F18, sui::kConfirmLines[i], C.infoRows[0].x, C.lineCy[i], Align::Left, INK);
+  drawNote(c, C.note, sui::kConfirmNote1, sui::kConfirmNote2);
+  for (int i = 0; i < 3; ++i) {
+    const Rect &b = C.buttons[i];
+    drawBox(c, b, PAPER, INK);
+    drawTextCy(c, Font::F24, sui::kConfirmLabels[i], b.x + 16, b.y + 32, Align::Left, INK);
+    drawTextCy(c, Font::F18, sui::kConfirmKeys[i], b.x + b.w - 16, b.y + 32, Align::Right, INK);
+  }
+}
+
 void drawCategoryPage(M5Canvas &c, const sui::SettingsScreen &s) {
   const sui::PageLayout &P = s.pageLayout();
   drawFocusRing(c, s);
@@ -210,6 +280,10 @@ void drawCategoryPage(M5Canvas &c, const sui::SettingsScreen &s) {
 void drawSettings(M5Canvas &c, const sui::SettingsScreen &s, const SettingsInfo &info) {
   const sui::SettingsLayout &L = s.layout();
   c.fillScreen(PAPER);
+  if (s.page() == sui::Page::Confirm) {
+    drawConfirmPage(c, s);
+    return;
+  }
   if (s.page() != sui::Page::Main) {
     drawCategoryPage(c, s);
     return;

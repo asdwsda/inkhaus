@@ -11,7 +11,15 @@ uint32_t g_lastInput = 0;
 Result fromUpdate(const settings_ui::Update &u) {
   Result r;
   r.redraw = !u.dirty.empty();
-  if (u.action == settings_ui::Action::StartRefresh) {
+  if (u.action == settings_ui::Action::FirmwareCheck) {
+    r.fwCheck = true;
+    r.redraw = true;
+  } else if (u.action == settings_ui::Action::FirmwareInstall || u.action == settings_ui::Action::FirmwareSkip) {
+    r.fwInstall = u.action == settings_ui::Action::FirmwareInstall;
+    r.fwSkip = !r.fwInstall;
+    r.pageChanged = true;
+    r.redraw = true;
+  } else if (u.action == settings_ui::Action::StartRefresh) {
     r.refresh = true;
     r.redraw = true;
   } else if (u.action == settings_ui::Action::SleepNow) {
@@ -44,6 +52,32 @@ void setNetwork(const settings_ui::NetworkInfo &n) {
 void setSdPresent(bool present) {
   if (g_screen) g_screen->setSdPresent(present);
 }
+
+void setFirmware(const settings_ui::FirmwareInfo &f) {
+  if (!g_screen) return;
+  settings_ui::FirmwareInfo n = f;
+  const settings_ui::FirmwareInfo &o = g_screen->firmware();
+  n.checking = o.checking;  // owned by the screen until clearFirmwareBusy()
+  n.downloading = o.downloading;
+  n.phase = o.phase;
+  n.pct = o.pct;
+  g_screen->setFirmware(n);
+}
+
+void setFirmwareProgress(settings_ui::FwPhase phase, int pct) {
+  if (!g_screen) return;
+  settings_ui::FirmwareInfo &f = g_screen->firmwareMut();
+  f.phase = phase;
+  f.pct = pct;
+}
+
+void clearFirmwareBusy() {
+  if (!g_screen) return;
+  g_screen->firmwareMut().checking = false;
+  g_screen->firmwareMut().downloading = false;
+}
+
+void keepAlive(uint32_t now) { g_lastInput = now; }
 
 Result onTouch(ui::Point p, uint32_t now) {
   if (!g_screen) return {};

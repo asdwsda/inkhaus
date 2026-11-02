@@ -86,7 +86,7 @@
 | 084 | [Make full power-off sleep work on battery](084-power-off-sleep.md) | testing | 035 |
 | 085 | [Power settings: sleep mode, updates, keep awake, estimate, indicators](085-power-settings.md) | testing | 084, 081, 079 |
 | 086 | [Keep the current tab across sleep](086-keep-tab-across-sleep.md) | testing | 071, 084 |
-| 087 | [Firmware self-update](087-self-update.md) | todo | 061, 084, 085 |
+| 087 | [Firmware self-update](087-self-update.md) | testing | 061, 084, 085 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
