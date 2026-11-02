@@ -23,6 +23,15 @@ power::WakeReason classifyWake(const WakeInput &in) {
   }
 }
 
+bool wokeFromSleep(ResetKind reset, power::WakeReason wake) {
+  if (reset == ResetKind::DeepSleep) return true;
+  return reset == ResetKind::PowerOn && wake != power::WakeReason::ColdBoot;
+}
+
+bool splashWanted(ResetKind reset, power::WakeReason wake) {
+  return reset == ResetKind::External || (reset == ResetKind::PowerOn && wake == power::WakeReason::ColdBoot);
+}
+
 WakePin pinForExt1(uint64_t) { return WakePin::Rocker; }
 
 const char *wakeName(power::WakeReason r) {

@@ -904,10 +904,9 @@ void setup() {
   bool splashed = false;
   uint32_t splashMs = 0;
   {
-    const esp_reset_reason_t rr = esp_reset_reason();
-    if (!boot::fallbackActive() && (rr == ESP_RST_POWERON || rr == ESP_RST_EXT) && (framesReady || present::begin())) {
+    if (!boot::fallbackActive() && sleepwake::splashWanted() && (framesReady || present::begin())) {
       framesReady = true;
-      // Every POWERON/EXT reset shows the splash (deep-sleep wakes never get here); the app then follows
+      // Reset button and real cold boots show the splash (deep-sleep and power-off wakes keep the image); the app then follows
       // with a full redraw (bootFrame(... || splashed) below).
       render::drawSplash(present::canvas(), "v" FW_VERSION);
       present::bootFrame(true);
@@ -967,7 +966,7 @@ void setup() {
     g_net.begin(cfg.cfg.connection.ha.internalUrl, cfg.cfg.connection.ha.externalUrl, cfg.cfg.connection.ha.token);
     startSession(millis());
   }
-  g_keepStatus = g_real && esp_reset_reason() == ESP_RST_DEEPSLEEP;
+  g_keepStatus = g_real && sleepwake::wokeFromSleep();
 
   if (!framesReady && !present::begin()) {
     present::settleEarlyClear();

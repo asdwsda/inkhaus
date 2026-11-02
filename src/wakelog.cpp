@@ -37,6 +37,7 @@ uint32_t g_sessionStartMs = 0, g_wifiMs = 0;
 bool g_sessionSeen = false, g_wifiSeen = false, g_fetchSeen = false;
 uint32_t g_refreshMs = 0;
 int g_refreshes = 0;
+int g_usbRx = -1;  // set by sleepwake::detect() before begin()
 
 const char *sessionName(power::Session s) {
   switch (s) {
@@ -159,6 +160,8 @@ void logf(const char *fmt, ...) {
   note(buf);
 }
 
+void setUsbRx(int v) { g_usbRx = v; }
+
 void setSleptPath(const char *path) {
   strncpy(g_rtcSleptPath, path ? path : "", sizeof g_rtcSleptPath - 1);
   g_rtcSleptPath[sizeof g_rtcSleptPath - 1] = 0;
@@ -177,6 +180,7 @@ void begin(const char *wakeName, power::Session session, bool deferWrite) {
   char mask[24];
   snprintf(mask, sizeof mask, "0x%llx", (unsigned long long)esp_sleep_get_ext1_wakeup_status());
   g_rec.ext1_mask = mask;
+  g_rec.usb_rx = g_usbRx;
   g_rec.rtc_boot_count = int32_t(g_rtcBootCount);
   g_rec.slept_path = g_rtcSleptPath[0] ? g_rtcSleptPath : "none";
   g_rtcSleptPath[0] = 0;  // a restart without a sleep must not repeat the old path

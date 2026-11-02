@@ -29,6 +29,12 @@ struct WakeInput {
 power::WakeReason classifyWake(const WakeInput &in);
 const char *wakeName(power::WakeReason r);
 
+// The frozen panel image is ours (deep-sleep wake, or a power-off wake: PowerOn with a wake reason other than
+// ColdBoot, i.e. the sleep marker or the BM8563 alarm flag was set). Such a start keeps the image: no splash.
+bool wokeFromSleep(ResetKind reset, power::WakeReason wake);
+// Splash screen: the reset button, or a real cold boot (first power-up, flashing, USB plugged in).
+bool splashWanted(ResetKind reset, power::WakeReason wake);
+
 // ext1 wake: the rocker push is the only EXT1 source, so the status mask is not needed; an empty mask
 // (seen on the device) is still the rocker. Kept as a function so the rule is tested.
 WakePin pinForExt1(uint64_t status_mask);

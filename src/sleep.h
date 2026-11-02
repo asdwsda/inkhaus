@@ -14,6 +14,11 @@ namespace sleepwake {
 // a deep sleep. Logs "WAKE: reason=...".
 power::WakeReason detect();
 
+// Valid after detect(). wokeFromSleep: the frozen panel image is ours (deep-sleep or power-off wake): keep it.
+// splashWanted: reset button or a real cold boot.
+bool wokeFromSleep();
+bool splashWanted();
+
 // The indicator variant that is on the panel from the previous sleep (None after a cold boot).
 // Valid after detect(); only meaningful for a scheduled-refresh wake (the first frame then keeps it).
 app_logic::Indicator storedIndicator();

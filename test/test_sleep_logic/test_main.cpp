@@ -28,6 +28,23 @@ void test_wake_power_on() {
   TEST_ASSERT_EQUAL(int(WakeReason::RtcAlarm), int(classifyWake(in(ResetKind::PowerOn, WakePin::None, true, false))));
 }
 
+void test_splash_and_kept_image() {
+  using R = WakeReason;
+  // power-off wake by rocker or by the BM8563 alarm: no splash, image kept
+  for (R w : {R::Button, R::RtcAlarm}) {
+    TEST_ASSERT_FALSE(splashWanted(ResetKind::PowerOn, w));
+    TEST_ASSERT_TRUE(wokeFromSleep(ResetKind::PowerOn, w));
+  }
+  TEST_ASSERT_TRUE(splashWanted(ResetKind::PowerOn, R::ColdBoot));
+  TEST_ASSERT_FALSE(wokeFromSleep(ResetKind::PowerOn, R::ColdBoot));
+  TEST_ASSERT_TRUE(splashWanted(ResetKind::External, R::ColdBoot));
+  TEST_ASSERT_TRUE(wokeFromSleep(ResetKind::DeepSleep, R::Touch));
+  TEST_ASSERT_FALSE(splashWanted(ResetKind::DeepSleep, R::Touch));
+  // alarm flag after a power-off: scheduled, not interactive
+  const R w = classifyWake(in(ResetKind::PowerOn, WakePin::None, true, true));
+  TEST_ASSERT_EQUAL(int(power::Session::ScheduledRefresh), int(power::decide_session(w, 4000)));
+}
+
 void test_wake_deep_sleep() {
   TEST_ASSERT_EQUAL(int(WakeReason::Touch), int(classifyWake(in(ResetKind::DeepSleep, WakePin::Touch))));
   TEST_ASSERT_EQUAL(int(WakeReason::Button), int(classifyWake(in(ResetKind::DeepSleep, WakePin::Rocker))));
@@ -443,6 +460,7 @@ int main() {
   RUN_TEST(test_ext1_empty_mask_is_rocker);
   RUN_TEST(test_sleep_plan_uses_current_settings_and_per_mode_sources);
   RUN_TEST(test_wake_power_on);
+  RUN_TEST(test_splash_and_kept_image);
   RUN_TEST(test_wake_deep_sleep);
   RUN_TEST(test_wake_restarts_are_not_wakes);
   RUN_TEST(test_session_kind_from_wake);

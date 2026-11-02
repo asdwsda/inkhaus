@@ -20,6 +20,7 @@ void logf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 // Call right after boot::begin() and the wake detection: remembers the wake reason and the start.
 // deferWrite: keep the boot line in RAM instead of writing it to the SD card now (task 058: no SD access while
 // the wake-feedback waveform runs); writeDeferred() appends it later.
+void setUsbRx(int v);  // before begin(): the GPIO3 USB probe of this wake
 void begin(const char *wakeName, power::Session session, bool deferWrite = false);
 // Writes the boot line kept by begin(..., true), if any.
 void writeDeferred();

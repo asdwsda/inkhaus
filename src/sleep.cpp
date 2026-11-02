@@ -31,6 +31,8 @@ const char *kKeyMarker = "m", *kKeyInd = "ind", *kKeyPath = "sp", *kKeyNext = "n
 // Survives deep sleep (not a power-off): the last sleep found the board still powered (USB).
 RTC_DATA_ATTR int8_t g_usbAtSleepRtc = -1;
 
+app_logic::ResetKind g_resetKind = app_logic::ResetKind::Other;
+power::WakeReason g_wakeReason = power::WakeReason::ColdBoot;
 app_logic::Indicator g_stored = app_logic::Indicator::None;
 bool g_badgeOnPanel = false;
 app_logic::Indicator g_panelInd = app_logic::Indicator::None;
@@ -112,6 +114,7 @@ int probeUsbRx() {
 
 power::WakeReason detect() {
   const int usbRx = probeUsbRx();
+  wakelog::setUsbRx(usbRx);
   power::set_usb_at_sleep(g_usbAtSleepRtc == 1);
   // A deep sleep held GPIO2 high with the pad hold; release it so that a later power-off can work.
   gpio_deep_sleep_hold_dis();
@@ -143,12 +146,14 @@ power::WakeReason detect() {
     M5.Rtc.clearIRQ();
   }
   const power::WakeReason r = app_logic::classifyWake(in);
+  g_resetKind = in.reset;
+  g_wakeReason = r;
   // The first frame only keeps the indicator of the previous sleep for a scheduled wake that
   // follows a sleep of ours; every other start clears it.
   g_stored = (r == power::WakeReason::RtcAlarm) ? app_logic::indicatorFromByte(ind) : app_logic::Indicator::None;
   g_panelInd = app_logic::indicatorFromByte(ind);
   g_panelNext = nx;
-  g_badgeOnPanel = in.reset == app_logic::ResetKind::DeepSleep && in.slept_marker &&
+  g_badgeOnPanel = app_logic::wokeFromSleep(in.reset, r) && in.slept_marker &&
                    g_panelInd != app_logic::Indicator::None;
   wakelog::logf("WAKE: reason=%s reset=%s pin=%s rtc_flag=%d marker=%d indicator_on_panel=%s usb_rx=%d slept=%s t_ms=%u\n",
                 app_logic::wakeName(r), resetName(in.reset), pinName(in.pin), in.rtc_alarm_flag ? 1 : 0,
@@ -156,6 +161,9 @@ power::WakeReason detect() {
                 (unsigned)millis());
   return r;
 }
+
+bool wokeFromSleep() { return app_logic::wokeFromSleep(g_resetKind, g_wakeReason); }
+bool splashWanted() { return app_logic::splashWanted(g_resetKind, g_wakeReason); }
 
 app_logic::Indicator storedIndicator() { return g_stored; }
 app_logic::Indicator panelIndicator() { return g_panelInd; }

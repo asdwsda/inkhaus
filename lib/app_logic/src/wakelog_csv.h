@@ -27,6 +27,7 @@ struct WakeRecord {
   int32_t hist_n = 0;           // history fetches this wake
   int32_t hist_ms = 0;          // sum of their fetch+parse time
   int32_t hist_bytes = 0;       // sum of their response bytes
+  int32_t usb_rx = -1;          // GPIO3 pull-down probe at wake: 1 = USB present; -1 = not probed (empty field)
 };
 
 constexpr size_t kWakeLogMaxBytes = 1024 * 1024;

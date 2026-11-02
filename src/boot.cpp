@@ -399,6 +399,7 @@ void begin() {
 
     auto cfg = M5.config();
     cfg.serial_baudrate = 0;    // Serial is started above
+    cfg.disable_rtc_irq = false;  // M5.begin would clear the BM8563 alarm flag, which sleepwake::detect() reads
     cfg.clear_display = false;  // keep the frozen screen across resets
     cfg.output_power = false;   // 5 V to the external port
     cfg.internal_imu = false;   // no IMU on M5Paper

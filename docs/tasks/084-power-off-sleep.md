@@ -66,3 +66,11 @@ the ~1 month target.
   as `button`/POWERON and run an interactive session: a power-on by the BM8563 can't be told from the rocker by
   reset reason. Fix: read the BM8563 alarm flag (AF) at boot -> scheduled session. usb_rx on battery is unknown
   (debug.log off; the CSV has no usb_rx column): add it to the wake log.
+- 2026-11-02 follow-up (PC + USB checked; battery re-test pending): (1) root cause of "RTC wake logged as button": M5.begin()
+  (cfg.disable_rtc_irq default true) wrote BM8563 reg 0x01 = 0, clearing the alarm flag before detect() read it; boot.cpp now sets
+  disable_rtc_irq=false, detect() reads+clears it -> `rtc_alarm`, scheduled session. (2) No splash on a power-off wake
+  (`app_logic::splashWanted/wokeFromSleep`: PowerOn + wake != cold_boot): the NVS screen record survives the power loss, bootFrame
+  re-renders the whole frame into the cold controller memory without refresh and refreshes only the diff tiles (as after deep sleep);
+  record missing/other firmware (e.g. after flashing) -> one full GC16 redraw, still no splash. The reset button and a real cold boot
+  (no marker, no alarm flag) keep the splash. Kept status and the sleep pill also apply. Limit: a flash on USB after a sleep looks
+  like a power-off wake (stale marker), so no splash then. (3) wakelog.csv has `usb_rx` as last column (empty = not probed).
