@@ -83,6 +83,12 @@ SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build) {
   return e;
 }
 
+bool needPeriodicFull(bool scheduled, int64_t nowEpoch, int64_t lastFullEpoch) {
+  if (!scheduled || !plausibleEpoch(nowEpoch)) return false;
+  if (!plausibleEpoch(lastFullEpoch) || lastFullEpoch > nowEpoch) return true;
+  return nowEpoch - lastFullEpoch >= kPeriodicFullAgeS;
+}
+
 bool localIdleSleepWanted(bool session_running) { return !session_running; }
 
 power::SleepPlan localIdlePlan(const settings::Settings &s, int64_t now_epoch, int32_t utc_offset_s) {

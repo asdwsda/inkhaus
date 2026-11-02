@@ -89,6 +89,7 @@ static bool g_stackLogged = false;
 static bool g_firstSession = true;
 static int64_t g_restoredEpoch = 0;  // task 037: when the restored values were last confirmed (0 = none)
 static power::WakeReason g_wake = power::WakeReason::ColdBoot;  // why this run started (sleepwake::detect)
+static RTC_DATA_ATTR int64_t g_rtcLastFullEpoch = 0;           // UTC of the last GC16 full refresh (task 083), 0 = unknown
 static bool g_scheduled = false;                                // scheduled refresh: no touch/rocker input
 static app_logic::WakeInputGuard g_wakeGuard;                   // swallows the press that woke the device
 
@@ -780,7 +781,11 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     plan = app_logic::planForSleep(g_settings, session, epoch, utcOffsetAt(epoch), localIdle);
   }
   if (!low && present::framesOk()) {
-    present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
+    // Task 083: partial refreshes drift grey over hours; a scheduled wake does a GC16 full refresh when the last one is >= 3 h old.
+    const int64_t fullNow = session_glue::wallClock();
+    const bool periodic = app_logic::needPeriodicFull(g_scheduled, fullNow, g_rtcLastFullEpoch);
+    present::prepareSleep(periodic);  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
+    if (present::fullCount() > 0 && app_logic::plausibleEpoch(fullNow)) g_rtcLastFullEpoch = fullNow;
     g_status.sleepBadge = true;  // STYLE.md 5.5: one badge for every wake mode and low-battery sleep
     composeFrame();
     now = millis();

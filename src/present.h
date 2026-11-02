@@ -71,6 +71,9 @@ void setLogTab(int tab);  // tab index shown in the "APP: render" log line
 // record. Returns true if it did something.
 bool idle(uint32_t now);
 // Call right before sleeping: GC16 full refresh if the debt is at least half the limit.
-bool prepareSleep();
+// forceFull (task 083): the periodic full refresh is due; do it regardless of the debt.
+bool prepareSleep(bool forceFull = false);
+// Number of GC16 full refreshes in this run (0 after every wake).
+uint32_t fullCount();
 
 }  // namespace present

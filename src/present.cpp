@@ -37,6 +37,7 @@ constexpr bool kQualityPushesGrey = false;
 constexpr int kBigChangePct = 50;          // one frame changing more than this: refresh it as a page
 
 uint32_t g_lastShowMs = 0;
+uint32_t g_fullCount = 0;      // GC16 full refreshes of this run (task 083)
 bool g_havePending = false;     // fastest refreshes since the last full refresh (ghost debt)
 bool g_recordValid = false;     // the NVS record still describes the panel
 bool g_recordDirty = false;     // panel content changed since the record was written
@@ -242,6 +243,7 @@ void fullRefresh(bool whiteFirst, const char *why) {
   g_partialCount = 0;
   g_partialArea = 0;
   g_havePending = false;
+  ++g_fullCount;
 }
 
 
@@ -569,9 +571,15 @@ bool idle(uint32_t now) {
   return true;
 }
 
-bool prepareSleep() {
+uint32_t fullCount() { return g_fullCount; }
+
+bool prepareSleep(bool forceFull) {
   bool ran = false;
-  if (g_havePending && ghostDebt(kGhostPartials / 2, kGhostAreaPct / 2)) {
+  if (forceFull) {
+    boot::log("periodic_full", 1);
+    fullRefresh(false, "full_periodic");
+    ran = true;
+  } else if (g_havePending && ghostDebt(kGhostPartials / 2, kGhostAreaPct / 2)) {
     boot::log("ghost_debt_sleep", (long)g_partialCount);
     fullRefresh(false, "full_before_sleep");
     ran = true;

@@ -46,6 +46,8 @@ bool endBurstRead();
 // sleep (closes a read burst first). The next boot::begin() after ESP_RST_DEEPSLEEP sends SYS_RUN
 // before probing; a controller that then does not answer takes the stock path (cold). Bounded waits.
 bool controllerStandby();
+// IT8951 SLEEP (task 083, -DEPD_SLEEP_OFF builds): image memory lost, wake needs a hardware reset.
+bool controllerSleep();
 
 // Bounded check that the controller answers (BUSY high). If it does not, resets it (hardware
 // reset pulse, full panel init) and reports it as cold. Returns true when no recovery was needed.

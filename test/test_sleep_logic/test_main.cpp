@@ -404,6 +404,18 @@ void test_guard_not_armed_blocks_nothing() {
   TEST_ASSERT_FALSE(g.blocksTouch());
 }
 
+void test_periodic_full() {
+  const int64_t now = 1800000000;
+  TEST_ASSERT_FALSE(needPeriodicFull(true, now, now - 3 * 3600 + 1));
+  TEST_ASSERT_TRUE(needPeriodicFull(true, now, now - 3 * 3600));
+  TEST_ASSERT_TRUE(needPeriodicFull(true, now, now - 5 * 3600));
+  TEST_ASSERT_FALSE(needPeriodicFull(true, now, now - 3600));
+  TEST_ASSERT_TRUE(needPeriodicFull(true, now, 0));        // unknown
+  TEST_ASSERT_TRUE(needPeriodicFull(true, now, now + 10)); // clock went back: unknown
+  TEST_ASSERT_FALSE(needPeriodicFull(false, now, 0));      // interactive wake: never
+  TEST_ASSERT_FALSE(needPeriodicFull(true, 0, 0));         // clock unset: cannot judge
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_ext1_empty_mask_is_rocker);
@@ -437,5 +449,6 @@ int main() {
   RUN_TEST(test_guard_boundaries);
   RUN_TEST(test_guard_key_wake_ignores_touch_and_touch_wake_ignores_key);
   RUN_TEST(test_guard_not_armed_blocks_nothing);
+  RUN_TEST(test_periodic_full);
   return UNITY_END();
 }

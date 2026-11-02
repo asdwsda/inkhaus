@@ -83,6 +83,15 @@ struct SleepExec {
 };
 SleepExec resolveSleepExec(SleepMethod planned, bool power_off_build);
 
+// ---- periodic full refresh (task 083) ------------------------------------------------------------
+
+// Partial refreshes leave the panel drifting grey over hours; a scheduled wake does one GC16 full refresh
+// when the last full refresh is at least this old.
+constexpr int64_t kPeriodicFullAgeS = 3 * 3600;
+// scheduled: this run is a scheduled refresh. Epochs are UTC seconds; lastFullEpoch 0 = unknown (counts as
+// old). An unset clock (implausible nowEpoch) cannot judge the age: false.
+bool needPeriodicFull(bool scheduled, int64_t nowEpoch, int64_t lastFullEpoch);
+
 // ---- local idle sleep (no session: demo mode, config-error screen) --------------------------------
 
 // A local idle timer drives sleep only when no session machine runs (it issues the Sleep command

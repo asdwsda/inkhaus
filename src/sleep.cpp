@@ -192,8 +192,13 @@ void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoc
     // Task 035: GPIO2 stays high through deep sleep. IT8951 in STANDBY (image memory kept). The GT911
     // stays awake: its wake needs INT driven by the host and GPIO36 is input-only (see SleepExec).
     wakelog::setSleptPath("deepsleep_hold");
+#ifdef EPD_SLEEP_OFF
+    const bool epdOk = ex.epd_standby && boot::controllerSleep();
+    Serial.printf("SLEEP: path=deepsleep_hold epd=%s touch=awake\n", epdOk ? "sleep" : "active");
+#else
     const bool epdOk = ex.epd_standby && boot::controllerStandby();
     Serial.printf("SLEEP: path=deepsleep_hold epd=%s touch=awake\n", epdOk ? "standby" : "active");
+#endif
   }
   // Deep sleep. GPIO2 keeps the board powered on battery: hold it high through the sleep.
   digitalWrite(kPinMainPower, HIGH);

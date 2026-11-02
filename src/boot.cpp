@@ -298,6 +298,16 @@ bool controllerStandby() {
     return waitBusyHigh(kReadyWaitMs, "after_standby");
 }
 
+bool controllerSleep() {
+    if (M5.getBoard() != m5::board_t::board_M5Paper) return false;
+    auto* p = static_cast<lgfx::Panel_IT8951*>(M5.Display.getPanel());
+    if (!p || !p->getBus()) return false;
+    endBurstRead();
+    if (!waitBusyHigh(kReadyWaitMs, "sleep")) return false;
+    p->setSleep(true);  // SLEEP 0x0003 (Panel_IT8951.inl:509): wake = hardware reset (cold start)
+    return waitBusyHigh(kReadyWaitMs, "after_sleep");
+}
+
 bool ensureControllerReady(const char* where) {
     if (waitBusyHigh(kReadyWaitMs, where)) return true;
     // Stuck: hardware reset of the controller and a full panel init (rotation is restored by it).
@@ -402,7 +412,17 @@ void begin() {
     const uint32_t d0 = micros();
     bool noReset = false;
 #ifndef BOOT_FORCE_STOCK
+#ifdef EPD_SLEEP_OFF
+    // Task 083: the controller may be in SLEEP (put there before the deep sleep); only a hardware reset
+    // wakes it, and the no-reset start-up would hang on it. So only a software restart/crash (controller
+    // awake) keeps the no-reset path; a wake, the reset button or power-on use the stock start-up (cold:
+    // bootFrame re-renders the controller memory from the record).
+    const bool ctrlAwake = rr != ESP_RST_DEEPSLEEP && rr != ESP_RST_POWERON && rr != ESP_RST_EXT;
+    if (g_bootMode == screen_track::BootMode::Normal && ctrlAwake) noReset = attachNoResetDisplay();
+    else log("epd_sleep_start", "hw_reset");
+#else
     if (g_bootMode == screen_track::BootMode::Normal) noReset = attachNoResetDisplay();
+#endif
 #else
     wakelog::logf("BOOT: forced_stock=1" "\n");
 #endif
