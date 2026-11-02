@@ -74,3 +74,6 @@ the ~1 month target.
   record missing/other firmware (e.g. after flashing) -> one full GC16 redraw, still no splash. The reset button and a real cold boot
   (no marker, no alarm flag) keep the splash. Kept status and the sleep pill also apply. Limit: a flash on USB after a sleep looks
   like a power-off wake (stale marker), so no splash then. (3) wakelog.csv has `usb_rx` as last column (empty = not probed).
+- Re-test 2026-11-02 (scratchpad wl084b.csv): from power-off the BM8563 alarm now wakes as `rtc_alarm` + scheduled
+  session: 11:56, 12:00, 12:04 (3/3), awake 6.5-11.9 s. usb_rx: 0 on every battery wake, 1 on every USB wake
+  (11:46, 11:49, 12:07, ...) -> the CH9102 RX probe is a reliable, free USB sense (085: offer On USB in all modes).
