@@ -18,7 +18,7 @@
 
 <section class="hero"><div class="wrap">
 <h1>Your smart home on paper.</h1>
-<p>Inkhaus turns an M5Paper e-ink screen into a small remote for Home Assistant. Lights, blinds, heating and sensors on one calm screen that barely uses any battery.</p>
+<p>Inkhaus turns an M5Paper e-ink screen into a small remote for Home Assistant. Lights, blinds, heating and sensors on one calm screen that uses very little power.</p>
 <p><a class="btn primary" href="#install">Download the installer</a><a class="btn" href="https://github.com/asdwsda/inkhaus">See on GitHub</a></p>
 <figure class="hero-fig"><img class="shot" src="img/showcase-tour.gif" width="1000" height="563" alt="Animated tour of Inkhaus on the M5Paper in portrait and landscape: wake, switch a light, brightness, shutters, climate, graphs, history, settings and sleep."><figcaption class="cap">A tour of the screens (design mockups)</figcaption></figure>
 
@@ -29,7 +29,7 @@
 <ol class="steps">
 <li><strong>Tap to switch</strong>Touch the screen to switch things. The side rocker button works too.</li>
 <li><strong>Always readable</strong>E-ink works in sunlight, has no backlight glare, and the screen stays when the device sleeps.</li>
-<li><strong>Weeks on a charge</strong>It sleeps between touches and shows when it was last updated.</li>
+<li><strong>Days on a charge</strong>It sleeps between touches. Power off mode lasts even longer, and you choose how much battery to trade for convenience.</li>
 </ol>
 </div></section>
 
@@ -44,7 +44,7 @@
 <ul class="feat">
 <li>Switches and lights</li><li>Blinds and covers</li><li>Thermostat</li><li>Weather</li><li>Vacuum</li>
 <li><strong>History graphs</strong> on the tab and on a long press</li><li>Brightness control</li><li>Rotate portrait or landscape</li>
-<li>Settings on the device</li><li>Your own tabs and layout in a text file</li>
+<li>Settings on the device</li><li>Choose your sleep mode and update interval</li><li>Update the firmware from Settings</li><li>Your own tabs and layout in a text file</li>
 <li>Works on your home network, no cloud needed</li>
 </ul>
 </div></section>
@@ -82,6 +82,7 @@
 <p>Plug in the M5Paper and press Install. Keep the cable connected until it says done.</p>
 <h3>3. Nothing else is touched</h3>
 <p>Your settings and SD card are not touched.</p>
+<p>Later updates: Settings > Tools on the device, or run the installer again.</p>
 <details><summary>Trouble?</summary>
 <ul>
 <li>No device found: use a data cable. On Windows, install the CH9102 USB driver (WCH CH343).</li>
@@ -127,8 +128,8 @@ tabs:
 
 <section><div class="wrap">
 <h2>Questions</h2>
-<details><summary>Does it need the internet?</summary><p>No. It talks to Home Assistant on your home network. The internet is only used to download the installer.</p></details>
-<details><summary>How long does the battery last?</summary><p>Weeks, depending on how often you touch it. It sleeps between touches and the screen needs no power to keep its picture.</p></details>
+<details><summary>Does it need the internet?</summary><p>No. It talks to Home Assistant on your home network. The internet is only used to download the installer and, if you choose, firmware updates.</p></details>
+<details><summary>How long does the battery last?</summary><p>Days on a charge; longer with Power off. It depends on the sleep mode and how often you touch it. The screen needs no power to keep its picture, and Settings shows a Battery use bar.</p></details>
 <details><summary>Is it safe?</summary><p>The token stays on your SD card. The device only talks to your Home Assistant.</p></details>
 <details><summary>Can I use it without the cloud?</summary><p>Yes. Nothing goes through a cloud service.</p></details>
 <details><summary>Which devices work?</summary><p>The M5Paper only.</p></details>

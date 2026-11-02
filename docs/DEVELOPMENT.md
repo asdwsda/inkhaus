@@ -39,6 +39,17 @@ python3 tools/wakelog.py wakelog.csv
 python3 tools/wakelog.py --file debug.log debug.log
 ```
 
+Dev tip: Settings > Sleep & wake > Keep awake = On USB stays set on the dev device, so it is awake whenever plugged in.
+
+## Self-update (OTA) testing
+
+- Debug build: set the NVS `ota/url` or build with `-DOTA_TEST_URL=\"http://HOST:PORT/\"`, then run
+  `tools/ota_test_server.py --bin .pio/build/m5paper/firmware.bin --version 9.9.9` (`--corrupt` serves altered
+  bytes; the device must reject them).
+- `tools/make_manifest.py` writes `manifest.json` (version, size, sha256).
+- Release checklist: bump `include/version.h`, `tools/flasher/Cargo.toml` and CHANGELOG. The release must contain
+  `firmware.bin` and `manifest.json`, or devices won't see the update. Pre-releases are ignored by the device.
+
 ## Repository layout
 
 | Path | Contents |

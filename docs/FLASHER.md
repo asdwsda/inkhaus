@@ -1,6 +1,7 @@
 # Inkhaus Installer (flasher)
 
 Installs a released firmware on the M5Paper over USB. No PlatformIO or Python needed.
+Once installed, later versions can also be installed from the device itself (Settings > Tools); the installer is needed for the first install, offline machines and recovery.
 
 Next step after installing: create `secrets.yaml` and `config.yaml`, see the [README](../README.md) and [CONFIG.md](CONFIG.md).
 
@@ -22,6 +23,7 @@ The binaries are unsigned, so the first start shows a warning (see Problems).
 
 Settings (Wi-Fi, options) and the SD card are kept: only the bootloader, partition table, boot_app0 and
 firmware are written; the rest of the flash (including settings storage) is not touched.
+Old settings are migrated on the first start (for example wake mode to sleep mode).
 
 **Upload YAML files (optional).** Press "Upload YAML files..." and pick `config.yaml` and/or `secrets.yaml` (exactly
 these names). Each file is sent to the SD card over USB; the M5Paper checks its size and CRC32 and its summary is shown.

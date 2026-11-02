@@ -3,7 +3,7 @@
 **Inkhaus** turns an **M5Stack M5Paper** e-ink touch screen into a battery-powered remote for
 [Home Assistant](https://www.home-assistant.io/). It shows your shutters, lights, thermostats and
 sensors, sends your taps to Home Assistant, and sleeps the rest of the time, so the screen always
-shows the last known state without using power. Version 1.2.1, see [CHANGELOG.md](CHANGELOG.md).
+shows the last known state without using power. Version 1.3.0, see [CHANGELOG.md](CHANGELOG.md).
 
 Website: <https://asdwsda.github.io/inkhaus/>
 
@@ -92,14 +92,24 @@ All options: [docs/CONFIG.md](docs/CONFIG.md).
 ## Using the device
 
 - **Wake it** by pressing the rocker (the 3-way button on the side), or by touching the screen if
-  you enabled a touch wake mode. A small **Zz** badge in the status bar shows it is asleep. The last screen is already there; fresh states arrive a moment later.
+  Sleep mode is Touch or Touch & rocker. In Power off mode the rocker switches it on again (about 1 s to a
+  usable screen). Before sleeping, a small pill in the status bar shows the sleep mode and the time of the
+  next update. The last screen is already there; fresh states arrive a moment later.
 - **Tabs:** tap the tab bar, or move the rocker up / down. **Widgets:** tap them, or move the focus
   ring with the rocker and push to activate. In landscape, "up" points left.
 - **Refresh now:** tap the "updated" label in the status bar.
 - **Settings:** long push of the rocker, or tap the battery indicator. Four categories: Display,
-  Sleep & wake, Network (Wi-Fi profile, Home Assistant connection) and Tools (demo mode, debug log).
+  Sleep & wake (Sleep mode, Updates while asleep, Keep awake, Idle timeout, Learn battery limits and a
+  Battery use bar from 1 lowest to 10 highest), Network (Wi-Fi profile, Home Assistant connection) and
+  Tools (demo mode, debug log, firmware update).
   Changes are saved when you leave Settings (Back on the overview page, or after 60 s idle).
-- The device goes back to sleep by itself after the idle timeout.
+- The device goes back to sleep by itself after the idle timeout. Hold the rocker push for 2.5 s (or use
+  Settings > Sleep & wake > Sleep now) to sleep at once. Keep awake (On USB / Always) disables the idle sleep.
+- **Update the firmware:** Settings > Tools shows "Update available" when a newer release exists (checked
+  about weekly, never interrupts you). Open the row, Check now, confirm with Yes (rocker up) or No. Keep the
+  device on USB or above 50 % battery. If the new version does not start, the old one is restored
+  automatically. Version 1.3.0 itself is installed with the installer once; later versions can come from the
+  device. The installer still works for a manual update.
 
 ## Troubleshooting
 
@@ -117,11 +127,17 @@ All options: [docs/CONFIG.md](docs/CONFIG.md).
   `tabs[0].widgets[2].entity`, line 9), usually a missing space or a wrong indentation.
 - **The screen looks garbled after installing:** the next start does one full redraw; if it stays,
   power-cycle the device.
+- **It does not wake / the screen stays blank (Power off):** press the rocker; if still dead, press the
+  reset button on the back and charge via USB.
+- **Wake takes long / Offline:** the Wi-Fi connect time per wake is capped; check the router range.
+- **Update failed / says rolled back:** the previous firmware was restored; try again on USB.
 - **Installer problems** (device not found, Windows/macOS warning): [docs/FLASHER.md](docs/FLASHER.md).
 
-**Battery.** The default wake mode (rocker button) is the most economical; touch wake keeps the touch
-controller awake and uses more battery, and Settings warns about it. Shorter idle timeouts and longer
-refresh intervals save power. Battery life has not been measured yet.
+**Battery.** Settings > Sleep & wake > Battery use shows how costly your choices are (1 = lowest,
+10 = highest). Power off with Updates while asleep Off drains least; Deep sleep wakes faster; the touch
+modes use the most. Defaults: Deep sleep, update every 1 h, idle timeout 20 s. Shorter idle timeouts and
+longer update intervals save power. The device learns the battery's cut-off voltage and sleeps cleanly
+before it browns out.
 
 ## More
 

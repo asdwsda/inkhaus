@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.0 - unreleased
+
+### Power and sleep
+- Sleep & wake page rebuilt: Sleep mode (Power off / Deep sleep / Touch / Touch & rocker), Updates while asleep (Off / 30 min / 1 h / 3 h / 6 h / 12 h), Keep awake (Off / On USB / Always), Idle timeout and a Battery use bar (1 = lowest, 10 = highest). Your old wake mode and refresh interval are migrated.
+- **Power off** sleep: the device switches off completely (lowest drain); the rocker or the scheduled update (RTC) turns it on.
+- **Sleep now**: hold the rocker push 2.5 s anywhere, or use the new Sleep now row in Settings.
+- Keep awake On USB / Always: no idle sleep while on USB power / never.
+- Learned battery limit: after a brown-out the device raises its low-battery limit (3.3-3.9 V) and sleeps cleanly before it. Switch off with "Learn battery limits".
+- The Wi-Fi connect time per wake is capped, so a missing network no longer keeps the device awake for a minute or more.
+- The current tab is kept across sleep, also after Power off.
+- Status pills (Power off, Deep sleep, Touch, next update, Keep awake) replace the "Zz" badge before sleep.
+- A scheduled wake does a full screen refresh when the last one is 3 hours old, which stops the grey drift.
+
+### Updates
+- **Firmware update from Settings > Tools**: the device checks GitHub about weekly (when Wi-Fi is already up) and shows "Update available". Check now, then confirm with Yes / No. The download is checked with SHA-256, and the old firmware is restored automatically after 3 failed starts. Needs USB power or battery of 50 % or more. Install 1.3.0 with the installer once; later versions can be installed from the device.
+
 ## 1.2.1 - 2026-10-30
 
 ### Installer
