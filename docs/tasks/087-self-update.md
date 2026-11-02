@@ -50,3 +50,4 @@ Architecture (architect, 2026-11-02):
 
 ## Notes
 - Architect 2026-11-02 (OPEN-S12): a version that rolled back is suppressed; offer again only for a newer version.
+- User 2026-11-02 (OPEN-S13): add "Check now": tapping the up-to-date Firmware row runs a manual check (needs Wi-Fi; shows Checking..., then the result in the hint). Spec: ui-designer to add the row state.
