@@ -64,4 +64,11 @@ bool rollbackNow(int earlierBoots);
 // crash. Network / HA state does not matter: a router outage must not roll back a good firmware.
 bool healthy(bool firstFrameDrawn, uint32_t loopMs);
 
+// ---- job deadline (task 090) ----
+// Total wall-clock cap per network job; the per-step HTTP timeouts and the 15 s stall limit stay as they are.
+constexpr uint32_t kCheckDeadlineMs = 60 * 1000;
+constexpr uint32_t kInstallDeadlineMs = 5 * 60 * 1000;
+// True once `elapsedMs` since the job start reached the cap of its kind (at the cap = expired).
+bool jobExpired(bool install, uint32_t elapsedMs);
+
 }  // namespace ota_logic

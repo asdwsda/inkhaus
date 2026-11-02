@@ -48,7 +48,7 @@ enum class CheckResult { Newer, UpToDate, NoWifi, NoServer, Timeout, Skipped };
 CheckResult checkNow(int64_t epoch, bool wifiUp);
 
 enum class Phase { Downloading, Verifying, Restarting };
-enum class Failure { None, Download, Damaged };
+enum class Failure { None, Download, Damaged, TooLong };
 // Blocking install: download into the inactive slot, SHA-256 check, set boot partition, restart. progress is
 // called about every 2 %. Returns only on failure (running firmware untouched); failure() says why.
 bool install(void (*progress)(Phase phase, int pct));

@@ -277,7 +277,7 @@ constexpr const char* kDemoConfigText = "built-in demo";
 
 // ---- firmware row (task 087, spec 8.6) ----
 enum class FwCheckErr { None, NoWifi, NoServer, Timeout };
-enum class FwDlErr { None, Download, Damaged };
+enum class FwDlErr { None, Download, Damaged, TooLong };
 enum class FwPhase { Downloading, Verifying, Restarting };
 struct FirmwareInfo {
   std::string current;     // "1.2.1"

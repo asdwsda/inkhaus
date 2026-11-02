@@ -622,7 +622,9 @@ FirmwareRow firmwareRow(const FirmwareInfo& f) {
     if (f.dlErr != FwDlErr::None) {
       r.look = FwLook::Failed;
       r.alert = true;
-      r.hint = f.dlErr == FwDlErr::Damaged ? "File damaged, not installed" : "Download failed, try again";
+      r.hint = f.dlErr == FwDlErr::Damaged ? "File damaged, not installed"
+                 : f.dlErr == FwDlErr::TooLong ? "Took too long, not installed"
+                                                : "Download failed, try again";
     } else {
       r.look = FwLook::Available;
       r.hint = "Update to " + v + " available";

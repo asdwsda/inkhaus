@@ -107,6 +107,17 @@ void test_limits() {
   TEST_ASSERT_TRUE(memoryOk(40 * 1024));
 }
 
+void test_job_deadline() {
+  TEST_ASSERT_FALSE(jobExpired(false, 0));
+  TEST_ASSERT_FALSE(jobExpired(false, 59999));
+  TEST_ASSERT_TRUE(jobExpired(false, 60000));
+  TEST_ASSERT_TRUE(jobExpired(false, 61000));
+  TEST_ASSERT_FALSE(jobExpired(true, 60000));  // install has the longer cap
+  TEST_ASSERT_FALSE(jobExpired(true, 299999));
+  TEST_ASSERT_TRUE(jobExpired(true, 300000));
+  TEST_ASSERT_TRUE(jobExpired(true, 400000));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_semver);
@@ -117,5 +128,6 @@ int main() {
   RUN_TEST(test_cold_boot_hourly_cap);
   RUN_TEST(test_suppressed);
   RUN_TEST(test_limits);
+  RUN_TEST(test_job_deadline);
   return UNITY_END();
 }

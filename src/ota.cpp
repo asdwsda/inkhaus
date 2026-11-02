@@ -126,6 +126,20 @@ uint32_t maxImageSize() {
   return p ? p->size : 0;
 }
 
+// Task 090: total deadline per job. Cooperative: the job checks cancelled() at its read steps (no task kill); the
+// loop also evaluates it while waiting, so the log line is written once whoever sees it first.
+uint32_t g_jobStartMs = 0;
+bool g_jobInstall = false;
+volatile bool g_timedOut = false;
+bool cancelled() {
+  if (g_timedOut) return true;
+  const uint32_t el = millis() - g_jobStartMs;
+  if (!ota_logic::jobExpired(g_jobInstall, el)) return false;
+  g_timedOut = true;
+  wakelog::logf("OTA: job timeout kind=%s after_ms=%u\n", g_jobInstall ? "install" : "check", (unsigned)el);
+  return true;
+}
+
 // Collects at most kMaxManifestBytes; a longer body makes write() fail, which aborts the transfer.
 class CapStream : public Stream {
  public:
@@ -133,6 +147,7 @@ class CapStream : public Stream {
   bool overflow = false;
   size_t write(uint8_t b) override { return write(&b, 1); }
   size_t write(const uint8_t *buf, size_t n) override {
+    if (cancelled()) return 0;  // deadline passed: aborts the transfer
     if (data.size() + n > ota_logic::kMaxManifestBytes) {
       overflow = true;
       return 0;
@@ -159,6 +174,11 @@ bool fetchManifest(ota_logic::Manifest &m) {
   CapStream body;  // chunked bodies have no length: the cap is enforced while reading
   http.writeToStream(&body);
   http.end();
+  if (g_timedOut) {
+    g_err = "job timeout";
+    g_failKind = CheckResult::Timeout;
+    return false;
+  }
   if (body.overflow) {
     g_err = "manifest too big";
     g_failKind = CheckResult::NoServer;
@@ -279,6 +299,9 @@ void jobEntry(void *arg) {
 // False = the task could not be created (memory); g_err is set.
 bool runJob(Job &j, void (*progress)(Phase, int)) {
   g_job = &j;
+  g_jobStartMs = millis();
+  g_jobInstall = j.kind == Job::Install;
+  g_timedOut = false;
   TaskHandle_t h = nullptr;
   if (heap_caps_get_largest_free_block(MALLOC_CAP_8BIT) < kJobStack + ota_logic::kMinFreeBlock ||
       xTaskCreate(&jobEntry, "otajob", kJobStack, &j, 1, &h) != pdPASS) {
@@ -289,6 +312,7 @@ bool runJob(Job &j, void (*progress)(Phase, int)) {
   }
   int lastPhase = -1, lastPct = -1;
   while (!j.done) {
+    cancelled();  // flags the job; it aborts at its next step. We still wait for `done` before freeing anything
     const int ph = j.phase, pc = j.pct;
     if (progress && ph >= 0 && (ph != lastPhase || pc != lastPct)) {
       lastPhase = ph;
@@ -415,7 +439,10 @@ bool installBody(void (*progress)(Phase, int)) {
   do {
     if (!prepareHeap()) break;
     ota_logic::Manifest m;
-    if (!fetchManifest(m)) break;
+    if (!fetchManifest(m)) {
+      if (g_timedOut) g_failure = Failure::TooLong;
+      break;
+    }
     if (!ota_logic::offer(FW_VERSION, m, maxImageSize())) {
       g_err = "no newer version";
       break;
@@ -454,6 +481,10 @@ bool installBody(void (*progress)(Phase, int)) {
     while (got < m.size) {
       const int avail = s->available();
       if (avail <= 0) {
+        if (cancelled()) {
+          failed = true;
+          break;
+        }
         if (!s->connected() || millis() - lastData > 15000) {
           g_err = "download stalled";
           failed = true;
@@ -465,6 +496,10 @@ bool installBody(void (*progress)(Phase, int)) {
       const int n = s->readBytes(buf, std::min<size_t>(sizeof(buf), std::min<uint32_t>(avail, m.size - got)));
       if (n <= 0) continue;
       lastData = millis();
+      if (cancelled()) {
+        failed = true;
+        break;
+      }
       mbedtls_sha256_update(&sha, buf, n);
       if (esp_ota_write(handle, buf, n) != ESP_OK) {
         g_err = "flash write failed";
@@ -482,6 +517,11 @@ bool installBody(void (*progress)(Phase, int)) {
     uint8_t digest[32];
     mbedtls_sha256_finish(&sha, digest);
     mbedtls_sha256_free(&sha);
+    if (failed && g_timedOut) {
+      g_err = "job timeout";
+      g_failure = Failure::TooLong;
+      break;
+    }
     if (failed) break;
     static const char *hex = "0123456789abcdef";
     std::string got256;

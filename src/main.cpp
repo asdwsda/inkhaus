@@ -774,7 +774,9 @@ static void fwInstall(uint32_t now) {
   drawSettingsFrame(present::Mode::Full, now);  // Tools page, the row in its downloading look
   wakelog::logf("OTA: install start version=%s\n", ota::availableVersion().c_str());
   ota::install(fwProgress);  // returns only on failure; the running firmware is untouched
-  g_fwDlErr = ota::failure() == ota::Failure::Damaged ? settings_ui::FwDlErr::Damaged : settings_ui::FwDlErr::Download;
+  g_fwDlErr = ota::failure() == ota::Failure::Damaged   ? settings_ui::FwDlErr::Damaged
+              : ota::failure() == ota::Failure::TooLong ? settings_ui::FwDlErr::TooLong
+                                                        : settings_ui::FwDlErr::Download;
   settings_flow::clearFirmwareBusy();
   settings_flow::setFirmware(fwSnapshot());
   fwResumed();

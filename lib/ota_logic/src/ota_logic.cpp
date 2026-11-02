@@ -92,6 +92,10 @@ bool offer(const std::string &current, const Manifest &m, uint32_t maxSize) {
 bool manifestLenOk(int64_t contentLen) { return contentLen <= (int64_t)kMaxManifestBytes; }
 bool memoryOk(uint32_t largestFreeBlock) { return largestFreeBlock >= kMinFreeBlock; }
 
+bool jobExpired(bool install, uint32_t elapsedMs) {
+  return elapsedMs >= (install ? kInstallDeadlineMs : kCheckDeadlineMs);
+}
+
 bool checkDue(const CheckState &s, int64_t now, bool coldBoot, bool wifiUp) {
   if (!wifiUp) return false;
   if (coldBoot) return now <= 0 || s.lastAttempt <= 0 || now - s.lastAttempt >= kColdCheckMinS;

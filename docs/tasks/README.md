@@ -88,7 +88,7 @@
 | 086 | [Keep the current tab across sleep](086-keep-tab-across-sleep.md) | done | 071, 084 |
 | 087 | [Firmware self-update](087-self-update.md) | done | 061, 084, 085 |
 | 089 | [OTA install crashes in the TLS handshake](089-ota-tls-stack.md) | done | 087 |
-| 090 | [Total time cap for an OTA job](090-ota-job-deadline.md) | todo | 089 |
+| 090 | [Total time cap for an OTA job](090-ota-job-deadline.md) | PC done | 089 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
