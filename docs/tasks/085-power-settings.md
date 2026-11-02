@@ -47,3 +47,7 @@ Pure logic (estimate model, setting migration, mode -> sleep plan) in lib/ with 
 - [ ] `pio run` and `pio test -e native` pass.
 
 ## Notes
+- User 2026-11-02 (replaces Scope item 4): no battery-life estimate (no days/weeks; we don't know it precisely).
+  Instead a simple "Battery use" bar on a 1..10 scale for the current set of settings (1 = Power off, Updates
+  Off, Keep awake Off; 10 = Keep awake Always). The lib model still ranks configurations (monotonic), but only
+  the 1..10 level is shown. Acceptance: "estimate model monotonic" -> "level monotonic, 1 and 10 at the ends".
