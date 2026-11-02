@@ -10,7 +10,7 @@
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2.4"/><polygon points="21,3 21,11 13,11" fill="currentColor"/></symbol>
 </defs>
 <rect width="960" height="1696" fill="#fff"/>
-<text x="16" y="30" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Status bar sleep and keep-awake indicators, portrait (540 x 56 strips)</text>
+<text x="16" y="30" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Sleep and keep-awake indicators, portrait</text>
 <g id="w-1" transform="translate(0,82)"><rect id="w-1-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
 <use id="w-1-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
 <text id="w-1-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
@@ -70,7 +70,7 @@
 <g id="w-5-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
 <text id="w-5-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
 <rect x="0" y="54" width="540" height="2" fill="#000"/></g>
-<text x="560" y="400" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">5 Touch wake (Touch or Touch &amp; rocker), next update 15:30</text>
+<text x="560" y="400" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">5 Touch wake, next update 15:30</text>
 <g id="w-6" transform="translate(0,462)"><rect id="w-6-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
 <use id="w-6-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
 <text id="w-6-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
@@ -80,7 +80,7 @@
 <g id="w-6-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
 <text id="w-6-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
 <rect x="0" y="54" width="540" height="2" fill="#000"/></g>
-<text x="560" y="476" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">6 Keep awake active: On USB (awake, not asleep)</text>
+<text x="560" y="476" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">6 Keep awake: On USB (awake)</text>
 <g id="w-7" transform="translate(0,538)"><rect id="w-7-frame" x="-12" y="-12" width="564" height="80" fill="none"/><rect x="0" y="0" width="540" height="54" fill="#fff"/>
 <use id="w-7-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="15" width="24" height="24" color="#000"/>
 <text id="w-7-label" x="48" y="27" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
@@ -90,8 +90,8 @@
 <g id="w-7-batt"><rect x="428" y="17" width="36" height="20" fill="#000"/><rect x="430" y="19" width="32" height="16" fill="#fff"/><rect x="430" y="19" width="25" height="16" fill="#000"/><rect x="464" y="22" width="4" height="10" fill="#000"/></g>
 <text id="w-7-pct" x="524" y="27" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
 <rect x="0" y="54" width="540" height="2" fill="#000"/></g>
-<text x="560" y="552" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">7 Keep awake active: Always</text>
-<text x="16" y="622" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Landscape (960 x 64 top bar; sleep kinds hide tab slot 5)</text>
+<text x="560" y="552" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">7 Keep awake: Always (awake)</text>
+<text x="16" y="622" font-size="24" font-weight="bold" fill="#000" text-anchor="start" dominant-baseline="central">Landscape (sleep kinds hide tab slot 5)</text>
 <text x="16" y="658" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Power off, next update 15:30</text>
 <g id="w-8" transform="translate(0,680)"><rect id="w-8-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
 <use id="w-8-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
@@ -176,7 +176,7 @@
 <g id="w-11-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
 <text id="w-11-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
 <rect x="0" y="65" width="960" height="2" fill="#000"/></g>
-<text x="16" y="1098" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Touch wake (Touch or Touch &amp; rocker), next update 15:30</text>
+<text x="16" y="1098" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Touch wake, next update 15:30</text>
 <g id="w-12" transform="translate(0,1120)"><rect id="w-12-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
 <use id="w-12-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
 <text id="w-12-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
@@ -197,7 +197,7 @@
 <g id="w-12-batt"><rect x="848" y="22" width="36" height="20" fill="#000"/><rect x="850" y="24" width="32" height="16" fill="#fff"/><rect x="850" y="24" width="25" height="16" fill="#000"/><rect x="884" y="27" width="4" height="10" fill="#000"/></g>
 <text id="w-12-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
 <rect x="0" y="65" width="960" height="2" fill="#000"/></g>
-<text x="16" y="1208" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake active: On USB (awake, not asleep)</text>
+<text x="16" y="1208" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake: On USB (awake)</text>
 <g id="w-13" transform="translate(0,1230)"><rect id="w-13-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
 <use id="w-13-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
 <text id="w-13-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>
@@ -216,7 +216,7 @@
 <text id="w-13-pct" x="944" y="32" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">78%</text>
 <text id="w-13-awake" x="944" y="53" font-size="18" fill="#000" text-anchor="end" dominant-baseline="central">USB awake</text>
 <rect x="0" y="65" width="960" height="2" fill="#000"/></g>
-<text x="16" y="1318" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake active: Always</text>
+<text x="16" y="1318" font-size="14" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake: Always (awake)</text>
 <g id="w-14" transform="translate(0,1340)"><rect id="w-14-frame" x="-12" y="-12" width="984" height="88" fill="none"/>
 <use id="w-14-link" xlink:href="#i-wifi" href="#i-wifi" x="16" y="20" width="24" height="24" color="#000"/>
 <text id="w-14-l1" x="56" y="21" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">updated</text>

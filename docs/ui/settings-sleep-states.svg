@@ -40,7 +40,7 @@
 <text id="w-4-hint" x="32" y="446" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Tap or rocker</text>
 <text id="w-4-value" x="508" y="428" font-size="24" fill="#000" text-anchor="end" dominant-baseline="central">Touch &amp; rocker</text>
 </g>
-<text x="16" y="492" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Updates while asleep: normal (6 pips) / forced Off (Power off cannot wake itself)</text>
+<text x="16" y="492" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Updates: normal, then forced Off (dotted, no pips)</text>
 <g id="w-5">
 <rect id="w-5-frame" x="16" y="508" width="508" height="72" rx="8" fill="#fff"/>
 <rect x="17" y="509" width="506" height="70" rx="8" fill="none" stroke="#000" stroke-width="2"/>
@@ -74,7 +74,7 @@
 <text id="w-8-l1" x="80" y="797" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Touch wake shortens battery life.</text>
 <text id="w-8-l2" x="80" y="819" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Rocker wake is recommended.</text>
 </g>
-<text x="540" y="68" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake: Off (On USB not offered) / Off (offered) / On USB / Always</text>
+<text x="540" y="68" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Keep awake (1st: On USB not offered)</text>
 <g id="w-9">
 <rect id="w-9-frame" x="540" y="84" width="508" height="88" rx="8" fill="#fff"/>
 <rect x="541" y="85" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
@@ -103,7 +103,7 @@
 <text id="w-12-hint" x="556" y="446" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Never sleeps</text>
 <text id="w-12-value" x="1032" y="428" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Always</text>
 </g>
-<text x="540" y="492" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Estimate block: weeks / days / hours (Always) / more than 6 months</text>
+<text x="540" y="492" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Estimate: weeks, days, hours (Always), over 6 months</text>
 <g id="w-13">
 <rect id="w-13-frame" x="540" y="508" width="508" height="124" fill="#fff"/>
 <rect x="540" y="508" width="508" height="1" fill="#888"/>

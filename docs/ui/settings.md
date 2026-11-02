@@ -41,7 +41,7 @@ No Home Assistant entity or service is used except the shared state fetch.
    - Orientation: applied on leaving: rotation is set, the layout recomputed
      (active tab kept, sub-page clamped), then **one full refresh** of the tab
      screen (STYLE.md section 10; Settings exit is always a full refresh).
-   - Wake mode, refresh interval: used the next time the device prepares to
+   - Sleep mode, updates while asleep, keep awake: used the next time the device prepares to
      sleep (power module reads the saved settings). The sleep badge (one for all wake modes)
      (STYLE.md 5.5) is the same for every wake mode.
    - Idle timeout: used from the moment Settings is left.
@@ -59,8 +59,8 @@ No Home Assistant entity or service is used except the shared state fetch.
    draws the tab screen with a full refresh) and then sleeps, so the frozen
    image is never a stale Settings page; the sleep badge is then drawn on
    the tab screen. OPEN-S1.
-6. **Touch Wake note.** While wake mode is Touch or Touch & Button (in the
-   buffer), the note slot shows an alert box `Touch wake shortens battery life. / Button wake is
+6. **Touch Wake note** (superseded by 8.2 notes, revision 10). While Sleep mode is Touch or Touch & rocker (in the
+   buffer), a note slot shows an alert box `Touch wake shortens battery life. / Button wake is
    recommended.` No numbers are quoted (power is still an estimate in
    ARCHITECTURE.md). The wake row always shows its pips (no warn icon; task 039).
    With Button the note slot is empty.
@@ -76,7 +76,7 @@ Settings is a two-level system: the **overview** (main page) lists four **catego
 | Category | Settings (edit buffer fields) |
 |----------|-------------------------------|
 | Display | Orientation |
-| Sleep & wake | Wake mode, Refresh every, Idle timeout, Stay awake on USB (9.1) |
+| Sleep & wake | Sleep mode, Updates while asleep, Keep awake, Idle timeout, Learn battery limits; battery estimate (8.2, revision 10, task 085) |
 | Network | Wi-Fi (`Auto` / profile names from secrets.yaml), HA connection (`Auto` / `Internal` / `External`) |
 | Tools | Demo mode, Debug log |
 
@@ -97,7 +97,7 @@ Shared geometry (unchanged from revision 6): margins 16, gaps 12, header 54 (por
 | Refresh now | (16, 880, 248, 64) | 912 | 3.4 |
 | Back | (276, 880, 248, 64) | 912 | 3.4 |
 
-Category row (row-relative, 508 x 96): label F24 INK left at x = 16, cy = 34; **one-line summary** F18 INK left at x = 16, cy = 66; chevron_right icon (M, 40 x 40) at (W - 52, 28), cy = 48. Summaries (from the edit buffer, so they follow unsaved changes; fit rule F18 then `...`): Display `Portrait` / `Landscape`; Sleep & wake `<wake>, <refresh>, <idle>` e.g. `Touch, 60 min, 20 s` (wake `Button` / `Touch` / `Touch & Button` shortened to `Both` only if it does not fit); Network `Wi-Fi <value>, HA <value>` e.g. `Wi-Fi Auto, HA Auto` or `Wi-Fi Hotspot, HA Internal`; Tools `Demo Off, Log Off`. Vertical sums: header 56 +12 = 68; 4 x 96 + 3 x 12 = 420 -> 488; +16 = 504; info 304 -> 808; footer 880 (72 px of free space between).
+Category row (row-relative, 508 x 96): label F24 INK left at x = 16, cy = 34; **one-line summary** F18 INK left at x = 16, cy = 66; chevron_right icon (M, 40 x 40) at (W - 52, 28), cy = 48. Summaries (from the edit buffer, so they follow unsaved changes; fit rule F18 then `...`): Display `Portrait` / `Landscape`; Sleep & wake `<Sleep mode>, updates <X>` plus `, USB awake` / `, always awake` when Keep awake is On USB / Always, e.g. `Power off, updates 3 h`, `Deep sleep, updates off`, `Touch & rocker, updates 30 min, always awake` (X = `off` / `30 min` / `1 h` / `3 h` / `6 h` / `12 h`; fit rule: drop the word `updates `, then `...`; revision 10, the idle timeout is no longer in the summary); Network `Wi-Fi <value>, HA <value>` e.g. `Wi-Fi Auto, HA Auto` or `Wi-Fi Hotspot, HA Internal`; Tools `Demo Off, Log Off`. Vertical sums: header 56 +12 = 68; 4 x 96 + 3 x 12 = 420 -> 488; +16 = 504; info 304 -> 808; footer 880 (72 px of free space between).
 
 Info rows (3.3 table) change only in wording: HA row `internal, ok 14:05` / `external, ok 14:05` (the link in use; was local / remote); Wi-Fi row shows the SSID of the connected profile.
 
@@ -198,10 +198,38 @@ All pages: header (title = category name, chip when the buffer is dirty), no tab
 ### 8.1 Display (`settings-display-*.svg`)
 Portrait: Orientation pip row (16, 68, 508, 72). Below it a static caption F18 DIM at (16, 152) cy 168: `Applied when Settings is left.` Landscape: row (16, 64, 456, 68), caption at (16, 132) cy 148. Mockup shows the changed value (unsaved), focus on the row.
 
-### 8.2 Sleep & wake (`settings-sleep-*.svg`)
-Pip rows Wake mode (68), Refresh every (152), Idle timeout (236), then the touch-wake note slot (16, 320, 508, 64) (empty with Button). Landscape: rows at y = 64, 144, 224 (h 68), note (16, 304, 456, 64). Mockups: Wake Touch (note visible), focus on Refresh every.
+### 8.2 Sleep & wake (`settings-sleep-*.svg`, revision 10, task 085)
+Replaces Wake mode, Refresh every and Stay awake on USB (old 9.1). Mockups: `settings-sleep-portrait.svg` (Power off, updates 3 h, Keep awake Off, focus on Keep awake), `settings-sleep-landscape.svg` (Touch & rocker, 30 min, On USB not offered, touch note, focus on Updates), `settings-sleep-states.svg` (every value of the mode and Keep awake rows, forced-Off row, notes, four estimate looks). Row types as 3.1; values F40 INK right edge W - 16; labels F24 INK at x = 16 (row-relative); ids w-N as listed.
 
-**Learn battery limits (task 079, revision 9).** Fifth row, hint-row type like 9.1 (88 high, `Off` / `On` F40 INK, label `Learn battery limits` F24, hint `Raise low limit after brownouts` F18 INK, label cy +32, hint cy +62, value cy +44 from row top). Portrait (16, 420, 508, 88) (12 below Stay awake, ends 508); touch-wake note moves to (16, 520, 508, 64). Landscape (488, 164, 456, 88) (right column, 12 below Stay awake); note unchanged (16, 304, 456, 64). Ids: w-5 = this row, w-6 = note, w-7 = Back. Rocker focus order: Wake mode, Refresh every, Idle timeout, Stay awake on USB, Learn battery limits, Back. PUSH or tap toggles in the shared buffer (partial of the row, `unsaved` chip if dirty flipped). Mockups show it On.
+| # | Row (id) | Type | Portrait rect | Landscape rect |
+|---|----------|------|---------------|----------------|
+| 1 | Sleep mode (w-1) | hint, 88 | (16, 68, 508, 88) | (16, 64, 456, 88) |
+| 2 | Updates while asleep (w-2) | pip, 72 / 68 | (16, 168, 508, 72) | (16, 164, 456, 68) |
+| 3 | Keep awake (w-3) | hint, 88 | (16, 252, 508, 88) | (16, 244, 456, 88) |
+| 4 | Idle timeout (w-4) | pip, 72 / 68 | (16, 352, 508, 72) | (16, 344, 456, 68) |
+| 5 | Learn battery limits (w-5) | hint, 88 (as before: hint `Raise low limit after brownouts`, `Off` / `On`) | (16, 436, 508, 88) | (488, 64, 456, 88) |
+| - | Note area (w-6, w-7 when shown) | notes 64 high, stacked, pitch 76, in this order | from (16, 536, 508, 64) | from (488, 164, 456, 64) |
+| - | Estimate block (next w id) | 124 high, not interactive | (16, 744, 508, 124) | (488, 328, 456, 124) |
+| - | Back (last w id) | 3.4 | (276, 880, 248, 64) | (722, 464, 222, 64) |
+
+Vertical check (portrait): 68 + 88 + 12 + 72 + 12 + 88 + 12 + 72 + 12 + 88 = 524; notes 536..676 (two at most); estimate 744..868; Back 880 (12 px gap). Landscape: left column ends 412; right column notes end 304 at most; estimate 328..452; Back 464.
+
+**Row 1, Sleep mode** (hint row; value F40, `Touch & rocker` F24 because F40 does not fit; hint F18 INK, live, label cy +32, hint cy +62, value cy +44). Cycle order = cost order, wraps: `Power off` (hint `Lowest drain`) -> `Deep sleep` (`Rocker, faster wake`) -> `Touch` (`Tap wakes`) -> `Touch & rocker` (`Tap or rocker`). Default `Power off` once task 084 works. Rocker always wakes in the first two and in `Touch & rocker`; `Touch` wakes by tap only. Migration of the old wake mode is firmware (Button -> Deep sleep unless 084 is usable, Touch, Touch & Button).
+
+**Row 2, Updates while asleep** (pip row, 6 pips): `Off` / `30 min` / `1 h` / `3 h` / `6 h` / `12 h` (cycle, wraps; 0 = Off). **Forced Off**: when Sleep mode is `Power off` and 084 cannot make the RTC power-on work, the row takes the unavailable look (STYLE.md section 8: 2 px dotted OFF border, label in OFF grey, no pips, value `Off` INK), ignores tap and PUSH, is skipped by the rocker focus, and the note `This device can't power on by` / `itself: updates stay Off.` shows (first slot). The stored value is kept and returns when the mode changes.
+
+**Row 3, Keep awake** (hint row, value F40): `Off` / `On USB` / `Always`. Live hint: Off `Sleeps as set above`; On USB `Awake while on USB`; Always `Never sleeps`. **On USB not offered** (Deep sleep, Touch, Touch & rocker unless the CH9102 RX probe of task 081 proves reliable; always offered in Power off via the power-off fallback): the cycle is `Off` -> `Always` -> `Off`, and while the value is Off the hint reads `On USB only in Power off` (no extra row, no note). If the user changes Sleep mode to one that does not offer it while the value is `On USB`, the buffer value becomes `Off` (the chip shows if that makes the buffer differ). Takes effect when Settings is left.
+
+**Row 4, Idle timeout**: unchanged (4 pips, `10 s` / `20 s` / `30 s` / `60 s`). Unused while Keep awake is Always (the row stays editable, no special look).
+
+**Note area.** Alert-icon notes as 3.2 (icon M at (12, 12), lines F18 cy 21 / 43, text x = 64), stacked from the top of the area, at most two, in priority order: (1) forced Off (text above); (2) Sleep mode is `Touch` or `Touch & rocker`: `Touch wake shortens battery life.` / `Rocker wake is recommended.` (replaces the old rule 6 text; no numbers). A note appearing or clearing redraws the whole note area.
+
+**Estimate block** (not a button; no focus stop). Top hairline (0, 0, 456 or 508, 1) OFF; caption `Estimated battery life` F18 DIM at x = 16, cy = 24; value line F40 INK at x = 16, cy = 60; gauge outline (17, 93, 278, 14) radius 4, 2 px INK, fill bar (20, 96, w, 8) INK with w = max(6, round(272 x f)); text `of best case` F18 INK at x = 308, cy = 100. Offsets are block-relative. Value text (INK, rounded, `About` always): under 48 h `About N hours`; under 21 days `About N days` (N >= 10 rounded to 5); then `About N weeks` up to 26 weeks; above that `Over 6 months`. f = estimate / best case, where best case = the model's value for Power off, updates Off, Keep awake Off with the same assumed use (so f = 1 only at that setting); estimate is from lib/power, labelled `Estimated` until measured. Keep awake Always = hours.
+Redraw: the caption and hairline are static (drawn when the page opens); the live part is the value line and gauge, region (0, 36, W, 88) block-relative, INK/PAPER only (`epd_fastest`); text stays INK so it is a fast partial. A tap changes the row (one partial) and the estimate region together as one update; the estimate is recomputed from the shared edit buffer on every change.
+
+**Interactions.** Row tap or PUSH cycles the value in the buffer (rows 1..3, 4, 5); redraw = the row, the estimate region, the note area if its condition flipped, the `unsaved` chip if the dirty flag flipped (partial; INK-only regions `epd_fastest`; the forced-row dotted OFF border makes its redraw `epd_quality`). Rocker focus order: Sleep mode, Updates while asleep (skipped when forced), Keep awake, Idle timeout, Learn battery limits, Back. LONG_PUSH = back to the overview. Focus ring as section 5. Settings are saved on leaving (rule 2) and used the next time the device sleeps; the status-bar indicator (STYLE.md 5.6) shows the result.
+
+**States.** Loading: none. HA offline / entity unavailable: not relevant (device-local settings). Estimate unavailable (model has no constants yet): value line `Estimate n/a`, gauge empty. Demo mode: unchanged.
 
 ### 8.3 Network (`settings-network-*.svg`)
 Hint rows, 88 high. Portrait: Wi-Fi (16, 68, 508, 88), HA connection (16, 168, 508, 88), note slot (16, 268, 508, 64). Landscape: Wi-Fi (16, 64, 456, 88), HA connection (488, 64, 456, 88), note (16, 164, 456, 64) (under Wi-Fi). Hints are live, read from the network state, never edited:
@@ -230,17 +258,8 @@ Refresh: entering and leaving a page = GC16 full; row toggles = one partial of t
 
 Mockups: `settings-portrait.svg` / `settings-landscape.svg` (overview, Sleep now row), `settings-sleep-portrait.svg` / `settings-sleep-landscape.svg` (toggle row, shown On, unsaved). Placement decision: the toggle is a sleep setting, so it lives on the **Sleep & wake** page (not the overview, which has no room for two more rows); only the action **Sleep now** is on the overview.
 
-### 9.1 Stay awake on USB (Sleep & wake page)
-Data: `settings::Settings.stay_awake_usb` (bool, default Off, saved on leaving like all settings; task 081 persists it in NVS). Hint row type (3.1), 88 high, `Off` / `On` cycle, value F40 INK.
-
-| Element | Portrait | Landscape | Font |
-|---------|----------|-----------|------|
-| Row | (16, 320, 508, 88), border 2 INK, radius 8, PAPER | (488, 64, 456, 88) (right column, top) | |
-| Label `Stay awake on USB` | x 32, cy 352 | x 504, cy 96 | F24 INK |
-| Hint `Never sleeps while on USB power` (static) | x 32, cy 382 | x 504, cy 126 | F18 INK |
-| Value `Off` / `On` | right edge x 508, cy 364 | right edge x 928, cy 108 | F40 INK |
-
-Touch-wake note slot moves below it in portrait: (16, 420, 508, 64) (landscape unchanged, (16, 304, 456, 64)). Ids: w-4 = this row, w-5 = note, w-6 = Back. Rocker focus order: Wake mode, Refresh every, Idle timeout, Stay awake on USB, Back. PUSH or tap toggles in the shared buffer; redraw = the row only (one partial, `epd_fastest`), plus the `unsaved` chip if the dirty flag flipped. Takes effect when Settings is left (the idle decision reads the saved value). Off = idle sleep exactly as today. On with no USB power: nothing changes visibly; battery sleep is unchanged. No separate "USB detected" indicator (OPEN-S7).
+### 9.1 Stay awake on USB (superseded)
+Replaced by Keep awake (`Off` / `On USB` / `Always`) in 8.2 (revision 10, task 085). The row layout, the `Never sleeps while on USB power` hint and the old focus order no longer apply. The OPEN-S7 hint question is answered by the status-bar indicator (STYLE.md 5.6).
 
 ### 9.2 Sleep now (overview)
 | Element | Portrait | Landscape | Font / grey |
@@ -260,3 +279,8 @@ No on-screen countdown (partial refresh while holding would ghost and cost batte
 ### 9.4 OPEN
 - OPEN-S7: no USB-power indicator on the toggle row; Battery info row already shows the bolt icon when charging. Add a hint `USB power detected` only if task 081 finds a reliable signal (architect).
 - OPEN-S8: toggle placed on the Sleep & wake page, not on the overview (coordinator's wording suggested the overview).
+
+### 10. OPEN (revision 10, task 085)
+- OPEN-S9: the estimate wording, rounding and `of best case` gauge are proposals (best case = Power off, updates Off); architect to confirm the model can give a best case.
+- OPEN-S10: On USB falling back to Off when the mode no longer offers it (8.2 row 3) is a proposal; alternative is to keep the stored value and treat it as Off.
+- OPEN-S11: forced-Off Updates (Power off without a working RTC power-on) shows as a dotted row plus note; confirm 084 can report "RTC power-on unsupported" at settings time.

@@ -155,7 +155,7 @@ Cell pitch = cell size + 12.
 | Status bar / top bar | status bar (0, 0, 540, 56) | top bar (0, 0, 960, 64), holds status AND tabs |
 | Refresh hit area | (0, 0, 288, 56) | (16, 4, 144, 56) |
 | Settings hit area (battery cluster) | (412, 0, 112, 56) | (832, 4, 112, 56) |
-| Sleep badge region | (298, 3, 100, 48) | (710, 8, 100, 48) |
+| Sleep indicator region (5.6) | (298, 3, 108, 48) | (706, 8, 108, 48) |
 | Tab bar (redraw region) | bottom: (0, 880, 540, 80) | strip inside the top bar: (172, 0, 648, 64) |
 | Content area | (16, 68, 508, 800) | (16, 72, 928, 452) |
 | Columns x rows | 2 x 7 | 5 x 4 |
@@ -262,7 +262,7 @@ every element: **cy = 27** (the 54 px above the rule).
 | Connection icon (S, 24x24) | (16, 15, 24, 24) | see 5.3 |
 | Refresh label text | x = 48, cy = 27, left, one line, max width 236 (to x = 284) | `updated 14:05` |
 | Refresh hit area | (0, 0, 288, 56) | invisible; 10 px from the sleep badge region |
-| Sleep badge region | (298, 3, 100, 48) | see 5.5 |
+| Sleep indicator region | (298, 3, 108, 48) | see 5.6 (replaces the 5.5 badge) |
 | Battery icon | origin (428, 17), 40 x 20 | see 5.4; cy = 27 |
 | Battery percent | right edge x = 524, cy = 27, rect (472, 0, 52, 54) | `78%` |
 | Settings hit area | (412, 0, 112, 56) | invisible; battery icon + percent |
@@ -343,7 +343,7 @@ screen, not specified here.)
 section 6). This is the touch path to Settings; the rocker path is a long push.
 No feedback on the cluster itself (the screen changes with a full refresh).
 
-### 5.5 Sleep badge
+### 5.5 Sleep badge (superseded by 5.6, task 085: the `Zz` badge is replaced by the state indicators; the rules below on timing, clearing and hit areas still apply with the new region)
 
 Purpose: the e-ink image is frozen while the device sleeps and looks awake. Right before every
 power-off or deep sleep the firmware draws **only the badge region** (partial refresh) so the user
@@ -383,6 +383,35 @@ Rules:
 - Not shown while the Settings screen is open; Settings auto-leaves to the tab screen before
   sleeping (settings.md rule 5), then the badge is drawn.
 - The sleep plan no longer selects a variant; the `touch_wake` flag does not affect the badge.
+
+### 5.6 Power state indicators (task 085)
+
+Sheet: `docs/ui/status-power-states.svg` (portrait strips, landscape strips, 2x enlargement); in context `tab-portrait-asleep.svg`, `tab-landscape-asleep.svg`. One **pill** of 104 x 44 (radius 12) in the same place as the old badge, drawn with the same primitives in both orientations; greys: INK / PAPER only. F18 only (the status bar size); no text below F18.
+
+| | Portrait | Landscape |
+|---|---|---|
+| Pill rect | (300, 5, 104, 44) | (708, 10, 104, 44), centred in the last tab slot (700, 4, 120, 56) |
+| Redraw region (pill + 2 px) | (298, 3, 108, 48) | (706, 8, 108, 48) |
+| Line 1 centre line | pill y + 14 | pill y + 14 |
+| Line 2 centre line | pill y + 32 | pill y + 32 |
+
+Clearances: portrait refresh hit area ends x = 288, pill 300..404, settings hit area starts 412; landscape slot 5 is hidden while asleep (as 5.5), pill 708..812, settings hit starts 832. The pill is never a hit target.
+
+**Asleep indicators: filled pill (INK, content PAPER).** Line 1: icon (20 x 20 at pill-relative (10, 4)) + the mode word in DejaVu Sans Bold 18 caps at x = 36. Line 2: `refresh` icon (18 x 18 at (11, 23)) + F18 regular text at x = 36: the next scheduled update `15:30` (24 h clock, the next RTC wake; at most 12 h ahead so no date) or `off` when Updates while asleep is Off (including forced Off).
+
+| State | Icon | Word | When |
+|-------|------|------|------|
+| Power off | `power` (circle open at the top, bar) | `OFF` | Sleep mode Power off. Replaces the `Zz` badge: the device is switched off, only the rocker (or the RTC alarm) starts it |
+| Deep sleep | `moon` | `DEEP` | Sleep mode Deep sleep (rocker wakes) |
+| Touch wake | `finger` (dot with two rings) | `TAP` | Sleep mode Touch or Touch & rocker (a tap wakes; the rocker may too, not shown) |
+
+The same indicator is used for low-battery sleep (mode as set). Line 2 is drawn from the saved settings at the moment of sleeping.
+
+**Keep-awake indicators (device is awake and will not idle-sleep): outline pill** (2 px INK border, PAPER fill, INK content; filled = asleep, outline = awake). Line 1 `AWAKE` Bold 18 centred; line 2 F18 regular centred: `on USB` (Keep awake On USB and USB power detected) or `always` (Keep awake Always). Shown on the tab screens only; drawn when the state starts, cleared (region PAPER / slot 5 redrawn) when it ends or the device sleeps (then the asleep pill replaces it). Landscape cannot hide tab slot 5 while the device is usable, so the awake state is a **caption under the battery cluster** instead: F18 INK, right edge x = 944, cy = 53, text `USB awake` / `always on`, region (832, 44, 112, 18); it is part of the Settings hit area (tapping it opens Settings, where Keep awake is changed).
+
+**Redraw.** Draw and clear each touch only their region, partial refresh `epd_fastest` (INK/PAPER only), after any ghost-clearing full refresh (section 10) and last before the EPD is powered off. A scheduled RTC wake that changes nothing redraws only when line 2 changed (the next update time moved): then the region alone. Cleared on wake as in 5.5. Never overlaps the refresh label, the outdated `clock` icon (ends x = 284) or the battery cluster.
+
+**Legibility.** At F18 bold the three words are 40 to 56 px wide; the 2x sheet shows all icons are distinguishable by silhouette, not only by word. Open: confirm on the device that the 18 px `refresh` icon and the `moon` stay readable (OPEN-5.6).
 
 ## 6. Tab bar
 
