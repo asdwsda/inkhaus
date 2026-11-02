@@ -82,7 +82,7 @@
 | 080 | [Cap the Wi-Fi connect time per session](080-wifi-connect-cap.md) | testing | 047, 056 |
 | 081 | [Stay awake on USB (setting) and manual sleep](081-usb-stay-awake-and-sleep-now.md) | done | 035 |
 | 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | testing (night run after release) | 029, 071 |
-| 083 | [Screen greys out while sleeping](083-panel-grey-drift.md) | testing | 035, 082 |
+| 083 | [Screen greys out while sleeping](083-panel-grey-drift.md) | done | 035, 082 |
 | 084 | [Make full power-off sleep work on battery](084-power-off-sleep.md) | done | 035 |
 | 085 | [Power settings: sleep mode, updates, keep awake, estimate, indicators](085-power-settings.md) | done | 084, 081, 079 |
 | 086 | [Keep the current tab across sleep](086-keep-tab-across-sleep.md) | done | 071, 084 |
