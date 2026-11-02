@@ -57,3 +57,7 @@ the ~1 month target.
     RTC alarm ~3-4 min ahead, whatever the settings say). Flashed. Remove/keep as test env afterwards.
   - Battery test (user): see report; results: `tools/wakelog.py`, count `reason=button`/`rtc_alarm` after `slept_path=poweroff`.
   - Open: acceptance 2-5 need the battery test; if the board does not come back, run with the reset button and note.
+- User battery test 2026-11-02: from power-off a short rocker push does NOT wake; holding it ~3 s does (user: acceptable,
+  hardware power-on latch). Reset button does not boot it while off (expected: no power). TODO: a power-off wake
+  must not show the splash screen; keep the frozen image and redraw only what changed (like a deep-sleep wake).
+  The power-off sleep indicator / Settings hint should say "hold 3 s" (085).
