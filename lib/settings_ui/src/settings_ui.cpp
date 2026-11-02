@@ -410,8 +410,12 @@ std::string categorySummary(int category, const Settings& s, const NetworkInfo& 
     case 0: return rowValueText(RowId::Orientation, s, n);
     case 1: {
       std::string mode = rowValueText(RowId::SleepMode, s, n);
-      if (shortWake && s.sleep_mode == settings::SleepSetting::TouchAndRocker) mode = "Touch+rocker";
-      return mode + ", " + rowValueText(RowId::Updates, s, n) + ", " + rowValueText(RowId::Idle, s, n);
+      std::string upd = rowValueText(RowId::Updates, s, n);
+      if (upd == "Off") upd = "off";
+      std::string out = mode + ", " + (shortWake ? "" : "updates ") + upd;
+      if (s.keep_awake == settings::KeepAwake::OnUsb) out += ", USB awake";
+      else if (s.keep_awake == settings::KeepAwake::Always) out += ", always awake";
+      return out;
     }
     case 2: return "Wi-Fi " + wifiValue(s, n) + ", HA " + haLinkName(s.ha_link);
     case 3: return std::string(updateAvailable ? "Update available, " : "") + "Demo " + (s.demo_mode ? "On" : "Off") + ", Log " + (s.debug_log ? "On" : "Off");
