@@ -24,6 +24,7 @@ void begin(const char *wakeName, power::Session session, bool deferWrite = false
 // Writes the boot line kept by begin(..., true), if any.
 void writeDeferred();
 // Phase marks (millis() values). Only the first Wi-Fi/fetch of a wake counts.
+// wifi_ms (CSV) = session start to the FIRST Wi-Fi association of the session (not HA/WebSocket online).
 void sessionStarted(uint32_t nowMs);
 void wifiUp(uint32_t nowMs);
 void fetchDone(uint32_t nowMs, bool ok);

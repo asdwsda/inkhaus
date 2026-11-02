@@ -1120,7 +1120,7 @@ void loop() {
     session_glue::ntpPoll(g_drv->wifiUp());
     if (g_drv->takeRender()) changed = true;
     logFetchApplied();
-    if (g_drv->status() == session::Status::Online) wakelog::wifiUp(now);
+    if (g_drv->wifiUp()) wakelog::wifiUp(now);
     {
       static bool wifiLogged = false;
       if (!wifiLogged && g_drv->wifiUp()) {
