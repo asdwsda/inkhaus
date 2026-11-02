@@ -783,7 +783,11 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   if (!low && present::framesOk()) {
     // Task 083: partial refreshes drift grey over hours; a scheduled wake does a GC16 full refresh when the last one is >= 3 h old.
     const int64_t fullNow = session_glue::wallClock();
+#ifdef NO_PERIODIC_FULL
+    const bool periodic = false;  // test envs: let the grey drift show
+#else
     const bool periodic = app_logic::needPeriodicFull(g_scheduled, fullNow, g_rtcLastFullEpoch);
+#endif
     present::prepareSleep(periodic);  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
     if (present::fullCount() > 0 && app_logic::plausibleEpoch(fullNow)) g_rtcLastFullEpoch = fullNow;
     g_status.sleepBadge = true;  // STYLE.md 5.5: one badge for every wake mode and low-battery sleep
