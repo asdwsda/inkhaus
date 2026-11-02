@@ -6,7 +6,7 @@ UI spec: none
 Needs device: yes
 
 ## Scope
-User photo (20261101_202055.jpg, 2026-11-01): after hours on the table, everything except the regions redrawn
+User photo (assets/083-grey-drift.jpg, 2026-11-01): after hours on the table, everything except the regions redrawn
 by the last scheduled wake (graph) drifted to a dark grey background. Sleep path is `deepsleep_hold`: GPIO2 stays
 high, IT8951 in STANDBY (sleep.cpp ~192). E-ink normally keeps its image unpowered for days, so the drift
 suggests the panel/driver is still biased during sleep — which may also be part of the high sleep current
