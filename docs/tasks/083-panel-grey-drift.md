@@ -1,6 +1,6 @@
 # 083: Screen greys out while sleeping
 
-Status: deferred (next release; user 2026-11-02)
+Status: testing (look test running)
 Depends on: 035 (sleep), 082
 UI spec: none
 Needs device: yes
@@ -55,3 +55,4 @@ suggests the panel/driver is still biased during sleep — which may also be par
 - Switch back to the normal build: `pio run -e m5paper -t upload --upload-port /dev/ttyUSB0` (via tools/device_lock.sh).
 
 - 2026-11-02 (user): the 4 h look test (epdoff vs. nofull) moves to the next release. The periodic GC16 full refresh (>= 3 h) stays in this release.
+- 2026-11-02 16:10: look test started (m5paper-epdoff from main a8e6bb9, user settings unchanged). Photo due ~20:15.
