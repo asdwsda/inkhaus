@@ -57,3 +57,12 @@ Pure logic (record events, compute the limit, bounds, decay) goes in lib/ so it 
   - Events: reset reason BROWNOUT, or TASK_WDT/PANIC with last mV < 3950 (not on USB). Keep the last 8.
   - Check the limit also right before Wi-Fi starts in each session (that's when the brownouts hit), not only at boot.
   - Percent scale: 0 % = learned limit (only when learning is on).
+- Revised after review (architect, 2026-11-02): wake-log replay showed brownouts from 3924 down to 3726 mV in one
+  discharge; max+100 pins the limit at 3900 (half the capacity lost) and it can't learn downward.
+  - Limit = mean(event mV in the current and previous charge cycle) + 50 mV, clamped [3300, 3900].
+  - Eventless charge cycle: limit -= 50 mV (probes down; new brownouts raise it again).
+  - A charge cycle ends only after a real discharge (a `last_mv` < 3900 was stored) and >= 4150 mV seen on two
+    readings >= 5 min apart (a short USB plug-in must not count).
+  - TASK_WDT/PANIC count only if the reading at boot is not above last mV + 30 (else USB is inferred).
+  - No factory-reset path exists in the firmware; the "factory reset clears it" item is dropped (namespace
+    `batlearn` must be cleared if one is added later).
