@@ -685,8 +685,7 @@ static void reloadConfigSource(settings::Orientation o) {
 
 // ---- firmware update row (task 087, docs/ui/settings.md 8.6) ----
 
-// UNVERIFIED: main may have power::usbPresent() (task 085 probe); use it there instead of usbAtSleep().
-static bool usbNow() { return power::usbAtSleep(); }
+static bool usbNow() { return power::usbPresent(); }
 
 static settings_ui::FwCheckErr g_fwCheckErr = settings_ui::FwCheckErr::None;
 static bool g_fwJustChecked = false;
@@ -1152,6 +1151,9 @@ static void testRestart() {
 #endif
 
 void loop() {
+#if defined(OTA_TEST_BAD) && defined(DEBUG_SERIAL)
+  if (millis() > 4000) { Serial.println("OTA-TEST: bad firmware restarting"); Serial.flush(); boot::endBurstRead(); ESP.restart(); }  // rollback test: never healthy
+#endif
   if (!present::framesOk()) {
     shot::poll(shot::Hooks{});  // no frames: the dump and mem commands do nothing
     delay(50);
@@ -1213,7 +1215,7 @@ void loop() {
     if (e.kind == input::Event::Touch) handleSettingsResult(settings_flow::onTouch(e.point, now), now);
     else if (e.kind == input::Event::Key)
       handleSettingsResult(settings_flow::onKey(ui::mapRocker(e.key, g_app.orientation(), false), now), now);
-    handleSettingsResult(settings_flow::tick(now), now);
+    handleSettingsResult(settings_flow::tick(millis()), now);
   } else if (e.kind == input::Event::LongTouch) {
     const auto d = g_defer.longPress();
     if (d.kind == uistate::DeferredTap::Result::LongPress) changed |= g_app.longPress(d.point, now);
