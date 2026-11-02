@@ -90,7 +90,7 @@
 | 089 | [OTA install crashes in the TLS handshake](089-ota-tls-stack.md) | done | 087 |
 | 090 | [Total time cap for an OTA job](090-ota-job-deadline.md) | PC done | 089 |
 | 091 | [Scheduled wake switches back to the first tab](091-tab-lost-on-scheduled-wake.md) | in-progress | 086, 083 |
-| 092 | [Grey drift: find the cause](092-grey-drift-root-cause.md) | todo | 083, 091 |
+| 092 | [Grey drift: find the cause](092-grey-drift-root-cause.md) | in-progress | 083, 091 |
 | 093 | [Task watchdog restart on a scheduled wake](093-wake-task-wdt.md) | todo | 083, 091 |
 
 ## Open items (not yet tasks, 2026-10-30)

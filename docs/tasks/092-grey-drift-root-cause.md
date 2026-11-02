@@ -1,6 +1,6 @@
 # 092: Grey drift: find the cause, replace the 3 h full refresh if possible
 
-Status: todo
+Status: in-progress
 Depends on: 083, 091
 UI spec: none
 Needs device: yes (unattended runs + user photos)
@@ -63,3 +63,11 @@ Fix by evidence, cheapest first:
   GC16 refresh, never after partials: scheduled wake that changes anything -> one GC16 full instead of partials (unseen, ~0.5 s);
   sleep entry after partials (interactive session, sleep badge) -> GC16 full incl. the badge (pending user OK: one visible flash).
   Then the >= 3 h periodic full (083) is redundant -> remove.
+- DECISION (user, 2026-11-02): no flash at sleep entry. Implement:
+  1. Scheduled wake that redraws anything -> one GC16 full of the whole frame instead of partials (the sleep badge included
+     in that frame, so it's the last refresh before sleep). Scheduled wake with no change -> no refresh.
+  2. Interactive sleep entry: keep the badge partial (no flash). Remember "partial debt" (any partial since the last GC16 full)
+     across sleep (RTC; power-off loses RTC -> NVS, write only on change). The next scheduled wake clears it with 1.
+     If Updates are Off (no scheduled wake), the next interactive wake's first frame is a GC16 full when debt is set.
+  3. Remove the >= 3 h periodic full (needPeriodicFull, g_rtcLastFullEpoch) and the m5paper-nofull env; keep tests consistent.
+  Native tests for the refresh decision (wake kind x changed x debt x updates on/off).
