@@ -1,6 +1,6 @@
 # 083: Screen greys out while sleeping
 
-Status: testing
+Status: deferred (next release; user 2026-11-02)
 Depends on: 035 (sleep), 082
 UI spec: none
 Needs device: yes
@@ -53,3 +53,5 @@ suggests the panel/driver is still biased during sleep — which may also be par
   g_rtcLastFullEpoch (RTC_DATA) and passes it to present::prepareSleep(forceFull) before the sleep badge. Verified on device with the age
   temporarily at 50 s (`periodic_full=1`, `full_periodic` GC16 ~1.2 s).
 - Switch back to the normal build: `pio run -e m5paper -t upload --upload-port /dev/ttyUSB0` (via tools/device_lock.sh).
+
+- 2026-11-02 (user): the 4 h look test (epdoff vs. nofull) moves to the next release. The periodic GC16 full refresh (>= 3 h) stays in this release.
