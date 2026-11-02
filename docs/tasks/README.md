@@ -92,6 +92,7 @@
 | 091 | [Scheduled wake switches back to the first tab](091-tab-lost-on-scheduled-wake.md) | in-progress | 086, 083 |
 | 092 | [Grey drift: find the cause](092-grey-drift-root-cause.md) | in-progress | 083, 091 |
 | 093 | [Task watchdog restart on a scheduled wake](093-wake-task-wdt.md) | todo | 083, 091 |
+| 094 | [Portrait 3-column grid](094-portrait-3-columns.md) | in-progress | 043 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
