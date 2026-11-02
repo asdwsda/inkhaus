@@ -80,4 +80,5 @@ user to connect it, and tell them what to look at on the screen.
 
 ## Commits
 Commit after each task you mark done, one commit per task, with the message
-`task NNN: <summary>`. Never push.
+`task NNN: <summary>`. You may push branches and tags (see CLAUDE.md Rules); force-push and
+deleting remote branches, tags or releases only with the user's permission.

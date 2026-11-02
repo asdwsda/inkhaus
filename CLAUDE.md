@@ -127,5 +127,6 @@ the same files, device, or unfinished implementation.
 - `config.yaml` (the dashboard: tabs, widgets, groups) holds no secrets and may be read and edited
   when the user shares it. If a `config.yaml` still contains a `connection:` section (old format),
   treat it as secret and don't read it.
-- Never `git push`.
+- Pushing (user, 2026-11-02): agents never `git push`. The architect (main session) may push branches
+  and tags. Force-push and deleting remote branches, tags or releases only with the user's permission.
 - Shell style: write variables as `"${variable}"`.
