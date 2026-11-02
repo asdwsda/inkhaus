@@ -75,3 +75,4 @@ Fix by evidence, cheapest first:
 - 2026-11-02 firmware-dev: DECISION items 1-3 implemented (present.cpp deferred mode + NVS `pdebt`, sleep_logic deferRefreshes/scheduledSleepFull/firstFrameFull, main.cpp, m5paper-nofull + periodic removed). Native + pio run (m5paper, debug, epdoff, batterytest, poweroff) pass. Device: see docs/device-checks.md 092. Pill-only change (next-update time) counts as 'no change', so on a no-change wake the pill on the panel keeps the old next-update time.
 - 2026-11-02 (user): every scheduled wake does the GC16 full (also when only the sleep pill's next-update time changed), so the pill time is always current.
 - 2026-11-02 firmware-dev: scheduledSleepFull removed; main.cpp calls finishScheduled(true) on every scheduled wake.
+- 2026-11-02 evening: overnight run started (normal m5paper build cc62829, user settings, battery). Photo + wake log (TASK_WDT / panel_init_slow) in the morning.
