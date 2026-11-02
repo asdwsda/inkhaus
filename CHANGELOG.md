@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0 - unreleased
+## 1.3.0 - 2026-11-02
 
 ### Power and sleep
 - Sleep & wake page rebuilt: Sleep mode (Power off / Deep sleep / Touch / Touch & rocker), Updates while asleep (Off / 30 min / 1 h / 3 h / 6 h / 12 h), Keep awake (Off / On USB / Always), Idle timeout and a Battery use bar (1 = lowest, 10 = highest). Your old wake mode and refresh interval are migrated.
