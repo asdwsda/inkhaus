@@ -32,3 +32,4 @@ With Sleep screen, the last frame before sleep is a dedicated screen instead of 
 - User 2026-11-03: footer "Asleep" + wake hint replaces the sleep pill (OK). Notifications block: HA persistent
   notifications are no longer entities, so fetch them with one short WebSocket call
   (`persistent_notification/get`, reusing the stats WS client), only when the block is enabled.
+- User 2026-11-03: date as English weekday on its own line, no year (OK).
