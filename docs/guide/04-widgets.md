@@ -211,6 +211,18 @@ A bell with the number of Home Assistant notifications. It has no `entity`. Tap 
 
 `name` is optional and defaults to `Alerts`. The tile is outline at 0 and filled when there is at least one. It shows `99+` above 99, `-` while loading and `n/a` when the list cannot be fetched.
 
+## Calendar
+
+The next two events of a Home Assistant calendar, each with its time and title ("14:30", "now", "Tue 09:00", "all day"). Read-only: a tap does nothing. It is 2x1; a wider tile is allowed where the screen has room.
+
+![Calendar tiles: events, nothing planned, an all-day event and unavailable.](img/gallery-calendar.png "The next events of a calendar.")
+
+```yaml
+- entity: calendar.family
+```
+
+The device asks Home Assistant for the events of the next 7 days while the tab is shown. "No events" means nothing is planned in that time. Events that are already over are left out. Until the answer arrives, the calendar's own next event is shown.
+
 ## Energy
 
 Today's energy use and solar production as two bars on one scale, in kWh. Read-only: a tap does nothing, a **long press** opens the hourly usage bars (the `usage` sensor only).
