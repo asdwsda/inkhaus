@@ -126,16 +126,19 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
       break;
     }
     case Page::Network:
-      L.rowCount = 2;
+      L.rowCount = 3;
       L.rowIds[0] = RowId::Wifi;
       L.rowIds[1] = RowId::HaLink;
+      L.rowIds[2] = RowId::ReportHa;
       if (portrait) {
         L.rows[0] = {16, 68, 508, 88};
         L.rows[1] = {16, 168, 508, 88};
-        L.note = {16, 268, 508, 64};
+        L.rows[2] = {16, 268, 508, 88};
+        L.note = {16, 368, 508, 64};
       } else {
         L.rows[0] = {16, 64, 456, 88};
         L.rows[1] = {488, 64, 456, 88};
+        L.rows[2] = {488, 164, 456, 88};
         L.note = {16, 164, 456, 64};  // under Wi-Fi
       }
       break;
@@ -231,6 +234,7 @@ const char* hintRowLabel(RowId r) {
     case RowId::KeepAwake: return "Keep awake";
     case RowId::LearnBattery: return "Learn battery limits";
     case RowId::Firmware: return "Firmware";
+    case RowId::ReportHa: return "Report to HA";
     default: return "";
   }
 }
@@ -239,6 +243,7 @@ const char* hintRowStaticHint(RowId r) {
     case RowId::Demo: return "Sample dashboard, offline";
     case RowId::Debug: return "Log lines to SD card";
     case RowId::LearnBattery: return "Raise low limit after brownouts";
+    case RowId::ReportHa: return "Battery, climate, last wake";
     default: return "";
   }
 }
@@ -343,6 +348,7 @@ std::string rowValueText(RowId r, const Settings& s, const NetworkInfo& n) {
     case RowId::Demo: return s.demo_mode ? "On" : "Off";
     case RowId::Debug: return s.debug_log ? "On" : "Off";
     case RowId::LearnBattery: return s.learn_battery ? "On" : "Off";
+    case RowId::ReportHa: return s.report_ha ? "On" : "Off";
     case RowId::Firmware: return "";
   }
   return "";
@@ -382,6 +388,7 @@ Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n, const settin
     case RowId::Demo: o.demo_mode = !s.demo_mode; break;
     case RowId::Debug: o.debug_log = !s.debug_log; break;
     case RowId::LearnBattery: o.learn_battery = !s.learn_battery; break;
+    case RowId::ReportHa: o.report_ha = !s.report_ha; break;
     case RowId::Firmware: break;  // not a setting
   }
   return o;

@@ -45,7 +45,7 @@ struct Settings {
     HaLink ha_link = HaLink::Auto;
     KeepAwake keep_awake = KeepAwake::Off;
     bool learn_battery = true;    // task 079: learn the low-battery limit from brownouts
-    bool report_ha = false;       // task 100: post battery/temperature/humidity/last wake to HA (opt-in)
+    bool report_ha = true;        // task 100: post battery/temperature/humidity/last wake to HA (default On, user 2026-11-03)
 
     bool operator==(const Settings& o) const {
         return sleep_mode == o.sleep_mode && refresh_interval_min == o.refresh_interval_min &&
@@ -85,7 +85,7 @@ constexpr const char* kKeyHaLink = "halink";         // HaLink; absent = Auto
 constexpr const char* kKeyStayAwakeUsb = "stayusb";  // old 0 / 1 (read for migration to keep_awake)
 constexpr const char* kKeyKeepAwake = "keepawake";   // KeepAwake; absent = Off
 constexpr const char* kKeyLearnBattery = "learnbat";  // 0 / 1; absent = on (no schema bump)
-constexpr const char* kKeyReportHa = "reportha";     // 0 / 1; absent = off (task 100, no schema bump)
+constexpr const char* kKeyReportHa = "reportha";     // 0 / 1; absent = on (task 100, no schema bump)
 
 // Abstract key-value store of ints.
 class KeyValueStore {

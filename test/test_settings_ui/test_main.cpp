@@ -225,9 +225,12 @@ void test_page_layouts() {
   PageLayout n = computePageLayout(Page::Network, Orientation::Portrait);
   expectRect(16, 68, 508, 88, n.rows[0]);
   expectRect(16, 168, 508, 88, n.rows[1]);
-  expectRect(16, 268, 508, 64, n.note);
+  expectRect(16, 268, 508, 88, n.rows[2]);
+  TEST_ASSERT_TRUE(n.rowIds[2] == RowId::ReportHa);
+  expectRect(16, 368, 508, 64, n.note);
   PageLayout nl = computePageLayout(Page::Network, Orientation::Landscape);
   expectRect(488, 64, 456, 88, nl.rows[1]);
+  expectRect(488, 164, 456, 88, nl.rows[2]);
   expectRect(16, 164, 456, 64, nl.note);
 
   PageLayout t = computePageLayout(Page::Tools, Orientation::Landscape);
@@ -370,7 +373,7 @@ void test_category_touch_opens_page_without_saving_and_back_returns() {
   TEST_ASSERT_TRUE(s.page() == Page::Network);
   TEST_ASSERT_FALSE(s.dirty());
   TEST_ASSERT_EQUAL_INT(0, s.focus());
-  TEST_ASSERT_EQUAL_INT(3, s.stopCount());
+  TEST_ASSERT_EQUAL_INT(4, s.stopCount());
   // Back: up, overview focus on the category just left
   u = touchCentre(s, s.pageLayout().backButton);
   TEST_ASSERT_TRUE(u.action == Action::PageChange);
@@ -468,6 +471,18 @@ void test_learn_battery_row() {
   TEST_ASSERT_EQUAL_STRING("Learn battery limits", rowLabel(RowId::LearnBattery));
   Settings o = cycleRow(RowId::LearnBattery, d, NetworkInfo());
   TEST_ASSERT_FALSE(o.learn_battery);
+}
+
+void test_report_ha_row() {
+  Settings d;
+  TEST_ASSERT_EQUAL_STRING("On", rowValueText(RowId::ReportHa, d, NetworkInfo()).c_str());
+  TEST_ASSERT_EQUAL_STRING("Report to HA", rowLabel(RowId::ReportHa));
+  TEST_ASSERT_EQUAL_STRING("Battery, climate, last wake", hintRowStaticHint(RowId::ReportHa));
+  Settings o = cycleRow(RowId::ReportHa, d, NetworkInfo());
+  TEST_ASSERT_FALSE(o.report_ha);
+  TEST_ASSERT_EQUAL_STRING("Off", rowValueText(RowId::ReportHa, o, NetworkInfo()).c_str());
+  TEST_ASSERT_TRUE(cycleRow(RowId::ReportHa, o, NetworkInfo()).report_ha);
+  TEST_ASSERT_FALSE(isPipRow(RowId::ReportHa));
 }
 
 void test_keep_awake_row_and_sleep_now() {
@@ -1126,6 +1141,7 @@ int main() {
   RUN_TEST(test_sleep_page_rules);
   RUN_TEST(test_estimate_view);
   RUN_TEST(test_learn_battery_row);
+  RUN_TEST(test_report_ha_row);
   RUN_TEST(test_page_targets_size_gaps_and_screen_bounds);
   RUN_TEST(test_summaries);
   RUN_TEST(test_wifi_and_ha_cycling);

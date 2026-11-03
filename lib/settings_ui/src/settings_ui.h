@@ -24,11 +24,9 @@ constexpr int kCategoryCount = 4;
 inline Page categoryPage(int i) { return static_cast<Page>(i + 1); }
 const char* categoryLabel(int i);  // "Display", "Sleep & wake", "Network", "Tools" (also the page title)
 
-// TODO(task 100): "Report to HA" row (Off | On, Settings::report_ha) per docs/ui/settings.md; the setting itself
-// already persists and is honoured by the session.
 // Setting rows, in the edit buffer order of the categories.
-enum class RowId { Orientation, SleepMode, Updates, Idle, Wifi, HaLink, Demo, Debug, KeepAwake, LearnBattery, Firmware };
-constexpr int kRowIdCount = 11;
+enum class RowId { Orientation, SleepMode, Updates, Idle, Wifi, HaLink, Demo, Debug, KeepAwake, LearnBattery, Firmware, ReportHa };
+constexpr int kRowIdCount = 12;
 constexpr int kMaxPageRows = 5;
 bool isPipRow(RowId r);  // Orientation, Updates, Idle (2..6 fixed values); the others are hint rows (88 high)
 

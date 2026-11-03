@@ -439,14 +439,16 @@ void test_learn_battery_persists() {
 
 void test_report_ha_persists() {
     FakeStore st;
-    TEST_ASSERT_FALSE(load(st).report_ha);  // absent = off
-    st.data[kKeyReportHa] = 5;              // invalid -> default
+    TEST_ASSERT_TRUE(load(st).report_ha);  // absent (fresh or migrated NVS) = on
+    st.data[kKeyReportHa] = 5;             // invalid -> default
+    TEST_ASSERT_TRUE(load(st).report_ha);
+    st.data[kKeyReportHa] = 0;
     TEST_ASSERT_FALSE(load(st).report_ha);
     Settings s;
-    s.report_ha = true;
+    s.report_ha = false;
     save(st, s);
-    TEST_ASSERT_EQUAL_INT32(1, st.data[kKeyReportHa]);
-    TEST_ASSERT_TRUE(load(st).report_ha);
+    TEST_ASSERT_EQUAL_INT32(0, st.data[kKeyReportHa]);
+    TEST_ASSERT_FALSE(load(st).report_ha);
     TEST_ASSERT_TRUE(load(st) == s);
     Settings d;
     TEST_ASSERT_FALSE(d == s);
