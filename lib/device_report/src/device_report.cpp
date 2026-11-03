@@ -24,7 +24,8 @@ bool shouldPost(Sensor s, int32_t value, const Record &last, int64_t nowEpoch) {
   if (!last.valid) return true;
   const int32_t delta = s == kBattery ? kBatteryDeltaPct : s == kTemperature ? kTempDeltaX10 : kHumDeltaX10;
   if (std::abs(value - last.value) >= delta) return true;
-  if (nowEpoch > 0 && last.epoch > 0 && nowEpoch - last.epoch > kMaxAgeS) return true;
+  // A stored epoch 0 (posted with the clock unset) is stale once the clock is set.
+  if (nowEpoch > 0 && (last.epoch <= 0 || nowEpoch - last.epoch > kMaxAgeS)) return true;
   return false;
 }
 

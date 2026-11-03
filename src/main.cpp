@@ -483,7 +483,7 @@ static void reportOnFetch(bool ok);
 // ---- sleep screen (task 101): persistent notifications over one short WebSocket call ----
 // Asked once per session after the first good state fetch, only when Settings > While asleep is Sleep screen and
 // config.yaml has `sleep_screen: notifications: true`. The sleep hold waits for the answer (bounded by the driver).
-static bool g_notifAsked = false, g_notifPending = false, g_notifValid = false;
+static bool g_notifAsked = false, g_notifPending = false, g_notifValid = false, g_notifWanted = false;
 static int g_notifCount = 0;
 static std::string g_notifTitle;
 
@@ -491,7 +491,23 @@ static void notificationsOnFetch(bool ok) {
   if (!ok || g_demoMode || !g_drv || g_notifAsked) return;
   if (!g_settings.sleep_screen || !g_cfg.cfg.sleepScreen.notifications) return;
   g_notifAsked = true;
-  g_notifPending = true;
+  g_notifPending = true;  // the sleep hold covers the wait
+  g_notifWanted = true;   // posted by notificationsPump once the graph fetches are done
+}
+
+static bool graphsBusy();
+// The WS call closes the keep-alive HTTPS socket, so it runs after the session's graph/history fetches (no extra
+// TLS handshake for them). Every loop.
+static void notificationsPump() {
+  if (!g_notifWanted || !g_drv) return;
+  if (graphsBusy()) return;
+  const session::Status st = g_drv->status();
+  if (st == session::Status::Offline || st == session::Status::AuthError) {
+    g_notifWanted = g_notifPending = false;
+    return;
+  }
+  if (st != session::Status::Online || !g_drv->wifiUp()) return;
+  g_notifWanted = false;
   app_logic::NetCommand c;
   c.type = app_logic::NetCommand::Type::Notifications;
   g_drv->postNotifications(c);
@@ -508,10 +524,11 @@ static void notificationsDone(app_logic::NetEvent &&ev) {
 
 static void graphsOnFetch(bool ok) {
   reportOnFetch(ok);  // task 100: before the graph jobs, so the sleep hold covers it
-  notificationsOnFetch(ok);
-  if (g_demoMode || !g_app.graphs().any()) return;
-  if (ok) graphsRequest(g_app.shownTab());
-  else g_app.graphs().fetchFailed(g_app.shownTab(), uistate::kGraphFetchAllTabs);
+  if (!g_demoMode && g_app.graphs().any()) {
+    if (ok) graphsRequest(g_app.shownTab());
+    else g_app.graphs().fetchFailed(g_app.shownTab(), uistate::kGraphFetchAllTabs);
+  }
+  notificationsOnFetch(ok);  // after the graph request: the pump waits for graphsBusy()
 }
 
 static bool graphsBusy() { return g_real && g_app.graphs().busy(); }
@@ -629,7 +646,7 @@ static void startSession(uint32_t now, bool restart = false) {
   g_drv->setNotificationsHandler(notificationsDone);
   g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy() || g_notifPending; });  // task 087: no sleep during a check / download
   report_glue::abort();
-  g_notifAsked = g_notifPending = false;  // the old net session's answer is dropped; the new one asks again
+  g_notifAsked = g_notifPending = g_notifWanted = false;  // the old net session's answer is dropped; the new one asks again
   g_app.graphs().abortFetch();  // the old net session is gone: a graph result will not arrive
   g_graphBatchMs = 0;
   if (g_app.history().fetching() || g_histWaitNet) {  // the old net session is gone: its result will not arrive
@@ -1421,6 +1438,7 @@ void loop() {
   historyPump();
   if (g_histChanged) { g_histChanged = false; changed = true; }
   graphsPump();
+  notificationsPump();
   if (g_app.graphs().takeChanged()) changed = true;
 
   if (!settings_flow::active() && g_app.screen() == uistate::Screen::Tabs) {

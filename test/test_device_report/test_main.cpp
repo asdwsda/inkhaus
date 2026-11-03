@@ -163,7 +163,8 @@ void test_should_post_change_and_age() {
   // no clock: the age rule is skipped
   TEST_ASSERT_FALSE(shouldPost(kBattery, 50, r, 0));
   r.epoch = 0;
-  TEST_ASSERT_FALSE(shouldPost(kBattery, 50, r, kNow));
+  TEST_ASSERT_TRUE(shouldPost(kBattery, 50, r, kNow));  // epoch 0 (posted with no clock) is stale once the clock is set
+  TEST_ASSERT_FALSE(shouldPost(kBattery, 50, r, 0));
 }
 
 void test_plan_first_time_posts_everything() {
