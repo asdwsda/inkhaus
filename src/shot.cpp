@@ -6,6 +6,8 @@
 #include <string>
 
 #include "boot.h"
+#include "config_sd.h"
+#include "provision_proto.h"
 #include "frame_diff.h"
 #include "present.h"
 #include "provision.h"
@@ -105,6 +107,13 @@ bool handle(const std::string &line, const Hooks &hk) {
   }
   if (line == "shotp") {
     if (hk.previous) dump(*hk.previous, true);
+    return true;
+  }
+  if (line == "cfgcrc") {  // task 117: size + CRC32 of /config.yaml (no content), to verify a restore
+    std::string text;
+    const config_sd::Status st = config_sd::readFile(text);
+    Serial.printf("CMD: cfgcrc status=%s size=%u crc=%08x\n", config_sd::statusText(st), (unsigned)text.size(),
+                  (unsigned)provision::crc32(reinterpret_cast<const uint8_t *>(text.data()), text.size()));
     return true;
   }
   int x, y, w, h;
