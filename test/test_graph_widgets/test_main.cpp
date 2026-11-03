@@ -173,6 +173,21 @@ void test_result_and_unchanged_data() {
   TEST_ASSERT_EQUAL_FLOAT(9, g.find(0, 0)->series.columns[0].last);
 }
 
+void test_yield_drop_keeps_data() {  // task 116: not offline
+  AppState a = makeApp();
+  GraphWidgets &g = a.graphs();
+  g.requestSession(0, false);
+  drain(g, HistOutcome::Ok, 5);
+  g.requestSession(0, false);
+  drain(g, HistOutcome::Cancelled);
+  TEST_ASSERT_TRUE(g.find(0, 0)->state == GraphState::Ready);
+  TEST_ASSERT_TRUE(g.find(0, 0)->hasData);
+  AppState b = makeApp();
+  b.graphs().requestSession(0, false);
+  drain(b.graphs(), HistOutcome::Cancelled);
+  TEST_ASSERT_TRUE(b.graphs().find(0, 0)->reason != GraphReason::Unreachable);
+}
+
 void test_failures() {
   AppState a = makeApp();
   GraphWidgets &g = a.graphs();
@@ -276,6 +291,7 @@ int main(int, char **) {
   RUN_TEST(test_unsupported_kind_is_no_graph);
   RUN_TEST(test_no_clock_cannot_plan);
   RUN_TEST(test_fetch_failed_marks_requested_tab);
+  RUN_TEST(test_yield_drop_keeps_data);
   RUN_TEST(test_cache_and_demo_data);
   RUN_TEST(test_tap_and_long_press_do_nothing);
   return UNITY_END();

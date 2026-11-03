@@ -349,6 +349,8 @@ static void onHistoryDone(app_logic::NetEvent &&ev) {
   const std::string id = h.entity();
   if (h.onFetchDone(ev.ticket, o, std::move(ev.series), epoch)) {
     g_histChanged = true;
+    if (o == uistate::HistOutcome::Cancelled)  // task 116: dropped by yielding; plan the fetch again if there is no data
+      g_histWaitNet = h.takeFetch(epoch, g_histJob, utcOffsetAt(epoch));
     if (o == uistate::HistOutcome::Ok && h.state() == uistate::HistState::Ready)
       g_histCache.put(id, histHash(), h.series(), epoch);  // UNVERIFIED: the SD write (~tens of ms) is fine here
   }
@@ -1282,6 +1284,8 @@ void setup() {
   wakelog::writeDeferred();
   ota::begin(splashed);  // task 087: state; splashed = cold boot
   ota::setQuiesce(otaQuiesce);
+  g_net.setOtaHook(ota::runAutoCheckJob);
+  ota::setPoster([]() { if (!g_net.running()) return false; g_net.postOtaCheck(); return true; });
   ota::setYield([]() { return g_net.userWaiting(); });
 
   boot::log("version", "017");

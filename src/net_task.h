@@ -19,6 +19,10 @@ class NetTask : public app_logic::INetPort {
   // Starts a new session: queued commands are dropped and late results of the old one ignored.
   void reset();
   bool running() const { return started_; }
+  // Task 116: the automatic OTA check runs here as a background-lane job; `hook` does the work (blocking, yields
+  // itself while userWaiting()). Not tied to the session epoch.
+  void setOtaHook(void (*hook)()) { otaHook_ = hook; }
+  void postOtaCheck();
   bool userWaiting() const { return cmds_.userWaiting(); }  // task 116
   // Smallest free stack of the task so far, in bytes (0 if not running).
   uint32_t stackFreeBytes() const;
@@ -34,6 +38,7 @@ class NetTask : public app_logic::INetPort {
   app_logic::Mailbox<Evt> evts_;
   std::atomic<uint32_t> epoch_{0};
   std::string internal_, external_, token_;
+  void (*otaHook_)() = nullptr;
   bool started_ = false;
   void *handle_ = nullptr;
 };

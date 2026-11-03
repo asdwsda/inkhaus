@@ -103,6 +103,14 @@ void NetTask::loop() {
       vTaskDelay(pdMS_TO_TICKS(20));
       continue;
     }
+    const bool ota = c.cmd.type == app_logic::NetCommand::Type::OtaCheck;
+    if (ota) {  // task 116: independent of the HA session; the caller's state machine always gets its "done"
+      app_logic::NetCommand cl;
+      cl.type = app_logic::NetCommand::Type::Close;
+      worker.run(cl);  // frees the kept-alive TLS block for the check
+      if (otaHook_) otaHook_();
+      continue;
+    }
     if (c.epoch != epoch_.load()) continue;  // belongs to a finished session
     const net::LinkInfo li = net::linkInfo();
     const bool newSession = c.epoch != plannedEpoch;
@@ -178,6 +186,14 @@ void NetTask::post(const app_logic::NetCommand &cmd) {
   const app_logic::Lane lane = app_logic::laneOf(cmd);
   cmds_.push(lane, std::move(c));
   if (lane == app_logic::Lane::User) yield_ = true;
+}
+
+void NetTask::postOtaCheck() {
+  Cmd c;
+  c.epoch = epoch_.load();
+  c.enqueuedMs = millis();
+  c.cmd.type = app_logic::NetCommand::Type::OtaCheck;
+  cmds_.push(app_logic::Lane::Background, std::move(c));
 }
 
 bool NetTask::poll(app_logic::NetEvent &out) {

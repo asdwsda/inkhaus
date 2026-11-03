@@ -263,6 +263,8 @@ void test_store_due_rules() {
   TEST_ASSERT_TRUE(s.due(e, 1000000 + 700, true));
   s.markAsked(e, 0);  // clock unset: asked once only
   TEST_ASSERT_FALSE(s.due(e, 0, false));
+  s.unmarkAsked(e);  // task 116: dropped by yielding, asked again
+  TEST_ASSERT_TRUE(s.due(e, 0, false));
 }
 
 void test_entities_on_shown_tab_only() {

@@ -25,6 +25,7 @@ static void test_lanes() {
   TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::Report)));
   TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::Notifications)));
   TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::Forecast)));
+  TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::OtaCheck)));  // the automatic OTA check never outranks a tap
 }
 
 static void test_tap_behind_three_background_jobs_starts_next() {

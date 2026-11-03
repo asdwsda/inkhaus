@@ -7,6 +7,7 @@ namespace forecast_glue {
 namespace {
 forecast::Store g_store;
 bool g_pending = false, g_changed = false;
+std::string g_asking;  // entity of the request in flight
 }  // namespace
 
 forecast::Store &store() { return g_store; }
@@ -35,6 +36,7 @@ void pump(app_logic::SessionDriver *drv, const config::Config &cfg, int shownTab
   for (const std::string &e : ents) {
     if (!g_store.due(e, nowEpoch, scheduledWake)) continue;
     g_store.markAsked(e, nowEpoch);  // failed or not: no second try within the wake
+    g_asking = e;
     g_pending = true;
     app_logic::NetCommand c;
     c.type = app_logic::NetCommand::Type::Forecast;
@@ -46,6 +48,11 @@ void pump(app_logic::SessionDriver *drv, const config::Config &cfg, int shownTab
 
 void onDone(app_logic::NetEvent &&ev, int64_t nowEpoch) {
   g_pending = false;
+  if (ev.error == HaError::Cancelled) {  // task 116: dropped by yielding to a user command, not a failure:
+    g_store.unmarkAsked(g_asking);      // keep the old data, ask again later in the session
+    wakelog::logf("APP: forecast dropped (yield), retry later\n");
+    return;
+  }
   const bool ok = ev.error == HaError::None;
   size_t n = ev.forecastDays.size();
   if (ok) {

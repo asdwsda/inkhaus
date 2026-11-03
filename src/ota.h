@@ -26,6 +26,11 @@ void setQuiesce(void (*fn)());
 // few seconds) only when Wi-Fi is up and the HA session is done. epoch 0 = clock unset.
 // interactive: automatic check only after kAutoIdleMs without input and with an empty user lane (task 116).
 void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone, bool interactive, uint32_t msSinceInput, bool userLaneBusy);
+// Task 116: the automatic check runs in the net task. tick() only plans it: it calls the poster (enqueues the job in
+// the net task's background lane; returns false if it cannot) and later picks up the result state. The net task
+// calls runAutoCheckJob(); the HA socket is closed by it before.
+void setPoster(bool (*fn)());
+void runAutoCheckJob();  // net task: blocking, yields to a waiting user command (then tick() retries when idle)
 // The automatic check aborts (cancelled) while this returns true (a user command waits). Task 116.
 void setYield(bool (*fn)());
 // Before deep sleep / power off: a session that drew its first frame and then slept on purpose was not a crash.
