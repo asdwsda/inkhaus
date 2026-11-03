@@ -41,6 +41,7 @@ bool isFocusable(WidgetType t, bool history) {
     case WidgetType::Sensor:
     case WidgetType::BinarySensor: return history;
     case WidgetType::Weather: return false;
+    case WidgetType::Energy: return false;  // task 109: read-only (long press opens the history)
     default: return true;
   }
 }

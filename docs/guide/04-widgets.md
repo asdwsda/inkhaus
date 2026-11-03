@@ -211,6 +211,20 @@ A bell with the number of Home Assistant notifications. It has no `entity`. Tap 
 
 `name` is optional and defaults to `Alerts`. The tile is outline at 0 and filled when there is at least one. It shows `99+` above 99, `-` while loading and `n/a` when the list cannot be fetched.
 
+## Energy
+
+Today's energy use and solar production as two bars on one scale, in kWh. Read-only: a tap does nothing, a **long press** opens the hourly usage bars (the `usage` sensor only).
+
+![Energy tile with used and solar bars, and with solar missing.](img/gallery-energy.png "Used and solar, one scale.")
+
+```yaml
+- type: energy
+  usage: sensor.energy_used_today
+  solar: sensor.energy_solar_today
+```
+
+Either key may be left out; then only that row is shown. The values are "today so far": the change since local midnight, taken from Home Assistant statistics. So a running total such as `sensor.shellypro3em_..._total_active_energy` works as is, a daily utility meter too. The value can lag the real one by up to an hour (statistics are compiled by Home Assistant). `-` means no value (yet), `n/a` means both sensors are unavailable.
+
 ## History graph on the tab
 
 Add `display: graph` to a sensor to draw its history right on the tab. This works for sensors and binary sensors, one entity only.
@@ -267,6 +281,7 @@ Without `display: graph`, a **long press** on a sensor still opens the history i
 | Widget | Default | Other sizes |
 |---|---|---|
 | Light, switch, automation, binary sensor, notifications | 1x1 | none |
+| Energy | 2x1 | none |
 | Sensor | 1x1 | `2x1` |
 | Weather | 2x1 | `1x1` (and wider with the forecast) |
 | Cover, group, climate, vacuum, media player | wide (2 cells in portrait, 3 in landscape with 5 columns, 2 with 4 columns) | none |
@@ -276,4 +291,4 @@ A size a widget does not allow is changed to the nearest allowed one.
 
 ## Coming soon
 
-These widgets are being built and do not work yet: a **calendar** (next event), an **alarm panel** and **locks and garage doors**, an **energy** widget, and **album art** in the media player. Do not use their entities yet: the device would report an unsupported entity.
+These widgets are being built and do not work yet: a **calendar** (next event), an **alarm panel** and **locks and garage doors**, and **album art** in the media player. Do not use their entities yet: the device would report an unsupported entity.

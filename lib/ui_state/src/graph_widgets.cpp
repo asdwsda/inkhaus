@@ -22,11 +22,25 @@ void GraphWidgets::rebuild(const config::Config &cfg, settings::Orientation o, c
   for (size_t t = 0; t < cfg.tabs.size(); ++t) {
     const config::Tab &tab = cfg.tabs[t];
     bool any = false;
-    for (const config::Widget &w : tab.widgets) any |= config::isGraphWidget(w);
+    for (const config::Widget &w : tab.widgets) any |= config::isGraphWidget(w) || w.type == config::WidgetType::Energy;
     if (!any) continue;
     const ui::Flow flow = ui::computeFlow(o, tab.widgets, ui::columnsOf(tab, o));
     for (const ui::Placement &p : flow.placements) {
       const config::Widget &w = tab.widgets[size_t(p.index)];
+      if (w.type == config::WidgetType::Energy) {  // task 109
+        for (int i = 0; i < 2; ++i) {
+          const std::string &id = i == 0 ? w.usage : w.solar;
+          if (id.empty()) continue;
+          GraphEntry e;
+          e.tab = int(t);
+          e.widget = p.index + (i == 0 ? 0 : kEnergySolarKey);
+          e.w = p.rect.w;
+          e.h = p.rect.h;
+          e.spec = makeEnergyTodaySpec(id);
+          entries_.push_back(std::move(e));
+        }
+        continue;
+      }
       if (!config::isGraphWidget(w)) continue;
       GraphEntry e;
       e.tab = int(t);

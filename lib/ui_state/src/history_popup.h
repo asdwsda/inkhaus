@@ -39,6 +39,9 @@ struct HistorySpec {
 int historyColumns(bool landscape, bool step);
 // deviceClass: of the entity if known; "energy" makes `sum` the default statistic of bar charts.
 HistorySpec makeHistorySpec(const config::Widget &w, bool landscape, const std::string &deviceClass = "");
+// Task 109: the fetch of an energy widget's "today so far" value: one day bucket (local midnight to now), statistic
+// `change`, so a total_increasing meter gives today's use. The value is the bucket's `last`.
+HistorySpec makeEnergyTodaySpec(const std::string &entity);
 // Widgets that open the popup: sensor / binary_sensor, no attribute, history not disabled.
 bool historyEnabledFor(const config::Widget &w);
 

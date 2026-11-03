@@ -33,6 +33,7 @@ enum class WidgetType {
   Vacuum,
   Notifications,  // task 103: no entity (persistent_notification WS call)
   MediaPlayer,  // task 106 (type name and domain "media_player")
+  Energy,  // task 109: `type: energy` with `usage:` / `solar:` entities (no entity / group key)
 };
 
 // Name as used in the `type:` override and as HA domain (e.g. "binary_sensor").
@@ -116,6 +117,7 @@ struct Widget {
   std::vector<std::string> details;     // up to kMaxDetails extra attributes for a details line
   std::optional<std::string> unit;      // unit override for the main value (<= kMaxUnitChars chars)
   std::optional<int> decimals;          // 0..3, rounds numeric main/detail values
+  std::string usage, solar;  // task 109: energy widget entities (either may be empty; `entity` = usage, else solar)
   bool forecast = false;  // task 104: weather widget with the 3-day forecast (wide, single entity)
   HistoryConfig history;  // defaults when the key is absent
   // Entities this widget acts on: {entity} or the group members.

@@ -101,6 +101,7 @@ SizeLimits sizeLimits(WidgetType t, const Grid &g) {
       case WidgetType::Sensor: return {{1, 1}, {1, 1}, {2, 1}};
       case WidgetType::Weather: return p3 ? SizeLimits{{2, 1}, {1, 1}, {n, 1}} : SizeLimits{{2, 1}, {2, 1}, {n, 1}};
       case WidgetType::MediaPlayer: return {{n, 1}, {n, 1}, {n, 1}};  // task 106: full row only (no compact layout)
+      case WidgetType::Energy: return {{2, 1}, {2, 1}, {2, 1}};  // task 109: 2x1 only
     }
   }
   const int wide = g.cols == 5 ? 3 : 2;
@@ -116,6 +117,7 @@ SizeLimits sizeLimits(WidgetType t, const Grid &g) {
     case WidgetType::Sensor: return {{1, 1}, {1, 1}, {2, 1}};
     case WidgetType::Weather: return {{2, 1}, {1, 1}, {2, 1}};
     case WidgetType::MediaPlayer: return {{wide, 1}, {wide, 1}, {wide, 1}};  // task 106
+    case WidgetType::Energy: return {{2, 1}, {2, 1}, {2, 1}};  // task 109: 2x1 only
   }
   return {{1, 1}, {1, 1}, {1, 1}};
 }

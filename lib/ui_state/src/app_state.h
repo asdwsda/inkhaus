@@ -15,6 +15,7 @@
 #include "media_layout.h"
 #include "media_popup.h"
 #include "media_view.h"
+#include "energy_view.h"  // task 109
 #include "entity_state.h"
 #include "graph_widgets.h"
 #include "notif_popup.h"
@@ -59,6 +60,7 @@ struct WidgetData {
   const forecast::Data *forecast = nullptr;  // task 104: forecast of a weather widget with `forecast: true`
   forecast::Ymd today;                       // task 104: local date (invalid: clock unset)
   NotifView notif;      // Notifications widgets (task 103)
+  EnergyView energy;    // Energy widgets (task 109)
 };
 
 enum class Screen { Tabs, ConfigError };
