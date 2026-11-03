@@ -1396,6 +1396,8 @@ void test_notifications_job_over_ws() {
   TEST_ASSERT_TRUE(e.notif.ok);
   TEST_ASSERT_EQUAL(2, e.notif.count);
   TEST_ASSERT_EQUAL_STRING("Disk", e.notif.newest.c_str());
+  TEST_ASSERT_EQUAL(2, (int)e.notifItems.size());  // task 103: the list, newest first
+  TEST_ASSERT_EQUAL_STRING("b", e.notifItems[0].id.c_str());
   TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"type\":\"persistent_notification/get\"") != std::string::npos);
   TEST_ASSERT_EQUAL(1, ha.closes);  // the HTTP socket is closed first
   // server error (unknown command): Parse, no count
@@ -1409,6 +1411,36 @@ void test_notifications_job_over_ws() {
   // no connector: network error
   HaWorker w2(ha, "https://ha.example.org", "", "T");
   TEST_ASSERT_TRUE(w2.run(c).error == HaError::Network);
+}
+
+// Task 103: persistent_notification/dismiss for one id.
+void test_notification_dismiss_job_over_ws() {
+  CountingHa ha;
+  FakeConnector fc;
+  fc.sock.result = "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":null}";
+  HaWorker w(ha, "https://ha.example.org", "", "T");
+  w.setWsConnector(&fc);
+  NetCommand c;
+  c.type = NetCommand::Type::NotifDismiss;
+  c.ids.push_back("my_id");
+  NetEvent e = w.run(c);
+  TEST_ASSERT_TRUE(e.type == NetEvent::Type::NotifDismissDone);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL_STRING("my_id", e.dismissId.c_str());
+  TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"type\":\"persistent_notification/dismiss\"") != std::string::npos);
+  TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"notification_id\":\"my_id\"") != std::string::npos);
+  FakeConnector bad;  // HA refuses (unknown id): an error, the id is echoed
+  bad.sock.result = "{\"id\":1,\"type\":\"result\",\"success\":false,\"error\":{\"code\":\"not_found\"}}";
+  HaWorker w2(ha, "https://ha.example.org", "", "T");
+  w2.setWsConnector(&bad);
+  NetEvent e2 = w2.run(c);
+  TEST_ASSERT_TRUE(e2.error != HaError::None);
+  TEST_ASSERT_EQUAL_STRING("my_id", e2.dismissId.c_str());
+  HaWorker w3(ha, "https://ha.example.org", "", "T");  // no connector
+  TEST_ASSERT_TRUE(w3.run(c).error == HaError::Network);
+  NetCommand none;
+  none.type = NetCommand::Type::NotifDismiss;
+  TEST_ASSERT_TRUE(w.run(none).error == HaError::Parse);  // no id
 }
 
 void test_statistics_bar_job() {
@@ -1527,6 +1559,7 @@ int main() {
   RUN_TEST(test_statistics_job_fallback_and_errors);
   RUN_TEST(test_statistics_bar_job);
   RUN_TEST(test_notifications_job_over_ws);
+  RUN_TEST(test_notification_dismiss_job_over_ws);
   RUN_TEST(test_history_job_errors_and_cancel);
   RUN_TEST(test_history_event_goes_to_handler_not_session);
   return UNITY_END();

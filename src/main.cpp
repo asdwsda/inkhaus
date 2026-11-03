@@ -308,7 +308,7 @@ static void showFrame(uint32_t now) {
       if (pl.graph) graphs.push_back({pl.rect.x, pl.rect.y, pl.rect.w, pl.rect.h});
     present::setMergeRegions(graphs);
   }
-  present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible());
+  present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen());
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 
@@ -485,11 +485,13 @@ static void reportOnFetch(bool ok);
 // config.yaml has `sleep_screen: notifications: true`. The sleep hold waits for the answer (bounded by the driver).
 static bool g_notifAsked = false, g_notifPending = false, g_notifValid = false, g_notifWanted = false;
 static int g_notifCount = 0;
+static bool g_notifChanged = false;  // task 103: the widget / popup changed: redraw
 static std::string g_notifTitle;
 
 static void notificationsOnFetch(bool ok) {
   if (!ok || g_demoMode || !g_drv || g_notifAsked) return;
-  if (!g_settings.sleep_screen || !g_cfg.cfg.sleepScreen.notifications) return;
+  const bool sleepWants = g_settings.sleep_screen && g_cfg.cfg.sleepScreen.notifications;
+  if (!sleepWants && !uistate::configHasNotificationsWidget(g_cfg.cfg)) return;  // task 103: or a notifications widget
   g_notifAsked = true;
   g_notifPending = true;  // the sleep hold covers the wait
   g_notifWanted = true;   // posted by notificationsPump once the graph fetches are done
@@ -504,6 +506,7 @@ static void notificationsPump() {
   const session::Status st = g_drv->status();
   if (st == session::Status::Offline || st == session::Status::AuthError) {
     g_notifWanted = g_notifPending = false;
+    g_notifChanged |= g_app.notifFetchFailed();  // task 103: the widget shows n/a (or its cached list, stale)
     return;
   }
   if (st != session::Status::Online || !g_drv->wifiUp()) return;
@@ -513,7 +516,29 @@ static void notificationsPump() {
   g_drv->postNotifications(c);
 }
 
+
+// Task 103: one dismiss call per id over a short WS connection (the popup marks the row pending meanwhile).
+static void notifDismissSink(const std::string &id) {
+  if (!g_drv || g_drv->status() != session::Status::Online || !g_drv->wifiUp()) {
+    g_app.notifDismissDone(id, false);  // offline: not queued (UNVERIFIED: the spec asks for a queue like other commands)
+    g_notifChanged = true;
+    return;
+  }
+  app_logic::NetCommand c;
+  c.type = app_logic::NetCommand::Type::NotifDismiss;
+  c.ids.push_back(id);
+  g_drv->postNotifications(c);
+}
+
 static void notificationsDone(app_logic::NetEvent &&ev) {
+  if (ev.type == app_logic::NetEvent::Type::NotifDismissDone) {
+    wakelog::logf("APP: notif_dismiss err=%d ms=%u\n", (int)ev.error, (unsigned)ev.ms);
+    g_app.notifDismissDone(ev.dismissId, ev.error == HaError::None);
+    g_notifChanged = true;
+    return;
+  }
+  if (ev.error == HaError::None && ev.notif.ok) g_notifChanged |= g_app.setNotifications(std::move(ev.notifItems));
+  else g_notifChanged |= g_app.notifFetchFailed();
   g_notifPending = false;
   g_notifValid = ev.error == HaError::None && ev.notif.ok;
   g_notifCount = g_notifValid ? ev.notif.count : 0;
@@ -644,6 +669,7 @@ static void startSession(uint32_t now, bool restart = false) {
   g_drv->setHttpDateHook(session_glue::httpDateObserved);  // task 097
   g_drv->setReportHandler([](app_logic::NetEvent &&ev) { report_glue::onDone(ev, session_glue::wallClock()); });
   g_drv->setNotificationsHandler(notificationsDone);
+  g_app.setNotifDismissSink(notifDismissSink);  // task 103
   g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy() || g_notifPending; });  // task 087: no sleep during a check / download
   report_glue::abort();
   g_notifAsked = g_notifPending = g_notifWanted = false;  // the old net session's answer is dropped; the new one asks again
@@ -994,6 +1020,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   ota::beforeSleep();  // task 087: a deliberate sleep after the first frame is not a crash
   if (!low) {
     historyShutdown();
+    g_app.closeNotif();  // task 103
     g_app.closeBrightness(now);  // flush the unsent value; the frozen screen never shows the popup (brightness.md rule 5)
     // Settings auto-leave before sleeping (settings.md rule 5). Whether or not Settings was open now,
     // the plan is made again from the settings in effect now: the session machine's plan was made
@@ -1437,6 +1464,7 @@ void loop() {
 
   historyPump();
   if (g_histChanged) { g_histChanged = false; changed = true; }
+  if (g_notifChanged) { g_notifChanged = false; changed = true; }  // task 103
   graphsPump();
   notificationsPump();
   if (g_app.graphs().takeChanged()) changed = true;
@@ -1466,7 +1494,7 @@ void loop() {
   if (e.kind != input::Event::None || popupOpen) g_lastInputMs = now;
   if (!g_scheduled && g_real && !ota::busy() &&
       app_logic::idleFullDue(present::partialDebt(), now - g_lastInputMs,
-                             settings_flow::active() || g_app.brightnessOpen() || g_app.historyPopup().visible(),
+                             settings_flow::active() || g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen(),
                              g_defer.armed()))  // task 095: grey drift in a long awake session
     present::idleFull();
   present::idle(millis());

@@ -17,6 +17,8 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   demo_ = demo;
   screen_ = Screen::Tabs;
   hist_.close();
+  notif_.close();
+  if (demo) notifStore_.setList(demoNotifications());  // task 103
   store_ = StateStore();
   if (demo) store_.update(demoStates(cfg_));
   focus_ = ui::FocusState();
@@ -113,6 +115,7 @@ WidgetData AppState::widgetData(int idx) const {
   d.group = !w->group.empty();
   d.cfg = w;
   d.members = membersOf(*w);
+  if (w->type == WidgetType::Notifications) d.notif = notifView(notifStore_, w->name);  // task 103
   for (const std::string &id : w->entities) {
     auto it = marks_.find(id);
     if (it != marks_.end() && it->second == Mark::Failed) d.failed = true;
@@ -255,6 +258,7 @@ bool AppState::tick(uint32_t now) {
   bool changed = false;
   lastNow_ = now;
   if (hist_.tick(now)) changed = true;  // the Loading frame appears after its delay
+  if (notif_.tick(now)) changed = true;  // task 103: the confirm dialog skips by itself
   if (popup_.isOpen()) {
     const EntityState *s = store_.get(popup_.entityId());
     bool closed = false;
@@ -297,6 +301,7 @@ bool AppState::touch(ui::Point p, uint32_t now) {
   if (screen_ != Screen::Tabs) return false;
   lastNow_ = now;
   if (hist_.isOpen()) return historyTouch(p);
+  if (notif_.isOpen()) return notifTouch(p, now);  // task 103
   if (popup_.isOpen()) return popupTouch(p, now);
   const ui::Hit hit = ui::hitTest(layout_, p);
   const int tabCount = int(cfg_.tabs.size());
@@ -329,6 +334,7 @@ bool AppState::touch(ui::Point p, uint32_t now) {
     case ui::HitKind::Widget: {
       const config::Widget *w = widgetAt(shownTab_, hit.index);
       if (!w) return false;
+      if (w->type == WidgetType::Notifications) return openNotif(now, false);  // task 103
       if (!ui::isFocusable(w->type)) return false;
       const bool single = ui::isSingleAction(w->type);
       if (single ? hit.sub != 0 : hit.sub == 0) return false;
@@ -346,7 +352,9 @@ bool AppState::rocker(ui::PhysicalKey key, uint32_t now) {
     if (key == ui::PhysicalKey::Push || key == ui::PhysicalKey::LongPush) return closeHistory();
     return false;
   }
+  if (notif_.isOpen()) return notifRocker(key, now);  // task 103
   if (popup_.isOpen()) return popupRocker(key, now);
+  if (key == ui::PhysicalKey::Push && openNotifFocused(now)) return true;  // task 103
   const ui::LogicalKey lk = ui::mapRocker(key, orientation_, false);
   // Anything but tab stepping acts on the shown content: let a pending tab switch happen first.
   bool changed = false;
@@ -406,6 +414,7 @@ bool AppState::openBrightness(int idx, uint32_t now) {
 }
 
 bool AppState::longPress(ui::Point p, uint32_t now) {
+  if (notif_.isOpen()) return false;
   if (dimmableLightAt(p)) return openBrightness(ui::hitTest(layout_, p).index, now);
   if (historyWidgetAt(p)) return openHistory(ui::hitTest(layout_, p).index, now);
   return false;
@@ -544,6 +553,69 @@ void AppState::brightnessMarks(bool &changed) {
     popup_.clearOptimistic();
     changed = true;
   }
+}
+
+// ---- notifications widget (task 103) ----
+
+bool AppState::setNotifications(std::vector<NotifItem> &&items) {
+  NotifStore next = notifStore_;
+  next.setList(std::move(items));
+  if (next == notifStore_) return false;
+  notifStore_ = std::move(next);
+  notif_.sync(notifStore_, orientation_);
+  return true;
+}
+
+bool AppState::notifFetchFailed() {
+  const NotifStore before = notifStore_;
+  notifStore_.setFailed();
+  notif_.sync(notifStore_, orientation_);
+  return !(before == notifStore_);
+}
+
+bool AppState::openNotif(uint32_t now, bool viaRocker) {
+  if (screen_ != Screen::Tabs || modalOpen()) return false;
+  notif_.open(notifStore_, now, viaRocker);
+  return true;
+}
+
+bool AppState::openNotifFocused(uint32_t now) {
+  if (focus_.mode == ui::FocusMode::Tab || !focus_.ringVisible) return false;
+  const int idx = focusedWidgetIndex();
+  const config::Widget *w = idx >= 0 ? widgetAt(shownTab_, idx) : nullptr;
+  return w && w->type == WidgetType::Notifications && openNotif(now, true);
+}
+
+bool AppState::closeNotif() { return notif_.close(); }
+
+bool AppState::notifResult(const NotifResult &r) {
+  for (const std::string &id : r.dismissIds) {
+    if (demo_) {  // demo: the dismissal succeeds at once
+      notifStore_.remove(id);
+      notif_.dismissDone(id, true);
+    } else if (nsink_) {
+      nsink_(id);
+    } else {
+      notif_.dismissDone(id, false);
+    }
+  }
+  notif_.sync(notifStore_, orientation_);
+  return r.changed;
+}
+
+bool AppState::notifTouch(ui::Point p, uint32_t now) {
+  return notifResult(notif_.touch(p, orientation_, notifStore_, now));
+}
+
+bool AppState::notifRocker(ui::PhysicalKey key, uint32_t now) {
+  return notifResult(notif_.rocker(key, orientation_, notifStore_, now));
+}
+
+bool AppState::notifDismissDone(const std::string &id, bool ok) {
+  if (ok) notifStore_.remove(id);
+  notif_.dismissDone(id, ok);
+  notif_.sync(notifStore_, orientation_);
+  return notif_.isOpen() || ok;
 }
 
 }  // namespace uistate

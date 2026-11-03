@@ -183,17 +183,18 @@ void HaWorker::runStatistics(const NetCommand &cmd, NetEvent &e) {
     e.fetchMs = uint32_t(std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - t0).count());
 }
 
-// Task 101: persistent_notification/get over one short WebSocket connection (same flow as the statistics).
-void HaWorker::runNotifications(NetEvent &e) {
+// One command over one short WebSocket connection (task 101 notifications, task 103 dismiss): the whole result
+// message goes to `body`. e.error is None when it arrived; the transport fields of `e` are filled.
+void HaWorker::runWsOnce(const std::string &commandJson, size_t maxBytes, std::string &body, NetEvent &e) {
   if (!ws_) {
     e.error = HaError::Network;
     return;
   }
   ws::Request req;
   req.token = token_;
-  req.limits.max_bytes = kNotificationsMaxBytes;
+  req.limits.max_bytes = maxBytes;
   req.limits.deadline_ms = 8000;
-  req.command_json = build_notifications_command(1);
+  req.command_json = commandJson;
   e.error = HaError::Network;  // no base URL could be used
   for (const std::string &base : wsBases()) {
     const ws::Endpoint ep = ws::parse_endpoint(base);
@@ -206,7 +207,7 @@ void HaWorker::runNotifications(NetEvent &e) {
       for (int k = 0; k < 4; k++) req.key[i * 4 + k] = uint8_t(r >> (8 * k));
     }
     req.host = ep.hostHeader;
-    std::string body;
+    body.clear();
     const ws::FlowResult fr = ws::run_command(*sock, req, [&](const char *d, size_t n) {
       body.append(d, n);
       return true;
@@ -220,10 +221,31 @@ void HaWorker::runNotifications(NetEvent &e) {
       if (fr.error == HaError::Network && fr.bytes == 0) continue;  // try the other base
       break;
     }
-    e.notif = parse_notifications(body);
-    e.error = e.notif.ok ? HaError::None : HaError::Parse;
+    e.error = HaError::None;
     break;
   }
+}
+
+// Task 101: persistent_notification/get. Task 103: the same answer also gives the full list.
+void HaWorker::runNotifications(NetEvent &e) {
+  std::string body;
+  runWsOnce(build_notifications_command(1), kNotificationsMaxBytes, body, e);
+  if (e.error != HaError::None) return;
+  e.notif = parse_notifications(body);
+  const NotifList list = parse_notification_list(body);
+  if (list.ok) e.notifItems = list.items;
+  e.error = e.notif.ok ? HaError::None : HaError::Parse;
+}
+
+// Task 103: persistent_notification/dismiss for ids[0].
+void HaWorker::runNotifDismiss(const NetCommand &cmd, NetEvent &e) {
+  e.dismissId = cmd.ids.empty() ? std::string() : cmd.ids[0];
+  if (e.dismissId.empty()) {
+    e.error = HaError::Parse;
+    return;
+  }
+  std::string body;
+  runWsOnce(build_notification_dismiss_command(1, e.dismissId), 4096, body, e);
 }
 
 NetEvent HaWorker::run(const NetCommand &cmd) {
@@ -248,6 +270,10 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     e.type = NetEvent::Type::NotificationsDone;
     e.ticket = cmd.ticket;
     runNotifications(e);
+  } else if (cmd.type == NetCommand::Type::NotifDismiss) {
+    e.type = NetEvent::Type::NotifDismissDone;
+    e.ticket = cmd.ticket;
+    runNotifDismiss(cmd, e);
   } else if (cmd.type == NetCommand::Type::Report) {
     e.type = NetEvent::Type::ReportDone;
     e.ticket = cmd.ticket;

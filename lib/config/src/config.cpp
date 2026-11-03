@@ -23,6 +23,7 @@ const TypeName kTypes[] = {
     {"climate", WidgetType::Climate},   {"sensor", WidgetType::Sensor},
     {"binary_sensor", WidgetType::BinarySensor},
     {"weather", WidgetType::Weather},   {"vacuum", WidgetType::Vacuum},
+    {"notifications", WidgetType::Notifications},  // task 103
 };
 
 bool startsWith(const std::string &s, const char *prefix) {
@@ -637,12 +638,34 @@ class Validator {
     r_.config.tabs.push_back(std::move(tb));
   }
 
+  // Task 103: `type: notifications`, optional `name` and `size`; no entity, no group.
+  void notificationsWidget(JsonObjectConst o, const std::string &path, Tab &tb) {
+    Widget w;
+    w.type = WidgetType::Notifications;
+    if (!o["entity"].isNull() || !o["group"].isNull()) {
+      err(path, "a notifications widget has no 'entity' or 'group'");
+      return;
+    }
+    str(o, "name", path, false, w.name);
+    std::string sizeText;
+    if (str(o, "size", path, false, sizeText)) {
+      WidgetSize sz;
+      if (parseSize(sizeText, sz)) w.size = sz;
+      else err(path + ".size", "invalid size, expected WxH with W and H in 1.." + std::to_string(kMaxWidgetSize));
+    }
+    tb.widgets.push_back(std::move(w));
+  }
+
   void widget(JsonVariantConst v, const std::string &path, Tab &tb) {
     if (!v.is<JsonObjectConst>()) {
       err(path, "must be a mapping");
       return;
     }
     JsonObjectConst o = v.as<JsonObjectConst>();
+    if (o["type"].is<const char *>() && std::string(o["type"].as<const char *>()) == "notifications") {
+      notificationsWidget(o, path, tb);  // task 103: no entity
+      return;
+    }
     Widget w;
     bool hasEntity = !o["entity"].isNull();
     bool hasGroup = !o["group"].isNull();

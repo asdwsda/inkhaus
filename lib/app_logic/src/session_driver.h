@@ -59,6 +59,7 @@ class SessionDriver {
   // every NotificationsDone event.
   using NotificationsHandler = std::function<void(NetEvent &&)>;
   void setNotificationsHandler(NotificationsHandler h) { notificationsHandler_ = std::move(h); }
+  // Task 103: the handler also gets NotifDismissDone events; post a NetCommand::Type::NotifDismiss with postNotifications.
   void postNotifications(const NetCommand &cmd) { net_.post(cmd); }
 
   // Task 071 (graph widgets): called when a full state fetch (wake, scheduled, manual refresh) has ended, with

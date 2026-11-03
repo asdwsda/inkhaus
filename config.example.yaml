@@ -83,3 +83,6 @@ tabs:
       - entity: person.alice    # no built-in type for this domain, so set it
         type: sensor
       - entity: cover.living_room_shutter   # also used above: fetched once
+      # Home Assistant persistent notifications: count + list popup with dismiss (no entity needed).
+      - type: notifications
+        name: Alerts          # optional, default Alerts

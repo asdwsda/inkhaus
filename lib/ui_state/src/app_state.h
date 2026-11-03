@@ -14,6 +14,8 @@
 #include "history_popup.h"
 #include "entity_state.h"
 #include "graph_widgets.h"
+#include "notif_popup.h"
+#include "notif_widget.h"
 #include "settings.h"
 #include "state_store.h"
 #include "ui_layout.h"
@@ -50,6 +52,7 @@ struct WidgetData {
   bool optimistic = false;  // members show the requested result of a tap that is still unconfirmed
   int pendingSub = 0;
   bool failed = false;  // the last action on this widget failed: real state plus alert badge
+  NotifView notif;      // Notifications widgets (task 103)
 };
 
 enum class Screen { Tabs, ConfigError };
@@ -89,10 +92,25 @@ class AppState {
   bool openHistoryFocused(uint32_t now);  // rocker long push on the focused sensor/binary widget
   bool closeHistory();                    // true if it was open
   bool historyOpen() const { return hist_.isOpen(); }
-  bool modalOpen() const { return popup_.isOpen() || hist_.isOpen(); }
+  bool modalOpen() const { return popup_.isOpen() || hist_.isOpen() || notif_.isOpen(); }
   const HistoryPopup &history() const { return hist_; }
   HistoryPopup &historyPopup() { return hist_; }
   std::string historyTitle() const { return widgetTitle(hist_.widget()); }
+
+  // ---- notifications widget (task 103, docs/ui/widgets-new.md 1) ----
+  // The list comes from one WS call per session (the owner calls setNotifications / notifFetchFailed). The popup is
+  // modal; its dismiss calls go to the sink (real mode) or apply at once (demo); results come back through
+  // notifDismissDone. All return true if something visible changed.
+  using NotifDismissSink = std::function<void(const std::string &id)>;
+  void setNotifDismissSink(NotifDismissSink s) { nsink_ = std::move(s); }
+  bool setNotifications(std::vector<NotifItem> &&items);
+  bool notifFetchFailed();
+  bool notifDismissDone(const std::string &id, bool ok);
+  bool openNotifFocused(uint32_t now);  // rocker push on the focused notifications widget
+  bool closeNotif();
+  bool notifOpen() const { return notif_.isOpen(); }
+  const NotifStore &notifStore() const { return notifStore_; }
+  const NotifPopup &notifPopup() const { return notif_; }
 
   // ---- history graph widgets (task 071) ----
   // Rebuilt by init(); call rebuildGraphs() again once the entity states are known (device classes).
@@ -178,6 +196,13 @@ class AppState {
   HistoryPopup hist_;
   GraphWidgets graphs_;
   BrightnessSink bsink_;
+  bool openNotif(uint32_t now, bool viaRocker);
+  bool notifTouch(ui::Point p, uint32_t now);
+  bool notifRocker(ui::PhysicalKey key, uint32_t now);
+  bool notifResult(const NotifResult &r);
+  NotifStore notifStore_;
+  NotifPopup notif_;
+  NotifDismissSink nsink_;
   bool bpUnknown_ = false, bpAwaiting_ = false, bpFailed_ = false, bpSawPending_ = false;
   uint32_t bpSentAt_ = 0, lastNow_ = 0;
   mutable EntityState optState_;  // widgetData(): the optimistic light state of the popup's widget

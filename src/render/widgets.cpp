@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "notif_widget_draw.h"
 #include "text_fit.h"
 #include "widget_view.h"
 
@@ -474,6 +475,7 @@ void drawWidget(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData 
     case WidgetType::Sensor: drawSensor(x, pl, data, title); break;
     case WidgetType::Weather: drawWeather(x, pl, data, title); break;
     case WidgetType::Vacuum: drawVacuum(x, data, title); break;
+    case WidgetType::Notifications: drawNotifWidget(c, pl.rect, data.notif); break;  // task 103
   }
 }
 
