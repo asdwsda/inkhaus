@@ -570,11 +570,13 @@ static void tabChangeFull(const char *log) {
   uint32_t initMs = 0;
   bool initOk = true;
   const uint32_t t0 = micros();
+  touchRecord();  // crash window: the INIT wipe invalidates what the stored record describes
   if (plan.init) {
     initOk = boot::initClearWhole();
     initMs = (micros() - t0) / 1000;
     if (!initOk) {  // controller did not take it: recover like any BUSY timeout, then draw as usual
       boot::log("init_clear_failed", 1);
+      g_forceFull = true;
       boot::ensureControllerReady("init_clear");
     }
   }

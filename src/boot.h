@@ -54,6 +54,8 @@ bool controllerSleep();
 // frame afterwards). Bounded; false if a BUSY wait timed out (caller then forces a full redraw).
 // UNVERIFIED on device: command, argument order, waveform index 0 and the completion wait.
 bool initClearWhole();
+// Debug: 0x0034 (DPY_AREA, default) or 0x0037 (DPY_BUF_AREA with the default M5Paper image buffer address).
+void setInitCommand(int cmd);
 
 // Bounded check that the controller answers (BUSY high). If it does not, resets it (hardware
 // reset pulse, full panel init) and reports it as cold. Returns true when no recovery was needed.

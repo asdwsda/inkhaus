@@ -326,6 +326,9 @@ bool controllerSleep() {
 
 // Task 099. Raw IT8951 I80 sequence as Panel_IT8951::_write_args does it (private, so repeated here):
 // preamble 0x6000 + command, then 0x0000 + args, each word after a BUSY wait, CS low across the burst.
+static uint16_t g_initCmd = 0x0034;
+void setInitCommand(int cmd) { g_initCmd = (cmd == 0x37) ? 0x0037 : 0x0034; }
+
 bool initClearWhole() {
     if (M5.getBoard() != m5::board_t::board_M5Paper) return false;
     auto* p = static_cast<lgfx::Panel_IT8951*>(M5.Display.getPanel());
@@ -333,9 +336,13 @@ bool initClearWhole() {
     endBurstRead();
     // UNVERIFIED: DPY_AREA (0x0034) with 5 words x, y, w, h, mode; mode 0 = INIT waveform; coordinates in the
     // controller's native (unrotated) frame, so the whole panel is cfg.panel_width x cfg.panel_height.
-    constexpr uint16_t kCmdDpyArea = 0x0034;
+    const uint16_t kCmdDpyArea = g_initCmd;
+    // UNVERIFIED 0x0037: DPY_BUF_AREA adds the image buffer address (lo, hi) as args 6-7; _tar_memaddr is private, so the
+    // M5Paper default 0x001236E0 from Panel_IT8951.inl is used.
+    const int nargs = g_initCmd == 0x0037 ? 7 : 5;
     constexpr uint16_t kWaveInit = 0;  // UNVERIFIED: waveform index 0 = INIT (Panel_IT8951.hpp UPDATE_MODE_INIT)
-    const uint16_t args[5] = {0, 0, (uint16_t)p->config().panel_width, (uint16_t)p->config().panel_height, kWaveInit};
+    const uint16_t args[7] = {0, 0, (uint16_t)p->config().panel_width, (uint16_t)p->config().panel_height, kWaveInit,
+                            (uint16_t)0x36E0, (uint16_t)0x0012};
     if (!waitBusyHigh(kReadyWaitMs, "init_clear")) return false;
     auto* bus = p->getBus();
     bool ok = true;
@@ -349,7 +356,7 @@ bool initClearWhole() {
     if (ok) {
         digitalWrite(kPinEpdCs, LOW);
         bus->writeData(0, 16);  // data preamble 0x0000
-        for (int i = 0; i < 5 && ok; ++i) {
+        for (int i = 0; i < nargs && ok; ++i) {
             bus->wait();
             ok = waitBusyHigh(kReadyWaitMs, "init_clear_arg");  // CS stays low, as in the library
             if (ok) bus->writeData(__builtin_bswap16(args[i]), 16);
@@ -365,6 +372,10 @@ bool initClearWhole() {
     feed();
     M5.Display.waitDisplay();
     feed();
+    if (M5.Display.displayBusy()) {  // waitDisplay gave up
+        log("init_clear_timeout", 1);
+        return false;
+    }
     return true;
 }
 

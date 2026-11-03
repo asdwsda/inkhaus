@@ -123,6 +123,11 @@ bool handle(const std::string &line, const Hooks &hk) {
     Serial.printf("CMD: tabclean %d\n", present::tabCleanVariant());
     return true;
   }
+  if (sscanf(line.c_str(), "initcmd %x", &v) == 1) {  // task 099, UNVERIFIED 0x34 | 0x37
+    boot::setInitCommand(v);
+    Serial.printf("CMD: initcmd %d\n", v == 0x37 ? 0x37 : 0x34);
+    return true;
+  }
   if (sscanf(line.c_str(), "tap %d %d", &x, &y) == 2) {
     input::Event e;
     e.kind = input::Event::Touch;
