@@ -73,7 +73,7 @@ Rocker: not applicable while asleep.
 
 ## 6. Refresh
 - Entering sleep: **one GC16 full refresh** of the whole screen (it holds DIM captions, OFF hairlines and the OFF warn icon, and the content is new), then the EPD powers off. No partial draw.
-- Scheduled wake with changes (`updated`, `next update`, battery, climate, weather...): redrawn as a GC16 full (task 092 rule); nothing changed = no redraw (the old frame stays, including the old `updated` time).
+- Scheduled wake: always redrawn as one GC16 full (task 092 rule, user 2026-11-02: every scheduled wake does the full, so `updated` and `next update` are always current).
 - Wake by touch/rocker: the dashboard is drawn as the normal first wake refresh (full, content is new). Nothing is drawn on top of the sleep screen.
 - Ghost debt: the screen is always a full refresh, so none carries over.
 
