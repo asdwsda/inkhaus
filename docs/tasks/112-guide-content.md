@@ -1,6 +1,6 @@
 # 112: Guide content
 
-Status: todo
+Status: done (first full version; calendar, alarm/lock, energy, album art sections wait for 105/107/108/109)
 Depends on: 110, 111; widgets 103-109 for their sections
 UI spec: docs/ui/widgets.md, widgets-new.md, settings.md, sleep-screen.md
 Needs device: no
@@ -26,3 +26,4 @@ features; add each new widget's section when its task (103-109) merges.
 ## Notes
 - User 2026-11-03: docs must be as user friendly as possible, part of the website, with widget screenshots and options.
 - User 2026-11-03: HA token creation as text steps + link (no HA UI screenshots).
+- 2026-11-03 firmware-dev: first full version written (pages 01-10, CONFIG.md is a pointer, example gains the sensor/graph/sleep_screen keys). Wrong gallery pictures (snippet vs parser): gallery-energy (`type: energy`, `usage:`, `solar:` not parsed yet), gallery-media-art-off (`art:` not a parser key, ignored), gallery-alarm (`alarm_control_panel.` domain unsupported), gallery-lock-garage (`lock.` unsupported, `type: garage` unsupported), gallery-calendar (`calendar.` entity as a widget unsupported; only in `sleep_screen`). Not used in the guide yet. Pictures missing from the plan: device-gestures, install-flow etc. (guide uses text instead).
