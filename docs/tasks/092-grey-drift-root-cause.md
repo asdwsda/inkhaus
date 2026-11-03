@@ -30,7 +30,7 @@ Fix by evidence, cheapest first:
 ## Acceptance criteria
 - [ ] Notes: E1-E3 results (photos by the user, time until drift visible, wake-log mV/h).
 - [ ] Chosen fix recorded in ARCHITECTURE.md with a one-line reason.
-- [ ] After 8 h unattended with the user's settings: no visible drift (user photo).
+- [x] After 8 h unattended with the user's settings: no visible drift (user photo).
 - [ ] Native test for any changed refresh-mode rule; `pio run` and `pio test -e native` pass.
 
 ## Notes
@@ -77,3 +77,4 @@ Fix by evidence, cheapest first:
 - 2026-11-02 firmware-dev: scheduledSleepFull removed; main.cpp calls finishScheduled(true) on every scheduled wake.
 - 2026-11-02 evening: overnight run started (normal m5paper build cc62829, user settings, battery). Photo + wake log (TASK_WDT / panel_init_slow) in the morning.
 - Overnight run uses build 2166bd9 (092+093+094) with portrait_columns: 3 on Home; starts when unplugged.
+- 2026-11-03: user reports the overnight run looks good (no visible drift). Wake log not checked for TASK_WDT (093 still open).
