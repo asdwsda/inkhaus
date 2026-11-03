@@ -52,6 +52,8 @@ class HaWorker {
   void runStatistics(const NetCommand &cmd, NetEvent &e);
   void runNotifications(NetEvent &e);
   void runForecast(const NetCommand &cmd, NetEvent &e);  // task 104
+  void runNotifDismiss(const NetCommand &cmd, NetEvent &e);  // task 103
+  void runWsOnce(const std::string &commandJson, size_t maxBytes, std::string &body, NetEvent &e);
   std::vector<std::string> wsBases() const;
   WsConnector *ws_ = nullptr;
   bool planExclusive_ = false, planExternalFirst_ = false;

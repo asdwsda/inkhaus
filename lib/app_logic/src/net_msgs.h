@@ -9,6 +9,7 @@
 #include "entity_state.h"
 #include "forecast.h"
 #include "ha_client.h"
+#include "notif_list.h"
 #include "notifications.h"
 #include "service_call.h"
 #include "stats_types.h"
@@ -16,9 +17,9 @@
 namespace app_logic {
 
 struct NetCommand {
-  enum class Type { Fetch, Call, Close, History, Report, Notifications, Forecast };  // Close: drop the kept-alive connection (before sleep)
+  enum class Type { Fetch, Call, Close, History, Report, Notifications, Forecast, NotifDismiss };  // Close: drop the kept-alive connection (before sleep)
   Type type = Type::Fetch;
-  std::vector<std::string> ids;  // Fetch: entities to fetch; Call: entities whose returned state is parsed
+  std::vector<std::string> ids;  // Fetch: entities to fetch; Call: entities whose returned state is parsed; NotifDismiss: [notification_id]
   int ticket = 0;                // Call
   ServiceCall call;              // Call
   // History (task 053): stream the entity's history of [histStart, histEnd) into `columns` columns.
@@ -41,7 +42,7 @@ struct NetCommand {
 };
 
 struct NetEvent {
-  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone, NotificationsDone, ForecastDone };
+  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone, NotificationsDone, ForecastDone, NotifDismissDone };
   Type type = Type::FetchDone;
   HaError error = HaError::None;
   int http_status = 0;
@@ -69,6 +70,8 @@ struct NetEvent {
   // ForecastDone (task 104, ticket echoes NetCommand::ticket): error None = forecastDays are valid (may be empty).
   std::string forecastEntity;
   std::vector<forecast::Day> forecastDays;
+  std::vector<NotifItem> notifItems;  // NotificationsDone (task 103): the list, newest first
+  std::string dismissId;              // NotifDismissDone (task 103): error None = dismissed
 };
 
 // History fetch failure that means "too much data": over the size cap, or the 15 s deadline hit while data was

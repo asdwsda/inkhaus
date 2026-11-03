@@ -274,7 +274,7 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       h.source = HistorySource(hSource);
       if (hHasMin) h.min = hMin;
       if (hHasMax) h.max = hMax;
-      if (!r.ok || type > uint32_t(WidgetType::Vacuum) || hasSize > 1) return false;
+      if (!r.ok || type > uint32_t(WidgetType::Notifications) || hasSize > 1) return false;
       wd.type = WidgetType(type);
       wd.display = WidgetDisplay(disp);
       wd.forecast = fc && wd.type == WidgetType::Weather;

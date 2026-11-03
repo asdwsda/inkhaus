@@ -31,6 +31,7 @@ enum class WidgetType {
   BinarySensor,
   Weather,
   Vacuum,
+  Notifications,  // task 103: no entity (persistent_notification WS call)
 };
 
 // Name as used in the `type:` override and as HA domain (e.g. "binary_sensor").

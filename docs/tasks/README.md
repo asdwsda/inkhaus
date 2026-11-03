@@ -101,7 +101,7 @@
 | 100 | [Report the M5Paper's own sensors to HA](100-report-device-sensors.md) | PC done | 024, 079 |
 | 101 | [Sleep screen](101-sleep-screen.md) | PC done | 092, 100 |
 | 102 | [Web flasher on the project site](102-web-flasher.md) | PC done | 061-065 |
-| 103 | [Notifications widget](103-notifications-widget.md) | in-progress | 101 |
+| 103 | [Notifications widget](103-notifications-widget.md) | PC done | 101 |
 | 104 | [Weather widget with forecast](104-weather-widget.md) | PC done | 045 |
 | 105 | [Calendar widget](105-calendar-widget.md) | todo | 045 |
 | 106 | [Media player widget (without album art)](106-media-widget.md) | in-progress | 045 |

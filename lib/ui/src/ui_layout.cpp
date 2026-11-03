@@ -96,7 +96,8 @@ SizeLimits sizeLimits(WidgetType t, const Grid &g) {
       case WidgetType::Light:
       case WidgetType::Switch:
       case WidgetType::Automation:
-      case WidgetType::BinarySensor: return {{1, 1}, {1, 1}, {1, 1}};
+      case WidgetType::BinarySensor:
+      case WidgetType::Notifications: return {{1, 1}, {1, 1}, {1, 1}};  // task 103
       case WidgetType::Sensor: return {{1, 1}, {1, 1}, {2, 1}};
       case WidgetType::Weather: return p3 ? SizeLimits{{2, 1}, {1, 1}, {n, 1}} : SizeLimits{{2, 1}, {2, 1}, {n, 1}};
     }
@@ -109,7 +110,8 @@ SizeLimits sizeLimits(WidgetType t, const Grid &g) {
     case WidgetType::Light:
     case WidgetType::Switch:
     case WidgetType::Automation:
-    case WidgetType::BinarySensor: return {{1, 1}, {1, 1}, {1, 1}};
+    case WidgetType::BinarySensor:
+    case WidgetType::Notifications: return {{1, 1}, {1, 1}, {1, 1}};  // task 103
     case WidgetType::Sensor: return {{1, 1}, {1, 1}, {2, 1}};
     case WidgetType::Weather: return {{2, 1}, {1, 1}, {2, 1}};
   }

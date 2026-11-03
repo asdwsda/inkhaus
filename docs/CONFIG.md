@@ -78,5 +78,12 @@ Widget types come from the entity domain: `cover`, `light`, `switch`, `automatio
 `sensor`, `binary_sensor`, `weather`, `vacuum`. Cover, climate and vacuum are wide; light, switch,
 automation and binary_sensor are 1x1; sensor is 1x1 (up to 2x1); weather is 2x1 (down to 1x1).
 Sizes outside the allowed range are clamped. Details are in [docs/ui/layout.md](ui/layout.md).
+
+**Notifications widget** (`type: notifications`, no `entity` or `group`; optional `name`, default `Alerts`): 1x1 bell with the
+count of Home Assistant persistent notifications (`0` outline, more than 0 filled; `99+`, `-` while loading, `n/a` when
+the list could not be fetched and nothing is cached). Tap or rocker push opens a list popup (3 rows per page in landscape, 6 in
+portrait) with a dismiss button per row, `Clear all` (asks first) and page buttons. The list is fetched once per session with one short
+WebSocket call (`persistent_notification/get`); dismissing sends `persistent_notification/dismiss` per notification.
+Spec: [docs/ui/widgets-new.md](ui/widgets-new.md) section 1.
 Config errors are reported with path and line, e.g. `tabs[0].widgets[2].entity (line 34)`. The
 file may be at most 64 KB.

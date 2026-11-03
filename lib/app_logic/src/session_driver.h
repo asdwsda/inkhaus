@@ -59,6 +59,7 @@ class SessionDriver {
   // every NotificationsDone event.
   using NotificationsHandler = std::function<void(NetEvent &&)>;
   void setNotificationsHandler(NotificationsHandler h) { notificationsHandler_ = std::move(h); }
+  // Task 103: the handler also gets NotifDismissDone events; post a NetCommand::Type::NotifDismiss with postNotifications.
   void postNotifications(const NetCommand &cmd) { net_.post(cmd); }
   // Task 104: the weather forecast (NetCommand::Type::Forecast); the handler gets every ForecastDone event.
   using ForecastHandler = std::function<void(NetEvent &&)>;
