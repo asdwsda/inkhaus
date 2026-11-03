@@ -8,7 +8,7 @@ Each section below says what the widget is for, what you can set, and shows a pi
 
 | Key | Values | Default | Effect |
 |---|---|---|---|
-| `entity` | an entity id, such as `light.floor_lamp` | none | The thing in Home Assistant. Every widget needs `entity` or `group`. |
+| `entity` | an entity id, such as `light.floor_lamp` | none | The thing in Home Assistant. Every widget needs `entity` or `group`, except notifications (see its section). |
 | `group` | a group name from `groups:` | none | Several things in one widget (see [Cover groups](#cover-or-light-group)). |
 | `name` | text | the Home Assistant name | The label on the tile. Required for groups. |
 | `size` | `WxH`, such as `2x1` | depends on the type | Cells wide and high. Only some types allow another size (table at the end). |
@@ -276,4 +276,4 @@ A size a widget does not allow is changed to the nearest allowed one.
 
 ## Coming soon
 
-These widgets are being built and do not work yet: a **calendar** (next event), an **alarm panel** and **locks and garage doors**, an **energy** widget, and **album art** in the media player. Do not use their entities yet: the device would report an unsupported entity.
+These widgets are being built and do not work yet: a **calendar** (next event), an **alarm panel** and **locks and garage doors**, an **energy** widget, and **album art** in the media player. Do not use their entities yet: the device would report an unsupported entity. (As a stop-gap, `type: sensor` shows such an entity's state as read-only text.)

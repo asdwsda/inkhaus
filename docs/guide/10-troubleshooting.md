@@ -1,15 +1,21 @@
 # Troubleshooting
 
-Find what you see, then follow the fix. Most problems are a typo in one of the two files or a Wi-Fi detail.
+Find what you see, then follow the fix. "Restart the device" below means: plug in the USB cable and press the pinhole on the back once (see [Touch and buttons](03-touch-and-buttons.md#the-reset-hole-pinhole)). Most problems are a typo in one of the two files or a Wi-Fi detail.
 
 ## It shows a demo dashboard with fake values
 
-**Cause:** no `config.yaml` was found, or Demo mode is on.
+**Cause:** no `config.yaml` was found, Demo mode is on, or `secrets.yaml` is missing or incomplete (then you see your own layout with fake values).
 
 **Fix:**
 1. Settings, Tools: set **Demo mode** to Off.
-2. Check that the SD card is formatted **FAT32** (not exFAT) and that `config.yaml` is in the **root** of the card, not in a folder.
+2. Check that the SD card is formatted **FAT32** (not exFAT; cards over 32 GB need a special tool, see [Getting started](01-getting-started.md#what-you-need)) and that `config.yaml` is in the **root** of the card, not in a folder.
 3. Check the file name: on Windows it may be `config.yaml.txt` if file extensions are hidden.
+
+## Token rejected (padlock in the status bar)
+
+**Cause:** the token is wrong, was deleted in Home Assistant, or has an extra space or line break.
+
+**Fix:** create a new token ([Getting started, Step 2](01-getting-started.md#step-2-create-a-home-assistant-token)) and paste it into `secrets.yaml` on one line, inside the quotes.
 
 ## The status bar says Offline
 
@@ -20,14 +26,10 @@ Find what you see, then follow the fix. Most problems are a typo in one of the t
 **Fix:**
 1. The Wi-Fi must be **2.4 GHz** and in range. Check `ssid` and `password` in `secrets.yaml` (inside quotes, no extra space).
 2. Check `internal_url`: `http://`, the IP address and `:8123`. Open the same address in a browser on your phone while on the same Wi-Fi.
-3. `external_url` must start with `https://`.
-4. Open Settings, Network: the hints show which network and which address were used. Force a profile or address if needed.
-
-## Token rejected
-
-**Cause:** the token is wrong, was deleted in Home Assistant, or has an extra space or line break.
-
-**Fix:** create a new token ([Getting started, Step 2](01-getting-started.md#step-2-create-a-home-assistant-token)) and paste it into `secrets.yaml` on one line, inside the quotes.
+3. `external_url` must start with `https://` and have a certificate from a normal authority: a self-signed certificate is refused. `internal_url` may be `http://` or `https://`.
+4. Use the IP address in `internal_url`: `.local` names (mDNS) are often not found. Home Assistant on another network (VLAN, guest Wi-Fi) must be reachable from the Wi-Fi the M5Paper uses.
+5. 5 GHz-only networks and hidden SSIDs do not work.
+6. Open Settings, Network: the hints show which network and which address were used. Force a profile or address if needed.
 
 ## A widget shows `-` or `n/a`
 
@@ -48,18 +50,18 @@ Fix the first error, restart the device, and check again. The row [is explained 
 
 ## "unsupported entity domain, set 'type' explicitly"
 
-The entity is of a kind that has no widget (for example `person.`). Add `type: sensor` to show it as a sensor. See [Widgets, Show any entity as a sensor](04-widgets.md#show-any-entity-as-a-sensor).
+The entity is of a kind that has no widget (for example `person.`). Add `type: sensor` to show it as a sensor. For locks, alarm panels and similar this shows the state as text only: you can read it but not operate it. See [Widgets, Show any entity as a sensor](04-widgets.md#show-any-entity-as-a-sensor).
 
 ## The screen stays blank or does not wake
 
 1. Press the rocker. In **Power off** mode **hold it for about 3 seconds**.
 2. Charge the device with the USB-C cable for a few minutes.
-3. Press the reset pinhole on the back with a pin.
+3. Plug in the USB cable and press the pinhole on the back once with a pin (restart).
 4. Still nothing? Install again from the [install page](../../install/).
 
 ## The screen looks garbled after installing
 
-The next start does one full redraw. If it stays garbled, switch the device off and on again (reset, or hold the rocker).
+The next start does one full redraw. If it stays garbled, restart the device.
 
 ## Faint traces of old pictures
 
@@ -79,4 +81,4 @@ The previous firmware was restored. Try the update again on USB power, or instal
 
 ## The installer does not see the device
 
-Use Chrome, Edge or Opera, a USB cable that carries data, and close other programs that use the serial port. Firefox and Safari cannot install from the web: use the installer app from the [Releases page](https://github.com/asdwsda/inkhaus/releases/latest).
+Use Chrome, Edge or Opera, a USB cable that carries data, and close other programs that use the serial port. Firefox and Safari cannot install from the web: use the installer app (a program you download and run on your computer) from the [Releases page](https://github.com/asdwsda/inkhaus/releases/latest).

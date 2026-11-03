@@ -4,7 +4,7 @@ E-ink keeps its picture without power, so the device sleeps most of the time. Th
 
 ## What happens when it wakes
 
-Each time the device wakes (you pressed the rocker, touched the screen, or its timer went off), it does the same:
+Each time the device wakes (you pressed the rocker (in Power off mode: held it for 3 seconds), touched the screen, or its timer went off), it does the same:
 
 1. It shows the last screen at once.
 2. It joins your Wi-Fi.
@@ -12,7 +12,7 @@ Each time the device wakes (you pressed the rocker, touched the screen, or its t
 4. It redraws what changed.
 5. After the idle timeout without a touch, it goes back to sleep.
 
-The device talks to Home Assistant over your Wi-Fi: the first Wi-Fi profile in range is used, and the internal or external address depending on where it is.
+The device talks to Home Assistant over your Wi-Fi: the first Wi-Fi profile (a network saved in `secrets.yaml`) in range is used, and the internal or external address depending on where it is.
 
 **What you'll see:** the last picture first, then fresh values a moment later. Before it sleeps, a small pill in the status bar shows the sleep mode and the time of the next scheduled update.
 
@@ -55,7 +55,7 @@ The battery symbol in the status bar shows the level; a bolt means it is chargin
 
 ![Table of status bar symbols with their meaning.](img/screen-status-icons.png "What the little symbols mean.")
 
-- The device **learns** the voltage at which the battery really runs out, and it sleeps cleanly before that. You can switch this off with Settings, Sleep and wake, Learn battery limits.
+- The device **learns** the voltage at which the battery really runs out (after a "brownout": it switched off by itself because the battery ran out sooner than it expected), and it sleeps cleanly before that. You can switch this off with Settings, Sleep and wake, Learn battery limits.
 - Charge with a USB-C **data** cable on any USB port or charger.
 - Shorter idle timeouts and longer update intervals save the most power.
 
@@ -63,4 +63,4 @@ The battery symbol in the status bar shows the level; a bolt means it is chargin
 
 Settings, Network, **Report to HA** (On by default) sends the battery level, the room temperature and humidity measured by the device, and the time of its last wake to Home Assistant. Use it to see in Home Assistant when the battery is low. Set it to Off to send nothing.
 
-**If it doesn't wake:** in Power off mode hold the push for 3 seconds. If it still does nothing, press the reset pinhole on the back and charge it via USB. See [Troubleshooting](10-troubleshooting.md).
+**If it doesn't wake:** in Power off mode hold the push for 3 seconds. If it still does nothing, plug in the USB cable, then press the pinhole on the back once (it restarts the device; see [Touch and buttons](03-touch-and-buttons.md#the-reset-hole-pinhole)). See [Troubleshooting](10-troubleshooting.md).

@@ -81,7 +81,7 @@ On the overview, the **Config** row says what the device made of `config.yaml`:
 | `no config.yaml on SD` | The card is not read, or the file is in a folder, or is misnamed. |
 | `built-in demo` | Demo mode is on. |
 
-The **Config errors** row shows how many mistakes there are. Fix the first, restart, and look at the next.
+The **Config errors** row shows how many mistakes there are. Fix the first, restart the device (plug in USB, press the pinhole once; see [Touch and buttons](03-touch-and-buttons.md#the-reset-hole-pinhole)), and look at the next.
 
 Most mistakes are a missing space, a tab character instead of spaces, or a missing quote.
 

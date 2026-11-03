@@ -23,7 +23,7 @@ Tap the **"updated" label** (top left) to fetch fresh states at once. Tap the **
 
 Change this in Settings, Display, Orientation. The default is portrait. It takes effect when you leave Settings, with one full screen refresh.
 
-In landscape, "up" on the rocker points to the left.
+In landscape, "up" on the rocker points to the left. The tab bar is at the bottom in portrait and at the top (right of the status bar) in landscape.
 
 ## Columns
 

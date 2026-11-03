@@ -74,4 +74,4 @@ Examples: `GMT0BST,M3.5.0/1,M10.5.0` (London), `EST5EDT,M3.2.0,M11.1.0` (New Yor
 
 ## Check your file
 
-After you edit `config.yaml`, restart the device. Then open Settings, the **Config** row says `OK` or names the first mistake with its line. See [Settings](06-settings.md#reading-the-config-row).
+After you edit `config.yaml`, restart the device (plug in USB and press the pinhole on the back once; see [Touch and buttons](03-touch-and-buttons.md#the-reset-hole-pinhole)). Then open Settings, the **Config** row says `OK` or names the first mistake with its line. See [Settings](06-settings.md#reading-the-config-row).

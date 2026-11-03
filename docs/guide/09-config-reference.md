@@ -149,4 +149,4 @@ home_assistant:
 | `ip` / `gateway` / `subnet` / `dns` | IPv4 addresses | none | The `static_ip` fields. |
 | `home_assistant` | block | required | The Home Assistant address and token. |
 | `internal_url` / `external_url` / `token` | text | `internal_url` and `token` required | `internal_url` starts with `http://` or `https://`. `external_url` is optional and must start with `https://`. The token is a long-lived access token (see [Getting started](01-getting-started.md#step-2-create-a-home-assistant-token)). |
-| `connection` | | | Old format: it is an error once `secrets.yaml` exists. |
+| `connection` | block (old format) | none | Old format of the three rows above, inside `config.yaml`. It is an error once `secrets.yaml` exists. |

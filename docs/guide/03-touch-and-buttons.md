@@ -19,7 +19,14 @@ Taps on a widget that shows a dotted frame (unavailable) are ignored.
 
 ## The rocker
 
-The rocker is the 3-way button on the right edge of the device. You can push it **up**, push it **down**, or press it in (**push**). Hold the push for a longer press.
+The rocker is the 3-way button on the right edge of the device. You can push it **up**, push it **down**, or press it in (**push**). Hold the push for a longer press. The durations differ, so here is the whole list:
+
+| Press the push for | Name | What happens |
+|---|---|---|
+| less than 0.5 s | **Push** | Normal press: starts the focus ring or activates. |
+| 0.5 s to 2.5 s | **Long push** | Opens Settings or goes one step back. |
+| 2.5 s or longer | **Hold** | Sleep now, from anywhere. |
+| 3 s, when the device is asleep in Power off mode | **Wake hold** | Switches the device on. |
 
 ![Line drawing of the M5Paper front with the rocker on the right edge and the back with reset and SD slot.](img/device-buttons.png "The rocker and the ports.")
 
@@ -35,6 +42,8 @@ On a tab screen:
 | **Long push** (about half a second) | Opens Settings (from the tabs), or goes one step back (in the ring, a popup or in Settings). |
 | **Hold push for 2.5 seconds** | Puts the device to sleep right away, from anywhere. |
 
+Keep the push down for the full time and let go when the screen changes.
+
 The first rocker press after the device wakes both shows the ring and does its job, so you do not need to press twice.
 
 ## Yes or no questions
@@ -49,13 +58,18 @@ This is on purpose: a push can tilt the rocker by accident, so push never means 
 
 ## Wake and sleep
 
-- **Wake:** press the rocker. With Sleep mode Touch or Touch & rocker, a tap on the screen wakes it too. With Sleep mode **Power off**, hold the rocker push for about 3 seconds.
+- **Wake:** press the rocker (in Sleep mode **Power off** this is not enough, see below). With Sleep mode Touch or Touch & rocker, a tap on the screen wakes it too. With Sleep mode **Power off**, hold the rocker push for about 3 seconds.
 - **Sleep:** the device sleeps by itself after the idle timeout (20 seconds by default). To sleep at once, hold the rocker push for 2.5 seconds, or use Settings, Sleep now.
 
 More on this in [Sleep and battery](07-sleep-and-battery.md).
 
-## The reset button
+## The reset hole (pinhole)
 
-On the back is a tiny reset hole next to the rocker side. Use a pin if the device does not react to anything. It restarts the device and keeps your files and settings.
+On the back is a tiny hole, the "pinhole", with a button behind it. Press it with a pin or a paper clip. What it does depends on the power:
+
+- **With the USB cable plugged in:** it **restarts** the device. Files and settings are kept. This is what the guide means by "restart the device".
+- **On battery only:** it switches the device **off**. Switch it on again with the rocker (hold the push for 3 seconds, if the Sleep mode is Power off).
+
+So to restart reliably, plug in the USB cable first. Use the pinhole when the device does not react to anything.
 
 **If it doesn't work:** if the screen stays blank, see [Troubleshooting](10-troubleshooting.md).

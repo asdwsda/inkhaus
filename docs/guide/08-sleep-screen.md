@@ -10,7 +10,7 @@ By default, the screen you were looking at stays on the display while the device
 
 ![Three sleep screens side by side.](img/sleep-screen-variants.png "While asleep: three looks.")
 
-The screen has **no live clock**: e-ink does not change during sleep, so a clock would be wrong. Instead, it says when it was last updated. At the bottom it says how to wake the device, for example "Press the side button", depending on your Sleep mode.
+The screen has **no live clock**: e-ink does not change during sleep, so a clock would be wrong. Instead, it says when it was last updated. At the bottom it says how to wake the device, for example "Press the rocker", depending on your Sleep mode.
 
 ## Optional blocks
 
