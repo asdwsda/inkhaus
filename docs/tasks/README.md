@@ -97,6 +97,7 @@
 | 096 | [Keep supported_color_modes in the state cache](096-cache-color-modes.md) | done | 045 |
 | 097 | [Set the clock from HA's HTTP Date header](097-clock-from-ha-date.md) | PC done | 008, 024 |
 | 098 | [Native tests for UNVERIFIED device-check logic](098-native-tests-unverified.md) | done | 087, 090, 092 |
+| 099 | [INIT clear on tab change (experiment)](099-init-clear-on-tab-change.md) | in-progress | 092, 095 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
