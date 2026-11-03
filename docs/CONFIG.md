@@ -57,6 +57,7 @@ tabs:
 |---|---|
 | `version` | schema version, `1` |
 | `timezone` | POSIX TZ string for the clock and wake schedule; default Central Europe (`CET-1CEST,M3.5.0,M10.5.0/3`) |
+| `sleep_screen` | optional, for Settings > Sleep & wake > While asleep = `Sleep screen`: `weather: weather.home` (adds a weather block), `calendar: calendar.family` (next event: `message`, `start_time`), `notifications: true` (count and newest title of the HA persistent notifications; one short WebSocket call at wake). Only the blocks you list are drawn; the screen looks complete with none of them. The two entities are fetched with the dashboard states |
 | `groups` | optional map `name: [entity, ...]`; names use lowercase letters, digits and `_`; all members share one domain; up to 16 per group |
 | `tabs` | 1 to 16 tabs, each with `title` and `widgets` (up to 24); a tab that overflows the screen splits into sub-pages |
 | `landscape_columns` | per tab, `4` or `5` (default `5`). With 4 columns, wide widgets are 2 cells, so two covers or thermostats fit per row. Portrait is not affected |

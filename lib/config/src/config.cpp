@@ -95,6 +95,7 @@ class Validator {
     if (!o["connection"].isNull()) connection(o["connection"], "connection");
     if (!o["groups"].isNull()) groups(o["groups"]);
     tabs(o["tabs"]);
+    if (!o["sleep_screen"].isNull()) sleepScreen(o["sleep_screen"]);
   }
 
   // secrets.yaml: the old `connection:` structure at the top level.
@@ -530,6 +531,42 @@ class Validator {
     for (const auto &g : r_.config.groups)
       if (g.name == name) return &g;
     return nullptr;
+  }
+
+  // Task 101: sleep_screen: {weather: weather.x, calendar: calendar.y, notifications: true|false}.
+  void sleepScreen(JsonVariantConst v) {
+    const std::string path = "sleep_screen";
+    if (!v.is<JsonObjectConst>()) {
+      err(path, "must be a mapping (weather, calendar, notifications)");
+      return;
+    }
+    JsonObjectConst o = v.as<JsonObjectConst>();
+    for (JsonPairConst kv : o) {
+      const char *k = kv.key().c_str();
+      if (std::strcmp(k, "weather") && std::strcmp(k, "calendar") && std::strcmp(k, "notifications"))
+        err(path + "." + k, "unknown key");
+    }
+    struct F {
+      const char *key;
+      const char *domain;
+      std::string *out;
+    } fields[] = {{"weather", "weather", &r_.config.sleepScreen.weather},
+                  {"calendar", "calendar", &r_.config.sleepScreen.calendar}};
+    for (const F &f : fields) {
+      std::string id;
+      if (!str(o, f.key, path, false, id)) continue;
+      if (!validEntityId(id) || domainOf(id) != f.domain) {
+        err(join(path, f.key), std::string("must be a ") + f.domain + " entity id (" + f.domain + ".name)");
+        continue;
+      }
+      *f.out = id;
+      addEntity(id);
+    }
+    std::string n;
+    if (str(o, "notifications", path, false, n)) {
+      if (n == "true") r_.config.sleepScreen.notifications = true;
+      else if (n != "false") err(join(path, "notifications"), "must be true or false");
+    }
   }
 
   void addEntity(const std::string &id) {

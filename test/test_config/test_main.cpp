@@ -870,6 +870,38 @@ void test_history_errors_do_not_echo_values() {
   for (const auto &e : r.errors) TEST_ASSERT_TRUE(e.message.find("SECRET") == std::string::npos);
 }
 
+void test_sleep_screen_section() {
+  ParseResult r0 = parseConfig(kMinimal);
+  TEST_ASSERT_TRUE(r0.ok());
+  TEST_ASSERT_TRUE(r0.config.sleepScreen.weather.empty());
+  TEST_ASSERT_TRUE(r0.config.sleepScreen.calendar.empty());
+  TEST_ASSERT_FALSE(r0.config.sleepScreen.notifications);
+
+  ParseResult r = parseConfig(std::string(kMinimal) +
+                              "sleep_screen:\n  weather: weather.home\n  calendar: calendar.family\n  notifications: true\n");
+  TEST_ASSERT_TRUE(r.ok());
+  TEST_ASSERT_EQUAL_STRING("weather.home", r.config.sleepScreen.weather.c_str());
+  TEST_ASSERT_EQUAL_STRING("calendar.family", r.config.sleepScreen.calendar.c_str());
+  TEST_ASSERT_TRUE(r.config.sleepScreen.notifications);
+  // fetched with the dashboard states, after the widget entities, once
+  TEST_ASSERT_EQUAL(3, (int)r.config.entityIds.size());
+  TEST_ASSERT_EQUAL_STRING("weather.home", r.config.entityIds[1].c_str());
+  TEST_ASSERT_EQUAL_STRING("calendar.family", r.config.entityIds[2].c_str());
+
+  ParseResult off = parseConfig(std::string(kMinimal) + "sleep_screen:\n  notifications: false\n");
+  TEST_ASSERT_TRUE(off.ok());
+  TEST_ASSERT_FALSE(off.config.sleepScreen.notifications);
+  TEST_ASSERT_EQUAL(1, (int)off.config.entityIds.size());
+}
+
+void test_sleep_screen_errors() {
+  assertErrorAt(std::string(kMinimal) + "sleep_screen: nope\n", "sleep_screen");
+  assertErrorAt(std::string(kMinimal) + "sleep_screen:\n  weather: light.a\n", "sleep_screen.weather");
+  assertErrorAt(std::string(kMinimal) + "sleep_screen:\n  calendar: Calendar.X\n", "sleep_screen.calendar");
+  assertErrorAt(std::string(kMinimal) + "sleep_screen:\n  notifications: maybe\n", "sleep_screen.notifications");
+  assertErrorAt(std::string(kMinimal) + "sleep_screen:\n  clock: true\n", "sleep_screen.clock");
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_example_parses_clean);
@@ -938,5 +970,7 @@ int main(int, char **) {
   RUN_TEST(test_history_shorthand_and_false);
   RUN_TEST(test_history_errors);
   RUN_TEST(test_history_errors_do_not_echo_values);
+  RUN_TEST(test_sleep_screen_section);
+  RUN_TEST(test_sleep_screen_errors);
   return UNITY_END();
 }

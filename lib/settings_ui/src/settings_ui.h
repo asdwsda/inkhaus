@@ -25,10 +25,10 @@ inline Page categoryPage(int i) { return static_cast<Page>(i + 1); }
 const char* categoryLabel(int i);  // "Display", "Sleep & wake", "Network", "Tools" (also the page title)
 
 // Setting rows, in the edit buffer order of the categories.
-enum class RowId { Orientation, SleepMode, Updates, Idle, Wifi, HaLink, Demo, Debug, KeepAwake, LearnBattery, Firmware, ReportHa };
+enum class RowId { Orientation, SleepMode, Updates, Idle, Wifi, HaLink, Demo, Debug, KeepAwake, LearnBattery, Firmware, ReportHa, SleepScreen };
 constexpr int kRowIdCount = 12;
-constexpr int kMaxPageRows = 5;
-bool isPipRow(RowId r);  // Orientation, Updates, Idle (2..6 fixed values); the others are hint rows (88 high)
+constexpr int kMaxPageRows = 6;
+bool isPipRow(RowId r);  // Orientation, Updates, Idle, SleepScreen (2..6 fixed values); the others are hint rows (88 high)
 
 // ---- layout (spec sections 3 and 8) ----
 constexpr int kInfoRowCount = 6;  // Firmware, Battery, HA, Wi-Fi, Config, Errors
@@ -161,7 +161,7 @@ const char* rowLabel(RowId r);
 std::string rowValueText(RowId r, const settings::Settings& s, const NetworkInfo& n);
 // Index of the current value in its allowed-values array (-1 if not allowed / not a pip row).
 int rowValueIndex(RowId r, const settings::Settings& s);
-int pipCount(RowId r);  // 2, 6, 4 for pip rows, else 0
+int pipCount(RowId r);  // 2, 6, 4, 2 for pip rows, else 0
 // Next allowed value, wrapping last -> first. An unknown value goes to the first. Wi-Fi: Auto -> 1..N -> Auto.
 settings::Settings cycleRow(RowId r, const settings::Settings& s, const NetworkInfo& n,
                             const settings::Capabilities& c = settings::kCapabilities);

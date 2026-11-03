@@ -18,7 +18,8 @@ const char* categoryLabel(int i) {
   return "";
 }
 
-bool isPipRow(RowId r) { return r == RowId::Orientation || r == RowId::Updates || r == RowId::Idle; }
+bool isPipRow(RowId r) { return r == RowId::Orientation || r == RowId::Updates || r == RowId::Idle || r == RowId::SleepScreen;
+}
 
 namespace {
 
@@ -98,27 +99,31 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
       break;
     case Page::Sleep: {
       // Spec 8.2: Sleep mode, Updates, Keep awake, Idle, Learn; notes stacked (pitch 76); estimate block 124.
-      L.rowCount = 5;
+      // Task 101: While asleep (2 pips) sits under Updates; at most one note is shown (they exclude each other).
+      L.rowCount = 6;
       L.rowIds[0] = RowId::SleepMode;
       L.rowIds[1] = RowId::Updates;
-      L.rowIds[2] = RowId::KeepAwake;
-      L.rowIds[3] = RowId::Idle;
-      L.rowIds[4] = RowId::LearnBattery;
+      L.rowIds[2] = RowId::SleepScreen;
+      L.rowIds[3] = RowId::KeepAwake;
+      L.rowIds[4] = RowId::Idle;
+      L.rowIds[5] = RowId::LearnBattery;
       if (portrait) {
         L.rows[0] = {16, 68, 508, 88};
         L.rows[1] = {16, 168, 508, 72};
-        L.rows[2] = {16, 252, 508, 88};
-        L.rows[3] = {16, 352, 508, 72};
-        L.rows[4] = {16, 436, 508, 88};
-        L.note = {16, 536, 508, 64};
-        L.note2 = {16, 612, 508, 64};
+        L.rows[2] = {16, 252, 508, 72};
+        L.rows[3] = {16, 336, 508, 88};
+        L.rows[4] = {16, 436, 508, 72};
+        L.rows[5] = {16, 520, 508, 88};
+        L.note = {16, 620, 508, 64};
+        L.note2 = {16, 620, 508, 64};  // never shown together with note
         L.estimate = {16, 744, 508, 124};
       } else {
         L.rows[0] = {16, 64, 456, 88};
         L.rows[1] = {16, 164, 456, 68};
-        L.rows[2] = {16, 244, 456, 88};
-        L.rows[3] = {16, 344, 456, 68};
-        L.rows[4] = {488, 64, 456, 88};
+        L.rows[2] = {16, 244, 456, 68};
+        L.rows[3] = {16, 324, 456, 88};
+        L.rows[4] = {16, 424, 456, 68};
+        L.rows[5] = {488, 64, 456, 88};
         L.note = {488, 164, 456, 64};
         L.note2 = {488, 240, 456, 64};
         L.estimate = {488, 328, 456, 124};
@@ -280,6 +285,7 @@ const char* rowLabel(RowId r) {
     case RowId::Orientation: return "Orientation";
     case RowId::Updates: return "Updates while asleep";
     case RowId::Idle: return "Idle timeout";
+    case RowId::SleepScreen: return "While asleep";
     default: return hintRowLabel(r);
   }
 }
@@ -309,6 +315,7 @@ int pipCount(RowId r) {
     case RowId::Orientation: return static_cast<int>(settings::kOrientationValues.size());
     case RowId::Updates: return static_cast<int>(settings::kRefreshIntervalMinValues.size());
     case RowId::Idle: return static_cast<int>(settings::kIdleTimeoutSValues.size());
+    case RowId::SleepScreen: return 2;
     default: return 0;
   }
 }
@@ -320,6 +327,7 @@ int rowValueIndex(RowId r, const Settings& s) {
     case RowId::KeepAwake: return indexOf(settings::kKeepAwakeValues, s.keep_awake);
     case RowId::Updates: return indexOf(settings::kRefreshIntervalMinValues, s.refresh_interval_min);
     case RowId::Idle: return indexOf(settings::kIdleTimeoutSValues, s.idle_timeout_s);
+    case RowId::SleepScreen: return s.sleep_screen ? 1 : 0;
     default: return -1;
   }
 }
@@ -343,6 +351,7 @@ std::string rowValueText(RowId r, const Settings& s, const NetworkInfo& n) {
     case RowId::Idle:
       std::snprintf(buf, sizeof buf, "%d s", static_cast<int>(s.idle_timeout_s));
       return buf;
+    case RowId::SleepScreen: return s.sleep_screen ? "Sleep screen" : "Dashboard";
     case RowId::Wifi: return wifiValue(s, n);
     case RowId::HaLink: return haLinkName(s.ha_link);
     case RowId::Demo: return s.demo_mode ? "On" : "Off";
@@ -389,6 +398,7 @@ Settings cycleRow(RowId r, const Settings& s, const NetworkInfo& n, const settin
     case RowId::Debug: o.debug_log = !s.debug_log; break;
     case RowId::LearnBattery: o.learn_battery = !s.learn_battery; break;
     case RowId::ReportHa: o.report_ha = !s.report_ha; break;
+    case RowId::SleepScreen: o.sleep_screen = !s.sleep_screen; break;
     case RowId::Firmware: break;  // not a setting
   }
   return o;
@@ -715,14 +725,14 @@ Update SettingsScreen::activatePage(int stop) {
   if (page_ == Page::Sleep) {
     // Hint rows of this page have live hints; a mode change can flip Updates (forced look) and Keep awake.
     if (id == RowId::SleepMode) {
-      for (int i = 0; i < 3; ++i) u.dirty.push_back(P.rows[i]);
+      for (int i : {0, 1, 3}) u.dirty.push_back(P.rows[i]);  // Sleep mode, Updates (forced look), Keep awake (hint)
     } else {
       u.dirty.push_back(row);
     }
     if (id == RowId::SleepMode || id == RowId::Updates || id == RowId::KeepAwake)
       u.dirty.push_back(estimateLiveRect(P.estimate));
     if (oldKey != sleepNotes(edit_, caps_).key) {
-      u.dirty.push_back({P.note.x, P.note.y, P.note.w, P.note2.y + P.note2.h - P.note.y});
+      u.dirty.push_back(P.note);  // one note at most
     }
   } else {
     if (isPipRow(id)) {

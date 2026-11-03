@@ -11,6 +11,7 @@
 #include "service_call.h"
 #include "state_parser.h"
 #include "template_builder.h"
+#include "notifications.h"
 
 #include <cmath>
 #define ASSERT_DBL(exp, act) TEST_ASSERT_TRUE_MESSAGE(std::fabs((double)(exp) - (double)(act)) < 1e-9, #act)
@@ -1041,8 +1042,70 @@ void test_history_fallback_policy() {
   }
 }
 
+static const char* kNotifList =
+    "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":["
+    "{\"notification_id\":\"a\",\"message\":\"old msg\",\"title\":\"Old\",\"created_at\":\"2026-11-01T08:00:00.1+00:00\"},"
+    "{\"notification_id\":\"b\",\"message\":\"line one\\nline two\",\"created_at\":\"2026-11-03T09:30:00+00:00\"},"
+    "{\"notification_id\":\"c\",\"message\":\"mid\",\"title\":\"Mid\",\"created_at\":\"2026-11-02T10:00:00+00:00\"}]}";
+
+void test_notifications_command() {
+  TEST_ASSERT_EQUAL_STRING("{\"id\":1,\"type\":\"persistent_notification/get\"}", build_notifications_command(1).c_str());
+}
+
+void test_notifications_list_newest_and_count() {
+  NotificationSummary s = parse_notifications(kNotifList);
+  TEST_ASSERT_TRUE(s.ok);
+  TEST_ASSERT_EQUAL(3, s.count);
+  TEST_ASSERT_EQUAL_STRING("line one", s.newest.c_str());  // newest has no title: first message line
+}
+
+void test_notifications_map_shape_and_title() {
+  NotificationSummary s = parse_notifications(
+      "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":{"
+      "\"x\":{\"title\":\"Disk\",\"message\":\"m\",\"created_at\":\"2026-11-03T09:30:00+00:00\"},"
+      "\"y\":{\"title\":\"Older\",\"created_at\":\"2026-11-03T09:00:00+00:00\"}}}");
+  TEST_ASSERT_TRUE(s.ok);
+  TEST_ASSERT_EQUAL(2, s.count);
+  TEST_ASSERT_EQUAL_STRING("Disk", s.newest.c_str());
+}
+
+void test_notifications_empty_and_bad() {
+  NotificationSummary e = parse_notifications("{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":[]}");
+  TEST_ASSERT_TRUE(e.ok);
+  TEST_ASSERT_EQUAL(0, e.count);
+  TEST_ASSERT_FALSE(parse_notifications("").ok);
+  TEST_ASSERT_FALSE(parse_notifications("{\"result\":[{").ok);
+  TEST_ASSERT_FALSE(parse_notifications("{\"id\":1,\"success\":false,\"result\":[]}").ok);
+  TEST_ASSERT_FALSE(parse_notifications("{\"id\":1,\"success\":true,\"result\":null}").ok);
+}
+
+void test_notifications_long_title_cut_at_char_boundary() {
+  std::string t(118, 'a');
+  t += "\xC3\xA4\xC3\xA4";  // 2-byte chars crossing the 120 byte cut
+  NotificationSummary s =
+      parse_notifications("{\"success\":true,\"result\":[{\"title\":\"" + t + "\",\"created_at\":\"x\"}]}");
+  TEST_ASSERT_TRUE(s.ok);
+  TEST_ASSERT_EQUAL(120, (int)s.newest.size());
+}
+
+void test_calendar_attributes_fetched() {
+  std::vector<std::string> names = state_attribute_names("calendar.family", ExtraAttrs());
+  bool msg = false, start = false;
+  for (const auto& n : names) {
+    msg |= n == "message";
+    start |= n == "start_time";
+  }
+  TEST_ASSERT_TRUE(msg && start);
+}
+
 int main() {
   UNITY_BEGIN();
+  RUN_TEST(test_notifications_command);
+  RUN_TEST(test_notifications_list_newest_and_count);
+  RUN_TEST(test_notifications_map_shape_and_title);
+  RUN_TEST(test_notifications_empty_and_bad);
+  RUN_TEST(test_notifications_long_title_cut_at_char_boundary);
+  RUN_TEST(test_calendar_attributes_fetched);
   RUN_TEST(test_unknown_cover_without_position);
   RUN_TEST(test_template_golden);
   RUN_TEST(test_template_binary_sensor_golden);

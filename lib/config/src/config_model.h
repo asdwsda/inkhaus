@@ -131,6 +131,15 @@ struct Tab {
   int portraitColumns = kDefaultPortraitColumns;    // 2, 3 or 4 (portrait grid only, task 094)
 };
 
+// Optional blocks of the sleep screen (task 101): `sleep_screen:` with `weather:` (a weather entity), `calendar:`
+// (a calendar entity) and `notifications: true`. Empty / false = block not shown. The two entities are fetched
+// with the dashboard states (added to entityIds).
+struct SleepScreenConfig {
+  std::string weather;
+  std::string calendar;
+  bool notifications = false;
+};
+
 struct Config {
   int version = 0;
   // POSIX TZ string (e.g. "CET-1CEST,M3.5.0,M10.5.0/3"); optional `timezone:` key.
@@ -139,6 +148,7 @@ struct Config {
   ConnectionConfig connection;
   std::vector<Group> groups;
   std::vector<Tab> tabs;
+  SleepScreenConfig sleepScreen;  // task 101
   // De-duplicated, in first-use order; includes members of referenced groups.
   std::vector<std::string> entityIds;
 };

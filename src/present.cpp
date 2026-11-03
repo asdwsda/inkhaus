@@ -59,6 +59,7 @@ bool g_firstFrameFull = false;  // interactive wake with debt and Updates Off: G
 
 const char *kNs = "diag";
 const char *kKeyDebt = "pdebt";
+const char *kKeySleepScreen = "slpscr";  // task 101: the panel shows the sleep screen
 const char *kKeyScr = "scr", *kKeyHash = "chash", *kKeySig = "psig", *kKeyTiles = "tiles";
 
 uint32_t g_fwId = 0;  // identifies the running firmware build; a record written by another one is not trusted
@@ -443,18 +444,48 @@ bool hasValidRecord() {
 M5Canvas &canvas() { return g_cur; }
 const M5Canvas &previous() { return g_panel; }
 
+static bool g_sleepScreenOnPanel = false, g_sleepScreenKnown = false;
+
+bool sleepScreenOnPanel() {
+  if (!g_sleepScreenKnown) {
+    Preferences p;
+    if (p.begin(kNs, true)) {
+      g_sleepScreenOnPanel = p.getUChar(kKeySleepScreen, 0) != 0;
+      p.end();
+    }
+    g_sleepScreenKnown = true;
+  }
+  return g_sleepScreenOnPanel;
+}
+
+void setSleepScreenOnPanel(bool on) {
+  if (sleepScreenOnPanel() == on) return;  // NVS is written only on change
+  g_sleepScreenOnPanel = on;
+  Preferences p;
+  if (p.begin(kNs, false)) {
+    p.putUChar(kKeySleepScreen, on ? 1 : 0);
+    p.end();
+  }
+}
+
 void bootFrame(bool forceFull, const EarlyClear *early) {
   auto &d = M5.Display;
   g_lastShownTab = g_renderTab;
   settleEarlyClear();  // before anything is written to the controller
+  // Task 101: the panel shows the sleep screen of the previous sleep (a scheduled wake keeps it until its own
+  // sleep screen). Whichever way this first frame is drawn, the panel stops showing it.
+  const bool afterSleepScreen = !g_deferred && sleepScreenOnPanel();
+  if (afterSleepScreen) setSleepScreenOnPanel(false);
   std::vector<uint16_t> stored;
   // A timed-out early clear left the controller memory untrusted (waitAndCheck set g_forceFull).
   if (g_forceFull) forceFull = true;
   loadDebt();
-  if (g_firstFrameFull && g_debt && !g_deferred && !forceFull) {  // task 092: no scheduled wake will clear the debt
-    boot::log("debt_full", 1);
+  if (((g_firstFrameFull && g_debt) || afterSleepScreen) && !g_deferred && !forceFull) {
+    // Task 092: no scheduled wake will clear the debt. Task 101: the dashboard replaces the sleep screen as one
+    // GC16 full (all content is new; no white fill first, the panel content is known).
+    boot::log(afterSleepScreen ? "sleep_screen_full" : "debt_full", 1);
     const bool inv = invalidateRecord();
-    fullRefresh(false, "full_debt");
+    fullRefresh(false, afterSleepScreen ? "full_after_sleep_screen" : "full_debt");
     if (inv) saveRecordOfCurrent();
     g_lastShowMs = millis();
     boot::log("draw", "full");

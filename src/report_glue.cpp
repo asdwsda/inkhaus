@@ -49,11 +49,11 @@ void savePosted() {
 }
 }  // namespace
 
-void wakeStart(bool settingOn, bool scheduled, bool coldBoot, devreport::WakeKind kind) {
+void wakeStart(bool settingOn, bool scheduled, bool coldBoot, devreport::WakeKind kind, bool readAnyway) {
   g_wanted = devreport::sessionReports(settingOn, scheduled, coldBoot);
   g_kind = scheduled ? devreport::WakeKind::Scheduled : kind;
   g_lastWake = g_wanted;
-  if (!g_wanted) return;
+  if (!g_wanted && !readAnyway) return;  // task 101: the sleep screen shows the reading without reporting it
   const uint32_t t0 = millis();
   g_haveClimate = sht30_i2c::read(g_climate);
   Serial.printf("HA: sht30 ok=%d temp_x10=%d hum_x10=%d ms=%u\n", g_haveClimate ? 1 : 0,

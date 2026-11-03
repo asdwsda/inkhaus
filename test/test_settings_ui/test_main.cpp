@@ -204,21 +204,23 @@ void test_page_layouts() {
   TEST_ASSERT_TRUE(s.rowIds[0] == RowId::SleepMode);
   expectRect(16, 168, 508, 72, s.rows[1]);
   TEST_ASSERT_TRUE(s.rowIds[1] == RowId::Updates);
-  expectRect(16, 252, 508, 88, s.rows[2]);
-  TEST_ASSERT_TRUE(s.rowIds[2] == RowId::KeepAwake);
-  expectRect(16, 352, 508, 72, s.rows[3]);
-  TEST_ASSERT_TRUE(s.rowIds[3] == RowId::Idle);
-  expectRect(16, 436, 508, 88, s.rows[4]);
-  TEST_ASSERT_TRUE(s.rowIds[4] == RowId::LearnBattery);
-  TEST_ASSERT_EQUAL_INT(6, s.stopCount);
-  expectRect(16, 536, 508, 64, s.note);
-  expectRect(16, 612, 508, 64, s.note2);
+  expectRect(16, 252, 508, 72, s.rows[2]);
+  TEST_ASSERT_TRUE(s.rowIds[2] == RowId::SleepScreen);
+  expectRect(16, 336, 508, 88, s.rows[3]);
+  TEST_ASSERT_TRUE(s.rowIds[3] == RowId::KeepAwake);
+  expectRect(16, 436, 508, 72, s.rows[4]);
+  TEST_ASSERT_TRUE(s.rowIds[4] == RowId::Idle);
+  expectRect(16, 520, 508, 88, s.rows[5]);
+  TEST_ASSERT_TRUE(s.rowIds[5] == RowId::LearnBattery);
+  TEST_ASSERT_EQUAL_INT(7, s.stopCount);
+  expectRect(16, 620, 508, 64, s.note);
   expectRect(16, 744, 508, 124, s.estimate);
   PageLayout sl = computePageLayout(Page::Sleep, Orientation::Landscape);
   expectRect(16, 164, 456, 68, sl.rows[1]);
-  expectRect(16, 244, 456, 88, sl.rows[2]);
-  expectRect(16, 344, 456, 68, sl.rows[3]);
-  expectRect(488, 64, 456, 88, sl.rows[4]);
+  expectRect(16, 244, 456, 68, sl.rows[2]);
+  expectRect(16, 324, 456, 88, sl.rows[3]);
+  expectRect(16, 424, 456, 68, sl.rows[4]);
+  expectRect(488, 64, 456, 88, sl.rows[5]);
   expectRect(488, 164, 456, 64, sl.note);
   expectRect(488, 328, 456, 124, sl.estimate);
 
@@ -443,16 +445,16 @@ void test_rocker_focus_orders_and_wrap() {
   }
   s.onKey(LogicalKey::Prev);
   TEST_ASSERT_EQUAL_INT(kStopBack, s.focus());
-  // enter Sleep & wake: 5 rows + Back
+  // enter Sleep & wake: 6 rows + Back
   s.onKey(LogicalKey::Next);  // 0
   s.onKey(LogicalKey::Next);  // 1 Sleep
   Update u = s.onKey(LogicalKey::Push);
   TEST_ASSERT_TRUE(u.action == Action::PageChange);
   TEST_ASSERT_TRUE(s.page() == Page::Sleep);
-  TEST_ASSERT_EQUAL_INT(6, s.stopCount());
+  TEST_ASSERT_EQUAL_INT(7, s.stopCount());
   TEST_ASSERT_EQUAL_INT(0, s.focus());
   s.onKey(LogicalKey::Prev);
-  TEST_ASSERT_EQUAL_INT(5, s.focus());  // Back
+  TEST_ASSERT_EQUAL_INT(6, s.focus());  // Back
   // Push on a row cycles the buffer
   s.onKey(LogicalKey::Next);
   s.onKey(LogicalKey::Push);  // Sleep mode Deep sleep -> Touch
@@ -473,6 +475,17 @@ void test_learn_battery_row() {
   TEST_ASSERT_FALSE(o.learn_battery);
 }
 
+void test_sleep_screen_row() {
+  Settings d;
+  TEST_ASSERT_EQUAL_STRING("Dashboard", rowValueText(RowId::SleepScreen, d, NetworkInfo()).c_str());
+  TEST_ASSERT_EQUAL_STRING("While asleep", rowLabel(RowId::SleepScreen));
+  Settings o = cycleRow(RowId::SleepScreen, d, NetworkInfo());
+  TEST_ASSERT_TRUE(o.sleep_screen);
+  TEST_ASSERT_EQUAL_STRING("Sleep screen", rowValueText(RowId::SleepScreen, o, NetworkInfo()).c_str());
+  TEST_ASSERT_EQUAL_INT(1, rowValueIndex(RowId::SleepScreen, o));
+  TEST_ASSERT_EQUAL_INT(2, pipCount(RowId::SleepScreen));
+}
+
 void test_report_ha_row() {
   Settings d;
   TEST_ASSERT_EQUAL_STRING("On", rowValueText(RowId::ReportHa, d, NetworkInfo()).c_str());
@@ -491,7 +504,7 @@ void test_keep_awake_row_and_sleep_now() {
   SettingsScreen s(st0, Orientation::Portrait, true);
   touchCentre(s, s.layout().categories[1]);  // Sleep & wake
   TEST_ASSERT_TRUE(s.page() == Page::Sleep);
-  const Rect row = s.pageLayout().rows[2];
+  const Rect row = s.pageLayout().rows[3];
   TEST_ASSERT_EQUAL_STRING("Off", rowValueText(RowId::KeepAwake, s.edit(), NetworkInfo()).c_str());
   TEST_ASSERT_EQUAL_STRING("Keep awake", rowLabel(RowId::KeepAwake));
   TEST_ASSERT_EQUAL_STRING("Sleeps as set above", sleepRowHint(RowId::KeepAwake, s.edit()).c_str());
@@ -586,7 +599,7 @@ void test_tools_toggles_and_values() {
 
 void test_pip_rows_cycle_full_circle() {
   NetworkInfo n;
-  const RowId pips[] = {RowId::Orientation, RowId::Updates, RowId::Idle};
+  const RowId pips[] = {RowId::Orientation, RowId::Updates, RowId::Idle, RowId::SleepScreen};
   for (RowId r : pips) {
     Settings s;
     TEST_ASSERT_TRUE(isPipRow(r));
@@ -907,7 +920,7 @@ void test_sleep_page_rules() {
   Update tu = touchCentre(sc, updRow);
   TEST_ASSERT_TRUE(tu.dirty.empty());
   TEST_ASSERT_EQUAL_INT32(360, sc.edit().refresh_interval_min);
-  sc.onKey(LogicalKey::Next);  // focus 0 -> would be 1 (Updates): skipped to Keep awake
+  sc.onKey(LogicalKey::Next);  // focus 0 -> would be 1 (Updates): skipped to While asleep
   TEST_ASSERT_EQUAL_INT(2, sc.focus());
   sc.onKey(LogicalKey::Prev);  // back over the forced row
   TEST_ASSERT_EQUAL_INT(0, sc.focus());
@@ -917,8 +930,8 @@ void test_sleep_page_rules() {
   int rows = 0;
   bool noteArea = false;
   for (const Rect& r : mu.dirty) {
-    for (int i = 0; i < 3; ++i) if (r == sc.pageLayout().rows[i]) ++rows;
-    if (r.x == sc.pageLayout().note.x && r.y == sc.pageLayout().note.y && r.h > 64) noteArea = true;
+    for (int i : {0, 1, 3}) if (r == sc.pageLayout().rows[i]) ++rows;
+    if (r.x == sc.pageLayout().note.x && r.y == sc.pageLayout().note.y) noteArea = true;
   }
   TEST_ASSERT_EQUAL_INT(3, rows);
   TEST_ASSERT_TRUE(noteArea);  // the forced note went away
@@ -1142,6 +1155,7 @@ int main() {
   RUN_TEST(test_estimate_view);
   RUN_TEST(test_learn_battery_row);
   RUN_TEST(test_report_ha_row);
+  RUN_TEST(test_sleep_screen_row);
   RUN_TEST(test_page_targets_size_gaps_and_screen_bounds);
   RUN_TEST(test_summaries);
   RUN_TEST(test_wifi_and_ha_cycling);

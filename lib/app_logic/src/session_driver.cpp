@@ -89,6 +89,10 @@ void SessionDriver::onNet(NetEvent &ev, int64_t now) {
     if (historyHandler_) historyHandler_(std::move(ev));
     return;
   }
+  if (ev.type == NetEvent::Type::NotificationsDone) {
+    if (notificationsHandler_) notificationsHandler_(std::move(ev));
+    return;
+  }
   if (ev.type == NetEvent::Type::ReportDone) {
     if (reportHandler_) reportHandler_(std::move(ev));
     return;

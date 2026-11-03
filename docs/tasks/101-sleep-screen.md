@@ -1,6 +1,6 @@
 # 101: Sleep screen
 
-Status: in-progress
+Status: in-progress (PC part done 2026-11-03, device check pending)
 Depends on: 092, 100
 UI spec: docs/ui/sleep-screen.md (mockups docs/ui/sleep-screen-*.svg, accepted 2026-11-03)
 Needs device: yes (look check)
@@ -33,3 +33,7 @@ With Sleep screen, the last frame before sleep is a dedicated screen instead of 
   notifications are no longer entities, so fetch them with one short WebSocket call
   (`persistent_notification/get`, reusing the stats WS client), only when the block is enabled.
 - User 2026-11-03: date as English weekday on its own line, no year (OK).
+
+## Notes (firmware-dev, PC part)
+- Done: settings key `sleep_screen` (NVS `sleepscr`) + While asleep pip row on the Sleep page (rows/notes per settings.md 8.2); config `sleep_screen:` (weather/calendar/notifications, cache format 8); lib/sleep_screen (layout, texts, fallbacks); `persistent_notification/get` via HaWorker/SessionDriver (lib/ha_client/notifications); src/render/sleep_screen_draw; sleep entry in main.cpp goToSleep (GC16 full, no pill, scheduled wake via finishScheduled); wake: present flag `slpscr` makes the first dashboard frame one GC16 full; SHT30 is read on every wake when the setting is on (report_glue readAnyway); sleepwake::enter stores indicator None.
+- Open (device): look check, `!` battery glyph, weather icon mapping (existing set), HA result shapes. Calendar entity attributes fetched via domain_attrs; widget `attribute:` extras are still not wired to HaClient (pre-existing: set_extra_attributes has no caller).

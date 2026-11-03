@@ -55,6 +55,11 @@ class SessionDriver {
   using ReportHandler = std::function<void(NetEvent &&)>;
   void setReportHandler(ReportHandler h) { reportHandler_ = std::move(h); }
   void postReport(const NetCommand &cmd) { net_.post(cmd); }
+  // Task 101: the sleep screen's persistent_notification/get (NetCommand::Type::Notifications); the handler gets
+  // every NotificationsDone event.
+  using NotificationsHandler = std::function<void(NetEvent &&)>;
+  void setNotificationsHandler(NotificationsHandler h) { notificationsHandler_ = std::move(h); }
+  void postNotifications(const NetCommand &cmd) { net_.post(cmd); }
 
   // Task 071 (graph widgets): called when a full state fetch (wake, scheduled, manual refresh) has ended, with
   // its success, before the session machine reacts (so a sleep that follows can be held back).
@@ -99,6 +104,7 @@ class SessionDriver {
   Log log_;
   HistoryHandler historyHandler_;
   ReportHandler reportHandler_;
+  NotificationsHandler notificationsHandler_;
   FetchHook fetchHook_;
   SleepHold sleepHold_;
   HttpDateHook httpDateHook_;

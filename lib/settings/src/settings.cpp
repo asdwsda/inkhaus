@@ -66,6 +66,7 @@ bool isValidWifiProfileIndex(int32_t v) { return v >= 0 && v <= kMaxWifiProfileI
 
 bool isValidLearnBattery(int32_t v) { return v == 0 || v == 1; }
 bool isValidReportHa(int32_t v) { return v == 0 || v == 1; }
+bool isValidSleepScreen(int32_t v) { return v == 0 || v == 1; }
 
 bool isValidHaLink(int32_t v) { return v >= 0 && v <= static_cast<int32_t>(HaLink::External); }
 
@@ -125,6 +126,7 @@ Settings load(const KeyValueStore& store) {
     if (store.getInt(kKeyHaLink, v) && isValidHaLink(v)) s.ha_link = static_cast<HaLink>(v);
     if (store.getInt(kKeyLearnBattery, v) && isValidLearnBattery(v)) s.learn_battery = v == 1;
     if (store.getInt(kKeyReportHa, v) && isValidReportHa(v)) s.report_ha = v == 1;
+    if (store.getInt(kKeySleepScreen, v) && isValidSleepScreen(v)) s.sleep_screen = v == 1;
     return s;
 }
 
@@ -142,6 +144,7 @@ void save(KeyValueStore& store, const Settings& s) {
     writeIfChanged(store, kKeyKeepAwake, static_cast<int32_t>(s.keep_awake));
     writeIfChanged(store, kKeyLearnBattery, s.learn_battery ? 1 : 0);
     writeIfChanged(store, kKeyReportHa, s.report_ha ? 1 : 0);
+    writeIfChanged(store, kKeySleepScreen, s.sleep_screen ? 1 : 0);
 }
 
 }  // namespace settings

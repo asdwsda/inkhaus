@@ -25,6 +25,7 @@
 #include "present.h"
 #include "render/screen.h"
 #include "render/settings_screen.h"
+#include "render/sleep_screen_draw.h"
 #include "render/splash_screen.h"
 #include "report_glue.h"
 #include "session_driver.h"
@@ -35,6 +36,7 @@
 #include "sleep.h"
 #include "state_cache.h"
 #include "sleep_logic.h"
+#include "sleep_screen.h"
 #include "shot.h"
 #include "tap_intent.h"
 #include "version.h"
@@ -478,8 +480,35 @@ static void graphsRequest(int tab) {
 // The session driver's hook: a full state fetch ended.
 static void reportOnFetch(bool ok);
 
+// ---- sleep screen (task 101): persistent notifications over one short WebSocket call ----
+// Asked once per session after the first good state fetch, only when Settings > While asleep is Sleep screen and
+// config.yaml has `sleep_screen: notifications: true`. The sleep hold waits for the answer (bounded by the driver).
+static bool g_notifAsked = false, g_notifPending = false, g_notifValid = false;
+static int g_notifCount = 0;
+static std::string g_notifTitle;
+
+static void notificationsOnFetch(bool ok) {
+  if (!ok || g_demoMode || !g_drv || g_notifAsked) return;
+  if (!g_settings.sleep_screen || !g_cfg.cfg.sleepScreen.notifications) return;
+  g_notifAsked = true;
+  g_notifPending = true;
+  app_logic::NetCommand c;
+  c.type = app_logic::NetCommand::Type::Notifications;
+  g_drv->postNotifications(c);
+}
+
+static void notificationsDone(app_logic::NetEvent &&ev) {
+  g_notifPending = false;
+  g_notifValid = ev.error == HaError::None && ev.notif.ok;
+  g_notifCount = g_notifValid ? ev.notif.count : 0;
+  g_notifTitle = g_notifValid ? ev.notif.newest : std::string();
+  wakelog::logf("APP: notifications err=%d count=%d ms=%u bytes=%u\n", (int)ev.error, g_notifCount, (unsigned)ev.ms,
+                (unsigned)ev.bytes);
+}
+
 static void graphsOnFetch(bool ok) {
   reportOnFetch(ok);  // task 100: before the graph jobs, so the sleep hold covers it
+  notificationsOnFetch(ok);
   if (g_demoMode || !g_app.graphs().any()) return;
   if (ok) graphsRequest(g_app.shownTab());
   else g_app.graphs().fetchFailed(g_app.shownTab(), uistate::kGraphFetchAllTabs);
@@ -597,8 +626,10 @@ static void startSession(uint32_t now, bool restart = false) {
   g_drv->setFetchHook(graphsOnFetch);
   g_drv->setHttpDateHook(session_glue::httpDateObserved);  // task 097
   g_drv->setReportHandler([](app_logic::NetEvent &&ev) { report_glue::onDone(ev, session_glue::wallClock()); });
-  g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy(); });  // task 087: no sleep during a check / download
+  g_drv->setNotificationsHandler(notificationsDone);
+  g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy() || g_notifPending; });  // task 087: no sleep during a check / download
   report_glue::abort();
+  g_notifAsked = g_notifPending = false;  // the old net session's answer is dropped; the new one asks again
   g_app.graphs().abortFetch();  // the old net session is gone: a graph result will not arrive
   g_graphBatchMs = 0;
   if (g_app.history().fetching() || g_histWaitNet) {  // the old net session is gone: its result will not arrive
@@ -906,6 +937,37 @@ static void handleSettingsResult(const settings_flow::Result &r, uint32_t now) {
 
 // ---- sleep (task 024) ----
 
+// Task 101: composes the sleep screen (lib/sleep_screen) into the canvas from what this wake knows.
+static void composeSleepScreen(const app_logic::SleepPath &pp) {
+  const int64_t epoch = session_glue::wallClock();
+  const config::SleepScreenConfig &sc = g_cfg.cfg.sleepScreen;
+  sleepscreen::Inputs in;
+  in.landscape = landscape();
+  in.wakeEpoch = epoch;
+  in.utcOffsetS = utcOffsetAt(epoch);
+  in.updatedEpoch = g_drv && g_drv->lastOkEpoch() ? g_drv->lastOkEpoch() : g_restoredEpoch;
+  in.nextUpdateEpoch = pp.next_update_at ? *pp.next_update_at : 0;
+  in.batteryPct = batteryPercent();
+  in.batteryMv = batteryMv();
+  in.charging = M5.Power.isCharging() == m5::Power_Class::is_charging;
+  int32_t t10 = 0, h10 = 0;
+  in.haveClimate = report_glue::climate(t10, h10);  // the SHT30 reading of this wake, never an older one
+  in.tempX10 = t10;
+  in.humX10 = h10;
+  in.sleepMode = g_settings.sleep_mode;
+  in.weatherConfigured = !sc.weather.empty();
+  in.weather = in.weatherConfigured ? g_app.store().get(sc.weather) : nullptr;
+  in.calendarConfigured = !sc.calendar.empty();
+  in.calendar = in.calendarConfigured ? g_app.store().get(sc.calendar) : nullptr;
+  in.notificationsConfigured = sc.notifications;
+  in.notificationCount = g_notifValid ? g_notifCount : 0;
+  in.notificationTitle = g_notifTitle;
+  const sleepscreen::View v = sleepscreen::compose(in);
+  render::drawSleepScreen(present::canvas(), v);
+  present::setLogTab(g_app.shownTab());
+  boot::log("sleep_screen", v.layout.blocks.size());
+}
+
 // Shared tail of every sleep: indicator frame (not for the low-battery notice), Wi-Fi off, controller
 // idle, then the real sleep. Returns only if sleeping failed.
 static void goToSleep(power::SleepPlan plan, power::Session session, bool localIdle = false) {
@@ -923,23 +985,40 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     const int64_t epoch = session_glue::wallClock();
     plan = app_logic::planForSleep(g_settings, session, epoch, utcOffsetAt(epoch), localIdle);
   }
+  bool pillOnPanel = true;
   if (!low && present::framesOk()) {
-    // Task 092: a scheduled wake draws nothing until here (see present::setWakePolicy), then one GC16 full.
-    if (!g_scheduled) present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
-    {  // STYLE.md 5.6: the pill shows the sleep mode and the next scheduled update, from the plan about to run
-      const int64_t pe = session_glue::wallClock();
-      const app_logic::SleepPath pp = app_logic::planSleepPath(plan, session, pe);
+    const int64_t pe = session_glue::wallClock();
+    const app_logic::SleepPath pp = app_logic::planSleepPath(plan, session, pe);
+    if (g_settings.sleep_screen) {
+      // Task 101: the dedicated sleep screen is the last frame, no pill. Always one GC16 full (scheduled wake:
+      // the deferred session draws it now; interactive: Mode::Full), then the flag that makes the next wake
+      // replace it by one full.
+      composeSleepScreen(pp);
+      now = millis();
+      if (g_scheduled) {
+        const uint32_t t0 = millis();
+        if (present::finishScheduled(true))
+          wakelog::refreshed(millis() - t0);
+      } else {
+        timedShow(present::Mode::Full, now);
+      }
+      present::setSleepScreenOnPanel(true);
+      pillOnPanel = false;
+    } else {
+      // Task 092: a scheduled wake draws nothing until here (see present::setWakePolicy), then one GC16 full.
+      if (!g_scheduled) present::prepareSleep();  // ghost debt first, the indicator is drawn last (STYLE.md 5.5)
+      // STYLE.md 5.6: the pill shows the sleep mode and the next scheduled update, from the plan about to run
       g_status.sleepKind = int(pp.indicator);
       g_status.sleepNextMin = app_logic::pillNextMinute(pp.next_update_at, pe, utcOffsetAt(pe));
-    }
-    composeFrame();
-    now = millis();
-    if (g_scheduled) {  // the badge is in this frame: the last refresh before sleep is always the GC16 full
-      const uint32_t t0 = millis();
-      if (present::finishScheduled(true))
-        wakelog::refreshed(millis() - t0);
-    } else {
-      timedShow(present::Mode::Partial, now);  // no flash at sleep entry; the partial debt is cleared by the next full
+      composeFrame();
+      now = millis();
+      if (g_scheduled) {  // the badge is in this frame: the last refresh before sleep is always the GC16 full
+        const uint32_t t0 = millis();
+        if (present::finishScheduled(true))
+          wakelog::refreshed(millis() - t0);
+      } else {
+        timedShow(present::Mode::Partial, now);  // no flash at sleep entry; the partial debt is cleared by the next full
+      }
     }
     present::prepareSleep();  // saves the record of the frame with the indicator, closes the read state
   }
@@ -948,10 +1027,11 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   net::powerDown();
   boot::endBurstRead();
   boot::setupDone();
-  sleepwake::enter(plan, session, session_glue::wallClock(), batteryMv());
+  sleepwake::enter(plan, session, session_glue::wallClock(), batteryMv(), pillOnPanel);
   // Not asleep (should not happen): carry on as an awake device without the indicator.
   boot::log("sleep_failed", 1);
   g_status.sleepKind = 0;
+  present::setSleepScreenOnPanel(false);
 }
 
 // Manual sleep (task 081): rocker hold 2.5 s or the Settings "Sleep now" row. Same path as the idle
@@ -1016,7 +1096,8 @@ void setup() {
   report_glue::wakeStart(s.report_ha && !s.demo_mode, g_scheduled, g_wake == power::WakeReason::ColdBoot,
                          g_wake == power::WakeReason::Touch ? devreport::WakeKind::Touch
                          : g_wake == power::WakeReason::Button ? devreport::WakeKind::Button
-                                                               : devreport::WakeKind::Boot);
+                                                               : devreport::WakeKind::Boot,
+                         s.sleep_screen && !s.demo_mode);  // task 101: the sleep screen shows the reading either way
   wakelog::begin(app_logic::wakeName(g_wake), kind, earlyClear);  // earlyClear: the SD write waits for the first draw
   if (g_scheduled) {  // the pill of our previous sleep stays on the panel (line 2 is replaced when we sleep again)
     g_status.sleepKind = int(sleepwake::storedIndicator());

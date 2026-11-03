@@ -45,6 +45,7 @@ struct Settings {
     HaLink ha_link = HaLink::Auto;
     KeepAwake keep_awake = KeepAwake::Off;
     bool learn_battery = true;    // task 079: learn the low-battery limit from brownouts
+    bool sleep_screen = false;    // task 101: last frame before sleep is the sleep screen (default: dashboard + pill)
     bool report_ha = true;        // task 100: post battery/temperature/humidity/last wake to HA (default On, user 2026-11-03)
 
     bool operator==(const Settings& o) const {
@@ -52,7 +53,8 @@ struct Settings {
                idle_timeout_s == o.idle_timeout_s && orientation == o.orientation &&
                demo_mode == o.demo_mode && debug_log == o.debug_log &&
                wifi_profile == o.wifi_profile && ha_link == o.ha_link &&
-               keep_awake == o.keep_awake && learn_battery == o.learn_battery && report_ha == o.report_ha;
+               keep_awake == o.keep_awake && learn_battery == o.learn_battery && report_ha == o.report_ha &&
+               sleep_screen == o.sleep_screen;
     }
     bool operator!=(const Settings& o) const { return !(*this == o); }
 };
@@ -85,6 +87,7 @@ constexpr const char* kKeyHaLink = "halink";         // HaLink; absent = Auto
 constexpr const char* kKeyStayAwakeUsb = "stayusb";  // old 0 / 1 (read for migration to keep_awake)
 constexpr const char* kKeyKeepAwake = "keepawake";   // KeepAwake; absent = Off
 constexpr const char* kKeyLearnBattery = "learnbat";  // 0 / 1; absent = on (no schema bump)
+constexpr const char* kKeySleepScreen = "sleepscr";  // 0 / 1; absent = dashboard (task 101, no schema bump)
 constexpr const char* kKeyReportHa = "reportha";     // 0 / 1; absent = on (task 100, no schema bump)
 
 // Abstract key-value store of ints.
@@ -109,6 +112,7 @@ bool isValidWifiProfileIndex(int32_t v);  // legacy index: 0..kMaxWifiProfileInd
 bool isValidHaLink(int32_t v);
 bool isValidLearnBattery(int32_t v);
 bool isValidReportHa(int32_t v);
+bool isValidSleepScreen(int32_t v);
 
 // Nearest allowed update interval (old values 15/120/240 from schema 2); ties go to the longer one.
 int32_t snapRefreshIntervalMin(int32_t v);
