@@ -14,7 +14,7 @@
 namespace app_logic {
 
 struct NetCommand {
-  enum class Type { Fetch, Call, Close, History };  // Close: drop the kept-alive connection (before sleep)
+  enum class Type { Fetch, Call, Close, History, Report };  // Close: drop the kept-alive connection (before sleep)
   Type type = Type::Fetch;
   std::vector<std::string> ids;  // Fetch: entities to fetch; Call: entities whose returned state is parsed
   int ticket = 0;                // Call
@@ -32,10 +32,12 @@ struct NetCommand {
   StatsType histStatistic = StatsType::Mean;
   int64_t histBucketSeconds = 0;
   int histBucketCount = 0;
+  // Report (task 100): POST /api/states/<entity> for each (entity, JSON body) pair, in order.
+  std::vector<std::pair<std::string, std::string>> reports;
 };
 
 struct NetEvent {
-  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone };
+  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone };
   Type type = Type::FetchDone;
   HaError error = HaError::None;
   int http_status = 0;
@@ -54,6 +56,10 @@ struct NetEvent {
   bool stats = false;          // the statistics source ran (log field src=stats)
   bool noStatistics = false;   // statistics: valid answer, but the entity has none (error is None)
   uint32_t heapMin = 0;        // filled by the net task for the log line
+  // ReportDone: one flag per posted entity (1 = HA accepted it), in command order. After a failure the rest is
+  // skipped (flag 0, never sent): a failed report is not retried within the session. ms = total time.
+  std::vector<uint8_t> reportOk;
+  uint32_t reportSent = 0, reportSkipped = 0;
 };
 
 // History fetch failure that means "too much data": over the size cap, or the 15 s deadline hit while data was

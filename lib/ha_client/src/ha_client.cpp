@@ -106,6 +106,16 @@ HaResult HaClient::call_service(const ServiceCall& call, const std::vector<std::
   return r;
 }
 
+HaResult HaClient::post_state(const std::string& entity_id, const std::string& body) {
+  std::string resp;
+  HaResult r = post("/api/states/" + entity_id, body, resp);
+  if (r.error == HaError::TooLarge) {  // the post went out; only the answer was too big to keep
+    r.error = HaError::None;
+    r.message.clear();
+  }
+  return r;
+}
+
 HaResult HaClient::stream_history(const std::string& entity_id, int64_t start_epoch,
                                   int64_t end_epoch, const StreamLimits& lim, const ChunkFn& sink,
                                   size_t* bytes_out) {

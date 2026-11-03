@@ -26,6 +26,7 @@
 #include "render/screen.h"
 #include "render/settings_screen.h"
 #include "render/splash_screen.h"
+#include "report_glue.h"
 #include "session_driver.h"
 #include "session_glue.h"
 #include "settings.h"
@@ -475,13 +476,25 @@ static void graphsRequest(int tab) {
 }
 
 // The session driver's hook: a full state fetch ended.
+static void reportOnFetch(bool ok);
+
 static void graphsOnFetch(bool ok) {
+  reportOnFetch(ok);  // task 100: before the graph jobs, so the sleep hold covers it
   if (g_demoMode || !g_app.graphs().any()) return;
   if (ok) graphsRequest(g_app.shownTab());
   else g_app.graphs().fetchFailed(g_app.shownTab(), uistate::kGraphFetchAllTabs);
 }
 
 static bool graphsBusy() { return g_real && g_app.graphs().busy(); }
+
+// Task 100: the device report (battery, temperature, humidity, last wake) after the first good state fetch of a wake.
+static void reportOnFetch(bool ok) {
+  if (g_demoMode || !g_drv) return;
+  app_logic::NetCommand c;
+  if (report_glue::onFetch(ok, batteryPercent(), batteryMv(), M5.Power.isCharging() == m5::Power_Class::is_charging,
+                           session_glue::wallClock(), c))
+    g_drv->postReport(c);
+}
 
 static void graphsDone(app_logic::NetEvent &&ev) {
   uistate::GraphWidgets &g = g_app.graphs();
@@ -583,7 +596,9 @@ static void startSession(uint32_t now, bool restart = false) {
   g_drv->setHistoryHandler(onHistoryDone);
   g_drv->setFetchHook(graphsOnFetch);
   g_drv->setHttpDateHook(session_glue::httpDateObserved);  // task 097
-  g_drv->setSleepHold([] { return graphsBusy() || ota::busy(); });  // task 087: no sleep during a check / download
+  g_drv->setReportHandler([](app_logic::NetEvent &&ev) { report_glue::onDone(ev, session_glue::wallClock()); });
+  g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy(); });  // task 087: no sleep during a check / download
+  report_glue::abort();
   g_app.graphs().abortFetch();  // the old net session is gone: a graph result will not arrive
   g_graphBatchMs = 0;
   if (g_app.history().fetching() || g_histWaitNet) {  // the old net session is gone: its result will not arrive
@@ -997,6 +1012,11 @@ void setup() {
   const ui::Rect pill{badgeRect.x + 2, badgeRect.y + 2, 104, 44};
   const bool earlyClear = !g_scheduled && kind == power::Session::Interactive && sleepwake::badgeOnPanel() &&
                           pill.x % 4 == 0;
+  // Task 100: early, before Wi-Fi heats the chip. Reads the SHT30 only when this wake reports.
+  report_glue::wakeStart(s.report_ha && !s.demo_mode, g_scheduled, g_wake == power::WakeReason::ColdBoot,
+                         g_wake == power::WakeReason::Touch ? devreport::WakeKind::Touch
+                         : g_wake == power::WakeReason::Button ? devreport::WakeKind::Button
+                                                               : devreport::WakeKind::Boot);
   wakelog::begin(app_logic::wakeName(g_wake), kind, earlyClear);  // earlyClear: the SD write waits for the first draw
   if (g_scheduled) {  // the pill of our previous sleep stays on the panel (line 2 is replaced when we sleep again)
     g_status.sleepKind = int(sleepwake::storedIndicator());

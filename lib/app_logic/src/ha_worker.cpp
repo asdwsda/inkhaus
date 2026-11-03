@@ -200,6 +200,27 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     e.ticket = cmd.ticket;
     if (cmd.histStats) runStatistics(cmd, e);
     else runHistory(cmd, e);
+  } else if (cmd.type == NetCommand::Type::Report) {
+    e.type = NetEvent::Type::ReportDone;
+    e.ticket = cmd.ticket;
+    bool failed = false;
+    for (const auto &item : cmd.reports) {
+      uint8_t ok = 0;
+      if (!failed) {
+        const HaResult r = client_->post_state(item.first, item.second);
+        e.ms += r.ms;
+        e.http_status = r.http_status;
+        e.external = isExternal(r.base_url);
+        e.reused = r.reused;
+        e.error = r.error;
+        if (r.ok()) ok = 1;
+        else failed = true;
+      }
+      e.reportOk.push_back(ok);
+      if (ok) ++e.reportSent;
+      else ++e.reportSkipped;
+    }
+    if (!failed) e.error = HaError::None;
   } else if (cmd.type == NetCommand::Type::Close) {
     transport_.close();
     e.type = NetEvent::Type::Closed;
