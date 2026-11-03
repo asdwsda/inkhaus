@@ -10,7 +10,8 @@ namespace report_glue {
 
 // Early in the wake (before Wi-Fi heats the chip): decides whether this wake reports (setting On, scheduled wake
 // or cold boot, not demo) and if so reads the SHT30 once. Without reporting nothing is read. Idempotent per boot.
-void wakeStart(bool settingOn, bool scheduled, bool coldBoot, devreport::WakeKind kind);
+// readAnyway (task 101, sleep screen on): read the SHT30 on every wake, reported or not.
+void wakeStart(bool settingOn, bool scheduled, bool coldBoot, devreport::WakeKind kind, bool readAnyway = false);
 
 // The last SHT30 reading of this wake (for task 101's sleep screen). False if none was taken or it failed.
 bool climate(int32_t &temp_x10, int32_t &hum_x10);

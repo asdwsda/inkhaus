@@ -39,6 +39,7 @@ Config fullConfig() {
   w2.entities = {"vacuum.r"};
   c.tabs = {{"One", {w1, w2}}, {"Empty", {}}};
   c.entityIds = {"cover.a", "cover.b", "vacuum.r"};
+  c.sleepScreen = {"weather.home", "calendar.family", true};  // task 101
   return c;
 }
 
@@ -47,6 +48,9 @@ void expectEqual(const Config &a, const Config &b) {
   TEST_ASSERT_TRUE(serializeConfig(a) == serializeConfig(b));
   TEST_ASSERT_EQUAL_INT(a.version, b.version);
   TEST_ASSERT_EQUAL_STRING(a.timezone.c_str(), b.timezone.c_str());
+  TEST_ASSERT_EQUAL_STRING(a.sleepScreen.weather.c_str(), b.sleepScreen.weather.c_str());
+  TEST_ASSERT_EQUAL_STRING(a.sleepScreen.calendar.c_str(), b.sleepScreen.calendar.c_str());
+  TEST_ASSERT_EQUAL(a.sleepScreen.notifications, b.sleepScreen.notifications);
   TEST_ASSERT_EQUAL(a.hasConnection, b.hasConnection);
   TEST_ASSERT_EQUAL_STRING(a.connection.wifi.staticIp.dns.c_str(), b.connection.wifi.staticIp.dns.c_str());
   TEST_ASSERT_EQUAL(a.connection.wifiProfiles.size(), b.connection.wifiProfiles.size());

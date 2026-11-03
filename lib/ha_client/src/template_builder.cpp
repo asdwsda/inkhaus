@@ -16,6 +16,7 @@ const char* domain_attrs(const std::string& domain) {
   if (domain == "binary_sensor") return "device_class";
   if (domain == "weather") return "temperature,humidity,temperature_unit";
   if (domain == "vacuum") return "battery_level,status";
+  if (domain == "calendar") return "message,start_time,all_day";  // task 101: sleep screen next event
   return "";
 }
 

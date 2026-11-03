@@ -189,7 +189,8 @@ void saveTab(int tab) {
   }
 }
 
-void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEpoch, int32_t batteryMv) {
+void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEpoch, int32_t batteryMv,
+           bool pillOnPanel) {
   power::SleepPlan plan = planIn;
 #ifdef TEST_POWEROFF_ALARM_S
   // Task 084 battery test: always power off, rocker wake, and a short RTC alarm (rounded up to a minute).
@@ -224,7 +225,7 @@ void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEp
   Preferences p;
   if (p.begin(kNs, false)) {
     p.putString(kKeyPath, ex.gpio2_low ? "poweroff" : "deepsleep");
-    p.putUChar(kKeyInd, uint8_t(sp.indicator));
+    p.putUChar(kKeyInd, pillOnPanel ? uint8_t(sp.indicator) : uint8_t(0));  // task 101: the sleep screen has no pill
     p.putLong64(kKeyNext, sp.next_update_at ? *sp.next_update_at : 0);
     p.putUChar(kKeyMarker, 1);
     p.end();

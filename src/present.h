@@ -80,6 +80,10 @@ bool prepareSleep();
 // Task 092 (grey drift). Call before bootFrame. deferred (scheduled wake): bootFrame and show() draw nothing and
 // only note whether the frame changed. firstFrameFull: bootFrame does one GC16 full when partial debt is set.
 void setWakePolicy(bool deferred, bool firstFrameFull);
+// Task 101: the sleep screen is the frame on the panel (NVS, survives sleep). Set by the caller after it drew the
+// sleep screen; bootFrame() of an interactive wake then replaces it by one GC16 full and clears the flag.
+bool sleepScreenOnPanel();
+void setSleepScreenOnPanel(bool on);
 // Task 095: one GC16 full of the current frame now (log `full_idle`), clears the debt. Call only when idle.
 void idleFull();
 bool deferChanged();   // the deferred frames differ from the panel

@@ -437,6 +437,19 @@ void test_learn_battery_persists() {
     TEST_ASSERT_TRUE(strlen(kKeyLearnBattery) <= 15);
 }
 
+void test_sleep_screen_persists() {
+    FakeStore st;
+    TEST_ASSERT_FALSE(load(st).sleep_screen);  // absent = dashboard
+    st.data[kKeySleepScreen] = 7;
+    TEST_ASSERT_FALSE(load(st).sleep_screen);
+    Settings s;
+    s.sleep_screen = true;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT32(1, st.data[kKeySleepScreen]);
+    TEST_ASSERT_TRUE(load(st).sleep_screen);
+    TEST_ASSERT_TRUE(strlen(kKeySleepScreen) <= 15);
+}
+
 void test_report_ha_persists() {
     FakeStore st;
     TEST_ASSERT_TRUE(load(st).report_ha);  // absent (fresh or migrated NVS) = on
@@ -536,6 +549,7 @@ int main(int, char**) {
     RUN_TEST(test_keep_awake_persists);
     RUN_TEST(test_learn_battery_persists);
     RUN_TEST(test_report_ha_persists);
+    RUN_TEST(test_sleep_screen_persists);
     RUN_TEST(test_wifi_profile_index_lookup);
     RUN_TEST(test_wifi_profile_legacy_index_migrates_once);
     return UNITY_END();

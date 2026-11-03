@@ -45,7 +45,9 @@ void saveTab(int tab);
 // either releases the main power hold (PowerOff; on battery the device is off after this call) or
 // enters ESP32 deep sleep (Touch mode, and the USB-powered fallback of PowerOff). Does not return
 // unless something prevented sleeping. The caller has drawn the indicator, closed the controller
-// read state (boot::endBurstRead) and stopped Wi-Fi.
-void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoch, int32_t batteryMv);
+// read state (boot::endBurstRead) and stopped Wi-Fi. pillOnPanel false (task 101: the sleep screen is on the
+// panel, it has no pill) stores indicator None, so the next wake neither clears nor keeps a pill.
+void enter(const power::SleepPlan &plan, power::Session session, int64_t nowEpoch, int32_t batteryMv,
+           bool pillOnPanel = true);
 
 }  // namespace sleepwake

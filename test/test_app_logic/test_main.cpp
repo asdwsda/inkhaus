@@ -1378,6 +1378,39 @@ void test_statistics_job_fallback_and_errors() {
   TEST_ASSERT_TRUE(w3.run(statsCmd()).error == HaError::Network);
 }
 
+void test_notifications_job_over_ws() {
+  CountingHa ha;
+  FakeConnector fc;
+  fc.sock.result = "{\"id\":1,\"type\":\"result\",\"success\":true,\"result\":["
+                   "{\"notification_id\":\"a\",\"title\":\"Old\",\"message\":\"m\",\"created_at\":\"2026-11-01T08:00:00+00:00\"},"
+                   "{\"notification_id\":\"b\",\"title\":\"Disk\",\"message\":\"m\",\"created_at\":\"2026-11-03T08:00:00+00:00\"}]}";
+  HaWorker w(ha, "https://ha.example.org", "", "T");
+  w.setWsConnector(&fc);
+  NetCommand c;
+  c.type = NetCommand::Type::Notifications;
+  c.ticket = 3;
+  NetEvent e = w.run(c);
+  TEST_ASSERT_TRUE(e.type == NetEvent::Type::NotificationsDone);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL(3, e.ticket);
+  TEST_ASSERT_TRUE(e.notif.ok);
+  TEST_ASSERT_EQUAL(2, e.notif.count);
+  TEST_ASSERT_EQUAL_STRING("Disk", e.notif.newest.c_str());
+  TEST_ASSERT_TRUE(fc.sock.lastCommand.find("\"type\":\"persistent_notification/get\"") != std::string::npos);
+  TEST_ASSERT_EQUAL(1, ha.closes);  // the HTTP socket is closed first
+  // server error (unknown command): Parse, no count
+  FakeConnector fc2;
+  fc2.sock.result = "{\"id\":1,\"type\":\"result\",\"success\":false,\"error\":{\"code\":\"unknown_command\"}}";
+  HaWorker w3(ha, "https://ha.example.org", "", "T");
+  w3.setWsConnector(&fc2);
+  NetEvent bad = w3.run(c);
+  TEST_ASSERT_TRUE(bad.error == HaError::Parse);
+  TEST_ASSERT_FALSE(bad.notif.ok);
+  // no connector: network error
+  HaWorker w2(ha, "https://ha.example.org", "", "T");
+  TEST_ASSERT_TRUE(w2.run(c).error == HaError::Network);
+}
+
 void test_statistics_bar_job() {
   CountingHa ha;
   FakeConnector fc;
@@ -1493,6 +1526,7 @@ int main() {
   RUN_TEST(test_statistics_job_heap_margin_closes_http);
   RUN_TEST(test_statistics_job_fallback_and_errors);
   RUN_TEST(test_statistics_bar_job);
+  RUN_TEST(test_notifications_job_over_ws);
   RUN_TEST(test_history_job_errors_and_cancel);
   RUN_TEST(test_history_event_goes_to_handler_not_session);
   return UNITY_END();

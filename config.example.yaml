@@ -10,6 +10,10 @@ version: 1
 
 # Optional. POSIX TZ string for the clock and the wake-up schedule. Default: Central Europe.
 # timezone: "CET-1CEST,M3.5.0,M10.5.0/3"
+# sleep_screen:                       # optional blocks of the sleep screen (Settings > While asleep)
+#   weather: weather.home
+#   calendar: calendar.family
+#   notifications: true
 
 # Optional device-side entity lists. All members must share one domain.
 # Group names: lowercase letters, digits and underscore only.

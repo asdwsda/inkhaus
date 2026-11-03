@@ -4,6 +4,7 @@
 
 #include "scanner.h"
 #include "stats_parser.h"
+#include "notifications.h"
 #include "stats_request.h"
 #include "ws_endpoint.h"
 
@@ -182,6 +183,49 @@ void HaWorker::runStatistics(const NetCommand &cmd, NetEvent &e) {
     e.fetchMs = uint32_t(std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - t0).count());
 }
 
+// Task 101: persistent_notification/get over one short WebSocket connection (same flow as the statistics).
+void HaWorker::runNotifications(NetEvent &e) {
+  if (!ws_) {
+    e.error = HaError::Network;
+    return;
+  }
+  ws::Request req;
+  req.token = token_;
+  req.limits.max_bytes = kNotificationsMaxBytes;
+  req.limits.deadline_ms = 8000;
+  req.command_json = build_notifications_command(1);
+  e.error = HaError::Network;  // no base URL could be used
+  for (const std::string &base : wsBases()) {
+    const ws::Endpoint ep = ws::parse_endpoint(base);
+    if (!ep.valid) continue;
+    transport_.close();  // the keep-alive TLS socket fragments the heap the WS handshake needs
+    std::unique_ptr<ws::Socket> sock = ws_->open(ep.host, ep.port, ep.tls);
+    if (!sock) continue;
+    for (int i = 0; i < 4; i++) {
+      const uint32_t r = sock->random32();
+      for (int k = 0; k < 4; k++) req.key[i * 4 + k] = uint8_t(r >> (8 * k));
+    }
+    req.host = ep.hostHeader;
+    std::string body;
+    const ws::FlowResult fr = ws::run_command(*sock, req, [&](const char *d, size_t n) {
+      body.append(d, n);
+      return true;
+    });
+    sock.reset();
+    e.bytes = fr.bytes;
+    e.ms = fr.ms;
+    e.external = isExternal(base);
+    if (!fr.ok()) {
+      e.error = fr.server_error ? HaError::Parse : fr.error;
+      if (fr.error == HaError::Network && fr.bytes == 0) continue;  // try the other base
+      break;
+    }
+    e.notif = parse_notifications(body);
+    e.error = e.notif.ok ? HaError::None : HaError::Parse;
+    break;
+  }
+}
+
 NetEvent HaWorker::run(const NetCommand &cmd) {
   NetEvent e;
   if (cmd.type == NetCommand::Type::Fetch) {
@@ -200,6 +244,10 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     e.ticket = cmd.ticket;
     if (cmd.histStats) runStatistics(cmd, e);
     else runHistory(cmd, e);
+  } else if (cmd.type == NetCommand::Type::Notifications) {
+    e.type = NetEvent::Type::NotificationsDone;
+    e.ticket = cmd.ticket;
+    runNotifications(e);
   } else if (cmd.type == NetCommand::Type::Report) {
     e.type = NetEvent::Type::ReportDone;
     e.ticket = cmd.ticket;

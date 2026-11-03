@@ -8,13 +8,14 @@
 #include "collector.h"
 #include "entity_state.h"
 #include "ha_client.h"
+#include "notifications.h"
 #include "service_call.h"
 #include "stats_types.h"
 
 namespace app_logic {
 
 struct NetCommand {
-  enum class Type { Fetch, Call, Close, History, Report };  // Close: drop the kept-alive connection (before sleep)
+  enum class Type { Fetch, Call, Close, History, Report, Notifications };  // Close: drop the kept-alive connection (before sleep)
   Type type = Type::Fetch;
   std::vector<std::string> ids;  // Fetch: entities to fetch; Call: entities whose returned state is parsed
   int ticket = 0;                // Call
@@ -37,7 +38,7 @@ struct NetCommand {
 };
 
 struct NetEvent {
-  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone };
+  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone, NotificationsDone };
   Type type = Type::FetchDone;
   HaError error = HaError::None;
   int http_status = 0;
@@ -60,6 +61,8 @@ struct NetEvent {
   // skipped (flag 0, never sent): a failed report is not retried within the session. ms = total time.
   std::vector<uint8_t> reportOk;
   uint32_t reportSent = 0, reportSkipped = 0;
+  // NotificationsDone (task 101): error None + notif.ok = the count and newest title are valid.
+  NotificationSummary notif;
 };
 
 // History fetch failure that means "too much data": over the size cap, or the 15 s deadline hit while data was

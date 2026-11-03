@@ -157,6 +157,9 @@ std::string serializeConfig(const Config &cfg) {
     }
   }
   w.strs(cfg.entityIds);
+  w.str(cfg.sleepScreen.weather);
+  w.str(cfg.sleepScreen.calendar);
+  w.u8(cfg.sleepScreen.notifications);
   w.u32(crc32(reinterpret_cast<const uint8_t *>(w.s.data()), w.s.size()));
   return w.s;
 }
@@ -281,6 +284,9 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
     if (!r.ok) return false;
   }
   r.strs(c.entityIds, kMaxCount);
+  r.str(c.sleepScreen.weather);
+  r.str(c.sleepScreen.calendar);
+  r.boolean(c.sleepScreen.notifications);
   if (!r.ok || r.n != 0) return false;
   out = std::move(c);
   return true;
