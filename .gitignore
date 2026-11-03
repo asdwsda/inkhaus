@@ -13,3 +13,4 @@ test-firmware/
 
 # Agent progress files (user-visible status)
 .progress/
+include/build_info_gen.h

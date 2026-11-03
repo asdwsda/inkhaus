@@ -251,6 +251,8 @@ Hint rows 88 high: Demo mode, Debug log (portrait (16, 68) and (16, 168), landsc
 
 Task 087 adds the **Firmware row** (8.6) as the third row: portrait (16, 268, 508, 88), the Debug log note slot moves to (16, 368, 508, 64); landscape (16, 164, 456, 88) under Demo mode (note slot unchanged). Focus order: Demo mode, Debug log, Firmware (only when actionable), Back. Mockups: portrait shows update available, landscape up to date; all states in `settings-tools-states.svg`.
 
+Task 113 adds the **About row** (static, no focus stop, no tap action) under the Firmware row: plain info look (1 px OFF-grey hairline on top, no border), label `About` F24 INK at the hint-row label position, build line F18 INK at the hint position: `<version> <variant> · <commit>[+] · <date>`, e.g. `1.3.1 debug · 7727f0d · 2026-11-03` (`+` = built from a dirty tree; variant = release / debug / batterytest / epdoff / poweroff). Fit rule (lib/settings_ui/src/build_info_line.h): drop the date, then the commit, then cut with an ellipsis. Placement is **UNVERIFIED, ui-designer to confirm**: portrait (16, 368, 508, 88) with the Debug log note slot moved down to (16, 468, 508, 64); landscape (16, 264, 456, 88) in the left column under Firmware (note slot unchanged). Also UNVERIFIED: the middle dot in the DejaVu fonts. No mockup yet.
+
 ### 8.5 Interactions and rocker (all category pages)
 | Target | Action | Redraw |
 |--------|--------|--------|

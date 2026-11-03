@@ -157,11 +157,13 @@ PageLayout computePageLayout(Page p, settings::Orientation o) {
         L.rows[0] = {16, 68, 508, 88};
         L.rows[1] = {16, 168, 508, 88};
         L.rows[2] = {16, 268, 508, 88};
-        L.note = {16, 368, 508, 64};
+        L.about = {16, 368, 508, 88};   // task 113, UNVERIFIED placement (ui-designer to confirm)
+        L.note = {16, 468, 508, 64};
       } else {
         L.rows[0] = {16, 64, 456, 88};
         L.rows[1] = {488, 64, 456, 88};
         L.rows[2] = {16, 164, 456, 88};
+        L.about = {16, 264, 456, 88};   // task 113, UNVERIFIED placement
         L.note = {488, 164, 456, 64};
       }
       break;

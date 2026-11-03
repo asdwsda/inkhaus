@@ -229,7 +229,7 @@ void test_page_layouts() {
   expectRect(16, 168, 508, 88, n.rows[1]);
   expectRect(16, 268, 508, 88, n.rows[2]);
   TEST_ASSERT_TRUE(n.rowIds[2] == RowId::ReportHa);
-  expectRect(16, 368, 508, 64, n.note);
+  expectRect(16, 368, 508, 64, n.note);  // Network page
   PageLayout nl = computePageLayout(Page::Network, Orientation::Landscape);
   expectRect(488, 64, 456, 88, nl.rows[1]);
   expectRect(488, 164, 456, 88, nl.rows[2]);
@@ -1058,7 +1058,8 @@ void test_fw_tools_page_focus_and_summary() {
   const PageLayout& P = s.pageLayout();
   TEST_ASSERT_EQUAL_INT(3, P.rowCount);
   expectRect(16, 268, 508, 88, P.rows[2]);
-  expectRect(16, 368, 508, 64, P.note);
+  expectRect(16, 468, 508, 64, P.note);
+  expectRect(16, 368, 508, 88, P.about);
   // Up to date: a tap starts Check now, the row is Checking, input is ignored until the caller clears it.
   Update u = s.onTouch({100, 300});
   TEST_ASSERT_TRUE(u.action == Action::FirmwareCheck);
