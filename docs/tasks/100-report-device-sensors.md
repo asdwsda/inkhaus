@@ -41,3 +41,5 @@ the device POSTs `/api/states/<entity>` (REST, existing token, existing HTTP cli
   fetch, sleep hold while in flight), setting key `reportha` (default Off). Default On.
 - Follow-up (2026-11-03): Settings row (Network page, RowId::ReportHa), default On + migration (absent key = On),
   SHT30 moved to M5.In_I2C (G21/G22, per M5Unified pin table; no begin/release). Open: device check (UNVERIFIED bus).
+- 2026-11-03 tester review: PASS (evidence scratchpad review100.md). Open minor: a sensor posted while the clock
+  is unset keeps epoch 0, so the 6 h age rule never fires for it; fix (treat epoch 0 as stale) after the task 101 merge.
