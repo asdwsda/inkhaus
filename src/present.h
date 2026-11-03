@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "screen_track.h"
+#include "burst_clean.h"
 
 namespace present {
 
@@ -70,6 +71,15 @@ void setLogTab(int tab);  // tab index shown in the "APP: render" log line; also
 // the last shown one; not stored.
 void setTabCleanVariant(int v);
 int tabCleanVariant();
+
+// Task 114: burst clean. Defaults n = 4 partials, idle 2 s, mode gc16 (device look decides). n < 0 turns it off;
+// mode = gc16 | gl16 | init+gl16 (nullptr keeps it). Debug serial: `burstclean N T mode`.
+void setBurstClean(int n, uint32_t idleMs, const char *mode);
+// True when more than n fast partials ran since the last full and the user was idle >= T (idleMs = time since the
+// last input); false in the given context exclusions (popup, Settings, OTA, pending tap, scheduled session).
+bool burstCleanDue(uint32_t idleMs, const screen_track::BurstContext &ctx);
+// One full refresh of the whole frame (mode as configured); logs `PRESENT: refresh=full_burst partials=N mode=..`.
+void burstClean();
 
 // Call regularly: after 2 s without a frame, runs one GC16 full refresh if the ghost debt is
 // exceeded (30 fastest refreshes or 300 % screen area since the last full refresh) and saves the

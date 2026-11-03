@@ -257,11 +257,21 @@ void drawConfirmPage(M5Canvas &c, const sui::SettingsScreen &s) {
   }
 }
 
-void drawCategoryPage(M5Canvas &c, const sui::SettingsScreen &s) {
+// About row (task 113): plain info look (hairline on top, as the Firmware row when up to date), label + build line.
+void drawAboutRow(M5Canvas &c, const Rect &r, const settings_ui::BuildInfo &b) {
+  c.fillRect(r.x, r.y, r.w, 1, OFFGREY);
+  drawTextCy(c, Font::F24, "About", r.x + 16, sui::hintRowLabelCy(r), Align::Left, INK);
+  const std::string line = settings_ui::buildInfoFit(
+      b, r.w - 32, [&c](const std::string &t) { return textWidth(c, Font::F18, t); });
+  drawTextCy(c, Font::F18, line, r.x + 16, sui::hintRowHintCy(r), Align::Left, INK);
+}
+
+void drawCategoryPage(M5Canvas &c, const sui::SettingsScreen &s, const settings_ui::BuildInfo &build) {
   const sui::PageLayout &P = s.pageLayout();
   drawFocusRing(c, s);
   drawHeader(c, s, sui::categoryLabel(static_cast<int>(P.page) - 1), P.title, P.unsavedChip, P.headerRule);
   for (int i = 0; i < P.rowCount; ++i) drawRow(c, s, i);
+  if (P.about.w > 0) drawAboutRow(c, P.about, build);
   if (P.caption.w > 0)
     drawTextCy(c, Font::F18, sui::kDisplayCaption, P.caption.x, P.caption.y + P.caption.h / 2, Align::Left, DIM);
   if (P.page == sui::Page::Sleep) {
@@ -285,7 +295,7 @@ void drawSettings(M5Canvas &c, const sui::SettingsScreen &s, const SettingsInfo 
     return;
   }
   if (s.page() != sui::Page::Main) {
-    drawCategoryPage(c, s);
+    drawCategoryPage(c, s, info.build);
     return;
   }
   drawFocusRing(c, s);

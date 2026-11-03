@@ -1,6 +1,7 @@
 #pragma once
 // Draws the Settings screen (docs/ui/settings.md) into the UI canvas. All geometry and texts come
 // from lib/settings_ui; this file only paints. No refresh here: the caller batches display().
+#include "build_info_line.h"
 #include <string>
 
 #include "draw.h"
@@ -11,6 +12,7 @@ namespace render {
 // Read-only values of the info block, snapshotted by the caller when the screen opens.
 struct SettingsInfo {
   std::string firmware = "v0.0.0";
+  settings_ui::BuildInfo build;  // task 113: About row on the Tools page
   settings_ui::BatteryInfo battery;
   settings_ui::HaInfo ha;
   settings_ui::WifiInfo wifi;

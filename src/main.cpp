@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "app_config.h"
+#include "build_info.h"
 #include "demo_mode.h"
 #include "app_state.h"
 #include "ui_layout.h"
@@ -215,6 +216,7 @@ static settings_ui::WallTime wallTime(int64_t epoch) {
 static void snapshotInfo() {
   render::SettingsInfo &i = g_info;
   i.firmware = "v" FW_VERSION;
+  i.build = buildinfo::info();
   i.battery.percent = batteryPercent();
   i.battery.millivolts = batteryMv();
   i.battery.learnedLimitMv = batterylimit::learned(g_settings.learn_battery) ? batteryLimitMv() : 0;
@@ -1135,6 +1137,7 @@ void setup() {
   ota::earlyBoot();  // task 087: count a boot of a just-installed firmware first, so a crash in setup() counts
   boot::begin();
   ota::logEarly();
+  Serial.printf("BOOT: fw=%s\n", buildinfo::line());  // task 113
   present::setFirmwareId(firmwareId());
   g_wake = sleepwake::detect();
   settings::Settings &s = g_settings;
@@ -1515,6 +1518,15 @@ void loop() {
   changed |= g_app.tick(now);
   if (changed) showFrame(now);
   if (e.kind != input::Event::None || popupOpen) g_lastInputMs = now;
+  {  // task 114: clean after a burst of taps (before 095's idle full, which it makes unnecessary by clearing the debt)
+    screen_track::BurstContext bc;
+    bc.popup = g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen();
+    bc.settings = settings_flow::active();
+    bc.ota = ota::busy();
+    bc.tap_pending = g_defer.armed();
+    bc.scheduled = g_scheduled;
+    if (g_real && present::burstCleanDue(now - g_lastInputMs, bc)) present::burstClean();
+  }
   if (!g_scheduled && g_real && !ota::busy() &&
       app_logic::idleFullDue(present::partialDebt(), now - g_lastInputMs,
                              settings_flow::active() || g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen(),

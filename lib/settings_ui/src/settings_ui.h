@@ -79,6 +79,7 @@ struct PageLayout {
   Rect note;     // w == 0: the page has no note slot
   Rect note2;    // Sleep page only (w == 0 elsewhere): second stacked note slot (pitch 76)
   Rect estimate; // Sleep page only: battery estimate block (not a focus stop)
+  Rect about;    // Tools only (w == 0 elsewhere): static build-info row (task 113), not a focus stop
   Rect caption;  // Display only (w == 0 elsewhere): text box of the static caption, F18 DIM, cy = y + h / 2
   Rect backButton;
   int stopCount = 0;  // rowCount + 1

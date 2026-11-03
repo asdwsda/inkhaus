@@ -11,6 +11,7 @@
 #include "modal_settle.h"
 #include "screen_track.h"
 #include "tab_clean.h"
+#include "burst_clean.h"
 
 using screen_track::Rect;
 
@@ -46,6 +47,8 @@ bool g_forceFull = false;       // a refresh failed: next frame is a full redraw
 int g_renderTab = -1;           // tab of the frame being shown (setLogTab)
 int g_lastShownTab = -1;        // task 099: tab of the previous show()/bootFrame (-1: none yet)
 int g_tabClean = 0;             // task 099: variant, see setTabCleanVariant()
+screen_track::BurstTracker g_burst;  // task 114: fast partials since the last full
+screen_track::BurstConfig g_burstCfg;
 bool g_readOpen = false;        // a refresh wait left the controller in the read state (needs endBurstRead)
 bool g_framesOk = false;
 int g_partialCount = 0;
@@ -287,6 +290,7 @@ void fullRefresh(bool whiteFirst, const char *why, epd_mode_t fullMode = epd_mod
   copyAllToPrev();
   g_partialCount = 0;
   g_partialArea = 0;
+  g_burst.onFull();  // task 114: any full refresh resets the burst count
   g_havePending = false;
   g_deferChanged = false;
   storeDebt(false);
@@ -320,6 +324,7 @@ void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
       g_settle.noteFastest(r, millis());  // popup debt: cleared by the settle refresh, not by a full one
     } else {
       ++g_partialCount;
+      g_burst.onPartial();
       g_partialArea += long(r.w) * long(r.h);
       g_havePending = true;
     }
@@ -596,9 +601,11 @@ int tabCleanVariant() { return g_tabClean; }
 
 // Task 099: the full refresh of a tab change, by variant. Variant 0 is the plain GC16 full. The INIT variants
 // replace the GC16 white fill (INIT wipes the panel to white); GL16 is used full-screen only.
-static void tabChangeFull(const char *log) {
-  const screen_track::TabCleanPlan plan = screen_track::tabCleanPlan(g_tabClean);
-  uint32_t initMs = 0;
+// Runs `plan` (optional INIT wipe, then the full refresh in its waveform). `plainLog` != null: variant 0 shape (plain
+// fullRefresh with that log tag). Returns the full-refresh time; initMs gets the INIT time.
+static uint32_t fullWithPlan(const screen_track::TabCleanPlan &plan, const char *plainLog, const char *log,
+                             uint32_t &initMs) {
+  initMs = 0;
   bool initOk = true;
   const uint32_t t0 = micros();
   touchRecord();  // crash window: the INIT wipe invalidates what the stored record describes
@@ -612,12 +619,45 @@ static void tabChangeFull(const char *log) {
     }
   }
   const uint32_t t1 = micros();
-  if (!initOk) fullRefresh(true, log);  // unknown controller state: GC16 white fill + GC16 as for any failure
-  else if (g_tabClean == 0) fullRefresh(false, log);
-  else fullRefresh(false, "tab_clean",
+  if (!initOk) fullRefresh(true, plainLog ? plainLog : log);  // unknown controller state: GC16 white fill + GC16
+  else if (plainLog) fullRefresh(false, plainLog);
+  else fullRefresh(false, log,
                    plan.full == screen_track::FullWave::GL16 ? epd_mode_t::epd_text : epd_mode_t::epd_quality);
+  return (micros() - t1) / 1000;
+}
+
+static void tabChangeFull(const char *log) {
+  uint32_t initMs = 0;
+  const uint32_t fullMs = fullWithPlan(screen_track::tabCleanPlan(g_tabClean), g_tabClean == 0 ? log : nullptr,
+                                       "tab_clean", initMs);
   Serial.printf("PRESENT: refresh=tab_clean v=%d init_ms=%u full_ms=%u\n", g_tabClean, (unsigned)initMs,
-                (unsigned)((micros() - t1) / 1000));
+                (unsigned)fullMs);
+}
+
+void setBurstClean(int n, uint32_t idleMs, const char *mode) {
+  g_burstCfg.n = n;
+  g_burstCfg.idle_ms = idleMs;
+  if (mode) screen_track::parseBurstMode(mode, g_burstCfg.mode);
+  Serial.printf("PRESENT: burstclean n=%d idle_ms=%u mode=%s\n", g_burstCfg.n, (unsigned)g_burstCfg.idle_ms,
+                screen_track::burstModeName(g_burstCfg.mode));
+}
+
+bool burstCleanDue(uint32_t idleMs, const screen_track::BurstContext &ctx) {
+  return !g_deferred && g_burst.due(g_burstCfg, idleMs, ctx);
+}
+
+// Task 114: one full refresh of the whole frame after a burst of taps (factory-app style). Resets the partial debt
+// like any full (fullRefresh). The caller guards the context (burstCleanDue).
+void burstClean() {
+  const int partials = g_burst.partials();
+  uint32_t initMs = 0;
+  const uint32_t fullMs = fullWithPlan(screen_track::burstPlan(g_burstCfg.mode), nullptr, "full_burst", initMs);
+  Serial.printf("PRESENT: refresh=full_burst partials=%d mode=%s init_ms=%u full_ms=%u\n", partials,
+                screen_track::burstModeName(g_burstCfg.mode), (unsigned)initMs, (unsigned)fullMs);
+  saveRecordOfCurrent();
+  closeRead();
+  boot::endBurstRead();
+  g_lastShowMs = millis();
 }
 
 bool show(Mode mode, uint32_t now) {

@@ -14,3 +14,4 @@ test-firmware/
 # Agent progress files (user-visible status)
 .progress/
 tools/cam.env
+include/build_info_gen.h
