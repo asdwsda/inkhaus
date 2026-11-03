@@ -6,7 +6,7 @@ UI spec: docs/ui/settings.md (new "Report to HA" row, added by ui-designer for t
 Needs device: yes (SHT30 read + HA states check; PC part first)
 
 ## Scope
-Settings option "Report to HA" (Off | On, default Off: a published app sends nothing unasked). When On,
+Settings option "Report to HA" (Off | On, default On: user 2026-11-03; it only talks to the user's own HA). When On,
 the device POSTs `/api/states/<entity>` (REST, existing token, existing HTTP client):
 - `sensor.m5paper_battery` (%, attrs: `voltage_mv`, `charging`), `sensor.m5paper_temperature` (°C),
   `sensor.m5paper_humidity` (%), `sensor.m5paper_last_wake` (ISO 8601 timestamp, attr `reason`:
@@ -29,7 +29,7 @@ the device POSTs `/api/states/<entity>` (REST, existing token, existing HTTP cli
 ## Acceptance criteria
 - [ ] Native tests: payloads (units, classes, ISO time, attrs), change/age rule, SHT30 CRC + conversion
       against datasheet vectors.
-- [ ] Setting Off: no POST, no SHT30 read cost beyond one read if task 101 needs it.
+- [ ] Default On (fresh install and migration). Setting Off: no POST, no SHT30 read cost beyond one read if task 101 needs it.
 - [ ] `pio test -e native`, `pio run` (all envs) pass.
 - [ ] Log `HA: report sent=N skipped=M ms=..`; device-checks line (entities appear in HA, values sane).
 
