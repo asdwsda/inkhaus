@@ -144,3 +144,6 @@ An IP camera watches the panel. `tools/device_lock.sh tools/cam_snapshot.sh OUT.
 frame (settings in the gitignored `tools/cam.env`); `--raw` for the full frame, `--burst N` for N frames at ~5 fps to
 catch a refresh. Open the JPEG with Read to judge the screen; very faint ghosting may not show, so the user still
 gives the final look OK. Needs room light. Never reset or flash during a long-running test unless the task says so.
+Room light (user, 2026-11-03): `tools/cam_light.sh on|off` switches the room's ceiling light (entity in cam.env, never
+in git). Plan camera shots in batches: one `on` before the batch, one `off` right after. No toggling per shot; keep each on/off state at least 1 min; leave
+it off when no camera work is planned.
