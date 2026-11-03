@@ -95,6 +95,8 @@
 | 094 | [Portrait 3-column grid](094-portrait-3-columns.md) | in-progress | 043 |
 | 095 | [Clear grey drift during long awake sessions](095-awake-drift-cleanup.md) | PC done | 092 |
 | 096 | [Keep supported_color_modes in the state cache](096-cache-color-modes.md) | done | 045 |
+| 097 | [Set the clock from HA's HTTP Date header](097-clock-from-ha-date.md) | in-progress | 008, 024 |
+| 098 | [Native tests for UNVERIFIED device-check logic](098-native-tests-unverified.md) | in-progress | 087, 090, 092 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
