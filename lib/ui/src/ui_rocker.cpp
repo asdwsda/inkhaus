@@ -78,6 +78,7 @@ std::vector<int> innerStops(const FocusEnv &env, int widgetIndex) {
   switch (p->type) {
     case WidgetType::Cover:
     case WidgetType::Vacuum: return {1, 2, 3};
+    case WidgetType::MediaPlayer: return {1, 2, 3, 4};  // task 106: prev, play/pause, next, text block (popup)
     case WidgetType::Climate: return {1, 2};  // the mode is display-only, not a stop
     default: return {};
   }
@@ -101,7 +102,7 @@ void changeTab(FocusState &st, const FocusEnv &env, int tab) {
 
 int entryInner(const FocusEnv &env, int widgetIndex) {
   const Placement *p = findPlacement(env, widgetIndex);
-  if (p && p->type == WidgetType::Cover) return 2;  // stop
+  if (p && (p->type == WidgetType::Cover || p->type == WidgetType::MediaPlayer)) return 2;  // stop
   return 1;
 }
 

@@ -99,6 +99,7 @@ SizeLimits sizeLimits(WidgetType t, const Grid &g) {
       case WidgetType::BinarySensor: return {{1, 1}, {1, 1}, {1, 1}};
       case WidgetType::Sensor: return {{1, 1}, {1, 1}, {2, 1}};
       case WidgetType::Weather: return p3 ? SizeLimits{{2, 1}, {1, 1}, {n, 1}} : SizeLimits{{2, 1}, {2, 1}, {n, 1}};
+      case WidgetType::MediaPlayer: return {{n, 1}, {n, 1}, {n, 1}};  // task 106: full row only (no compact layout)
     }
   }
   const int wide = g.cols == 5 ? 3 : 2;
@@ -112,6 +113,7 @@ SizeLimits sizeLimits(WidgetType t, const Grid &g) {
     case WidgetType::BinarySensor: return {{1, 1}, {1, 1}, {1, 1}};
     case WidgetType::Sensor: return {{1, 1}, {1, 1}, {2, 1}};
     case WidgetType::Weather: return {{2, 1}, {1, 1}, {2, 1}};
+    case WidgetType::MediaPlayer: return {{wide, 1}, {wide, 1}, {wide, 1}};  // task 106
   }
   return {{1, 1}, {1, 1}, {1, 1}};
 }
@@ -297,6 +299,12 @@ std::vector<SubRegion> subRegions(WidgetType type, WidgetSize, const Rect &r) {
       out.push_back({1, {r.x + W - 228, y, 64, 64}});
       out.push_back({2, {r.x + W - 152, y, 64, 64}});
       out.push_back({3, {r.x + W - 76, y, 64, 64}});
+      break;
+    case WidgetType::MediaPlayer:  // task 106: prev, play/pause, next, then the text block (opens the popup)
+      out.push_back({1, {r.x + W - 228, y, 64, 64}});
+      out.push_back({2, {r.x + W - 152, y, 64, 64}});
+      out.push_back({3, {r.x + W - 76, y, 64, 64}});
+      out.push_back({4, {r.x + 12, r.y + 12, W - 264, 80}});
       break;
     case WidgetType::Climate:
       out.push_back({1, {r.x + (W < 400 ? 94 : W - 276), y, 64, 64}});  // compact 2x1: minus at 94

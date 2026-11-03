@@ -43,6 +43,19 @@ EntityState vacuum(const std::string &id, const char *state, int battery, const 
   return e;
 }
 
+// Media player (task 106): empty title / artist / album are left out; volume 0..1.
+EntityState media(const std::string &id, const char *state, const char *name, const char *title, const char *artist,
+                  const char *album, double volume) {
+  EntityState e = make(id, state, name);
+  if (*title) attr(e, "media_title", title);
+  if (*artist) attr(e, "media_artist", artist);
+  if (*album) attr(e, "media_album_name", album);
+  attr(e, "volume_level", std::to_string(volume).substr(0, 4).c_str());
+  attr(e, "is_volume_muted", "false");
+  e.supported_features = 4 | 8 | 16 | 32 | 1;
+  return e;
+}
+
 // Showcase states for the ids of demo.yaml; false for any other id.
 bool showcase(const std::string &id, EntityState &out) {
   if (id == "sensor.living_room_climate") {
@@ -97,6 +110,10 @@ bool showcase(const std::string &id, EntityState &out) {
   else if (id == "vacuum.upstairs") out = vacuum(id, "cleaning", 64);
   else if (id == "vacuum.basement") out = vacuum(id, "returning", 15);
   else if (id == "vacuum.attic") out = vacuum(id, "error", 40, "Brush stuck");
+  else if (id == "media_player.living_room") out = media(id, "playing", "Living room", "Blue in Green", "Miles Davis", "Kind of Blue", 0.45);
+  else if (id == "media_player.kitchen") out = media(id, "paused", "Kitchen", "Morning Mix", "", "", 0.30);
+  else if (id == "media_player.bedroom") out = media(id, "off", "Bedroom", "", "", "", 0.20);
+  else if (id == "media_player.office") out = media(id, "idle", "Office", "", "", "", 0.50);
   else if (id == "light.kitchen_ceiling" || id == "light.hall" || id == "light.office_desk") {
     out = make(id, "on");
     out.brightness = 128;
@@ -163,6 +180,7 @@ EntityState demoForBase(const std::string &id) {
     e.temperature_unit = "\xC2\xB0" "C";
     return e;
   }
+  if (domain == "media_player") return media(id, "playing", "Player", "Blue in Green", "Miles Davis", "Kind of Blue", 0.45);
   if (domain == "vacuum") {
     EntityState e = make(id, "docked", "Robot");
     e.battery_level = 85;

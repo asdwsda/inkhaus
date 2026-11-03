@@ -79,6 +79,18 @@ ActionResult fakeAction(config::WidgetType type, int sub, const std::vector<cons
       r.changed = true;
       return r;
     }
+    case T::MediaPlayer: {  // task 106: prev / next keep the state (the call is still sent)
+      if (sub < 1 || sub > 3 || members.empty() || !members[0] || !members[0]->available) return r;
+      EntityState s = *members[0];
+      if (sub == 2) {
+        if (s.state == "playing" || s.state == "buffering") s.state = "paused";
+        else if (s.state == "off") s.state = "on";  // turn_on
+        else s.state = "playing";
+      }
+      r.states.push_back(s);
+      r.changed = true;
+      return r;
+    }
     default:
       return r;
   }

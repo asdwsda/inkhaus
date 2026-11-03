@@ -29,6 +29,12 @@ std::optional<session::Event> intentFromRequest(T type, int sub, const std::vect
       return session::Event::user_action(
           ids, sub == 1 ? A::VacuumStart : sub == 2 ? A::VacuumPause : A::VacuumReturnToBase);
     }
+    case T::MediaPlayer: {  // task 106: 1 prev, 2 play/pause (or turn_on from off), 3 next
+      if (sub < 1 || sub > 3) return std::nullopt;
+      ids.resize(1);
+      const A a = sub == 1 ? A::MediaPrevious : sub == 3 ? A::MediaNext : req[0].state == "on" ? A::MediaTurnOn : A::MediaPlayPause;
+      return session::Event::user_action(ids, a);
+    }
     case T::Climate: {
       const EntityState &s = req[0];
       if (!s.temperature) return std::nullopt;

@@ -74,8 +74,13 @@ tabs:
 | `history` | graph options: `false` (off), a number of hours (`history: 48`), or a mapping with `hours` (1 to 720, default 24), `type` (`auto`, `line`, `bar`, `step`), `statistic` (`mean`, `min`, `max`, `sum`, `change`), `period` (`auto`, `hour`, `day`), `min` / `max` (fixed y axis, `min` < `max`), `source` (`auto`, `history`, `statistics`). All optional. `statistic` (default `mean`, `sum` for `device_class: energy`) and `period` only apply to `type: bar`, elsewhere they are ignored. Errors: `type: bar` with `source: history`, and `period: hour` bars over more than 128 hours |
 
 Widget types come from the entity domain: `cover`, `light`, `switch`, `automation`, `climate`,
-`sensor`, `binary_sensor`, `weather`, `vacuum`. Cover, climate and vacuum are wide; light, switch,
+`sensor`, `binary_sensor`, `weather`, `vacuum`, `media_player`. Cover, climate, vacuum and media_player are wide; light, switch,
 automation and binary_sensor are 1x1; sensor is 1x1 (up to 2x1); weather is 2x1 (down to 1x1).
+A `media_player` widget (task 106; docs/ui/widgets-new.md section 4) shows the title and artist (the `name` while
+nothing plays), prev / play-pause / next buttons, and opens a popup when you tap the text: title, artist, album,
+transport buttons, volume (`-` / `+` in 5 % steps, the bar, rocker Up / Down, sent one second after the last step) and mute.
+Volume and mute are dotted when the player's `supported_features` lacks them. Single entity only (no group); with
+several players give each a `name`. Size: wide only (3 cells landscape 5 columns, otherwise 2; a full row in portrait 3 and 4 columns).
 Sizes outside the allowed range are clamped. Details are in [docs/ui/layout.md](ui/layout.md).
 Config errors are reported with path and line, e.g. `tabs[0].widgets[2].entity (line 34)`. The
 file may be at most 64 KB.

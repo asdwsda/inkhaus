@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "media_widget.h"
 #include "text_fit.h"
 #include "widget_view.h"
 
@@ -474,6 +475,7 @@ void drawWidget(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData 
     case WidgetType::Sensor: drawSensor(x, pl, data, title); break;
     case WidgetType::Weather: drawWeather(x, pl, data, title); break;
     case WidgetType::Vacuum: drawVacuum(x, data, title); break;
+    case WidgetType::MediaPlayer: drawMediaWidget(c, pl, data, title, innerSub); break;  // task 106
   }
 }
 

@@ -31,6 +31,7 @@ enum class WidgetType {
   BinarySensor,
   Weather,
   Vacuum,
+  MediaPlayer,  // task 106 (type name and domain "media_player")
 };
 
 // Name as used in the `type:` override and as HA domain (e.g. "binary_sensor").
