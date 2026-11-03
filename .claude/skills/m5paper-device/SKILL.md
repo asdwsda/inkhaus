@@ -138,3 +138,9 @@ the architect.
   real secrets.yaml; a real config.yaml may be read only if the user shares it and it has no
   `connection:` section.
 
+
+## Camera (user, 2026-11-03)
+An IP camera watches the panel. `tools/device_lock.sh tools/cam_snapshot.sh OUT.jpg` saves a cropped, upright
+frame (settings in the gitignored `tools/cam.env`); `--raw` for the full frame, `--burst N` for N frames at ~5 fps to
+catch a refresh. Open the JPEG with Read to judge the screen; very faint ghosting may not show, so the user still
+gives the final look OK. Needs room light. Never reset or flash during a long-running test unless the task says so.
