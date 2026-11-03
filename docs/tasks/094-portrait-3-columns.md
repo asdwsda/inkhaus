@@ -2,7 +2,7 @@
 
 Status: in-progress
 Depends on: 043 (landscape_columns: 4)
-UI spec: docs/ui/layout.md 2b (3 col), mockups docs/ui/experiment-portrait-3col*.svg, experiment-portrait-4col*.svg (4 col)
+UI spec: docs/ui/layout.md 2b (3 col), accepted mockup docs/ui/experiment-portrait-3col-cover3.svg; variants docs/ui/experiments/experiment-portrait-3col*.svg, docs/ui/experiments/experiment-portrait-4col*.svg (4 col)
 Needs device: yes (visual check)
 
 ## Scope
@@ -28,9 +28,9 @@ User 2026-11-02: per-tab `portrait_columns: 3` (default 2), analogous to `landsc
 - [ ] `pio run` and `pio test -e native` pass.
 
 ## Notes
-- 2026-11-02 (user): also experiment with portrait_columns: 4 (mockup docs/ui/experiment-portrait-4col*.svg pending). Allowed values 2..4 if the 4-col mockup is accepted, else 2..3.
+- 2026-11-02 (user): also experiment with portrait_columns: 4 (mockup docs/ui/experiments/experiment-portrait-4col*.svg pending). Allowed values 2..4 if the 4-col mockup is accepted, else 2..3.
 - 2026-11-02 (user): 3-col mockup accepted, short form "Open…" ok. 4 columns allowed (`portrait_columns: 2|3|4`), mockups
-  docs/ui/experiment-portrait-4col{,-fit}.svg. At 4 columns only sensor, binary_sensor, switch and toggle buttons
+  docs/ui/experiments/experiment-portrait-4col{,-fit}.svg. At 4 columns only sensor, binary_sensor, switch and toggle buttons
   (light, automation) may be 1x1 (icon above name/state, F24 -> F18 -> "…"); weather min 2x1; cover/cover group/climate/vacuum
   always full row (4x1, compact 2x1 not allowed at 4 cols); graph min 2x1, default 4x2. Keep the per-type min/max in one table
   so it is easy to change. (light/automation as 1x1 = architect's reading of "button", confirm with user.)

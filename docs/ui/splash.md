@@ -75,6 +75,6 @@ portrait. Version shows `v?` if `FW_VERSION` is not defined (a dev build).
 ## 8. Logo status (task 044)
 
 **Chosen: D** (variant C one-stroke house with variant B toggle-i in the doorway),
-sheet `docs/ui/logo-variants.svg`, standalone mark `docs/ui/logo-inkhaus.svg` (100 x 100,
+sheet `docs/ui/experiments/logo-variants.svg`, standalone mark `docs/ui/logo-inkhaus.svg` (100 x 100,
 for the firmware icon generator; render at 360 px for the splash and at 48 px for icons).
 It reads at 48 px (dot, stem and knob stay distinct). Everything else on the splash is unchanged.

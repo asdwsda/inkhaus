@@ -2,8 +2,8 @@
 
 Task 069. Desktop window (Rust egui/eframe), not e-ink. Content area 560x420 logical px (egui points; scales with the
 OS DPI). Minimum size 520x400, resizable but the layout is a centred 560-wide column. Flow and wording stay as in
-docs/FLASHER.md; no new features. Mockups: `docs/ui/installer-a.svg`, `-b.svg`, `-c.svg` (light, all 6 states each),
-`installer-dark.svg` (dark theme sample). PNGs in docs/ui/png/.
+docs/FLASHER.md; no new features. Mockups: `docs/ui/experiments/installer-a.svg`, `-b.svg`, `-c.svg` (light, all 6 states each),
+`experiments/installer-dark.svg` (dark theme sample). PNGs in docs/ui/experiments/png/.
 
 ## States (same in every variant)
 1. No device: "Plug in your M5Paper", hint "Use a USB cable that carries data, not only power.", driver link

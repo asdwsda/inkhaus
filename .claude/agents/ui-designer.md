@@ -9,7 +9,7 @@ specs and mockups only, never firmware code.
 
 ## Checking your own work (shell)
 You have a shell ONLY for the mockup tools. Use it on every revision before you report:
-- `tools/render_mockups.sh`: renders docs/ui/*.svg to docs/ui/png/ with DejaVu Sans
+- `tools/render_mockups.sh`: renders docs/ui/*.svg to docs/ui/png/ and docs/ui/experiments/*.svg to docs/ui/experiments/png/ with DejaVu Sans
   (the device font). Then look at the PNGs with Read; the PNGs are the reference, not
   the SVGs (SVG viewers substitute fonts).
 - `tools/check_mockups.py docs/ui/<file>.svg ...`: fails on text/icons outside a widget's
@@ -50,6 +50,10 @@ Write `docs/ui/<screen-name>.md` with:
 - States: loading, offline/HA unreachable, entity unavailable.
 - An SVG mockup at 960x540 (`docs/ui/<screen-name>.svg`) that matches the
   spec exactly, using only greys.
+
+Folders (user, 2026-11-03): new designs, variants and proposals go to `docs/ui/experiments/`
+(PNGs in `docs/ui/experiments/png/`). `docs/ui/` and `docs/ui/png/` hold only accepted designs;
+the architect moves a mockup there once the user accepts it.
 
 Keep shared values (grid, margins, fonts, icon sizes) in docs/ui/STYLE.md and
 reuse them in every screen. Ask the architect when entity choices or user

@@ -97,7 +97,7 @@ row 4 free.
 
 A tab may set `portrait_columns: 3` (default 2, the grid above; 2, 3 and 4 are valid, anything else is a config error; 4 columns: cells 118 px, x 16/146/276/406, per-type limits in `sizeLimits` in lib/ui/src/ui_layout.cpp, see task 094 notes).
 Landscape is not affected. Mockups: `experiment-portrait-3col-cover3.svg` (default: wide widgets 3x1),
-`experiment-portrait-3col.svg` (cover `size: 2x1`), `experiment-portrait-3col-climate2.svg` (climate `size: 2x1`).
+`experiments/experiment-portrait-3col.svg` (cover `size: 2x1`), `experiments/experiment-portrait-3col-climate2.svg` (climate `size: 2x1`).
 Everything in the portrait column of the table in section 2 stays (status bar, tab bar, content area, row y, 7 rows) except:
 
 | | Portrait, 3 columns |
