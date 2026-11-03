@@ -101,6 +101,13 @@
 | 100 | [Report the M5Paper's own sensors to HA](100-report-device-sensors.md) | PC done | 024, 079 |
 | 101 | [Sleep screen](101-sleep-screen.md) | PC done | 092, 100 |
 | 102 | [Web flasher on the project site](102-web-flasher.md) | PC done | 061-065 |
+| 103 | [Notifications widget](103-notifications-widget.md) | todo | 101 |
+| 104 | [Weather widget with forecast](104-weather-widget.md) | todo | 045 |
+| 105 | [Calendar widget](105-calendar-widget.md) | todo | 045 |
+| 106 | [Media player widget (without album art)](106-media-widget.md) | todo | 045 |
+| 107 | [Media album art](107-media-album-art.md) | todo | 106 |
+| 108 | [Alarm panel, lock and garage widgets + confirm dialog](108-alarm-lock-widgets.md) | todo | 045 |
+| 109 | [Energy widget](109-energy-widget.md) | todo | 082 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
