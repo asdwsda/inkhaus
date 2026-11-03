@@ -66,6 +66,7 @@ static EntityState full() {
   e.device_class = "temperature";
   e.temperature_unit = "C";
   e.status = "ok";
+  e.color_modes = "color_temp,xy";
   e.attrs = {{"a", "1"}, {"b", "x y"}};
   return e;
 }
@@ -78,6 +79,44 @@ void test_codec_round_trip() {
   TEST_ASSERT_TRUE(statecodec::unpack(statecodec::pack(in, 1790000123), ep, out));
   TEST_ASSERT_EQUAL(1790000123, (long)ep);
   TEST_ASSERT_TRUE(in == out);
+}
+
+void test_codec_color_modes_round_trip() {
+  std::vector<EntityState> in = {make("light.a", "on"), make("light.b", "on"), make("light.c", "off")};
+  in[1].color_modes = "onoff";
+  in[2].color_modes = "color_temp,xy,hs";
+  int64_t ep = 0;
+  std::vector<EntityState> out;
+  TEST_ASSERT_TRUE(statecodec::unpack(statecodec::pack(in, 5), ep, out));
+  TEST_ASSERT_EQUAL(3, out.size());
+  TEST_ASSERT_EQUAL_STRING("", out[0].color_modes.c_str());
+  TEST_ASSERT_EQUAL_STRING("onoff", out[1].color_modes.c_str());
+  TEST_ASSERT_EQUAL_STRING("color_temp,xy,hs", out[2].color_modes.c_str());
+}
+
+static uint32_t testCrc(const std::string& s) {
+  uint32_t c = 0xFFFFFFFFu;
+  for (unsigned char b : s) {
+    c ^= b;
+    for (int k = 0; k < 8; ++k) c = (c >> 1) ^ (0xEDB88320u & (0u - (c & 1u)));
+  }
+  return ~c;
+}
+
+void test_codec_old_format_rejected() {
+  // Build a valid format-1 record: no color_modes field (2 zero bytes before the attrs count), valid CRC.
+  std::string v2 = statecodec::pack({make("light.a", "on")}, 77);
+  std::string body = v2.substr(0, v2.size() - 4);
+  body.erase(body.size() - 3, 2);
+  body[4] = 1;
+  const uint32_t c = testCrc(body);
+  for (int i = 0; i < 4; ++i) body.push_back(char((c >> (8 * i)) & 0xFF));
+  int64_t ep = 3;
+  std::vector<EntityState> out = {make("keep.me", "1")};
+  TEST_ASSERT_FALSE(statecodec::unpack(body, ep, out));
+  TEST_ASSERT_EQUAL(3, (long)ep);
+  TEST_ASSERT_EQUAL(1, out.size());
+  TEST_ASSERT_TRUE(statecodec::Source::None == statecodec::restore(body, body, {"light.a"}, ep, out));
 }
 
 void test_codec_empty_round_trip() {
@@ -136,6 +175,8 @@ int main() {
   RUN_TEST(test_update_attribute_and_availability_change);
   RUN_TEST(test_codec_round_trip);
   RUN_TEST(test_codec_empty_round_trip);
+  RUN_TEST(test_codec_color_modes_round_trip);
+  RUN_TEST(test_codec_old_format_rejected);
   RUN_TEST(test_codec_truncation_and_corruption);
   RUN_TEST(test_restore_prefers_rtc_then_flash_and_filters);
   RUN_TEST(test_store_all);
