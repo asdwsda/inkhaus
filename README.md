@@ -15,16 +15,16 @@ Website: <https://asdwsda.github.io/inkhaus/>
 
 1. **Get the hardware.** The original **M5Stack M5Paper** (not the M5Paper S3), a USB-C **data**
    cable (some cables only charge), and a microSD card formatted **FAT32** (not exFAT).
-2. **Download the Inkhaus Installer** for Windows, macOS or Linux from the
-   [Releases page](https://github.com/asdwsda/inkhaus/releases/latest): Windows
-   `inkhaus-installer-windows-x86_64.exe`, macOS `inkhaus-installer-macos-universal.zip`, Linux
-   `inkhaus-installer-linux-x86_64.tar.gz`. The installer is unsigned, so your system warns on the
-   first start; [docs/FLASHER.md](docs/FLASHER.md) shows how to open it anyway.
-3. **Install.** Connect the M5Paper with the cable, start the installer and press **Install**.
-   Details and fixes for common problems: [docs/FLASHER.md](docs/FLASHER.md).
+2. **Install in your browser.** Open <https://asdwsda.github.io/inkhaus/install/> in Chrome, Edge or
+   Opera on a computer, connect the M5Paper with the cable and press **Install**. No download needed.
+   Firefox, Safari or offline? Use the **Inkhaus Installer** app (Windows, macOS, Linux) from the
+   [Releases page](https://github.com/asdwsda/inkhaus/releases/latest); it is unsigned, so your system
+   warns on the first start. Both ways: [docs/FLASHER.md](docs/FLASHER.md).
+3. **Wait for the restart.** Your settings and SD card are kept on updates. Fixes for common problems:
+   [docs/FLASHER.md](docs/FLASHER.md).
 4. **Add your two files.** Download the two example files below, rename them to `secrets.yaml` and
    `config.yaml`, edit them (see below) and either copy them
-   to the **root of the SD card**, or press "Upload YAML files..." in the installer. The device
+   to the **root of the SD card**, or (installer app) press "Upload YAML files...". The device
    restarts and shows your dashboard.
 
 Without a `config.yaml` (or with Demo mode on) you see a demo dashboard with fake values, so you can

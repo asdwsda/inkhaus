@@ -46,12 +46,13 @@ class T(unittest.TestCase):
     def test_cap_and_prerelease(self):
         r = [rel("v%d" % i, "2026-02-%02d" % i) for i in range(1, 16)]
         r += [rel("pre-new", "2026-03-01", pre=True), rel("pre-old", "2026-02-05", pre=True)]
-        tags = [x["tag_name"] for x in w.select(r, 10)]
-        self.assertEqual(len(tags), 11)  # 10 stable + the newer pre-release
+        tags = [x["tag_name"] for x in w.select(r)]
+        self.assertEqual(len(tags), 6)  # 5 stable + the newer pre-release
         self.assertEqual(tags[0], "pre-new")
         self.assertEqual(tags[1], "v15")
-        self.assertEqual(tags[-1], "v6")
+        self.assertEqual(tags[-1], "v11")
         self.assertNotIn("pre-old", tags)
+        self.assertEqual(w.CAP, 5)
         self.assertEqual(w.select([rel("p", "2026-01-01", pre=True)]), [])
 
     def test_build_sample(self):

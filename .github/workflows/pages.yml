@@ -8,6 +8,10 @@ on:
     paths: ["site/**", "docs/ui/png/**", ".github/workflows/pages.yml", "tools/make_webflash_manifest.py", "tools/vendor_esp_web_tools.sh"]
   release:
     types: [published]
+  # A release published by release.yml (GITHUB_TOKEN) does not fire `release`; run after it finishes.
+  workflow_run:
+    workflows: [release]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -21,6 +25,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

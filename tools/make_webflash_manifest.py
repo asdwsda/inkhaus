@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Web flasher support (task 102): ESP Web Tools manifests and releases.json.
 
-  select --api releases.json [--cap 10]
+  select --api releases.json [--cap 5]
       Print the tags to publish, newest first (one per line).
-  build  --api releases.json --src DIR --out DIST/install [--cap 10]
+  build  --api releases.json --src DIR --out DIST/install [--cap 5]
       DIR/<tag>/ holds a release's manifest.json + segment files. For every selected tag that has
       a folder: copy the segment files to OUT/firmware/<tag>/, write the ESP Web Tools manifest
       (manifest.json there) and write OUT/releases.json.
@@ -21,7 +21,7 @@ import os
 import shutil
 import sys
 
-CAP = 10
+CAP = 5
 CHIPS = {"esp32": "ESP32"}
 
 

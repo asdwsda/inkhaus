@@ -1,9 +1,22 @@
-# Inkhaus Installer (flasher)
+# Installing Inkhaus (web page and installer app)
 
 Installs a released firmware on the M5Paper over USB. No PlatformIO or Python needed.
-Once installed, later versions can also be installed from the device itself (Settings > Tools); the installer is needed for the first install, offline machines and recovery.
+Once installed, later versions can also be installed from the device itself (Settings > Tools).
 
 Next step after installing: create `secrets.yaml` and `config.yaml`, see the [README](../README.md) and [CONFIG.md](CONFIG.md).
+
+## Web install (recommended)
+Open <https://asdwsda.github.io/inkhaus/install/> in **Chrome, Edge or Opera on a computer** (Web Serial;
+Firefox, Safari and phones cannot do it).
+1. Connect the M5Paper with a USB data cable. On Windows install the CH9102 driver once if no port shows up.
+2. Pick a version (the newest stable one is preselected; tick "Show pre-releases" for test versions; the page
+   offers the last 5 stable releases). Older versions show a note: settings saved by newer versions may be reset.
+3. Press **Install**, pick the new USB port in the browser window and wait for "done". Do not unplug meanwhile.
+Settings and the SD card are kept (no erase). The page copies the firmware from the release, so a brand new
+release may take a few minutes to appear.
+
+## Installer app (fallback: Firefox/Safari, offline, YAML upload)
+The rest of this page describes the native installer app.
 
 ## Download
 From the release page, pick the file for your system:

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Install Inkhaus in your browser</title>
-<meta name="description" content="Install or update Inkhaus on an M5Paper from Chrome or Edge, no software needed.">
+<meta name="description" content="Install or update Inkhaus on an M5Paper from Chrome, Edge or Opera, no software needed.">
 <link rel="icon" href="../logo-inkhaus.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../style.css">
 <script type="module" src="esp-web-tools/install-button.js"></script>
@@ -12,40 +12,63 @@
 <body>
 <header><div class="wrap">
 <a class="brand" href="../"><img src="../logo-inkhaus.svg" width="48" height="48" alt="">Inkhaus</a>
-<nav aria-label="Main"><a href="../">Home</a><a href="../#install">Native installers</a><a href="https://github.com/asdwsda/inkhaus">GitHub</a></nav>
+<nav aria-label="Main"><a href="../#features">Features</a><a href="./" aria-current="page">Install</a><a href="../#setup">Set up</a><a href="https://github.com/asdwsda/inkhaus">GitHub</a></nav>
 </div></header>
 <main>
 <section class="hero"><div class="wrap">
-<h1>Install in your browser</h1>
-<p>Connect the M5Paper with a USB data cable and install or update Inkhaus right here. Your settings are kept when you update.</p>
+<h1>Install Inkhaus</h1>
+<p>Connect your M5Paper with a USB cable and install Inkhaus here in the browser. No tools to download. Your settings and SD card are kept when you update.</p>
 
-<div id="unsupported" hidden>
-<p><strong>This browser can't do it.</strong> Use Chrome, Edge or Opera on a computer, or use one of the <a href="../#install">native installers</a>.</p>
-</div>
-
-<div id="picker" hidden>
-<p><label for="ver"><strong>Version</strong></label><br>
-<select id="ver"></select></p>
-<p><label><input type="checkbox" id="pre"> Show pre-releases</label></p>
-<p id="info" class="muted"></p>
-<p id="downgrade" hidden><strong>Older version.</strong> Settings from newer versions may be reset.</p>
+<div class="card">
+<div id="app" hidden>
+<h3>1. Choose a version</h3>
+<div class="row"><select id="ver" aria-label="Version"><option>Loading versions...</option></select><span id="size" class="muted"></span></div>
+<label class="chk"><input type="checkbox" id="pre"> Show pre-releases</label>
+<p id="note" class="note" hidden></p>
+<h3>2. Install</h3>
 <esp-web-install-button id="btn">
-<button slot="activate" class="btn primary" type="button">Install</button>
+<button slot="activate" id="go" class="btn primary" type="button" disabled>Install</button>
 <span slot="unsupported"></span>
 <span slot="not-allowed">Open this page over https to install.</span>
 </esp-web-install-button>
+<p class="cap">A browser window asks for the USB port: pick the new entry that appears when you plug in the M5Paper. Your settings and SD card are kept.</p>
 </div>
-<p id="failed" hidden>The version list could not be loaded. Use a <a href="../#install">native installer</a> instead.</p>
+
+<div id="nosupport">
+<h3>This browser cannot install from a page</h3>
+<p>Firefox and Safari do not support Web Serial, which this page needs to talk to the M5Paper. Open this page in Chrome, Edge or Opera on a computer, or use the installer app:</p>
+<p id="apps" class="os"></p>
+<p class="cap">Offline or other ways to install: <a href="https://github.com/asdwsda/inkhaus/blob/main/docs/FLASHER.md">docs/FLASHER.md</a></p>
+</div>
+
+<div id="failed" hidden>
+<h3>Could not load the version list</h3>
+<p>Check your connection and reload the page, or use the installer app.</p>
+<p class="os"><a class="btn primary" href="">Reload</a><a class="btn" href="https://github.com/asdwsda/inkhaus/releases/latest">Installer apps</a></p>
+</div>
+</div>
 </div></section>
 
 <section><div class="wrap">
-<h2>Before and after</h2>
-<ul>
-<li>No device found: use a data cable. On Windows, install the <a href="https://www.wch-ic.com/downloads/CH343SER_EXE.html">CH9102 USB driver (WCH CH343)</a>.</li>
-<li>After a first install, copy <code>config.yaml</code> and <code>secrets.yaml</code> to the SD card. See <a href="https://github.com/asdwsda/inkhaus/blob/main/docs/CONFIG.md">CONFIG.md</a>.</li>
-</ul>
+<h2>Before you start</h2>
+<ol class="steps">
+<li><strong>Use a data cable</strong>Some USB cables only charge. Use one that also carries data.</li>
+<li><strong>Windows: driver</strong>Windows may need the CH9102 USB driver once. Mac and Linux do not. <a href="https://www.wch-ic.com/downloads/CH343SER_EXE.html">Get the CH9102 driver</a></li>
+<li><strong>Pick the right browser</strong>Chrome, Edge or Opera on a computer. Not Firefox or Safari.</li>
+</ol>
+</div></section>
+
+<section><div class="wrap">
+<h2>After the install</h2>
+<p>The M5Paper restarts and asks for its files. Copy these two files to the root of its SD card (FAT32), put the card in, and restart it:</p>
+<pre>config.yaml    your tabs and widgets
+secrets.yaml   Wi-Fi and Home Assistant token</pre>
+<p><a href="https://github.com/asdwsda/inkhaus/blob/main/docs/CONFIG.md">How to write them: docs/CONFIG.md</a></p>
 </div></section>
 </main>
+<footer><div class="wrap">
+<p>Inkhaus, open source on <a href="https://github.com/asdwsda/inkhaus">GitHub</a>. Install page powered by ESP Web Tools.</p>
+</div></footer>
 <script src="install.js"></script>
 </body>
 </html>

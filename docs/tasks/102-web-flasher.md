@@ -1,6 +1,6 @@
 # 102: Web flasher on the project site
 
-Status: in-progress
+Status: in-progress (PC part done; device checks left)
 Depends on: 061-065 (native installer, release workflow, site)
 UI spec: docs/ui/installer.md (states reused; page layout by ui-designer, mockup in docs/ui/experiments/)
 Needs device: yes (one install + one update from Chrome; PC part first)
@@ -44,3 +44,6 @@ native installers. The native installers stay as the fallback (Firefox/Safari, o
 ## Notes
 - Decision (architect, 2026-11-03): ESP Web Tools on GitHub Pages, firmware copied into the site per release.
   Reason: Web Serial needs HTTPS and same-origin/CORS files; Pages gives both for free.
+- Round 2 (2026-11-03): /install/ page built per docs/ui/web-flasher.md (cap 5, workflow_run trigger, FLASHER.md/README).
+  Dry run: `python3 tools/make_webflash_manifest.py build --api tools/testdata/webflash/api.json --src tools/testdata/webflash/src --out /tmp/x`
+  writes firmware/<tag>/ + releases.json (4 releases, relative same-origin manifest paths). Page weight 1012 KiB (limit 1024).
