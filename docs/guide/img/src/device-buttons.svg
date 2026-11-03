@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="640" viewBox="0 0 1000 640" font-family="DejaVu Sans">
+<!-- Device drawing (vector, schematic). Body 66 x 118 mm at 3.8 px/mm = 250 x 448 px. Edge positions are approximate (rocker on the right edge as in layout.md 7.1). -->
+<rect width="1000" height="640" fill="#fff"/>
+<text id="t-front" x="185" y="40" font-size="24" fill="#000" text-anchor="middle" font-weight="bold">Front</text>
+<rect id="body" x="60" y="70" width="250" height="448" rx="18" fill="#fff" stroke="#000" stroke-width="3"/>
+<rect id="screen" x="75" y="94" width="220" height="392" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="75" y="94" width="220" height="30" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="125" y="99" width="40" height="20" rx="4" fill="#000"/>
+<rect x="171" y="99" width="40" height="20" rx="4" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="217" y="99" width="40" height="20" rx="4" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="87" y="136" width="94" height="42" rx="4" fill="#000"/>
+<rect x="189" y="136" width="94" height="42" rx="4" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="87" y="186" width="196" height="42" rx="4" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="87" y="236" width="94" height="42" rx="4" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="189" y="236" width="94" height="42" rx="4" fill="#000"/>
+<text id="t-scr1" x="185" y="395" font-size="18" fill="#444" text-anchor="middle" >touch screen</text>
+<text id="t-scr2" x="185" y="418" font-size="18" fill="#444" text-anchor="middle" >540 x 960 px</text>
+<rect id="usb" x="160" y="514" width="50" height="8" rx="3" fill="#000"/>
+<line x1="185" y1="522" x2="185" y2="560" stroke="#000" stroke-width="2"/><circle cx="185" cy="522" r="4" fill="#000"/>
+<text id="t-usb" x="185" y="584" font-size="20" fill="#000" text-anchor="middle" >USB-C (charge + data)</text>
+<text id="t-usb2" x="185" y="608" font-size="18" fill="#444" text-anchor="middle" >bottom edge</text>
+<rect id="rocker" x="308" y="150" width="14" height="96" rx="6" fill="#000"/>
+<line x1="310" y1="182" x2="320" y2="182" stroke="#fff" stroke-width="2"/>
+<line x1="310" y1="214" x2="320" y2="214" stroke="#fff" stroke-width="2"/>
+<line x1="322" y1="166" x2="400" y2="144" stroke="#000" stroke-width="2"/><circle cx="322" cy="166" r="4" fill="#000"/>
+<text id="co-0-h" x="410" y="150" font-size="22" fill="#000" text-anchor="start" font-weight="bold">UP</text>
+<text id="co-0-0" x="410" y="176" font-size="18" fill="#000" text-anchor="start" >Previous tab or widget.</text>
+<text id="co-0-1" x="410" y="200" font-size="18" fill="#000" text-anchor="start" >Yes in a yes/no question.</text>
+<line x1="322" y1="198" x2="400" y2="244" stroke="#000" stroke-width="2"/><circle cx="322" cy="198" r="4" fill="#000"/>
+<text id="co-1-h" x="410" y="250" font-size="22" fill="#000" text-anchor="start" font-weight="bold">PUSH</text>
+<text id="co-1-0" x="410" y="276" font-size="18" fill="#000" text-anchor="start" >Activate the focused widget.</text>
+<text id="co-1-1" x="410" y="300" font-size="18" fill="#000" text-anchor="start" >Hold: open Settings.</text>
+<text id="co-1-2" x="410" y="322" font-size="18" fill="#000" text-anchor="start" >Wakes from sleep.</text>
+<text id="co-1-3" x="410" y="346" font-size="18" fill="#000" text-anchor="start" >Yes/no question: skip.</text>
+<line x1="322" y1="230" x2="400" y2="404" stroke="#000" stroke-width="2"/><circle cx="322" cy="230" r="4" fill="#000"/>
+<text id="co-2-h" x="410" y="410" font-size="22" fill="#000" text-anchor="start" font-weight="bold">DOWN</text>
+<text id="co-2-0" x="410" y="436" font-size="18" fill="#000" text-anchor="start" >Next tab or widget.</text>
+<text id="co-2-1" x="410" y="460" font-size="18" fill="#000" text-anchor="start" >No in a yes/no question.</text>
+<text id="t-rk" x="410" y="120" font-size="20" fill="#444" text-anchor="start" >Rocker (right edge)</text>
+<text id="t-back" x="805" y="40" font-size="24" fill="#000" text-anchor="middle" font-weight="bold">Back (approximate)</text>
+<rect id="body-b" x="680" y="70" width="250" height="448" rx="18" fill="#fff" stroke="#000" stroke-width="3"/>
+<rect x="700" y="170" width="210" height="250" rx="8" fill="none" stroke="#888" stroke-width="2" stroke-dasharray="4 6"/>
+<circle id="reset" cx="716" cy="100" r="6" fill="#fff" stroke="#000" stroke-width="3"/>
+<line x1="722" y1="100" x2="760" y2="100" stroke="#000" stroke-width="2"/>
+<rect id="sd" x="780" y="514" width="50" height="8" rx="3" fill="#000"/>
+<line x1="805" y1="522" x2="805" y2="560" stroke="#000" stroke-width="2"/><circle cx="805" cy="522" r="4" fill="#000"/>
+<text id="t-reset" x="770" y="106" font-size="20" fill="#000" text-anchor="start" >Reset (pinhole)</text>
+<text id="t-reset2" x="770" y="130" font-size="18" fill="#444" text-anchor="start" >use a paper clip</text>
+<text id="t-sd" x="805" y="584" font-size="20" fill="#000" text-anchor="middle" >microSD slot</text>
+<text id="t-sd2" x="805" y="608" font-size="18" fill="#444" text-anchor="middle" >bottom edge, FAT32 card</text>
+<text id="t-bk" x="805" y="300" font-size="22" fill="#888" text-anchor="middle" >M5Paper</text>
+<text id="t-note" x="500" y="630" font-size="16" fill="#444" text-anchor="middle" >Positions are approximate; check them against your device.</text>
+</svg>
