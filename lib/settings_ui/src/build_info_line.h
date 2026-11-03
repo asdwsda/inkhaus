@@ -1,5 +1,5 @@
 #pragma once
-// Task 113: which firmware is running, as one line "1.3.1 debug · 7727f0d · 2026-11-03" (a dirty tree adds `+` to
+// Task 113: which firmware is running, as one line "1.3.1 debug | 7727f0d | 2026-11-03" (a dirty tree adds `+` to
 // the commit). Pure formatting and fit rule; the values come from src/build_info.cpp.
 #include <functional>
 #include <string>
@@ -14,7 +14,7 @@ struct BuildInfo {
   std::string date;     // "2026-11-03", "" = unknown
 };
 
-constexpr const char* kBuildSep = " \xC2\xB7 ";  // " · " (UNVERIFIED: the middle dot exists in the DejaVu fonts)
+constexpr const char* kBuildSep = " | ";
 
 inline std::string buildInfoLine(const BuildInfo& b, bool withCommit = true, bool withDate = true) {
   std::string s = b.version + " " + b.variant;

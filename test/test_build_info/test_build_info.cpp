@@ -27,11 +27,11 @@ static int measure(const std::string& s) {
 
 void test_line_full_dirty_and_missing() {
     BuildInfo b = sample();
-    TEST_ASSERT_EQUAL_STRING("1.3.1 debug \xC2\xB7 7727f0d \xC2\xB7 2026-11-03", buildInfoLine(b).c_str());
+    TEST_ASSERT_EQUAL_STRING("1.3.1 debug | 7727f0d | 2026-11-03", buildInfoLine(b).c_str());
     b.dirty = true;
-    TEST_ASSERT_EQUAL_STRING("1.3.1 debug \xC2\xB7 7727f0d+ \xC2\xB7 2026-11-03", buildInfoLine(b).c_str());
+    TEST_ASSERT_EQUAL_STRING("1.3.1 debug | 7727f0d+ | 2026-11-03", buildInfoLine(b).c_str());
     b.commit = "";
-    TEST_ASSERT_EQUAL_STRING("1.3.1 debug \xC2\xB7 2026-11-03", buildInfoLine(b).c_str());
+    TEST_ASSERT_EQUAL_STRING("1.3.1 debug | 2026-11-03", buildInfoLine(b).c_str());
 }
 
 void test_fit_drops_date_then_commit_then_ellipsis() {

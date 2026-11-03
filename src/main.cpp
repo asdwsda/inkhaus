@@ -1135,6 +1135,9 @@ static uint32_t firmwareId() {
   return h ? h : 1u;
 }
 
+// Task 117: the config reload (libyaml recursion) overflowed the 8 KB default loop stack.
+SET_LOOP_TASK_STACK_SIZE(16 * 1024);
+
 void setup() {
   ota::earlyBoot();  // task 087: count a boot of a just-installed firmware first, so a crash in setup() counts
   boot::begin();
@@ -1329,6 +1332,13 @@ static void testRestart() {
 #endif
 
 void loop() {
+  {
+    static bool stackLogged = false;  // once per session, after the first minute of use
+    if (!stackLogged && millis() > 60000) {
+      stackLogged = true;
+      Serial.printf("BOOT: loop_stack_free=%u\n", (unsigned)uxTaskGetStackHighWaterMark(nullptr));
+    }
+  }
 #if defined(OTA_TEST_BAD) && defined(DEBUG_SERIAL)
   if (millis() > 4000) { Serial.println("OTA-TEST: bad firmware restarting"); Serial.flush(); boot::endBurstRead(); ESP.restart(); }  // rollback test: never healthy
 #endif
