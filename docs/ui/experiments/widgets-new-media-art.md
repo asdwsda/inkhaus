@@ -67,3 +67,6 @@ Interactions, rocker and other states: as 4.1 (the art is not a touch target in 
 
 `tools/render_mockups.sh`, `tools/check_mockups.py docs/ui/experiments/widgets-new-media-art-*.svg`: 0 problems (4 files).
 PNGs: `docs/ui/experiments/png/widgets-new-media-art-{states,tab-portrait,popup-landscape,popup-portrait}.png`.
+
+User 2026-11-03: open questions 1-4 OK with the recommended defaults (one 200x200 fetch per track, portrait popup
+700 px, per-widget `art: false`, accept `...`). Mockups pending the user's look.

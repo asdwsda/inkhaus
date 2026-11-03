@@ -60,3 +60,5 @@ Staleness: the date next to each version is the release date; no auto-refresh.
 ## Reflow
 >= 900 px: as mockup. < 900: steps one column. < 600: H1 32, header column, buttons full width 56 high, select full
 width, size line hidden, copy as in `web-flasher-narrow*.svg`.
+
+Accepted by the user 2026-11-03, open questions 1-4 with the recommended defaults.
