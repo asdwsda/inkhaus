@@ -45,7 +45,7 @@ image), alt text, guide section. Captions and alt texts are drafts for step 110.
 
 | File | Shows | Caption | Alt | Status |
 |---|---|---|---|---|
-| `device-buttons` | Front and back line drawing: screen, rocker (UP / PUSH / DOWN) with its actions, USB-C, microSD, reset pinhole | The rocker and the ports. Positions are approximate. | Line drawing of the M5Paper front with the rocker on the right edge and the back with reset and SD slot. | done |
+| `device-buttons` | Front and back line drawing: screen, rocker (UP / PUSH / DOWN) with its actions, USB-C, microSD, reset pinhole | The rocker and the ports (positions from the M5Stack drawing). | Line drawing of the M5Paper front with the rocker on the right edge and the back with reset and SD slot. | done (redrawn batch 3) |
 | `device-gestures` | Cheat sheet: tap, long press (history graph), rocker up/down/push/hold, tap "updated", tap battery; one pictogram per row (hand circle icon, rocker bar) | Everything you can do without a keyboard. | Table of gestures with a small icon each. | |
 | `device-yesno` | A confirm dialog with UP = yes, DOWN = no, PUSH = skip marked on a rocker sketch | In a yes/no question the rocker answers. | Confirm dialog with the rocker keys labelled yes, no and skip. | |
 | `device-focus-ring` | Tab screen with the rocker focus ring on one widget (3 px ring) and the three rocker steps as a mini sequence | The ring shows what PUSH will activate. | Widget with a thick ring around it and three arrows for the rocker. | |
@@ -115,34 +115,34 @@ One fragment per row (widgets + states + snippet). Landscape cell widths for 1x1
 | File | Shows | Caption | Status |
 |---|---|---|---|
 | `gallery-light-on-off` | light 1x1 on (80 %) and off + snippet with `name:` | A light: filled when on, outline when off. | done |
-| `gallery-light-states` | on / off / pending (hourglass) / unavailable (dotted frame, slash) | A light in each state. | |
+| `gallery-light-states` | on / off / pending (hourglass) / unavailable (dotted frame, slash) | A light in each state. | done (batch 3) |
 | `gallery-switch` | see `gallery-small-widgets` (switch off, binary_sensor open, automation on) | Switch, window sensor, automation. | done |
-| `gallery-automation` | automation enabled/disabled (circular arrows) | An automation: tap to enable or disable. | |
-| `gallery-cover-states` | cover opening (up filled), closed, stopped, pending (dashed hourglass), unavailable | A shutter in five states. | |
+| `gallery-automation` | automation enabled/disabled (circular arrows) | An automation: tap to enable or disable. | done (batch 3) |
+| `gallery-cover-states` | cover opening (up filled), closed, stopped, pending (dashed hourglass), unavailable | A shutter in five states. | done (batch 3) |
 | `gallery-cover-group` | `groups:` entry + `group:` widget with `name:`, all members move | One button for several shutters. | done |
 | `gallery-climate` | climate wide, target 22.0 with - / + | A thermostat. | done |
-| `gallery-climate-states` | heating (flame), off, unavailable; target changing pending | Thermostat states. | |
+| `gallery-climate-states` | heating (flame), off, unavailable; target changing pending | Thermostat states. | done (batch 3) |
 | `gallery-sensor-sizes` | sensor 1x1 vs 2x1 with details + snippet | Sensor 1x1 and `size: 2x1`. | done |
 | `gallery-sensor-options` | decimals 0/1/2, `unit:` override, `attribute:` | Format a sensor value. | |
 | `gallery-sensor-states` | value, unavailable (n/a, dotted), loading (-) | A sensor when data is missing. | done |
-| `gallery-binary-sensor` | window open/closed, door, motion, battery (device_class wording) | Open or closed, on or off, in words. | |
+| `gallery-binary-sensor` | window open/closed, door, motion, battery (device_class wording) | Open or closed, on or off, in words. | done (batch 3) |
 | `gallery-weather` | weather 2x1 (1x1 and other conditions wait for a mockup) | Current weather. | done (2x1 only) |
-| `gallery-weather-forecast` | weather with forecast (wide) | Weather with a forecast. | |
-| `gallery-vacuum` | vacuum states: docked, cleaning, returning, error, unavailable | A robot vacuum. | |
+| `gallery-weather-forecast` | weather with forecast (wide) | Weather with a forecast. | done (batch 3) |
+| `gallery-vacuum` | vacuum states: docked, cleaning, returning, error, unavailable | A robot vacuum. | done (batch 3) |
 | `gallery-graph-types` | `display: graph`: line, step and bar widgets + snippet | Line, step or bars. | done |
-| `gallery-graph-options` | `hours`, `min/max`, `statistic`, `period` before/after | Graph options at a glance. | |
+| `gallery-graph-options` | `hours`, `min/max`, `statistic`, `period` before/after | Graph options at a glance. | done (batch 3) |
 | `gallery-history-popup` | long press on a sensor opens the popup; snippet `history: 48` | Long press for history; `history: false` turns it off. | |
-| `gallery-notifications` | notification count badge 0 / 3 + list popup | Home Assistant notifications. | |
-| `gallery-calendar` | next event 2x1, empty day | The next calendar event. | |
-| `gallery-media` | media player wide with art, playing / paused / off + popup | A media player. | |
-| `gallery-media-art-off` | `art: false` vs default (side by side) | Turn the cover art off. | |
-| `gallery-alarm` | alarm panel states (disarmed, armed home/away, triggered) + keypad popup | An alarm panel with a keypad. | |
-| `gallery-lock-garage` | lock locked/unlocked/jammed, garage open/closed | Locks and garage doors. | |
-| `gallery-energy` | energy 2x1 (kWh) | Energy today. | |
+| `gallery-notifications` | notification count badge 0 / 3 + list popup | Home Assistant notifications. | done (batch 3) |
+| `gallery-calendar` | next event 2x1, empty day | The next calendar event. | done (batch 3) |
+| `gallery-media` | media player wide with art, playing / paused / off + popup | A media player. | done (batch 3) |
+| `gallery-media-art-off` | `art: false` vs default (side by side) | Turn the cover art off. | done (batch 3) |
+| `gallery-alarm` | alarm panel states (disarmed, armed home/away, triggered) + keypad popup | An alarm panel with a keypad. | done (batch 3) |
+| `gallery-lock-garage` | lock locked/unlocked/jammed, garage open/closed | Locks and garage doors. | done (batch 3) |
+| `gallery-energy` | energy 2x1 (kWh) | Energy today. | done (batch 3) |
 | `gallery-name-override` | same entity without and with `name:` (no truncation example yet) | Rename a widget. | done |
 | `gallery-icon-override` | `icon:` before/after (only if the option exists, see open question 2) | Pick another icon. | |
-| `gallery-type-override` | `person.alice` with `type: sensor` | Show any entity as a sensor. | |
-| `gallery-size-guide` | the 1x1, 2x1, wide, 2x2 and 3x2 blocks drawn as grey cells with which widget types allow which | Sizes each widget allows. | |
+| `gallery-type-override` | `person.alice` with `type: sensor` | Show any entity as a sensor. | done (batch 3) |
+| `gallery-size-guide` | the 1x1, 2x1, wide, 2x2 and 3x2 blocks drawn as grey cells with which widget types allow which | Sizes each widget allows. | done (batch 3) |
 
 ### G. Config (section "Configuration")
 
@@ -213,3 +213,21 @@ portrait columns image uses schematic cells (same grid geometry, no icons), not 
 2. Is there an `icon:` widget option? CONFIG.md lists none (task 111 mentions it). Default: skip `gallery-icon-override`.
 3. Hold time for "Settings": layout.md says long push >= 600 ms; the drawing says "Hold". Default: keep "Hold" in images, the guide text says "about half a second".
 4. Image size cap: 82 images x about 20 KB = about 1.7 MB for the site. Default: fine.
+
+## 6. Batch 3 (done)
+
+- `device-buttons` redrawn from the M5Stack size drawing and labelled photo (3.5 px per mm; `gen_sources.py` `device_buttons()`):
+  portrait front with rocker (right edge, centre 58 mm from the bottom, 12.5 mm), microSD (right edge, 24.7 mm from the
+  bottom), USB-C and Grove A on the bottom edge, Grove B/C on the left edge, back with RST/OFF pinhole (82.4 mm from the bottom,
+  on the rocker side). "Approximate" label dropped. Remaining doubt: the drawing does not name the rocker and the card slot;
+  the mapping (rocker = the 12.5 mm protruding part at 60 mm, SD = the 11 mm part at 24.7 mm) comes from the photo
+  (dial above the card slot) and the front view bump. Confirm with the user's camera shot.
+- Drawn from the widgets.md rules (geometry of the accepted mockups, builders in `gen_sources.py`): `gallery-light-states`,
+  `gallery-automation`, `gallery-cover-states`, `gallery-climate-states`, `gallery-binary-sensor` (window, door, generic;
+  other classes need icons not drawn yet), `gallery-vacuum` (dock and battery icons are new, drawn to the STYLE.md description),
+  `gallery-type-override`, `gallery-size-guide` (schematic), `gallery-graph-options` (copies of the accepted history states).
+  `gallery-sensor-options` stays covered by `gallery-sensor-decimals`.
+- New widgets (accepted mockups copied 1:1, popups scaled to 45-50 %): `gallery-notifications`, `gallery-calendar`,
+  `gallery-weather-forecast`, `gallery-media`, `gallery-media-art-off`, `gallery-media-art-states`, `gallery-alarm`,
+  `gallery-lock-garage`, `gallery-energy`.
+- All PNGs 6 to 25 KB; check_mockups 0 problems (size guide has no widgets; checked by eye).

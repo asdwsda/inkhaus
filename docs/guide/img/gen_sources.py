@@ -30,12 +30,13 @@ def snippet(x,y,w,lines,tag='config.yaml'):
         col='#444' if l.strip().startswith('#') else '#000'
         o+=txt('sn-l%d'%k,x+16,y+58+k*lh,l,20,col,extra='font-family="DejaVu Sans Mono" xml:space="preserve"')
     return o,h
-def fragment(name,widgets,labels,lines,W,note=None):
+def fragment(name,widgets,labels,lines,W,note=None,symin=0):
     pad=20; wy=pad
     W=max(W,int(2*pad+32+12.1*max(len(l) for l in lines))+4)
     body=widgets
     for i,(lx,ly,s) in enumerate(labels): body+=txt('lb-%d'%i,lx,ly,s,18,'#444',extra='')
     sy=wy+ max(ly for _,ly,_ in labels)-wy+24 if labels else wy
+    sy=max(sy,symin)
     sn,h=snippet(pad,sy,W-2*pad,lines)
     H=sy+h+pad
     svg=HDR%(W,H,W,H)+'<defs>'+syms+'</defs>\n<rect width="%d" height="%d" fill="#fff"/>\n'%(W,H)+body+sn+'</svg>\n'
@@ -531,8 +532,8 @@ def vacuum(n,name,status,batt,fills=(0,0,0),pend=None,un=False,err=False,low=Fal
     st='n/a' if un else status
     o+=T('w-%d-state'%n,12,77,st,24)
     if not un and not err:
-        wd=int(len(st)*13.4)+12+12
-        o+=U('w-%d-bat'%n,'i-batt-low' if low else 'i-batt',wd,57,24,'#000')+T('w-%d-bat-text'%n,wd+28,77-6+6,batt,18)
+        wd=int(len(st)*14.6)+16
+        o+=U('w-%d-bat'%n,'i-batt-low' if low else 'i-batt',wd,57,24,'#000')+T('w-%d-bat-text'%n,wd+28,75,batt,18)
     if un: o+=T('w-%d-bat-text'%n,150,77,'-',18)+U('w-%d-badge'%n,'i-warn',W-264,57,24,'#000')
     if err: o+=U('w-%d-badge'%n,'i-alert',W-264,57,24,'#000')
     for k,(nm,gl) in enumerate((('start','i-play'),('pause','i-pause'),('dock','i-dock'))):
@@ -553,4 +554,101 @@ def frag(name,items,lines,W,tw=None):
     for k,(b,x,y,lab,lx,ly) in enumerate(items):
         w+=pl(k+1,x,y,re.sub(r'w-\d+-','w-%d-'%(k+1),b).replace('id="w-%d"'%0,'')) 
         labels.append((x+lx,y+ly,lab))
-    fragment(name,w,labels,lines,W)
+    fragment(name,w,labels,lines,W,symin=max(y for _,_,y,*r in items)+104+24)
+
+# --- compositions
+L1=130   # label y under a 1x1 widget
+frag('gallery-light-states',[(toggle(1,'Ceiling','i-bulb','On 80%','on'),20,20,'on',0,L1),(toggle(1,'Ceiling','i-bulb-off','Off','off'),208,20,'off',0,L1),
+ (toggle(1,'Ceiling','i-bulb','On','pon'),396,20,'pending (turned on)',0,L1),(toggle(1,'Ceiling','i-bulb-off','n/a','un'),584,20,'unavailable',0,L1)],
+ ['- entity: light.living_room_ceiling','  name: Ceiling','# pending: dashed frame + hourglass until Home Assistant confirms','# unavailable: dotted frame, grey name, "n/a"; taps are ignored'],772)
+frag('gallery-automation',[(toggle(1,'Night mode','i-auto','On','on'),20,20,'enabled (filled)',0,L1),(toggle(1,'Night mode','i-auto','Off','off'),208,20,'disabled (outline)',0,L1),
+ (toggle(1,'Night mode','i-auto','Off','poff'),396,20,'pending (turning off)',0,L1)],
+ ['- entity: automation.night_mode','  name: Night mode','# a tap enables or disables it (it does not run it)'],584)
+cv=[('Shutter','Opening 40%',(1,0,0),None,False,'opening: up is filled'),('Shutter','Closed',(0,0,0),None,False,'closed'),
+    ('Shutter','Open 40%',(0,0,0),None,False,'stopped half way (shown as Open 40%)'),('Shutter','Closed',(0,0,0),0,False,'pending: the tapped button is dashed'),
+    ('Shutter','n/a',(0,0,0),None,True,'unavailable')]
+frag('gallery-cover-states',[(cover(1,nm,st,f,p,u),20,20+k*120,lab,572,60) for k,(nm,st,f,p,u,lab) in enumerate(cv)],
+ ['- entity: cover.living_room_shutter','  name: Shutter','# buttons: up, stop, down; closing fills the down button'],980)
+frag('gallery-climate-states',[(climate(1,'Living room'),20,20,'heating: flame, target 22.0 with - and +',572,60),
+ (climate(1,'Living room','off','Off'),20,140,'mode off: target shows Off',572,60),
+ (climate(1,'Living room',target='23.0°',pend=1),20,260,'pending: + tapped, hourglass by the name',572,60),
+ (climate(1,'Living room',un=True),20,380,'unavailable',572,60)],
+ ['- entity: climate.living_room','  name: Living room','# the service call is sent 1.5 s after the last tap'],1000)
+bs=[(toggle(1,'Window','i-window-on','Open','off'),'window, open'),(toggle(1,'Window','i-window-off','Closed','off'),'window, closed'),
+    (toggle(1,'Door','i-door-on','Open','off'),'door, open'),(toggle(1,'Door','i-door-off','Closed','off'),'door, closed'),
+    (toggle(1,'Smoke','i-dot-on','On','off'),'other class: On'),(toggle(1,'Smoke','i-dot-off','Off','off'),'other class: Off'),
+    (toggle(1,'Window','i-warn','n/a','un',176,'warn'),'unavailable')]
+frag('gallery-binary-sensor',[(b,20+(k%4)*188,20+(k//4)*160,lab,0,L1) for k,(b,lab) in enumerate(bs)],
+ ['- entity: binary_sensor.living_room_window','  name: Window','# read only; the frame never fills. window and door say Open / Closed,','# other device classes say On / Off (motion: Motion / Clear)'],772)
+vc=[('Vacuum','Docked','85%',(0,0,1),None,False,False,False,'docked: dock button filled'),('Vacuum','Cleaning','62%',(1,0,0),None,False,False,False,'cleaning: start filled'),
+    ('Vacuum','Returning','18%',(0,0,1),None,False,False,True,'returning, battery low (!)'),('Vacuum','Brush stuck','',(0,0,0),None,False,True,False,'error: the status text + alert'),
+    ('Vacuum','n/a','',(0,0,0),None,True,False,False,'unavailable')]
+frag('gallery-vacuum',[(vacuum(1,nm,st,b,f,p,u,e,l),20,20+k*120,lab,572,60) for k,(nm,st,b,f,p,u,e,l,lab) in enumerate(vc)],
+ ['- entity: vacuum.robot','  name: Vacuum','# buttons: start, pause, back to dock'],980)
+frag('gallery-type-override',[(sensor_txt(1,'home','Alice'),20,20,'person.alice as a sensor',0,L1)],
+ ['# without type: the entity has no widget','- entity: person.alice','  type: sensor','  name: Alice'],520)
+
+# --- size guide (schematic grey cells, 1/2 scale of the landscape 5 column grid) and graph options
+def sizeguide():
+    o='';cw,ch,gp=88,52,6
+    blocks=[('1x1',1,1,20,20,['light, switch, automation','binary_sensor, sensor','weather (small), lock,','garage, alarm, notifications']),
+            ('2x1',2,1,300,20,['sensor, weather,','calendar, energy','graph (2x1 and up)']),
+            ('3x1 (wide)',3,1,540,20,['cover, group, climate,','vacuum, media player,','weather with forecast']),
+            ('2x2',2,2,20,230,['graph (default size)','and bigger up to 3x2']),
+            ('3x2',3,2,540,230,['graph (default in','landscape, biggest)'])]
+    for k,(nm,c,r,x,y,txts) in enumerate(blocks):
+        w=c*cw+(c-1)*gp; h=r*ch+(r-1)*gp
+        for i in range(c):
+            for j in range(r):
+                o+='<rect id="sg-%d-%d%d" x="%d" y="%d" width="%d" height="%d" rx="6" fill="#ccc" stroke="#000" stroke-width="2"/>\n'%(k,i,j,x+i*(cw+gp),y+j*(ch+gp),cw,ch)
+        o+=txt('sg-n%d'%k,x,y+h+28,nm,20,'#000',extra='font-weight="bold"')
+        for t,s_ in enumerate(txts): o+=txt('sg-t%d-%d'%(k,t),x,y+h+54+t*22,s_,18,'#444')
+    o+=txt('sg-foot',20,490,'Sizes in landscape with 5 columns. Portrait with 2 columns: 1x1 = 1 cell, 2x1 = full row.',18,'#444')
+    o+=txt('sg-foot2',20,516,'Set one with  size: 2x1  on the widget; a size a type does not allow is clamped.',18,'#444')
+    write('gallery-size-guide',880,540,o,syms='')
+sizeguide()
+hl=ld('history-widget-landscape') if False else None
+hwp=ld('history-widget-portrait')
+def hsrc(src,n): return place(src,n,n,0,0)
+items=[(hws,6,20,20,'min: 19 and max: 23 fix the y axis (line)'),(hws,2,540,20,'bar: one bar per day (statistic: sum)')]
+w='';labels=[]
+for k,(src,n,x,y,lab) in enumerate(items):
+    ww,hh=wh(src,n); w+=place(src,n,k+1,x,y); labels.append((x,y+hh+26,lab))
+fragment('gallery-graph-options',w,labels,['- entity: sensor.living_room_climate','  display: graph','  history:','    hours: 24','    min: 19','    max: 23',
+  '- entity: sensor.energy_today','  display: graph','  history:','    hours: 168','    type: bar','    statistic: sum   # mean, min, max, sum, change','    period: day      # hour, day or auto'],1100)
+
+# ====================================================================== batch 3, part 3: new widgets (accepted mockups copied 1:1)
+SW=ld('widgets-new-states-small'); WW=ld('widgets-new-states-wide'); MA=ld('widgets-new-media-art-states')
+syms=SYM2+all_syms(['widgets-new-states-small','widgets-new-states-wide','widgets-new-media-art-states','widgets-new-popup-alarm','widgets-new-popup-notifications','widgets-new-popup-media'])+EXTRA+EXTRA2
+def gal3(name,items,lines,W,pop=None):
+    """items (src,n,x,y,label); pop = (mockup,x,y,scale,label) scaled popup picture"""
+    w='';labels=[];bot=0;k=0
+    for src,n,x,y,lab in items:
+        k+=1; ww,hh=wh(src,n); w+=place(src,n,k,x,y); labels.append((x,y+hh+26,lab)); bot=max(bot,y+hh+30)
+    if pop:
+        m,x,y,sc,lab=pop
+        w+=scaled(m,x,y,sc,'pp')+'<rect id="pp-edge" x="%d" y="%d" width="%d" height="%d" fill="none" stroke="#888" stroke-width="2"/>\n'%(x,y,int(960*sc),int(540*sc))
+        labels.append((x,y+int(540*sc)+26,lab)); bot=max(bot,y+int(540*sc)+30)
+    fragment(name,w,labels,lines,W,symin=bot)
+PIN=lambda n:n
+gal3('gallery-notifications',[(SW,1,20,20,'no alerts (outline)'),(SW,5,208,20,'12 alerts (filled)'),(SW,9,396,20,'3 pending')],
+ ['- type: notifications   # no entity','  name: Alerts          # optional, default Alerts','# tap: list of Home Assistant notifications, dismiss one or Clear all'],
+ 1100,pop=('widgets-new-popup-notifications',584,20,0.5,'the list popup'))
+gal3('gallery-calendar',[(WW,2,20,20,'next two events'),(WW,4,404,20,'nothing in the next 7 days')],
+ ['- entity: calendar.family','  name: Family      # optional','# shows events that have not ended, soonest first'],788)
+gal3('gallery-weather-forecast',[(WW,1,20,20,'forecast: true, 3 days'),(WW,3,20,160,'a day without forecast shows -')],
+ ['- entity: weather.home','  forecast: true    # needs a wide widget (3 cells landscape)'],592)
+gal3('gallery-media',[(WW,9,20,20,'playing: pause button filled'),(WW,11,20,160,'paused'),(WW,15,20,300,'unavailable')],
+ ['- entity: media_player.living_room','  name: Living room   # shown while nothing plays','# tap the text for the volume popup'],1080,
+ pop=('widgets-new-popup-media',600,20,0.45,'the popup'))
+gal3('gallery-media-art-off',[(MA,1,20,20,'default: cover art left of the text'),(WW,9,20,160,'art: false: text only')],
+ ['- entity: media_player.living_room','  art: false        # default is true (picture fetched once per track)'],592)
+gal3('gallery-alarm',[(SW,2,20,20,'disarmed'),(SW,10,208,20,'pending (Away)'),(SW,6,396,20,'triggered (filled)')],
+ ['- entity: alarm_control_panel.home','  name: Alarm','# tap: keypad popup; the code never leaves the device'],1060,
+ pop=('widgets-new-popup-alarm',584,20,0.45,'the keypad'))
+gal3('gallery-lock-garage',[(SW,3,20,20,'lock: locked'),(SW,7,208,20,'lock: open (filled)'),(SW,4,396,20,'garage: closed'),(SW,8,584,20,'garage: open (filled)')],
+ ['- entity: lock.front_door','  name: Front door','- entity: cover.garage    # device_class garage, or  type: garage','# a tap asks first: UP = yes, DOWN = no, PUSH = skip'],772)
+gal3('gallery-energy',[(WW,10,20,20,'used and solar, one scale'),(WW,12,404,20,'solar missing')],
+ ['- type: energy','  usage: sensor.energy_used_today','  solar: sensor.energy_solar_today'],788)
+gal3('gallery-media-art-states',[(MA,1,20,20,'art decoded'),(MA,2,20,170,'no picture'),(MA,3,20,320,'picture loading'),(MA,4,20,470,'fetch failed')],
+ ['- entity: media_player.living_room'],592)
