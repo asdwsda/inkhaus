@@ -1,6 +1,6 @@
 # 103: Notifications widget
 
-Status: todo
+Status: in-progress
 Depends on: 101
 UI spec: docs/ui/widgets-new.md §0, §1 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)

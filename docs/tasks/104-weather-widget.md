@@ -1,6 +1,6 @@
 # 104: Weather widget with forecast
 
-Status: todo
+Status: in-progress
 Depends on: 045
 UI spec: docs/ui/widgets-new.md §0, §2 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)
