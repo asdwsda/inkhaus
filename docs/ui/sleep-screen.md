@@ -1,6 +1,6 @@
 # Sleep screen (task 101)
 
-Last frame drawn before sleeping when Settings > Sleep & wake > While asleep = `Sleep screen` (settings.md 8.2). With `Dashboard` nothing changes (tab screen + sleep pill, STYLE.md 5.6). Values from STYLE.md: greys INK 0 / DIM 4 (static captions) / OFF 8 (hairlines, unavailable icon) / PAPER 15; F18 / F24 / F40 / F56; icons S 24, M 40, L 48; margin 16; every text and icon placed by its centre line `cy`; text box = 1.2 x size; value + unit runs share a baseline (`baseline_left`, unit F24 after F40, x + 2). Mockups (in docs/ui/experiments/, PNGs in docs/ui/experiments/png/; moved up once accepted):
+Last frame drawn before sleeping when Settings > Sleep & wake > While asleep = `Sleep screen` (settings.md 8.2). With `Dashboard` nothing changes (tab screen + sleep pill, STYLE.md 5.6). Values from STYLE.md: greys INK 0 / DIM 4 (static captions) / OFF 8 (hairlines, unavailable icon) / PAPER 15; F18 / F24 / F40 / F56; icons S 24, M 40, L 48; margin 16; every text and icon placed by its centre line `cy`; text box = 1.2 x size; value + unit runs share a baseline (`baseline_left`, unit F24 after F40, x + 2). Mockups (PNG in docs/ui/png/; accepted by the user 2026-11-03, may be revised after the device look):
 
 | | all optional blocks | none | no SHT30 + weather unavailable |
 |---|---|---|---|

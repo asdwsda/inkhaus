@@ -2,7 +2,7 @@
 
 Status: in-progress
 Depends on: 092, 100
-UI spec: docs/ui/sleep-screen.md (mockups in docs/ui/experiments/sleep-screen-*.svg, pending user review)
+UI spec: docs/ui/sleep-screen.md (mockups docs/ui/sleep-screen-*.svg, accepted 2026-11-03)
 Needs device: yes (look check)
 
 ## Scope
