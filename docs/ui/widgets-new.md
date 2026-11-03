@@ -1,6 +1,6 @@
 # New widgets (proposal, 2026-11-03)
 
-Status: **proposal** (mockups in `docs/ui/experiments/`, PNGs in `docs/ui/experiments/png/`). Nothing here is accepted yet;
+Status: **accepted** by the user 2026-11-03 (open decisions 1-6 taken with the recommended defaults); media widget gets album art in a follow-up revision. Mockups in `docs/ui/`, PNGs in `docs/ui/png/`;
 STYLE.md, widgets.md and layout.md are unchanged. Everything reuses their rules: grid (STYLE 4), inner grid and stacks (4b),
 text boxes 1.2 x font size, centre-line rule, only F18/F24/F40/F56, dynamic text INK, `name`/`state` ids for the checker, visual
 states (STYLE 9), refresh rules (STYLE 10), rocker yes/no (STYLE 10b), popup rules (brightness.md 2: modal, 3 px border, 6 px
@@ -333,7 +333,7 @@ mocked up (recommended: mock them once the landscape ones are accepted).
 
 ## Evidence
 
-`tools/render_mockups.sh` + `tools/check_mockups.py docs/ui/experiments/widgets-new-*.svg`: 0 problems (8 files). PNGs:
-`docs/ui/experiments/png/widgets-new-{tab-landscape,tab-portrait,states-small,states-wide,popup-notifications,popup-alarm,popup-media,popup-confirm}.png`.
+`tools/render_mockups.sh` + `tools/check_mockups.py docs/ui/widgets-new-*.svg`: 0 problems (8 files). PNGs:
+`docs/ui/png/widgets-new-{tab-landscape,tab-portrait,states-small,states-wide,popup-notifications,popup-alarm,popup-media,popup-confirm}.png`.
 The `w-90` panels, key and row frames use `-btn` ids or no ids; popup text was checked against the padded panel frame.
 
