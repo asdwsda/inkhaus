@@ -76,7 +76,7 @@ void httpDateObserved(const std::string &date, int status, uint32_t rttMs) {
   }
   const int64_t now = wallClock();
   const bool trusted = app_logic::plausibleEpoch(now) && !M5.Rtc.getVoltLow();
-  const app_logic::HttpDateDecision dec = app_logic::decideHttpDate(d, status, rttMs, now, trusted);
+  const app_logic::HttpDateDecision dec = app_logic::decideHttpDate(d, status, rttMs, now, trusted, loadLastSync());
   if (!dec.accept) {
     Serial.printf("TIME: http_date rejected status=%d rtt_ms=%u\n", status, (unsigned)rttMs);
     return;
@@ -90,7 +90,7 @@ void httpDateObserved(const std::string &date, int status, uint32_t rttMs) {
     dt.time.hours = c.hour; dt.time.minutes = c.minute; dt.time.seconds = c.second;
     M5.Rtc.setDateTime(dt);  // UNVERIFIED: also clears the RTC low-voltage flag like the SNTP path
   }
-  saveLastSync(dec.estimate);
+  if (dec.saveSync) saveLastSync(dec.syncTime);
   if (g_ntp == NtpState::Idle || g_ntp == NtpState::Waiting) {
     sntp_stop();
     g_ntp = NtpState::Done;

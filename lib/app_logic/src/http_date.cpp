@@ -52,14 +52,18 @@ bool parseHttpDate(const char *s, size_t n, int64_t &epoch) {
 }
 
 HttpDateDecision decideHttpDate(int64_t dateEpoch, int httpStatus, uint32_t rttMs, int64_t clockNow,
-                                bool clockTrusted) {
+                                bool clockTrusted, int64_t lastSync) {
   HttpDateDecision d;
   if (httpStatus < 200 || httpStatus >= 300 || rttMs > kHttpDateMaxRttMs) return d;
+  const int64_t est = dateEpoch + (500 + (int64_t)rttMs / 2 + 500) / 1000;
+  if (!plausibleEpoch(est)) return d;
   d.accept = true;
-  d.estimate = dateEpoch + (500 + (int64_t)rttMs / 2 + 500) / 1000;
+  d.estimate = est;
   d.delta = clockNow > 0 ? d.estimate - clockNow : 0;
   const int64_t ad = d.delta < 0 ? -d.delta : d.delta;
   d.write = !clockTrusted || clockNow <= 0 || ad >= kHttpDateMinStepS;
+  d.syncTime = d.write ? d.estimate : clockNow;
+  d.saveSync = d.write || lastSync <= 0 || d.syncTime - lastSync >= kHttpDateSaveIntervalS;
   return d;
 }
 

@@ -962,36 +962,50 @@ static void test_http_date_decide() {
   const int64_t now = 1800000000;
   using app_logic::decideHttpDate;
   // Estimate: date + 0.5 s + rtt/2, rounded.
-  auto d = decideHttpDate(now, 200, 0, now, true);
+  auto d = decideHttpDate(now, 200, 0, now, true, 0);
   TEST_ASSERT_TRUE(d.accept);
   TEST_ASSERT_EQUAL_INT64(now + 1, d.estimate);  // 0.5 s rounds up
-  d = decideHttpDate(now, 200, 1000, now, true);
+  d = decideHttpDate(now, 200, 1000, now, true, 0);
   TEST_ASSERT_EQUAL_INT64(now + 1, d.estimate);  // 0.5 + 0.5 = 1.0
-  d = decideHttpDate(now, 200, 2000, now, true);
+  d = decideHttpDate(now, 200, 2000, now, true, 0);
   TEST_ASSERT_TRUE(d.accept);
   TEST_ASSERT_EQUAL_INT64(now + 2, d.estimate);  // 0.5 + 1.0 = 1.5 -> 2
-  TEST_ASSERT_FALSE(decideHttpDate(now, 200, 2001, now, true).accept);   // RTT too long
-  TEST_ASSERT_FALSE(decideHttpDate(now, 404, 100, now, true).accept);    // not 2xx
-  TEST_ASSERT_FALSE(decideHttpDate(now, 401, 100, now, true).accept);
-  TEST_ASSERT_FALSE(decideHttpDate(now, 301, 100, now, true).accept);
-  TEST_ASSERT_TRUE(decideHttpDate(now, 204, 100, now, true).accept);
+  TEST_ASSERT_FALSE(decideHttpDate(now, 200, 2001, now, true, 0).accept);   // RTT too long
+  TEST_ASSERT_FALSE(decideHttpDate(now, 404, 100, now, true, 0).accept);    // not 2xx
+  TEST_ASSERT_FALSE(decideHttpDate(now, 401, 100, now, true, 0).accept);
+  TEST_ASSERT_FALSE(decideHttpDate(now, 301, 100, now, true, 0).accept);
+  TEST_ASSERT_TRUE(decideHttpDate(now, 204, 100, now, true, 0).accept);
   // Write policy (clock = now, estimate = date + 1 for a fast reply).
-  d = decideHttpDate(now - 1, 200, 100, now, true);   // estimate == now
+  d = decideHttpDate(now - 1, 200, 100, now, true, 0);   // estimate == now
   TEST_ASSERT_TRUE(d.accept);
   TEST_ASSERT_EQUAL_INT64(0, d.delta);
   TEST_ASSERT_FALSE(d.write);
-  d = decideHttpDate(now, 200, 100, now, true);       // +1 s
+  d = decideHttpDate(now, 200, 100, now, true, 0);       // +1 s
   TEST_ASSERT_FALSE(d.write);
-  d = decideHttpDate(now + 1, 200, 100, now, true);   // +2 s
+  d = decideHttpDate(now + 1, 200, 100, now, true, 0);   // +2 s
   TEST_ASSERT_EQUAL_INT64(2, d.delta);
   TEST_ASSERT_TRUE(d.write);
-  d = decideHttpDate(now - 4, 200, 100, now, true);   // -3 s
+  d = decideHttpDate(now - 4, 200, 100, now, true, 0);   // -3 s
   TEST_ASSERT_EQUAL_INT64(-3, d.delta);
   TEST_ASSERT_TRUE(d.write);
-  TEST_ASSERT_TRUE(decideHttpDate(now - 1, 200, 100, now, false).write);  // untrusted: always
-  TEST_ASSERT_TRUE(decideHttpDate(now, 200, 100, 0, false).write);        // clock unset
+  TEST_ASSERT_TRUE(decideHttpDate(now - 1, 200, 100, now, false, 0).write);  // untrusted: always
+  TEST_ASSERT_TRUE(decideHttpDate(now, 200, 100, 0, false, 0).write);        // clock unset
+  // Implausible estimate: rejected outright.
+  TEST_ASSERT_FALSE(decideHttpDate(1000, 200, 100, now, true, 0).accept);
+  TEST_ASSERT_FALSE(decideHttpDate(0, 200, 100, 0, false, 0).accept);
+  // Last-sync saving: written -> estimate; not written -> current clock, only if stale (>= 1 h) or none.
+  d = decideHttpDate(now + 1, 200, 100, now, true, now - 10);   // written
+  TEST_ASSERT_TRUE(d.saveSync);
+  TEST_ASSERT_EQUAL_INT64(d.estimate, d.syncTime);
+  d = decideHttpDate(now - 1, 200, 100, now, true, now - 10);   // no write, recent sync
+  TEST_ASSERT_FALSE(d.saveSync);
+  d = decideHttpDate(now - 1, 200, 100, now, true, now - 3600); // no write, stale sync
+  TEST_ASSERT_TRUE(d.saveSync);
+  TEST_ASSERT_EQUAL_INT64(now, d.syncTime);
+  d = decideHttpDate(now - 1, 200, 100, now, true, 0);          // no write, none stored
+  TEST_ASSERT_TRUE(d.saveSync);
   // An accepted Date counts as a sync: no SNTP for 24 h.
-  d = decideHttpDate(now, 200, 100, 0, false);
+  d = decideHttpDate(now, 200, 100, 0, false, 0);
   TEST_ASSERT_FALSE(app_logic::shouldSyncNtp(d.estimate, d.estimate + 100, false));
   TEST_ASSERT_FALSE(app_logic::shouldSyncNtp(d.estimate, d.estimate + 86400, false));
   TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(d.estimate, d.estimate + 86401, false));
