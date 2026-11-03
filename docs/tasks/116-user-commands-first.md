@@ -24,3 +24,6 @@ graphs, report (100), notifications (103), forecast (104), calendar/events and t
       a yielding job is re-queued or dropped per its policy; OTA job refused in interactive sessions.
 - [ ] `pio test -e native`, `pio run` all envs.
 - [ ] Device: on battery, rocker wake, 10 taps: tap -> call start <= 300 ms and tap -> action <= 2 s in 9/10 (`timing`).
+
+## Notes
+- User 2026-11-03: device and router stay where they are, so the weak link (RSSI about -82 dBm) is the normal case; design and test for it.
