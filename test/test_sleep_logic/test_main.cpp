@@ -478,6 +478,71 @@ void test_idle_full_due() {
   TEST_ASSERT_FALSE(idleFullDue(true, t, false, true));       // input pending
 }
 
+// Task 098 (092): full wake x debt x Updates matrix. A simulated debt flag stands in for present.cpp's NVS `pdebt`
+// (partial refresh sets it, any GC16 full clears it, it survives sleep because it is only ever written on change).
+struct WakeSim {
+  bool debt = false;
+  bool updatesOn = true;
+  // One session: returns what the first frame and the sleep entry did.
+  struct Out { bool firstFull, deferred, sleepFull, sleepPartial; };
+  Out wake(bool scheduled, bool changedFrames) {
+    Out o{};
+    o.deferred = deferRefreshes(scheduled);
+    o.firstFull = firstFrameFull(scheduled, debt, updatesOn);
+    if (o.firstFull) debt = false;
+    if (scheduled) {
+      o.sleepFull = true;  // main.cpp: finishScheduled(true) on every scheduled wake, changed or not
+      debt = false;
+    } else {
+      if (changedFrames) debt = true;  // partial refresh in the session
+      o.sleepPartial = true;           // sleep badge: partial, no flash
+      debt = true;
+    }
+    return o;
+  }
+};
+
+void test_098_scheduled_wake_never_partial_and_clears_debt() {
+  WakeSim s;
+  s.debt = true;
+  for (bool changed : {false, true}) {
+    s.debt = true;
+    auto o = s.wake(true, changed);
+    TEST_ASSERT_TRUE(o.deferred);
+    TEST_ASSERT_FALSE(o.firstFull);
+    TEST_ASSERT_TRUE(o.sleepFull);
+    TEST_ASSERT_FALSE(o.sleepPartial);
+    TEST_ASSERT_FALSE(s.debt);  // no-change scheduled wake clears it too
+  }
+}
+
+void test_098_updates_off_debt_first_frame_full_once() {
+  WakeSim s;
+  s.updatesOn = false;
+  s.debt = true;  // e.g. kept across a power-off (NVS)
+  auto o = s.wake(false, false);
+  TEST_ASSERT_TRUE(o.firstFull);  // -> `debt_full`
+  TEST_ASSERT_FALSE(o.deferred);
+  // sleep badge partial sets debt again, so the next interactive wake does it again (no scheduled wake to clear it)
+  TEST_ASSERT_TRUE(s.debt);
+  TEST_ASSERT_TRUE(s.wake(false, false).firstFull);
+  // no debt, Updates Off: no flash
+  s.debt = false;
+  TEST_ASSERT_FALSE(firstFrameFull(false, s.debt, s.updatesOn));
+}
+
+void test_098_updates_on_interactive_debt_waits_for_scheduled_wake() {
+  WakeSim s;
+  s.updatesOn = true;
+  auto o = s.wake(false, true);
+  TEST_ASSERT_FALSE(o.firstFull);
+  TEST_ASSERT_TRUE(s.debt);
+  o = s.wake(false, false);
+  TEST_ASSERT_FALSE(o.firstFull);  // still deferred to the scheduled wake
+  s.wake(true, false);
+  TEST_ASSERT_FALSE(s.debt);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_ext1_empty_mask_is_rocker);
@@ -516,5 +581,8 @@ int main() {
   RUN_TEST(test_guard_not_armed_blocks_nothing);
   RUN_TEST(test_refresh_decision);
   RUN_TEST(test_idle_full_due);
+  RUN_TEST(test_098_scheduled_wake_never_partial_and_clears_debt);
+  RUN_TEST(test_098_updates_off_debt_first_frame_full_once);
+  RUN_TEST(test_098_updates_on_interactive_debt_waits_for_scheduled_wake);
   return UNITY_END();
 }

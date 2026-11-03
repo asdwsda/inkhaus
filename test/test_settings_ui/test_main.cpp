@@ -974,6 +974,40 @@ void test_fw_row_looks() {
   TEST_ASSERT_TRUE(firmwareRow(f).alert);
 }
 
+// Task 098 (090/087): the texts of the open device checks.
+void test_098_fw_error_texts() {
+  FirmwareInfo f = fwInfo();
+  // 090: manifest stall -> "Check failed: timeout" (60 s); install > 5 min -> "Took too long"
+  f.checkErr = FwCheckErr::Timeout;
+  FirmwareRow r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::CheckFailed && r.alert && r.actionable);
+  TEST_ASSERT_EQUAL_STRING("Check failed: timeout", r.hint.c_str());
+  f.checkErr = FwCheckErr::NoServer;  // low-memory skip maps here (main.cpp fwCheck)
+  TEST_ASSERT_EQUAL_STRING("Check failed: no server", firmwareRow(f).hint.c_str());
+  f.checkErr = FwCheckErr::None;
+  f.available = "1.3.0";
+  f.dlErr = FwDlErr::TooLong;
+  r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::Failed && r.alert && r.actionable && r.chip);
+  TEST_ASSERT_EQUAL_STRING("Took too long, not installed", r.hint.c_str());
+  // 087: Wi-Fi down with an offer: refused, not actionable, text names Wi-Fi (also over a stale dlErr)
+  f.dlErr = FwDlErr::None;
+  f.wifi = false;
+  r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::Refused && !r.actionable && r.dotted);
+  TEST_ASSERT_EQUAL_STRING("1.3.0: Wi-Fi not connected", r.hint.c_str());
+  // Wi-Fi down wins over the battery text; battery alone gives the 50 % text
+  f.blockedBattery = true;
+  TEST_ASSERT_EQUAL_STRING("1.3.0: Wi-Fi not connected", firmwareRow(f).hint.c_str());
+  f.wifi = true;
+  r = firmwareRow(f);
+  TEST_ASSERT_TRUE(r.look == FwLook::Refused && !r.actionable);
+  TEST_ASSERT_EQUAL_STRING("1.3.0 needs USB or 50% battery", r.hint.c_str());
+  // a blocked install is refused even after an earlier failure
+  f.dlErr = FwDlErr::TooLong;
+  TEST_ASSERT_TRUE(firmwareRow(f).look == FwLook::Refused);
+}
+
 void test_fw_progress_look() {
   FirmwareInfo f = fwInfo();
   f.available = "1.3.0";
@@ -1118,6 +1152,7 @@ int main() {
   RUN_TEST(test_orientation_changed_flag_both_directions);
   RUN_TEST(test_network_rows_dirty_includes_hint_row_value_only);
   RUN_TEST(test_fw_row_looks);
+  RUN_TEST(test_098_fw_error_texts);
   RUN_TEST(test_fw_progress_look);
   RUN_TEST(test_fw_tools_page_focus_and_summary);
   RUN_TEST(test_fw_demo_in_edit_buffer_refuses);

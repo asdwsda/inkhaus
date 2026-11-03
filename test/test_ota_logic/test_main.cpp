@@ -118,6 +118,35 @@ void test_job_deadline() {
   TEST_ASSERT_TRUE(jobExpired(true, 400000));
 }
 
+// Task 098 (090): deadline as ota.cpp::cancelled() evaluates it: elapsed = millis() - start, unsigned.
+void test_098_deadline_scenarios() {
+  TEST_ASSERT_EQUAL_UINT32(60000, kCheckDeadlineMs);
+  TEST_ASSERT_EQUAL_UINT32(300000, kInstallDeadlineMs);
+  // slow install: still running at 4:59, "Took too long" path (cancelled() true) at 5:00
+  const uint32_t start = 1000;
+  TEST_ASSERT_FALSE(jobExpired(true, (start + 299999u) - start));
+  TEST_ASSERT_TRUE(jobExpired(true, (start + 300000u) - start));
+  // manifest stall: a check dies at 60 s although the install cap would still allow it
+  TEST_ASSERT_TRUE(jobExpired(false, 60000));
+  TEST_ASSERT_FALSE(jobExpired(true, 60000));
+  // millis() wrap in the middle of a job
+  const uint32_t nearWrap = 0xFFFFFF00u;
+  TEST_ASSERT_FALSE(jobExpired(false, (uint32_t)(nearWrap + 59000u) - nearWrap));
+  TEST_ASSERT_TRUE(jobExpired(false, (uint32_t)(nearWrap + 60000u) - nearWrap));
+}
+
+// Task 098 (087): battery gate and low-memory skip edges.
+void test_098_battery_gate_and_memory() {
+  TEST_ASSERT_TRUE(installAllowed(false, 0) == InstallBlock::Battery);
+  TEST_ASSERT_TRUE(installAllowed(false, 49) == InstallBlock::Battery);
+  TEST_ASSERT_TRUE(installAllowed(false, 50) == InstallBlock::None);
+  TEST_ASSERT_TRUE(installAllowed(false, 100) == InstallBlock::None);
+  TEST_ASSERT_TRUE(installAllowed(true, 0) == InstallBlock::None);  // USB wins at any level
+  TEST_ASSERT_FALSE(memoryOk(0));
+  TEST_ASSERT_FALSE(memoryOk(kMinFreeBlock - 1));
+  TEST_ASSERT_TRUE(memoryOk(kMinFreeBlock));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_semver);
@@ -129,5 +158,7 @@ int main() {
   RUN_TEST(test_suppressed);
   RUN_TEST(test_limits);
   RUN_TEST(test_job_deadline);
+  RUN_TEST(test_098_deadline_scenarios);
+  RUN_TEST(test_098_battery_gate_and_memory);
   return UNITY_END();
 }
