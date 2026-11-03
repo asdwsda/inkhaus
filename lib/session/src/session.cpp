@@ -341,7 +341,9 @@ void SessionMachine::pump(int64_t now, std::vector<Command>& out) {
   }
   if (!fetched_ || refresh_) {  // queued actions went out first; the full fetch follows
     refresh_ = false;
-    out.push_back(make(Command::Type::FetchStates));
+    Command f = make(Command::Type::FetchStates);
+    f.user = fetched_;  // the first fetch of a session is not a user command; a later refresh is
+    out.push_back(f);
     flight_ = Flight::FetchAll;
     return;
   }
@@ -349,6 +351,7 @@ void SessionMachine::pump(int64_t now, std::vector<Command>& out) {
   for (const Item& it : confirm_)
     if (it.due_ms <= now) c.ids.push_back(it.id);
   if (!c.ids.empty()) {
+    c.user = true;  // follows a tap
     confirm_fetching_ = c.ids;
     out.push_back(c);
     flight_ = Flight::FetchConfirm;

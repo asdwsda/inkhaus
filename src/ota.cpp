@@ -131,8 +131,21 @@ uint32_t maxImageSize() {
 uint32_t g_jobStartMs = 0;
 bool g_jobInstall = false;
 volatile bool g_timedOut = false;
+bool (*g_yieldFn)() = nullptr;
+volatile bool g_autoJob = false;
+volatile bool g_yielded = false;
+enum AutoState : int { AutoIdle = 0, AutoQueued, AutoDone };  // task 116: loop <-> net task hand-off
+volatile int g_autoState = AutoIdle;
+volatile int64_t g_autoEpoch = 0;
+bool (*g_poster)() = nullptr;
 bool cancelled() {
   if (g_timedOut) return true;
+  if (g_autoJob && g_yieldFn && g_yieldFn()) {  // task 116: a user command waits; the automatic check retries later
+    g_timedOut = true;
+    g_yielded = true;
+    wakelog::logf("OTA: check yielded to a user command\n");
+    return true;
+  }
   const uint32_t el = millis() - g_jobStartMs;
   if (!ota_logic::jobExpired(g_jobInstall, el)) return false;
   g_timedOut = true;
@@ -222,6 +235,10 @@ bool runCheckBody(int64_t epoch, CheckResult &result) {
     result = g_failKind;
     wakelog::logf("OTA: check failed err=%s\n", g_err.c_str());  // silent for the user
   }
+  if (g_yielded) {  // task 116: not an attempt; nothing recorded, the idle check retries
+    result = CheckResult::Skipped;
+    return true;
+  }
   g_sched.lastAttempt = epoch;
   if (ok) g_sched.lastSuccess = epoch;
   saveCheck(ok, epoch);
@@ -302,6 +319,7 @@ bool runJob(Job &j, void (*progress)(Phase, int)) {
   g_jobStartMs = millis();
   g_jobInstall = j.kind == Job::Install;
   g_timedOut = false;
+  g_yielded = false;  // task 116: per job, so Check now after a yielded automatic check is not misread
   TaskHandle_t h = nullptr;
   if (heap_caps_get_largest_free_block(MALLOC_CAP_8BIT) < kJobStack + ota_logic::kMinFreeBlock ||
       xTaskCreate(&jobEntry, "otajob", kJobStack, &j, 1, &h) != pdPASS) {
@@ -328,9 +346,9 @@ bool runJob(Job &j, void (*progress)(Phase, int)) {
   return true;
 }
 
-bool runCheck(int64_t epoch, CheckResult &result) {
+bool runCheck(int64_t epoch, CheckResult &result, bool quiesce = true) {
   g_err.clear();
-  if (g_quiesce) g_quiesce();  // net-task call: from the loop, before the job task exists
+  if (quiesce && g_quiesce) g_quiesce();  // net-task call: from the loop, before the job task exists
   Job j;
   j.kind = Job::Check;
   j.epoch = epoch;
@@ -373,21 +391,42 @@ void begin(bool coldBoot) {
 }
 
 void setQuiesce(void (*fn)()) { g_quiesce = fn; }
+void setPoster(bool (*fn)()) { g_poster = fn; }
+void setYield(bool (*fn)()) { g_yieldFn = fn; }
 
-void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone) {
+void runAutoCheckJob() {  // net task
+  CheckResult r;
+  g_autoJob = true;
+  runCheck(g_autoEpoch, r, false);  // the net task closed the HA socket already
+  g_autoJob = false;
+  g_autoState = AutoDone;
+}
+
+void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone, bool interactive, uint32_t msSinceInput,
+          bool userLaneBusy) {
+  if (g_autoState == AutoDone) {  // the net task finished the automatic check
+    g_autoState = AutoIdle;
+    g_busy = false;
+    if (g_yielded) g_checkedThisBoot = false;  // yielded: try again when idle
+    return;
+  }
   if (g_busy) return;
   if (!g_loopSeen) {
     g_loopSeen = true;
     g_loopStartMs = nowMs;
   }
   if (g_pending && !g_healthyDone && ota_logic::healthy(g_began, nowMs - g_loopStartMs)) markHealthy();
-  if (g_checkedThisBoot || !wifiUp || !sessionDone) return;
+  if (g_checkedThisBoot || !wifiUp || !sessionDone || !g_poster) return;
+  if (!ota_logic::autoCheckAllowed(interactive, false, msSinceInput, userLaneBusy)) return;  // task 116: UNVERIFIED on device
   if (!ota_logic::checkDue(g_sched, epoch, g_cold, wifiUp)) return;
   g_checkedThisBoot = true;  // one attempt per boot/wake; failures retry at the next eligible wake
-  g_busy = true;
-  CheckResult r;
-  runCheck(epoch, r);
-  g_busy = false;
+  g_autoEpoch = epoch;
+  g_busy = true;  // also holds sleep until the net task is done
+  g_autoState = AutoQueued;
+  if (!g_poster()) {
+    g_autoState = AutoIdle;
+    g_busy = false;
+  }
 }
 
 void beforeSleep() {

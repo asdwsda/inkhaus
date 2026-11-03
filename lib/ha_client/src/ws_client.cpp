@@ -262,7 +262,7 @@ FlowResult Flow::run() {
   bool upgraded = false;
   uint8_t rb[512];
   while (!aborted() && phase_ != Phase::Done) {
-    if (req_.limits.cancel && *req_.limits.cancel) { fail(HaError::Cancelled, "cancelled"); break; }
+    if ((req_.limits.cancel && *req_.limits.cancel) || (req_.limits.yield && *req_.limits.yield)) { fail(HaError::Cancelled, "cancelled"); break; }
     uint32_t el = elapsed();
     if (el >= req_.limits.deadline_ms) { fail(HaError::Timeout, "deadline"); break; }
     uint32_t wait = std::min<uint32_t>(req_.limits.deadline_ms - el, 250);

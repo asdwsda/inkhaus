@@ -11,7 +11,7 @@ void pump_body(StreamSource& src, BodyKind kind, int64_t length, const StreamLim
   uint8_t buf[512];
   for (;;) {
     uint32_t elapsed = src.now() - start_ms;
-    if (lim.cancel && *lim.cancel) { r.cancelled = true; return; }
+    if ((lim.cancel && *lim.cancel) || (lim.yield && *lim.yield)) { r.cancelled = true; return; }
     if (elapsed > lim.deadline_ms) { r.deadline = true; return; }
     size_t cap = sizeof(buf);
     if (kind == BodyKind::Identity && left >= 0 && (int64_t)cap > left) cap = (size_t)left;

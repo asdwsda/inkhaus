@@ -43,6 +43,9 @@ class HaWorker {
   void applyPlan(const UrlPlan &plan);
   // Without a connector the statistics source answers Network (tests of the history path).
   void setWsConnector(WsConnector *c) { ws_ = c; }
+  // Task 116: while *f is true, background jobs (history, statistics, notifications, forecast) abort with
+  // Cancelled at the next chunk; user commands never look at it. The net task requeues/drops the job.
+  void setYieldFlag(const volatile bool *f) { yieldFlag_ = f; }
   // Which URL answered last (None before the first success).
   Side answeredSide() const;
 
@@ -56,6 +59,8 @@ class HaWorker {
   void runWsOnce(const std::string &commandJson, size_t maxBytes, std::string &body, NetEvent &e);
   std::vector<std::string> wsBases() const;
   WsConnector *ws_ = nullptr;
+  const volatile bool *yieldFlag_ = nullptr;
+  const volatile bool *yield_ = nullptr;  // yieldFlag_ for the running background job, else null
   bool planExclusive_ = false, planExternalFirst_ = false;
   HttpTransport &transport_;
   std::string internal_, external_, token_;

@@ -89,6 +89,7 @@ struct Command {
   Type type = Type::Render;
   std::vector<std::string> ids;
   int ticket = 0;
+  bool user = false;  // FetchStates: refresh-now or a tap follow-up (task 116)
   Action action = Action::LightToggle;
   bool custom = false;
   ServiceCall custom_call;

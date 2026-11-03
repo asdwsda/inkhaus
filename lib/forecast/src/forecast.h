@@ -65,6 +65,7 @@ class Store {
   void setToday(const Ymd &t) { today_ = t; }
   const Ymd &today() const { return today_; }
   void markAsked(const std::string &entity, int64_t now);
+  void unmarkAsked(const std::string &entity);  // the request was dropped (task 116 yield): ask again later
   // Not asked yet in this session: due on a scheduled wake (once per wake), else when there is no data or it is
   // older than kMaxAgeS. Asked already: never again on a scheduled wake; interactive sessions (the screen can
   // stay awake for hours) ask again kMaxAgeS after the last attempt, failed or not. Clock unset (now <= 0): once.

@@ -205,7 +205,10 @@ bool HistoryPopup::onFetchDone(int ticket, HistOutcome o, history::Series &&s, i
     case HistOutcome::TooMany: fail(HistReason::TooMany); return true;
     case HistOutcome::Unavailable: fail(HistReason::Unavailable); return true;
     case HistOutcome::NoStatistics: fail(HistReason::NoStatistics); return true;
-    case HistOutcome::Cancelled:
+    case HistOutcome::Cancelled:  // task 116: dropped by yielding to a user command, not offline
+      if (hasData_) { if (state_ == HistState::Loading) state_ = HistState::Stale; }
+      else { state_ = HistState::Loading; fetchWanted_ = true; }  // the caller plans the fetch again
+      return true;
     case HistOutcome::Unreachable:
       if (hasData_) { state_ = HistState::Stale; offline_ = true; }
       else fail(HistReason::Unreachable);

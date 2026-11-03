@@ -49,6 +49,12 @@ constexpr int64_t kColdCheckMinS = 3600;  // a cold boot checks at most once per
 // failure) 1 day since the last attempt. Never without Wi-Fi up. `nowEpoch` 0 (clock unset): only a cold boot checks.
 bool checkDue(const CheckState &s, int64_t nowEpoch, bool coldBoot, bool wifiUp);
 
+// Task 116: the automatic check runs on scheduled wakes, and in an interactive/always-awake session only once
+// there was no user input for kAutoIdleMs and the user lane is empty. Never while the user is active.
+// Settings > Check now (userRequested) always may.
+constexpr uint32_t kAutoIdleMs = 60000;
+bool autoCheckAllowed(bool interactiveSession, bool userRequested, uint32_t msSinceInput, bool userLaneBusy);
+
 // ---- install gate ----
 enum class InstallBlock { None, Battery };
 // Allowed on USB or battery >= 50 %.

@@ -499,6 +499,24 @@ void test_timeout_without_bytes_keeps_cache() {  // F3
   TEST_ASSERT_TRUE(p.hasData());
 }
 
+void test_yield_drop_is_not_offline() {  // task 116
+  HistoryJob j;
+  HistoryPopup p;  // with cache: data stays, not marked offline
+  p.open(lineSpec(), 0, 0, 0);
+  p.applyCache(Freshness::Stale, makeSeries(20), kNow - 7200);
+  p.takeFetch(kNow, j);
+  p.onFetchDone(j.ticket, HistOutcome::Cancelled, history::Series(), kNow);
+  TEST_ASSERT_TRUE(p.hasData());
+  TEST_ASSERT_FALSE(p.offline());
+  TEST_ASSERT_EQUAL(HistState::Stale, p.state());
+  HistoryPopup q;  // without data: not an error, the fetch is planned again
+  q.open(lineSpec(), 0, 0, 0);
+  q.takeFetch(kNow, j);
+  q.onFetchDone(j.ticket, HistOutcome::Cancelled, history::Series(), kNow);
+  TEST_ASSERT_EQUAL(HistState::Loading, q.state());
+  TEST_ASSERT_TRUE(q.takeFetch(kNow, j));
+}
+
 void test_same_columns_tolerance() {  // F4
   HistoryPopup p;
   p.open(lineSpec(), 0, 0, 0);
@@ -543,6 +561,7 @@ int main() {
   RUN_TEST(test_same_columns_tolerance);
   RUN_TEST(test_source_choice_and_jobs);
   RUN_TEST(test_no_statistics_outcome);
+  RUN_TEST(test_yield_drop_is_not_offline);
   RUN_TEST(test_bar_window);
   RUN_TEST(test_bar_window_local_days);
   return UNITY_END();

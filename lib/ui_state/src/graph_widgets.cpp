@@ -140,7 +140,7 @@ bool GraphWidgets::onFetchDone(int ticket, HistOutcome o, history::Series &&s, i
     case HistOutcome::TooMany: fail(GraphReason::TooMany); break;
     case HistOutcome::Unavailable: fail(GraphReason::Unavailable); break;
     case HistOutcome::NoStatistics: fail(GraphReason::NoStatistics); break;
-    case HistOutcome::Cancelled:
+    case HistOutcome::Cancelled: changed = markFailed(*e, false); break;  // task 116: yielded, not offline; data stays (stale)
     case HistOutcome::Unreachable: changed = markFailed(*e, true); break;
   }
   if (changed) changed_ = true;
