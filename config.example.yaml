@@ -78,6 +78,8 @@ tabs:
       - entity: sensor.outside_temperature
         name: Outside
       - entity: weather.home
+      - entity: weather.home    # a second one with the 3-day forecast (needs a wide widget)
+        forecast: true
       - entity: vacuum.robot
         name: Vacuum
       - entity: person.alice    # no built-in type for this domain, so set it

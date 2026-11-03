@@ -637,6 +637,19 @@ class Validator {
     r_.config.tabs.push_back(std::move(tb));
   }
 
+  // Task 104: `forecast: true|false`, weather widgets with a single entity only.
+  void parseForecastOption(JsonObjectConst o, const std::string &path, Widget &w) {
+    std::string f;
+    if (!str(o, "forecast", path, false, f)) return;
+    if (f != "true" && f != "false") {
+      err(path + ".forecast", "must be true or false");
+    } else if (f == "true") {
+      if (w.type != WidgetType::Weather) err(path + ".forecast", "only available for weather widgets");
+      else if (!w.group.empty()) err(path + ".forecast", "needs a single entity, not a group");
+      else w.forecast = true;
+    }
+  }
+
   void widget(JsonVariantConst v, const std::string &path, Tab &tb) {
     if (!v.is<JsonObjectConst>()) {
       err(path, "must be a mapping");
@@ -725,6 +738,7 @@ class Validator {
       else
         w.display = WidgetDisplay::Graph;
     }
+    parseForecastOption(o, path, w);  // task 104
     for (const auto &e : w.entities) addEntity(e);
     tb.widgets.push_back(std::move(w));
   }

@@ -60,6 +60,9 @@ class HaClient {
   // Task 100: POST /api/states/<entity_id> with a state JSON (creates or updates a state object; HA answers
   // 200/201 with the state, which is ignored). Same URL fallback as the other calls.
   HaResult post_state(const std::string& entity_id, const std::string& body);
+  // Task 104: POST /api/services/<domain>/<service>?return_response; the raw answer body goes to `response`.
+  HaResult call_service_response(const std::string& domain, const std::string& service,
+                                 const std::string& body, std::string& response);
   HaResult call_service(const ServiceCall& call, const std::vector<std::string>* wanted = nullptr,
                         std::vector<EntityState>* states = nullptr);
 

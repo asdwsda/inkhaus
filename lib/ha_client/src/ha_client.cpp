@@ -106,6 +106,11 @@ HaResult HaClient::call_service(const ServiceCall& call, const std::vector<std::
   return r;
 }
 
+HaResult HaClient::call_service_response(const std::string& domain, const std::string& service,
+                                         const std::string& body, std::string& response) {
+  return post("/api/services/" + domain + "/" + service + "?return_response", body, response);
+}
+
 HaResult HaClient::post_state(const std::string& entity_id, const std::string& body) {
   std::string resp;
   HaResult r = post("/api/states/" + entity_id, body, resp);

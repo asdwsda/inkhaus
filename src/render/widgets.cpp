@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "text_fit.h"
+#include "weather_forecast_draw.h"
 #include "widget_view.h"
 
 namespace render {
@@ -472,7 +473,10 @@ void drawWidget(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData 
     case WidgetType::BinarySensor: drawToggle(x, data, title); break;
     case WidgetType::Climate: drawClimate(x, data, title); break;
     case WidgetType::Sensor: drawSensor(x, pl, data, title); break;
-    case WidgetType::Weather: drawWeather(x, pl, data, title); break;
+    case WidgetType::Weather:
+      if (isForecastWidget(data.cfg, pl.rect.w)) drawWeatherForecast(c, pl.rect, data);  // task 104
+      else drawWeather(x, pl, data, title);
+      break;
     case WidgetType::Vacuum: drawVacuum(x, data, title); break;
   }
 }

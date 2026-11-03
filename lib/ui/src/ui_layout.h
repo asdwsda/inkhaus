@@ -63,6 +63,9 @@ SizeLimits sizeLimits(config::WidgetType type, const Grid &g);
 SizeLimits sizeLimits(config::WidgetType type, settings::Orientation o, int columns = 0);
 // Graph widgets (`display: graph`) have their own table.
 SizeLimits graphSizeLimits(const Grid &g);
+// Task 104: weather with forecast needs a widget at least this wide (px); default = the narrowest such width.
+constexpr int kForecastMinW = 500;
+SizeLimits forecastSizeLimits(const Grid &g);
 
 enum ClampReason : unsigned {
   kClampTypeMin = 1,   // raised to the type minimum

@@ -114,6 +114,7 @@ struct Widget {
   std::vector<std::string> details;     // up to kMaxDetails extra attributes for a details line
   std::optional<std::string> unit;      // unit override for the main value (<= kMaxUnitChars chars)
   std::optional<int> decimals;          // 0..3, rounds numeric main/detail values
+  bool forecast = false;  // task 104: weather widget with the 3-day forecast (wide, single entity)
   HistoryConfig history;  // defaults when the key is absent
   // Entities this widget acts on: {entity} or the group members.
   std::vector<std::string> entities;

@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include "forecast.h"
 #include "scanner.h"
 #include "stats_parser.h"
 #include "notifications.h"
@@ -226,6 +227,23 @@ void HaWorker::runNotifications(NetEvent &e) {
   }
 }
 
+// Task 104: weather.get_forecasts (daily) over REST, the answer parsed here.
+void HaWorker::runForecast(const NetCommand &cmd, NetEvent &e) {
+  e.forecastEntity = cmd.forecastEntity;
+  std::string body, resp;
+  if (!forecast::buildRequestBody(cmd.forecastEntity, body)) {
+    e.error = HaError::Parse;
+    return;
+  }
+  const HaResult r = client_->call_service_response("weather", "get_forecasts", body, resp);
+  e.error = r.error;
+  e.http_status = r.http_status;
+  e.external = isExternal(r.base_url);
+  e.ms = r.ms;
+  e.reused = r.reused;
+  if (r.ok() && !forecast::parseResponse(resp, cmd.forecastEntity, e.forecastDays)) e.error = HaError::Parse;
+}
+
 NetEvent HaWorker::run(const NetCommand &cmd) {
   NetEvent e;
   if (cmd.type == NetCommand::Type::Fetch) {
@@ -244,6 +262,10 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     e.ticket = cmd.ticket;
     if (cmd.histStats) runStatistics(cmd, e);
     else runHistory(cmd, e);
+  } else if (cmd.type == NetCommand::Type::Forecast) {
+    e.type = NetEvent::Type::ForecastDone;
+    e.ticket = cmd.ticket;
+    runForecast(cmd, e);
   } else if (cmd.type == NetCommand::Type::Notifications) {
     e.type = NetEvent::Type::NotificationsDone;
     e.ticket = cmd.ticket;
