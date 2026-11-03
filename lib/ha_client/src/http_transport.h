@@ -16,6 +16,7 @@ struct HttpResponse {
   bool reused = false;     // sent over an already open connection (keep-alive)
   bool stale = false;      // status == 0 and reused: the old connection failed before any response
   uint32_t ms = 0;         // duration of the request
+  std::string date;        // value of the Date response header ("" = absent), task 097
 };
 
 class HttpTransport {

@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include "http_date.h"
 #include "net.h"
 #include "wall_time.h"
 
@@ -65,6 +66,36 @@ void ntpSessionStart() {
   const bool want = app_logic::shouldSyncNtp(loadLastSync(), wallClock(), M5.Rtc.getVoltLow());
   g_ntp = want ? NtpState::Idle : NtpState::Off;
   Serial.printf("APP: ntp %s\n", want ? "wanted" : "not_needed");
+}
+
+void httpDateObserved(const std::string &date, int status, uint32_t rttMs) {
+  int64_t d = 0;
+  if (!app_logic::parseHttpDate(date.data(), date.size(), d)) {
+    Serial.println("TIME: http_date invalid");
+    return;
+  }
+  const int64_t now = wallClock();
+  const bool trusted = app_logic::plausibleEpoch(now) && !M5.Rtc.getVoltLow();
+  const app_logic::HttpDateDecision dec = app_logic::decideHttpDate(d, status, rttMs, now, trusted, loadLastSync());
+  if (!dec.accept) {
+    Serial.printf("TIME: http_date rejected status=%d rtt_ms=%u\n", status, (unsigned)rttMs);
+    return;
+  }
+  if (dec.write) {
+    timeval tv{(time_t)dec.estimate, 0};
+    settimeofday(&tv, nullptr);
+    const app_logic::Civil c = app_logic::epochToCivil(dec.estimate, 0);
+    m5::rtc_datetime_t dt;
+    dt.date.year = c.year; dt.date.month = c.month; dt.date.date = c.day;
+    dt.time.hours = c.hour; dt.time.minutes = c.minute; dt.time.seconds = c.second;
+    M5.Rtc.setDateTime(dt);  // UNVERIFIED: also clears the RTC low-voltage flag like the SNTP path
+  }
+  if (dec.saveSync) saveLastSync(dec.syncTime);
+  if (g_ntp == NtpState::Idle || g_ntp == NtpState::Waiting) {
+    sntp_stop();
+    g_ntp = NtpState::Done;
+  }
+  Serial.printf("TIME: http_date delta_s=%ld wrote=%d\n", (long)dec.delta, dec.write ? 1 : 0);
 }
 
 void ntpAbort() {

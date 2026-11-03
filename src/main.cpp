@@ -582,6 +582,7 @@ static void startSession(uint32_t now, bool restart = false) {
   g_sessionOver = false;
   g_drv->setHistoryHandler(onHistoryDone);
   g_drv->setFetchHook(graphsOnFetch);
+  g_drv->setHttpDateHook(session_glue::httpDateObserved);  // task 097
   g_drv->setSleepHold([] { return graphsBusy() || ota::busy(); });  // task 087: no sleep during a check / download
   g_app.graphs().abortFetch();  // the old net session is gone: a graph result will not arrive
   g_graphBatchMs = 0;

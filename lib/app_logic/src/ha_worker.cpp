@@ -194,6 +194,7 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     e.states = std::move(f.states);
     e.ms = f.result.ms;
     e.reused = f.result.reused;
+    e.httpDate = std::move(f.result.http_date);
   } else if (cmd.type == NetCommand::Type::History) {
     e.type = NetEvent::Type::HistoryDone;
     e.ticket = cmd.ticket;

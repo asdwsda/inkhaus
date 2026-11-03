@@ -27,6 +27,7 @@ struct HaResult {
   std::string base_url;  // base URL that answered
   uint32_t ms = 0;       // duration of the last request
   bool reused = false;   // it went over a kept-alive connection
+  std::string http_date; // Date header of the answer ("" = none), task 097
   bool ok() const { return error == HaError::None; }
 };
 
