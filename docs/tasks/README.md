@@ -116,3 +116,10 @@
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
 - User-approved (2026-10-29): Settings overview summary wording (OPEN-S5) and long Wi-Fi names shrink then "..." (OPEN-S6).
 - 056: a scan after a deep-sleep wake fails (aps=-2); rare now (scan only after a failed direct connect). Watch `event_ms=-1` in debug.log.
+
+## Resume point (2026-11-03, usage limit)
+- 104 merged (guide reference has `forecast`). Branches to merge next, both committed, PC part done:
+  `worktree-agent-a7543ff6d34094f59` (103 notifications, regenerated icon_data: re-run tools/gen_icons.py on conflicts)
+  and `worktree-agent-a10218e428c930f80` (106 media). Expect trivial conflicts in the widget enum, config_cache bound,
+  ui_layout, widgets.cpp, app_state, main.cpp; add their new config keys to docs/guide/09-config-reference.md.
+- Then: demo-data follow-ups for 103/104/106, tasks 105/107/108/109, guide visuals batch 2 (111), content (112).
