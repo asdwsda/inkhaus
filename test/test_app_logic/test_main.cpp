@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "demo_mode.h"
+#include "http_date.h"
 #include "ha_worker.h"
 #include "mailbox.h"
 #include "session_driver.h"
@@ -912,6 +913,90 @@ static void test_ntp_policy() {
   TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(now + 50, now, false));          // sync in the future
 }
 
+static int64_t pd(const char *s, bool *ok = nullptr) {
+  int64_t e = -1;
+  const bool r = app_logic::parseHttpDate(s, strlen(s), e);
+  if (ok) *ok = r;
+  return e;
+}
+
+static void test_http_date_parse() {
+  bool ok = false;
+  TEST_ASSERT_EQUAL_INT64(784111777, pd("Sun, 06 Nov 1994 08:49:37 GMT", &ok));
+  TEST_ASSERT_TRUE(ok);
+  TEST_ASSERT_EQUAL_INT64(1709208000, pd("Thu, 29 Feb 2024 12:00:00 GMT", &ok));  // leap day
+  TEST_ASSERT_TRUE(ok);
+  TEST_ASSERT_EQUAL_INT64(946684800, pd("Sat, 01 Jan 2000 00:00:00 GMT", &ok));
+  TEST_ASSERT_TRUE(ok);
+  TEST_ASSERT_EQUAL_INT64(2225059199, pd("Wed, 04 Jul 2040 23:59:59 GMT", &ok));  // past 2038
+  TEST_ASSERT_TRUE(ok);
+  const char *bad[] = {
+      "",
+      "Sun, 06 Nov 1994 08:49:3",                      // truncated
+      "Sunday, 06-Nov-94 08:49:37 GMT",                // RFC 850
+      "Sun Nov  6 08:49:37 1994",                      // asctime
+      "Sun, 06 Nov 1994 08:49:37 UTC",                 // not GMT
+      "Sun, 06 Nov 1994 08:49:37 +0100",
+      "Sun, 06 Nov 1994 08:49:37 GMT ",                // trailing
+      "Sun, 06 Xyz 1994 08:49:37 GMT",                 // bad month
+      "Xyz, 06 Nov 1994 08:49:37 GMT",                 // bad weekday
+      "Mon, 06 Nov 1994 08:49:37 GMT",                 // weekday does not match
+      "Sun, 31 Nov 1994 08:49:37 GMT",                 // bad day
+      "Wed, 29 Feb 2023 12:00:00 GMT",                 // not a leap year
+      "Sun, 00 Nov 1994 08:49:37 GMT",
+      "Sun, 06 Nov 1994 24:49:37 GMT",                 // bad hour
+      "Sun, 06 Nov 1994 08:60:37 GMT",                 // bad minute
+      "Sun, 06 Nov 1994 08:49:60 GMT",                 // bad second
+      "Sun, 06 Nov 1994 08:4a:37 GMT",
+      "Sun, 06 Nov 1969 08:49:37 GMT",                 // before the epoch
+  };
+  for (const char *s : bad) {
+    pd(s, &ok);
+    TEST_ASSERT_FALSE_MESSAGE(ok, s);
+  }
+  int64_t e = 0;
+  TEST_ASSERT_FALSE(app_logic::parseHttpDate(nullptr, 0, e));
+}
+
+static void test_http_date_decide() {
+  const int64_t now = 1800000000;
+  using app_logic::decideHttpDate;
+  // Estimate: date + 0.5 s + rtt/2, rounded.
+  auto d = decideHttpDate(now, 200, 0, now, true);
+  TEST_ASSERT_TRUE(d.accept);
+  TEST_ASSERT_EQUAL_INT64(now + 1, d.estimate);  // 0.5 s rounds up
+  d = decideHttpDate(now, 200, 1000, now, true);
+  TEST_ASSERT_EQUAL_INT64(now + 1, d.estimate);  // 0.5 + 0.5 = 1.0
+  d = decideHttpDate(now, 200, 2000, now, true);
+  TEST_ASSERT_TRUE(d.accept);
+  TEST_ASSERT_EQUAL_INT64(now + 2, d.estimate);  // 0.5 + 1.0 = 1.5 -> 2
+  TEST_ASSERT_FALSE(decideHttpDate(now, 200, 2001, now, true).accept);   // RTT too long
+  TEST_ASSERT_FALSE(decideHttpDate(now, 404, 100, now, true).accept);    // not 2xx
+  TEST_ASSERT_FALSE(decideHttpDate(now, 401, 100, now, true).accept);
+  TEST_ASSERT_FALSE(decideHttpDate(now, 301, 100, now, true).accept);
+  TEST_ASSERT_TRUE(decideHttpDate(now, 204, 100, now, true).accept);
+  // Write policy (clock = now, estimate = date + 1 for a fast reply).
+  d = decideHttpDate(now - 1, 200, 100, now, true);   // estimate == now
+  TEST_ASSERT_TRUE(d.accept);
+  TEST_ASSERT_EQUAL_INT64(0, d.delta);
+  TEST_ASSERT_FALSE(d.write);
+  d = decideHttpDate(now, 200, 100, now, true);       // +1 s
+  TEST_ASSERT_FALSE(d.write);
+  d = decideHttpDate(now + 1, 200, 100, now, true);   // +2 s
+  TEST_ASSERT_EQUAL_INT64(2, d.delta);
+  TEST_ASSERT_TRUE(d.write);
+  d = decideHttpDate(now - 4, 200, 100, now, true);   // -3 s
+  TEST_ASSERT_EQUAL_INT64(-3, d.delta);
+  TEST_ASSERT_TRUE(d.write);
+  TEST_ASSERT_TRUE(decideHttpDate(now - 1, 200, 100, now, false).write);  // untrusted: always
+  TEST_ASSERT_TRUE(decideHttpDate(now, 200, 100, 0, false).write);        // clock unset
+  // An accepted Date counts as a sync: no SNTP for 24 h.
+  d = decideHttpDate(now, 200, 100, 0, false);
+  TEST_ASSERT_FALSE(app_logic::shouldSyncNtp(d.estimate, d.estimate + 100, false));
+  TEST_ASSERT_FALSE(app_logic::shouldSyncNtp(d.estimate, d.estimate + 86400, false));
+  TEST_ASSERT_TRUE(app_logic::shouldSyncNtp(d.estimate, d.estimate + 86401, false));
+}
+
 // A fetch with a changed entity must reach the widget data and request a render.
 void test_fetch_reaches_widget_data() {
   auto parsed = config::parseConfig(
@@ -1300,6 +1385,8 @@ int main() {
   RUN_TEST(test_last_ok_derived_when_clock_arrives);
   RUN_TEST(test_refresh_reports_issue_and_seq);
   RUN_TEST(test_ntp_policy);
+  RUN_TEST(test_http_date_parse);
+  RUN_TEST(test_http_date_decide);
   RUN_TEST(test_civil_roundtrip);
   RUN_TEST(test_label);
   RUN_TEST(test_status_labels);

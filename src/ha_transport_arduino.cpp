@@ -125,6 +125,8 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
   }
   for (const auto& h : headers) http_.addHeader(h.first.c_str(), h.second.c_str());
 
+  static const char* kDate[] = {"Date"};
+  http_.collectHeaders(kDate, 1);  // task 097: time source. UNVERIFIED: header map is per request
   bool keep = false;  // false: the connection state is unclear, drop it
   const uint32_t req_t0 = millis();
   int code = http_.sendRequest(method.c_str(), (uint8_t*)body.data(), body.size());
@@ -147,6 +149,7 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
         out.error = HTTPClient::errorToString(ret).c_str();
       } else {
         out.status = code;
+        out.date = http_.header("Date").c_str();
         out.body = std::move(capped.sink.data);
         keep = true;
       }

@@ -58,6 +58,9 @@ class SessionDriver {
   // While this returns true (and for at most kSleepHoldMaxMs) the machine's Sleep command, including the Wi-Fi
   // power-down, waits: the graph fetches that follow the state fetch still need the connection.
   using SleepHold = std::function<bool()>;
+  // Task 097: called for every successful fetch that carried a Date header (value, HTTP status, request ms).
+  using HttpDateHook = std::function<void(const std::string &, int, uint32_t)>;
+  void setHttpDateHook(HttpDateHook h) { httpDateHook_ = std::move(h); }
   void setSleepHold(SleepHold h) { sleepHold_ = std::move(h); }
   static constexpr int64_t kSleepHoldMaxMs = 20000;
 
@@ -92,6 +95,7 @@ class SessionDriver {
   HistoryHandler historyHandler_;
   FetchHook fetchHook_;
   SleepHold sleepHold_;
+  HttpDateHook httpDateHook_;
   bool sleepHeld_ = false, releasingSleep_ = false;
   int64_t sleepHeldSince_ = 0;
   session::Command heldSleep_;

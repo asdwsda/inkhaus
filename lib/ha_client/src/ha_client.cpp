@@ -51,6 +51,7 @@ HaResult HaClient::post(const std::string& path, const std::string& body, std::s
     r.base_url = base;
     r.ms = resp.ms;
     r.reused = resp.reused;
+    r.http_date = std::move(resp.date);
     if (resp.status == 401) {
       r.error = HaError::Auth;
       r.message = "unauthorized";

@@ -43,6 +43,7 @@ struct NetEvent {
   bool external = false;  // answered by the external URL
   uint32_t ms = 0;        // duration of the HTTP request
   bool reused = false;    // over a kept-alive connection
+  std::string httpDate;   // FetchDone: Date header of the answer ("" = none), task 097
   std::vector<EntityState> states;  // FetchDone: fetched; ServiceDone: states returned by the call
   // HistoryDone (ticket echoes NetCommand::ticket): the downsampled series (error None only), the scan
   // result and the timings of the log line `HIST: fetch_ms parse_ms bytes points`.

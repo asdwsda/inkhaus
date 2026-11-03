@@ -112,6 +112,8 @@ void SessionDriver::onNet(NetEvent &ev, int64_t now) {
     if (log_) log_("APP: fetch_done err=" + std::to_string(int(ev.error)) + " http=" +
                    std::to_string(ev.http_status) + " states=" + std::to_string(ev.states.size()) +
                    " changed=" + std::to_string(changed.size()) + (ev.external ? " link=remote" : " link=local"));
+    if (!lastFetchFailed_ && !ev.httpDate.empty() && httpDateHook_)
+      httpDateHook_(ev.httpDate, ev.http_status, ev.ms);
     if (fullFetch && fetchHook_) fetchHook_(!lastFetchFailed_);
     send(Event::fetch_done(ev.error, std::move(changed), ev.states), now);
   } else if (ev.type == NetEvent::Type::ServiceDone) {
