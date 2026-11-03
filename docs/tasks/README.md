@@ -98,6 +98,8 @@
 | 097 | [Set the clock from HA's HTTP Date header](097-clock-from-ha-date.md) | PC done | 008, 024 |
 | 098 | [Native tests for UNVERIFIED device-check logic](098-native-tests-unverified.md) | done | 087, 090, 092 |
 | 099 | [INIT clear on tab change (experiment)](099-init-clear-on-tab-change.md) | PC done | 092, 095 |
+| 100 | [Report the M5Paper's own sensors to HA](100-report-device-sensors.md) | in-progress | 024, 079 |
+| 101 | [Sleep screen](101-sleep-screen.md) | in-progress | 092, 100 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
