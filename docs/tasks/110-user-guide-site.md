@@ -1,6 +1,6 @@
 # 110: User guide on the website (structure and build)
 
-Status: todo
+Status: done
 Depends on: 065, 102
 UI spec: none (site style; page layout by ui-designer in 111)
 Needs device: no
@@ -27,3 +27,4 @@ to the guide's config reference (no duplicate content).
 
 ## Notes
 - User 2026-11-03: docs must be as user friendly as possible, part of the website, with widget screenshots and options.
+- 2026-11-03: config-key lint is an error when a parser key is missing from docs/guide/09-config-reference.md, so every task that adds a config key must add it to that table too.
