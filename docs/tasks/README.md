@@ -111,6 +111,9 @@
 | 110 | [User guide on the website (structure and build)](110-user-guide-site.md) | done | 065, 102 |
 | 111 | [Guide visuals: widget fragments, annotated screens, diagrams](111-guide-visuals.md) | todo | 110 (page layout), accepted mockups |
 | 112 | [Guide content](112-guide-content.md) | todo | 110, 111; widgets 103-109 for their sections |
+| 113 | [Build info in Settings](113-build-info-in-settings.md) | todo | 087 |
+| 114 | [Clean the screen after a burst of taps (factory-app style)](114-tap-burst-cleanup.md) | todo | 092, 095, 099 |
+| 115 | [Slow taps after waking on battery](115-slow-taps-after-wake.md) | todo | 080, 093 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).

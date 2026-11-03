@@ -25,3 +25,4 @@ features; add each new widget's section when its task (103-109) merges.
 
 ## Notes
 - User 2026-11-03: docs must be as user friendly as possible, part of the website, with widget screenshots and options.
+- User 2026-11-03: HA token creation as text steps + link (no HA UI screenshots).

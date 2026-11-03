@@ -32,3 +32,4 @@ ui-designer plans and draws the visual aids; a tool renders them to cropped PNGs
 
 ## Notes
 - User 2026-11-03: docs must be as user friendly as possible, part of the website, with widget screenshots and options.
+- User 2026-11-03: style of batch 1 OK, continue; real device `shot` screenshots replace drawn fragments after device checks; shrink showcase GIF when room is needed; device drawing from real product photos (M5Stack docs).
