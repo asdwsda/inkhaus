@@ -123,6 +123,15 @@ bool handle(const std::string &line, const Hooks &hk) {
     Serial.printf("CMD: tabclean %d\n", present::tabCleanVariant());
     return true;
   }
+  {  // task 114: `burstclean N T mode` (N partials, T ms idle, mode gc16 | gl16 | init+gl16; N < 0 = off)
+    int n;
+    unsigned t;
+    char m[16];
+    if (sscanf(line.c_str(), "burstclean %d %u %15s", &n, &t, m) == 3) {
+      present::setBurstClean(n, t, m);
+      return true;
+    }
+  }
   if (sscanf(line.c_str(), "initcmd %x", &v) == 1) {  // task 099, UNVERIFIED 0x34 | 0x37
     boot::setInitCommand(v);
     Serial.printf("CMD: initcmd %d\n", v == 0x37 ? 0x37 : 0x34);

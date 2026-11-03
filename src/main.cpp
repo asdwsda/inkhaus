@@ -1506,6 +1506,15 @@ void loop() {
   changed |= g_app.tick(now);
   if (changed) showFrame(now);
   if (e.kind != input::Event::None || popupOpen) g_lastInputMs = now;
+  {  // task 114: clean after a burst of taps (before 095's idle full, which it makes unnecessary by clearing the debt)
+    screen_track::BurstContext bc;
+    bc.popup = g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen();
+    bc.settings = settings_flow::active();
+    bc.ota = ota::busy();
+    bc.tap_pending = g_defer.armed();
+    bc.scheduled = g_scheduled;
+    if (g_real && present::burstCleanDue(now - g_lastInputMs, bc)) present::burstClean();
+  }
   if (!g_scheduled && g_real && !ota::busy() &&
       app_logic::idleFullDue(present::partialDebt(), now - g_lastInputMs,
                              settings_flow::active() || g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen(),
