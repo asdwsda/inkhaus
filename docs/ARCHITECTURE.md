@@ -149,7 +149,7 @@ Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA
   with the fast M5GFX EPD mode.
 - Page change: full-quality refresh of the whole screen.
 - Ghosting: full refresh after N partial updates (N tuned on device) and on
-  every scheduled refresh that changes something.
+  every scheduled wake (GC16 full, also when only the sleep pill time changed; user 2026-11-02).
 - Never redraw if nothing changed. Show "last updated" wherever staleness matters.
 - EPD power is turned off before sleeping.
 

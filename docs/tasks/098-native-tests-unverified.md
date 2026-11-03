@@ -1,6 +1,6 @@
 # 098: Native tests for UNVERIFIED device-check logic
 
-Status: in-progress
+Status: done
 Depends on: 087, 090, 092
 UI spec: none
 Needs device: no

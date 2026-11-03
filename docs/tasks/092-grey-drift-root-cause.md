@@ -65,7 +65,7 @@ Fix by evidence, cheapest first:
   Then the >= 3 h periodic full (083) is redundant -> remove.
 - DECISION (user, 2026-11-02): no flash at sleep entry. Implement:
   1. Scheduled wake that redraws anything -> one GC16 full of the whole frame instead of partials (the sleep badge included
-     in that frame, so it's the last refresh before sleep). Scheduled wake with no change -> no refresh.
+     in that frame, so it's the last refresh before sleep). (Superseded 2026-11-02, see Notes: every scheduled wake does the GC16 full.)
   2. Interactive sleep entry: keep the badge partial (no flash). Remember "partial debt" (any partial since the last GC16 full)
      across sleep (RTC; power-off loses RTC -> NVS, write only on change). The next scheduled wake clears it with 1.
      If Updates are Off (no scheduled wake), the next interactive wake's first frame is a GC16 full when debt is set.
