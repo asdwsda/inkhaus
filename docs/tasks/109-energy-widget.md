@@ -18,3 +18,6 @@ Out of scope: other new widgets.
 - [ ] Layout rects match the spec numbers (tests where the layout lives in lib/).
 - [ ] `pio test -e native`, `pio run` (all envs) pass.
 - [ ] docs/CONFIG.md + config.example.yaml document the widget; docs/device-checks.md line; UNVERIFIED tags.
+
+## Notes
+- User 2026-11-03: has energy sensors (entity ids to be given); this one gets a real-entity device check.
