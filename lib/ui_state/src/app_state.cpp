@@ -127,6 +127,21 @@ WidgetData AppState::widgetData(int idx) const {
     d.nowMin = calendars_->nowMin();
   }
   if (w->type == WidgetType::Notifications) d.notif = notifView(notifStore_, w->name);  // task 103
+  if (w->type == WidgetType::Energy) {  // task 109
+    int pw = 0;
+    for (const ui::Placement &p : layout_.flow.placements)
+      if (p.index == idx) pw = p.rect.w;
+    EnergyInput in[2];
+    const std::string *ids[2] = {&w->usage, &w->solar};
+    for (int i = 0; i < 2; ++i) {
+      in[i].configured = !ids[i]->empty();
+      if (!in[i].configured) continue;
+      in[i].state = store_.get(*ids[i]);
+      const GraphEntry *g = graphs_.find(shownTab_, idx + (i == 0 ? 0 : kEnergySolarKey));
+      in[i].hasValue = energyTodayValue(g, in[i].value);
+    }
+    d.energy = energyView(in[0], in[1], energyLayout(pw, 2).bw);
+  }
   for (const std::string &id : w->entities) {
     auto it = marks_.find(id);
     if (it != marks_.end() && it->second == Mark::Failed) d.failed = true;

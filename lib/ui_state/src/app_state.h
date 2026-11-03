@@ -15,6 +15,7 @@
 #include "media_layout.h"
 #include "media_popup.h"
 #include "media_view.h"
+#include "energy_view.h"  // task 109
 #include "entity_state.h"
 #include "graph_widgets.h"
 #include "notif_popup.h"
@@ -62,6 +63,7 @@ struct WidgetData {
   NotifView notif;      // Notifications widgets (task 103)
   const calendar::Data *calendar = nullptr;  // task 105: get_events answer of a calendar widget
   int64_t nowMin = 0;                        // task 105: local minutes of now (0: clock unset)
+  EnergyView energy;    // Energy widgets (task 109)
 };
 
 enum class Screen { Tabs, ConfigError };

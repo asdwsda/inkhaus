@@ -26,6 +26,7 @@ const TypeName kTypes[] = {
     {"notifications", WidgetType::Notifications},  // task 103
     {"media_player", WidgetType::MediaPlayer},  // task 106
     {"calendar", WidgetType::Calendar},         // task 105
+    {"energy", WidgetType::Energy},  // task 109
 };
 
 bool startsWith(const std::string &s, const char *prefix) {
@@ -671,6 +672,44 @@ class Validator {
     tb.widgets.push_back(std::move(w));
   }
 
+  // Task 109: `type: energy` with `usage:` and/or `solar:` (sensor ids), optional `name` and `size`; no entity, no group.
+  void energyWidget(JsonObjectConst o, const std::string &path, Tab &tb) {
+    Widget w;
+    w.type = WidgetType::Energy;
+    if (!o["entity"].isNull() || !o["group"].isNull()) {
+      err(path, "an energy widget uses 'usage' and 'solar', not 'entity' or 'group'");
+      return;
+    }
+    str(o, "name", path, false, w.name);
+    std::string sizeText;
+    if (str(o, "size", path, false, sizeText)) {
+      WidgetSize sz;
+      if (parseSize(sizeText, sz)) w.size = sz;
+      else err(path + ".size", "invalid size, expected WxH with W and H in 1.." + std::to_string(kMaxWidgetSize));
+    }
+    if (!o["history"].isNull()) history(o["history"], path + ".history", w);
+    const size_t before = r_.errors.size();
+    auto sensorKey = [&](const char *key, std::string &out) {
+      if (!str(o, key, path, true, out)) return;
+      if (!validEntityId(out) || domainOf(out) != "sensor") {
+        err(path + "." + key, "must be a sensor entity id (sensor.object_id)");
+        out.clear();
+      }
+    };
+    if (!o["usage"].isNull()) sensorKey("usage", w.usage);
+    if (!o["solar"].isNull()) sensorKey("solar", w.solar);
+    if (r_.errors.size() != before) return;
+    if (w.usage.empty() && w.solar.empty()) {
+      err(path, "an energy widget needs 'usage' or 'solar'");
+      return;
+    }
+    w.entity = w.usage.empty() ? w.solar : w.usage;
+    if (!w.usage.empty()) w.entities.push_back(w.usage);
+    if (!w.solar.empty()) w.entities.push_back(w.solar);
+    for (const auto &e : w.entities) addEntity(e);
+    tb.widgets.push_back(std::move(w));
+  }
+
   void widget(JsonVariantConst v, const std::string &path, Tab &tb) {
     if (!v.is<JsonObjectConst>()) {
       err(path, "must be a mapping");
@@ -679,6 +718,10 @@ class Validator {
     JsonObjectConst o = v.as<JsonObjectConst>();
     if (o["type"].is<const char *>() && std::string(o["type"].as<const char *>()) == "notifications") {
       notificationsWidget(o, path, tb);  // task 103: no entity
+      return;
+    }
+    if (o["type"].is<const char *>() && std::string(o["type"].as<const char *>()) == "energy") {
+      energyWidget(o, path, tb);  // task 109: usage / solar instead of entity
       return;
     }
     Widget w;

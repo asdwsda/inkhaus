@@ -73,6 +73,10 @@ tabs:
       # Home Assistant persistent notifications: count + list popup with dismiss (no entity needed).
       - type: notifications
         name: Alerts          # optional, default Alerts
+      # Energy: today so far (change since local midnight, from statistics); long press = hourly usage bars.
+      - type: energy
+        usage: sensor.energy_used_today     # a running total also works
+        solar: sensor.energy_solar_today    # either key may be left out
       # Sensor: an attribute instead of the state, up to 2 more on a details line, unit and decimals.
       - entity: sensor.living_room_climate
         name: Living room

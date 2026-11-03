@@ -11,13 +11,20 @@ int historyColumns(bool landscape, bool step) {
 }
 
 bool historyEnabledFor(const config::Widget &w) {
+  if (w.type == config::WidgetType::Energy) return w.history.enabled && !w.entity.empty();  // task 109
   return (w.type == config::WidgetType::Sensor || w.type == config::WidgetType::BinarySensor) &&
          w.attribute.empty() && w.history.enabled && !w.entity.empty() && !config::isGraphWidget(w);
 }
 
-HistorySpec makeHistorySpec(const config::Widget &w, bool landscape, const std::string &deviceClass) {
+HistorySpec makeHistorySpec(const config::Widget &wIn, bool landscape, const std::string &deviceClass) {
   using config::HistorySource;
   using config::HistoryType;
+  config::Widget w = wIn;
+  if (w.type == config::WidgetType::Energy) {  // task 109: usage bars of the last hours: statistic `change`
+    w.history.type = HistoryType::Bar;
+    w.history.source = HistorySource::Statistics;
+    if (!w.history.statistic) w.history.statistic = config::HistoryStatistic::Change;
+  }
   HistorySpec s;
   s.entity = w.entity;
   s.hours = w.history.hours;
@@ -64,6 +71,26 @@ HistorySpec makeHistorySpec(const config::Widget &w, bool landscape, const std::
   p.hasMax = w.history.max.has_value();
   p.min = w.history.min.value_or(0);
   p.max = w.history.max.value_or(0);
+  return s;
+}
+
+HistorySpec makeEnergyTodaySpec(const std::string &entity) {
+  HistorySpec s;
+  s.entity = entity;
+  s.hours = 24;
+  s.chart = HistChart::Bar;
+  s.source = history::Source::Statistics;
+  s.period = StatsPeriod::Day;  // one bucket: local midnight up to now
+  s.statistic = StatsType::Change;
+  s.columns = 1;
+  history::CacheParams &p = s.params;
+  p.entity = entity;
+  p.hours = s.hours;
+  p.type = int(config::HistoryType::Bar);
+  p.statistic = int(config::HistoryStatistic::Change);
+  p.period = int(config::HistoryPeriod::Day);
+  p.source = int(config::HistorySource::Statistics);
+  p.columns = 1;
   return s;
 }
 

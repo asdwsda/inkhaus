@@ -154,6 +154,8 @@ std::string serializeConfig(const Config &cfg) {
       w.u8(h.max.has_value());
       w.f32(h.max ? *h.max : 0.f);
       w.u8(uint32_t(wd.display) | (wd.forecast ? 0x80u : 0u));  // bit 7: forecast (task 104)
+      w.str(wd.usage);  // task 109
+      w.str(wd.solar);
     }
   }
   w.strs(cfg.entityIds);
@@ -274,7 +276,9 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       h.source = HistorySource(hSource);
       if (hHasMin) h.min = hMin;
       if (hHasMax) h.max = hMax;
-      if (!r.ok || type > uint32_t(WidgetType::Calendar) || hasSize > 1) return false;
+      r.str(wd.usage);  // task 109
+      r.str(wd.solar);
+      if (!r.ok || type > uint32_t(WidgetType::Energy) || hasSize > 1) return false;
       wd.type = WidgetType(type);
       wd.display = WidgetDisplay(disp);
       wd.forecast = fc && wd.type == WidgetType::Weather;

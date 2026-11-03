@@ -58,7 +58,7 @@ tabs:
 
 ### Widgets, all types
 
-Each widget has exactly one of `entity` or `group` (except `type: notifications`, which has neither).
+Each widget has exactly one of `entity` or `group` (except `type: notifications` and `type: energy`, which have neither).
 
 | Key | Values | Default | Effect |
 |---|---|---|---|
@@ -66,7 +66,7 @@ Each widget has exactly one of `entity` or `group` (except `type: notifications`
 | `group` | a name from `groups` | none | A widget for all members of the group. Needs `name`. |
 | `name` | text | the Home Assistant name | The label. Required for groups. Default `Alerts` for notifications. |
 | `size` | `WxH` | depends on the type | See [Widgets, Sizes](04-widgets.md#sizes). Sizes a type does not allow are corrected. |
-| `type` | `sensor`, `cover`, `light`, `switch`, `automation`, `climate`, `binary_sensor`, `weather`, `vacuum`, `media_player`, `calendar`, `notifications` | from the entity | Pick the widget type yourself, for example `type: sensor` for `person.alice`. `notifications` needs no entity. |
+| `type` | `sensor`, `cover`, `light`, `switch`, `automation`, `climate`, `binary_sensor`, `weather`, `vacuum`, `media_player`, `calendar`, `notifications`, `energy` | from the entity | Pick the widget type yourself, for example `type: sensor` for `person.alice`. `notifications` needs no entity. |
 
 ### Sensor options
 
@@ -82,6 +82,18 @@ Each widget has exactly one of `entity` or `group` (except `type: notifications`
 | Key | Values | Default | Effect |
 |---|---|---|---|
 | `forecast` | `true` or `false` | `false` | Adds the next 3 days to a weather widget. Single entity only. Needs a wide tile; the size is raised. |
+
+### Energy widget
+
+`type: energy`, no `entity` or `group`. At least one of `usage` and `solar` is needed. Size is always 2x1. `name` and `size` are accepted but not shown.
+
+| Key | Values | Default | Effect |
+|---|---|---|---|
+| `usage` | sensor id | none | The consumption sensor, the top row (`Used`). A running total (`total_increasing`, such as a Shelly 3EM total) works: the widget shows the change since local midnight. |
+| `solar` | sensor id | none | The solar production sensor, the second row (`Solar`). Same rules. |
+| `history` | `false` | on | `history: false` switches the long press popup off. |
+
+Both sensors need long-term statistics in Home Assistant (any sensor with a `state_class` has them). `Wh` is shown as `kWh`.
 
 ### Graph and history
 

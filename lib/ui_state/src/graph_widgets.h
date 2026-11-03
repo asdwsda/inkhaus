@@ -18,6 +18,10 @@ namespace uistate {
 // flip it if the log line `APP: graph_fetch ms=` shows all graphs together under 0.5 s.
 constexpr bool kGraphFetchAllTabs = false;
 
+// Task 109: an energy widget owns two entries, keyed (tab, widget index) for the usage sensor and (tab,
+// widget index + kEnergySolarKey) for the solar sensor.
+constexpr int kEnergySolarKey = 1000;
+
 constexpr int kGraphTicketBase = 1000000;  // popup tickets are small; a result with a ticket >= this is a graph's
 
 enum class GraphState { Loading, Ready, Error };
