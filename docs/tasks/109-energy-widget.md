@@ -22,3 +22,4 @@ Out of scope: other new widgets.
 ## Notes
 - User 2026-11-03: has energy sensors (entity ids to be given); this one gets a real-entity device check.
 - User 2026-11-03: energy entity e.g. `sensor.shellypro3em_3ce90e703834_total_active_energy` (Shelly Pro 3EM total).
+- 2026-11-03: the guide gallery picture for this widget (docs/guide/img/gallery-*) embeds a config snippet from docs/ui/widgets-new.md; implement those keys exactly (or fix the spec + picture), so the guide snippet parses.
