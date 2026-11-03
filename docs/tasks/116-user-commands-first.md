@@ -1,6 +1,6 @@
 # 116: User commands jump the net queue
 
-Status: todo
+Status: PC part done (device check open, docs/device-checks.md 116)
 Depends on: 115
 UI spec: none
 Needs device: yes (timing check on battery; PC part first)

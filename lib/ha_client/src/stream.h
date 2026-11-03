@@ -14,6 +14,7 @@ struct StreamLimits {
   size_t max_bytes = kStreamMaxBytes;
   uint32_t deadline_ms = kStreamDeadlineMs;
   const volatile bool* cancel = nullptr;  // set by another task to abort the transfer
+  const volatile bool* yield = nullptr;   // task 116: a user command waits; a background job aborts (same result as cancel)
 };
 
 // Returns false from on_chunk to abort (counts as cancelled).
@@ -39,7 +40,7 @@ class StreamGate {
   StreamGate(const StreamLimits& limits, ChunkFn sink) : lim_(limits), sink_(std::move(sink)) {}
   size_t accept(const char* p, size_t n, uint32_t elapsed_ms, StreamResult& r) {
     if (r.too_large || r.cancelled || r.deadline) return 0;
-    if (lim_.cancel && *lim_.cancel) { r.cancelled = true; return 0; }
+    if ((lim_.cancel && *lim_.cancel) || (lim_.yield && *lim_.yield)) { r.cancelled = true; return 0; }
     if (elapsed_ms > lim_.deadline_ms) { r.deadline = true; return 0; }
     if (r.bytes > lim_.max_bytes || n > lim_.max_bytes - r.bytes) { r.too_large = true; return 0; }
     if (sink_ && !sink_(p, n)) { r.cancelled = true; return 0; }

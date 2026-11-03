@@ -374,7 +374,7 @@ void begin(bool coldBoot) {
 
 void setQuiesce(void (*fn)()) { g_quiesce = fn; }
 
-void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone) {
+void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone, bool interactive) {
   if (g_busy) return;
   if (!g_loopSeen) {
     g_loopSeen = true;
@@ -382,6 +382,7 @@ void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone) {
   }
   if (g_pending && !g_healthyDone && ota_logic::healthy(g_began, nowMs - g_loopStartMs)) markHealthy();
   if (g_checkedThisBoot || !wifiUp || !sessionDone) return;
+  if (!ota_logic::autoCheckAllowed(interactive, false)) return;  // task 116: UNVERIFIED on device
   if (!ota_logic::checkDue(g_sched, epoch, g_cold, wifiUp)) return;
   g_checkedThisBoot = true;  // one attempt per boot/wake; failures retry at the next eligible wake
   g_busy = true;

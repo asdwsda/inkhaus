@@ -157,6 +157,7 @@ void SessionDriver::execute(const std::vector<Command> &cmds, int64_t now) {
       case CT::FetchStates: {
         NetCommand n;
         n.type = NetCommand::Type::Fetch;
+        n.user = c.user;
         n.ids = c.ids.empty() ? entityIds_ : c.ids;
         fetching_ = c.ids.empty();
         if (c.ids.empty()) refreshIssued_ = true;

@@ -96,6 +96,8 @@ bool jobExpired(bool install, uint32_t elapsedMs) {
   return elapsedMs >= (install ? kInstallDeadlineMs : kCheckDeadlineMs);
 }
 
+bool autoCheckAllowed(bool interactiveSession, bool userRequested) { return userRequested || !interactiveSession; }
+
 bool checkDue(const CheckState &s, int64_t now, bool coldBoot, bool wifiUp) {
   if (!wifiUp) return false;
   if (coldBoot) return now <= 0 || s.lastAttempt <= 0 || now - s.lastAttempt >= kColdCheckMinS;

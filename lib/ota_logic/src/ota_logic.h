@@ -49,6 +49,10 @@ constexpr int64_t kColdCheckMinS = 3600;  // a cold boot checks at most once per
 // failure) 1 day since the last attempt. Never without Wi-Fi up. `nowEpoch` 0 (clock unset): only a cold boot checks.
 bool checkDue(const CheckState &s, int64_t nowEpoch, bool coldBoot, bool wifiUp);
 
+// Task 116: the automatic check never runs in an interactive session (it would hold the net path against taps);
+// scheduled wakes only. Settings > Check now (userRequested) always may.
+bool autoCheckAllowed(bool interactiveSession, bool userRequested);
+
 // ---- install gate ----
 enum class InstallBlock { None, Battery };
 // Allowed on USB or battery >= 50 %.

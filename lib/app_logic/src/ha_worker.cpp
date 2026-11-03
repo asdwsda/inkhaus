@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "forecast.h"
+#include "net_lanes.h"
 #include "scanner.h"
 #include "stats_parser.h"
 #include "notifications.h"
@@ -62,6 +63,7 @@ void HaWorker::runHistory(const NetCommand &cmd, NetEvent &e) {
   history::Scanner sc(col);
   StreamLimits lim;
   lim.cancel = cmd.histCancel.get();
+  lim.yield = yield_;
   Clock::duration parse{};
   size_t bytes = 0;
   const HaResult r = client_->stream_history(
@@ -131,6 +133,7 @@ void HaWorker::runStatistics(const NetCommand &cmd, NetEvent &e) {
   ws::Request req;
   req.token = token_;
   req.limits.cancel = cmd.histCancel.get();
+  req.limits.yield = yield_;
   if (!build_statistics_command(1, cmd.histEntity, cmd.histStart, cmd.histEnd, cmd.histPeriod, mask, req.command_json)) {
     e.error = HaError::Parse;
     return;
@@ -195,6 +198,7 @@ void HaWorker::runWsOnce(const std::string &commandJson, size_t maxBytes, std::s
   req.token = token_;
   req.limits.max_bytes = maxBytes;
   req.limits.deadline_ms = 8000;
+  req.limits.yield = yield_;
   req.command_json = commandJson;
   e.error = HaError::Network;  // no base URL could be used
   for (const std::string &base : wsBases()) {
@@ -268,6 +272,7 @@ void HaWorker::runNotifDismiss(const NetCommand &cmd, NetEvent &e) {
 
 NetEvent HaWorker::run(const NetCommand &cmd) {
   NetEvent e;
+  yield_ = laneOf(cmd) == Lane::Background ? yieldFlag_ : nullptr;
   if (cmd.type == NetCommand::Type::Fetch) {
     e.type = NetEvent::Type::FetchDone;
     FetchResult f;  // nothing to fetch is a success with 0 states (no request)

@@ -1432,7 +1432,7 @@ void loop() {
   if (g_drv) {
     g_drv->tick(now);
     session_glue::ntpPoll(g_drv->wifiUp());
-    ota::tick(now, session_glue::wallClock(), g_drv->wifiUp(), g_drv->sessionDone());  // task 087: due check
+    ota::tick(now, session_glue::wallClock(), g_drv->wifiUp(), g_drv->sessionDone(), !g_scheduled);  // task 087: due check; task 116: scheduled wakes only
     if (g_drv->takeRender()) changed = true;
     logFetchApplied();
     if (g_drv->wifiUp()) wakelog::wifiUp(now);

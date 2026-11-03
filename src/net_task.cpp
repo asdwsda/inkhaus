@@ -87,6 +87,7 @@ void NetTask::loop() {
   ArduinoWsConnector wsConnector;
   app_logic::HaWorker worker(transport, internal_, external_, token_);
   worker.setWsConnector(&wsConnector);
+  worker.setYieldFlag(&yield_);
   // The plan depends on the connected network and the Settings: recomputed when either changes.
   // net::linkInfo() is a consistent snapshot (published under a spinlock in net.cpp).
   net::LinkInfo planned;
@@ -123,9 +124,29 @@ void NetTask::loop() {
                     plan.first == app_logic::Side::External ? "external" : "internal", plan.exclusive ? 1 : 0,
                     plan.learn ? 1 : 0);
     }
+    const bool background = app_logic::laneOf(c.cmd) == app_logic::Lane::Background;
+    const uint32_t startMs = millis();
+    // UNVERIFIED (task 116): per-command queue wait; user commands are the ones the tap budget cares about.
+    if (!background || c.requeues == 0)
+      Serial.printf("APP: timing queue_wait_ms=%u lane=%s type=%d\n", (unsigned)(startMs - c.enqueuedMs),
+                    background ? "bg" : "user", (int)c.cmd.type);
+    yield_ = false;
+    if (background && cmds_.userWaiting()) yield_ = true;  // post() sets it too when a user command arrives later
     Evt e;
     e.epoch = c.epoch;
     e.ev = worker.run(c.cmd);
+    if (background && e.ev.error == HaError::Cancelled && yield_ &&
+        !(c.cmd.histCancel && *c.cmd.histCancel)) {  // aborted for a user command, not by the UI
+      const app_logic::YieldPolicy pol = app_logic::yieldPolicyOf(c.cmd.type);
+      Serial.printf("APP: net_yield type=%d policy=%s requeues=%u\n", (int)c.cmd.type,
+                    pol == app_logic::YieldPolicy::Requeue && c.requeues < 3 ? "requeue" : "drop", (unsigned)c.requeues);
+      if (pol == app_logic::YieldPolicy::Requeue && c.requeues < 3) {
+        ++c.requeues;
+        cmds_.requeueFront(std::move(c));  // the user lane goes first at the next pop
+        continue;
+      }
+      // dropped: the Cancelled event below tells the UI the job is over
+    }
     if (e.ev.type == app_logic::NetEvent::Type::HistoryDone) {
       e.ev.heapMin = (uint32_t)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
       Serial.printf("HIST: src=%s fetch_ms=%u parse_ms=%u bytes=%u points=%u heap_min=%u err=%d%s\n",
@@ -152,8 +173,11 @@ void NetTask::loop() {
 void NetTask::post(const app_logic::NetCommand &cmd) {
   Cmd c;
   c.epoch = epoch_.load();
+  c.enqueuedMs = millis();
   c.cmd = cmd;
-  cmds_.push(std::move(c));
+  const app_logic::Lane lane = app_logic::laneOf(cmd);
+  cmds_.push(lane, std::move(c));
+  if (lane == app_logic::Lane::User) yield_ = true;
 }
 
 bool NetTask::poll(app_logic::NetEvent &out) {

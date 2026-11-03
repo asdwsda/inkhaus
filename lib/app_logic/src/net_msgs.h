@@ -19,6 +19,7 @@ namespace app_logic {
 struct NetCommand {
   enum class Type { Fetch, Call, Close, History, Report, Notifications, Forecast, NotifDismiss };  // Close: drop the kept-alive connection (before sleep)
   Type type = Type::Fetch;
+  bool user = false;             // Fetch: a user refresh / tap follow-up (user lane, task 116); Call and NotifDismiss are always user
   std::vector<std::string> ids;  // Fetch: entities to fetch; Call: entities whose returned state is parsed; NotifDismiss: [notification_id]
   int ticket = 0;                // Call
   ServiceCall call;              // Call

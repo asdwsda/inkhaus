@@ -8,6 +8,7 @@
 
 #include "ha_worker.h"
 #include "mailbox.h"
+#include "net_lanes.h"
 
 class NetTask : public app_logic::INetPort {
  public:
@@ -22,12 +23,13 @@ class NetTask : public app_logic::INetPort {
   uint32_t stackFreeBytes() const;
 
  private:
-  struct Cmd { uint32_t epoch = 0; app_logic::NetCommand cmd; };
+  struct Cmd { uint32_t epoch = 0; uint32_t enqueuedMs = 0; uint8_t requeues = 0; app_logic::NetCommand cmd; };
   struct Evt { uint32_t epoch = 0; app_logic::NetEvent ev; };
   static void entry(void *self);
   void loop();
 
-  app_logic::Mailbox<Cmd> cmds_;
+  app_logic::LaneQueue<Cmd> cmds_;  // task 116: user lane first
+  volatile bool yield_ = false;     // a user command waits: background jobs abort at the next chunk
   app_logic::Mailbox<Evt> evts_;
   std::atomic<uint32_t> epoch_{0};
   std::string internal_, external_, token_;
