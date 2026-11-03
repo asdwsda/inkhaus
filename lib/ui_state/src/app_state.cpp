@@ -12,7 +12,7 @@ namespace uistate {
 using config::WidgetType;
 
 void AppState::init(const config::Config &cfg, settings::Orientation o, bool demo) {
-  cfg_ = cfg;
+  if (&cfg != &cfg_) cfg_ = cfg;  // init(config()) re-inits from the own copy (orientation change)
   orientation_ = o;
   demo_ = demo;
   screen_ = Screen::Tabs;

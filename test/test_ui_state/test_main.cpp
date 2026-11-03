@@ -1327,8 +1327,20 @@ void test_restore_tab() {
   TEST_ASSERT_EQUAL(0, a.shownTab());
 }
 
+// Task 117: main drops its own tabs after init and re-inits from the app's copy on an orientation change.
+void test_init_from_own_config_keeps_tabs() {
+  AppState a;
+  a.init(exampleConfig(), settings::Orientation::Portrait, true);
+  const size_t tabs = a.config().tabs.size();
+  const size_t w0 = a.config().tabs[0].widgets.size();
+  a.init(a.config(), settings::Orientation::Landscape, true);
+  TEST_ASSERT_EQUAL(tabs, a.config().tabs.size());
+  TEST_ASSERT_EQUAL(w0, a.config().tabs[0].widgets.size());
+}
+
 int main() {
   UNITY_BEGIN();
+  RUN_TEST(test_init_from_own_config_keeps_tabs);
   RUN_TEST(test_fmt_number);
   RUN_TEST(test_cover_single);
   RUN_TEST(test_cover_unavailable_and_loading);

@@ -46,6 +46,17 @@
 #include "version.h"
 #include "wakelog.h"
 #include "wall_time.h"
+#include <esp_heap_caps.h>
+
+// Task 117: one MEM line (internal heap free / min / largest block, PSRAM free) for stress measurements.
+static void logMem(const char *tag) {
+  Serial.printf("MEM: %s int_free=%u int_min=%u int_largest=%u psram_free=%u\n", tag,
+                (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                (unsigned)heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL),
+                (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+                (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+}
+
 
 #ifdef TLS_CHECK
 namespace tls_check { void run(); }
@@ -75,6 +86,10 @@ static int32_t batteryLimitMv();
 static bool batteryTooLowForWifi();
 static void lowBatterySleep();
 static app_config::Loaded g_cfg;
+
+// Task 117: AppState keeps its own copy of the config; the tabs (the bulk: ~0.2 KB per widget of internal heap)
+// are dropped from g_cfg after init so a 16-tab dashboard leaves room for Wi-Fi. Use g_app.config() for tabs.
+static void dropCfgTabs() { std::vector<config::Tab>().swap(g_cfg.cfg.tabs); }
 static render::SettingsInfo g_info;  // snapshot taken when Settings opens / after a good refresh
 
 // Real mode: the config has a connection section, states come from Home Assistant through the
@@ -476,8 +491,8 @@ static void graphsInit() {
   g_app.setCalendarStore(&calendar_glue::store());  // task 105
   if (g_demoMode) {
     const int64_t w = session_glue::wallClock() ? session_glue::wallClock() : 1793361600;
-    forecast_glue::fillDemo(g_cfg.cfg, forecast::dateOf(w, utcOffsetAt(w)));
-    calendar_glue::fillDemo(g_cfg.cfg, w, utcOffsetAt(w));  // task 105
+    forecast_glue::fillDemo(g_app.config(), forecast::dateOf(w, utcOffsetAt(w)));
+    calendar_glue::fillDemo(g_app.config(), w, utcOffsetAt(w));  // task 105
   }
   g_app.rebuildGraphs();
   graphsLoad(g_app.shownTab());
@@ -505,7 +520,7 @@ static std::string g_notifTitle;
 static void notificationsOnFetch(bool ok) {
   if (!ok || g_demoMode || !g_drv || g_notifAsked) return;
   const bool sleepWants = g_settings.sleep_screen && g_cfg.cfg.sleepScreen.notifications;
-  if (!sleepWants && !uistate::configHasNotificationsWidget(g_cfg.cfg)) return;  // task 103: or a notifications widget
+  if (!sleepWants && !uistate::configHasNotificationsWidget(g_app.config())) return;  // task 103: or a notifications widget
   g_notifAsked = true;
   g_notifPending = true;  // the sleep hold covers the wait
   g_notifWanted = true;   // posted by notificationsPump once the graph fetches are done
@@ -700,6 +715,7 @@ static void startSession(uint32_t now, bool restart = false) {
   }
   wakelog::sessionStarted(now);
   if (!restart && g_firstSession) boot::log("t_wifi_start_ms", (long)boot::elapsedMs());  // task 058
+  logMem("session_start");
   // The offset is taken now (local time at planning time); the machine plans the wake-up from it.
   if (!restart) g_sessionWake = g_firstSession ? g_wake : power::WakeReason::Button;
   g_drv->start(g_sessionWake, batteryMv(), g_settings, utcOffsetAt(session_glue::wallClock()), now);
@@ -752,7 +768,7 @@ static void applyOrientation(settings::Orientation o) {
     if (const EntityState *s = g_app.store().get(id)) keep.push_back(*s);
   M5.Display.setRotation(o == settings::Orientation::Landscape ? 1 : 0);
   present::begin();
-  g_app.init(g_cfg.cfg, o, g_demoMode);
+  g_app.init(g_app.config(), o, g_demoMode);  // the tabs live in the app only (task 117: see dropCfgTabs)
   g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMediaSink(onMediaSend);
@@ -786,6 +802,7 @@ static void reloadConfigSource(settings::Orientation o) {
   g_demoMode = app_logic::isDemoRun(g_settings, g_cfg.demo, g_cfg.cfg.hasConnection);
   g_real = !g_demoMode;
   g_app.init(g_cfg.cfg, o, g_demoMode);
+  dropCfgTabs();
   g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMediaSink(onMediaSend);
@@ -1228,6 +1245,7 @@ void setup() {
   const app_config::Loaded &cfg = g_cfg;
   applyTimezone(cfg.cfg.timezone);
   boot::log("config_source", cfg.source);
+  logMem("after_config");
   if (cfg.error) {
     g_app.initError(cfg.errors, s.orientation);
     const auto &e = cfg.errors[0];
@@ -1236,7 +1254,10 @@ void setup() {
     // Demo (fake states, local fake actions) unless the config has a connection section.
     g_demoMode = app_logic::isDemoRun(s, cfg.demo, cfg.cfg.hasConnection);
     g_real = !g_demoMode;
+    logMem("before_app_init");
     g_app.init(cfg.cfg, s.orientation, g_demoMode);
+    dropCfgTabs();
+    logMem("after_app_init");
     if (sleepwake::restoreTabWanted() && g_app.restoreTab(sleepwake::savedTab())) boot::log("tab_restored", (long)g_app.shownTab());  // task 086
     g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
@@ -1244,7 +1265,9 @@ void setup() {
     g_app.setMarksDriven(g_real);
     boot::log("mode", g_real ? "real" : "demo");
     if (g_real) g_restoredEpoch = state_cache::restore(cfg.cfg.entityIds, g_app.store());
+    logMem("after_restore");
     graphsInit();
+    logMem("after_graphs");
   }
 #ifdef TEST_CONFIG_MOCKUP
   g_status.mockLabel = true;
@@ -1264,6 +1287,7 @@ void setup() {
   if (g_real) {
     session_glue::loadClockFromRtc();
     if (batteryTooLowForWifi()) lowBatterySleep();  // the brownouts hit when Wi-Fi starts (task 079)
+    logMem("before_net_begin");
     g_net.begin(cfg.cfg.connection.ha.internalUrl, cfg.cfg.connection.ha.externalUrl, cfg.cfg.connection.ha.token);
     startSession(millis());
   }
@@ -1342,6 +1366,11 @@ void loop() {
     if (!stackLogged && millis() > 60000) {
       stackLogged = true;
       Serial.printf("BOOT: loop_stack_free=%u\n", (unsigned)uxTaskGetStackHighWaterMark(nullptr));
+    }
+    static uint32_t lastMem = 0;
+    if (millis() - lastMem > 30000) {  // every 30 s while awake
+      lastMem = millis();
+      logMem("tick");
     }
   }
 #if defined(OTA_TEST_BAD) && defined(DEBUG_SERIAL)
@@ -1510,10 +1539,10 @@ void loop() {
   if (g_notifChanged) { g_notifChanged = false; changed = true; }  // task 103
   graphsPump();
   notificationsPump();
-  forecast_glue::pump(g_drv.get(), g_cfg.cfg, g_app.shownTab(), g_sessionWake == power::WakeReason::RtcAlarm, graphsBusy(),
+  forecast_glue::pump(g_drv.get(), g_app.config(), g_app.shownTab(), g_sessionWake == power::WakeReason::RtcAlarm, graphsBusy(),
                       session_glue::wallClock(), utcOffsetAt(session_glue::wallClock()));  // task 104
   if (forecast_glue::takeChanged()) changed = true;
-  calendar_glue::pump(g_drv.get(), g_cfg.cfg, g_app.shownTab(), g_sessionWake == power::WakeReason::RtcAlarm, graphsBusy(),
+  calendar_glue::pump(g_drv.get(), g_app.config(), g_app.shownTab(), g_sessionWake == power::WakeReason::RtcAlarm, graphsBusy(),
                       session_glue::wallClock(), utcOffsetAt(session_glue::wallClock()));  // task 105
   if (calendar_glue::takeChanged()) changed = true;
   if (g_app.graphs().takeChanged()) changed = true;

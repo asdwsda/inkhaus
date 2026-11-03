@@ -281,6 +281,39 @@ static HttpResponse status(int s) { HttpResponse r; r.status = s; return r; }
 static const char* kInt = "http://ha.local:8123";
 static const char* kExt = "https://x.ui.nabu.casa";
 
+// Task 117: a long id list goes out as several templates of at most kMaxIdsPerRequest ids; states merge in order.
+void test_fetch_states_chunks_long_id_list() {
+  FakeTransport t;
+  std::vector<std::string> ids;
+  for (int i = 0; i < 85; ++i) ids.push_back("light.l" + std::to_string(i));
+  for (size_t at = 0; at < ids.size(); at += HaClient::kMaxIdsPerRequest) {
+    std::string body = "{";
+    for (size_t i = at; i < ids.size() && i < at + HaClient::kMaxIdsPerRequest; ++i)
+      body += std::string(i > at ? "," : "") + "\"" + ids[i] + "\": {\"s\": \"on\", \"lc\": 1, \"a\": {}}";
+    t.queue.push_back(ok((body + "}").c_str()));
+  }
+  HaClient c(t, kInt, "", "TOKEN");
+  FetchResult f = c.fetch_states(ids);
+  TEST_ASSERT_TRUE(f.result.ok());
+  TEST_ASSERT_EQUAL(3, t.calls.size());
+  TEST_ASSERT_EQUAL(85, f.states.size());
+  TEST_ASSERT_EQUAL_STRING("light.l84", f.states[84].id.c_str());
+  TEST_ASSERT_EQUAL_STRING("light.l40", f.states[40].id.c_str());
+}
+
+void test_fetch_states_chunk_failure_fails_all() {
+  FakeTransport t;
+  std::vector<std::string> ids;
+  for (int i = 0; i < 45; ++i) ids.push_back("light.l" + std::to_string(i));
+  std::string body = "{";
+  for (int i = 0; i < 40; ++i) body += std::string(i ? "," : "") + "\"" + ids[i] + "\": {\"s\": \"on\", \"lc\": 1, \"a\": {}}";
+  t.queue = {ok((body + "}").c_str()), status(500)};
+  HaClient c(t, kInt, "", "TOKEN");
+  FetchResult f = c.fetch_states(ids);
+  TEST_ASSERT_EQUAL(HaError::Http, f.result.error);
+  TEST_ASSERT_EQUAL(0, f.states.size());
+}
+
 void test_client_internal_ok_no_external() {
   FakeTransport t;
   t.queue = {ok("{\"light.a\": {\"s\": \"on\", \"lc\": 1, \"a\": {}}}")};
@@ -1119,6 +1152,8 @@ int main() {
   RUN_TEST(test_action_single_id_is_list_and_empty_rejected);
   RUN_TEST(test_climate_clamp_and_round);
   RUN_TEST(test_climate_call_body);
+  RUN_TEST(test_fetch_states_chunks_long_id_list);
+  RUN_TEST(test_fetch_states_chunk_failure_fails_all);
   RUN_TEST(test_client_internal_ok_no_external);
   RUN_TEST(test_client_fallback_and_remember);
   RUN_TEST(test_client_set_remembered_used_first);

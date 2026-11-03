@@ -70,23 +70,37 @@ HaResult HaClient::post(const std::string& path, const std::string& body, std::s
 }
 
 FetchResult HaClient::fetch_states(const std::vector<std::string>& ids) {
+  // Task 117: one template per kMaxIdsPerRequest ids. HA compiles each distinct template (seconds, blocking its
+  // event loop, for ~150 ids) and answered a 188-id template with a 500; small templates stay fast and are cached.
   FetchResult f;
-  std::string body, err;
-  if (!build_template_request_body(ids, body, err, extra_)) {
-    f.result.error = HaError::Parse;
-    f.result.message = err;
-    return f;
+  for (size_t at = 0; at < ids.size() || at == 0; at += kMaxIdsPerRequest) {
+    const size_t end = std::min(ids.size(), at + kMaxIdsPerRequest);
+    const std::vector<std::string> part(ids.begin() + long(at), ids.begin() + long(end));
+    std::string body, err;
+    if (!build_template_request_body(part, body, err, extra_)) {
+      f.result.error = HaError::Parse;
+      f.result.message = err;
+      f.states.clear();
+      return f;
+    }
+    std::string resp;
+    const uint32_t before = f.result.ms;
+    f.result = post("/api/template", body, resp);
+    f.result.ms += before;
+    if (!f.result.ok()) {
+      f.states.clear();
+      return f;
+    }
+    ParseResult p = parse_state_response(resp, part);
+    if (!p.ok) {
+      f.result.error = HaError::Parse;
+      f.result.message = p.error;
+      f.states.clear();
+      return f;
+    }
+    for (EntityState& st : p.states) f.states.push_back(std::move(st));
+    if (ids.empty()) break;
   }
-  std::string resp;
-  f.result = post("/api/template", body, resp);
-  if (!f.result.ok()) return f;
-  ParseResult p = parse_state_response(resp, ids);
-  if (!p.ok) {
-    f.result.error = HaError::Parse;
-    f.result.message = p.error;
-    return f;
-  }
-  f.states = std::move(p.states);
   return f;
 }
 

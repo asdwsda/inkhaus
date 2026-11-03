@@ -49,6 +49,7 @@ class HaClient {
   // Widget-requested attributes per entity, fetched on top of the fixed ones (task 030).
   void set_extra_attributes(ExtraAttrs extra) { extra_ = std::move(extra); }
 
+  static constexpr size_t kMaxIdsPerRequest = 40;  // task 117
   FetchResult fetch_states(const std::vector<std::string>& ids);
   // wanted/states: if both are given, the changed states HA returns for entities in `wanted` are
   // parsed into `states` (empty if the body is missing or unparsable; the call still succeeded).
