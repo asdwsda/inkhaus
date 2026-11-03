@@ -1,6 +1,6 @@
 # 106: Media player widget (without album art)
 
-Status: in-progress
+Status: PC done (device check pending)
 Depends on: 045
 UI spec: docs/ui/widgets-new.md §0, §4 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)
@@ -21,3 +21,5 @@ Out of scope: other new widgets.
 
 ## Notes
 - User 2026-11-03: no such entity in the user's HA. Demo mode must show this widget with sample data (all states), so the device look check works without a real entity.
+- PC part done: lib/ui_state/media_{view,popup,layout}, app_state_media.cpp (AppState hooks), lib/app_logic/media_intent, src/render/media_widget (widget + popup, prev/next/volume/mute glyphs drawn from primitives), test/test_media. Shared-file edits are one-liners: config_model/config/config_cache (enum MediaPlayer), ui_layout (sizes, subRegions), ui_rocker (stops), template_builder, service_call, tap_intent, fake_actions, demo_states, widgets.cpp/screen.cpp dispatch, main.cpp (sink, modal flag, close before sleep).
+- Device check line in docs/device-checks.md (106).

@@ -32,6 +32,9 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   popup_ = BrightnessPopup();
   popup_.setSink([this](const std::string &id, int pct) { onBrightnessSend(id, pct); });
   bpUnknown_ = bpAwaiting_ = bpFailed_ = bpSawPending_ = false;
+  media_ = MediaPopup();
+  media_.setSink([this](const std::string &id, MediaSend what, int v) { onMediaSend(id, what, v); });
+  maAwaiting_ = maFailed_ = maSawPending_ = false;
   relayout();
   refreshFocusFlow();
   rebuildGraphs();
@@ -255,6 +258,7 @@ bool AppState::setMarks(const std::map<std::string, Mark> &marks) {
     }
   }
   brightnessMarks(changed);
+  mediaMarks(changed);
   return changed;
 }
 
@@ -263,6 +267,7 @@ bool AppState::tick(uint32_t now) {
   lastNow_ = now;
   if (hist_.tick(now)) changed = true;  // the Loading frame appears after its delay
   if (notif_.tick(now)) changed = true;  // task 103: the confirm dialog skips by itself
+  changed |= mediaTick(now);
   if (popup_.isOpen()) {
     const EntityState *s = store_.get(popup_.entityId());
     bool closed = false;
@@ -307,6 +312,7 @@ bool AppState::touch(ui::Point p, uint32_t now) {
   if (hist_.isOpen()) return historyTouch(p);
   if (notif_.isOpen()) return notifTouch(p, now);  // task 103
   if (popup_.isOpen()) return popupTouch(p, now);
+  if (media_.isOpen()) return mediaTouch(p, now);
   const ui::Hit hit = ui::hitTest(layout_, p);
   const int tabCount = int(cfg_.tabs.size());
   switch (hit.kind) {
@@ -340,6 +346,7 @@ bool AppState::touch(ui::Point p, uint32_t now) {
       if (!w) return false;
       if (w->type == WidgetType::Notifications) return openNotif(now, false);  // task 103
       if (!ui::isFocusable(w->type)) return false;
+      if (w->type == WidgetType::MediaPlayer && hit.sub == kMediaSubText) return openMedia(hit.index, now);
       const bool single = ui::isSingleAction(w->type);
       if (single ? hit.sub != 0 : hit.sub == 0) return false;
       return runAction(hit.index, hit.sub, now);
@@ -359,6 +366,7 @@ bool AppState::rocker(ui::PhysicalKey key, uint32_t now) {
   if (notif_.isOpen()) return notifRocker(key, now);  // task 103
   if (popup_.isOpen()) return popupRocker(key, now);
   if (key == ui::PhysicalKey::Push && openNotifFocused(now)) return true;  // task 103
+  if (media_.isOpen()) return mediaRocker(key, now);
   const ui::LogicalKey lk = ui::mapRocker(key, orientation_, false);
   // Anything but tab stepping acts on the shown content: let a pending tab switch happen first.
   bool changed = false;
@@ -382,8 +390,11 @@ bool AppState::rocker(ui::PhysicalKey key, uint32_t now) {
       return true;
     case ui::Effect::OpenSettings:
       return changed || (focus_.ringVisible != wasRing);  // no Settings screen yet
-    case ui::Effect::WidgetAction:
+    case ui::Effect::WidgetAction: {
+      const config::Widget *mw = widgetAt(shownTab_, r.widgetIndex);
+      if (mw && mw->type == WidgetType::MediaPlayer && r.sub == kMediaSubText) return openMedia(r.widgetIndex, now);
       return runAction(r.widgetIndex, r.sub, now) || true;
+    }
   }
   return changed;
 }
@@ -398,7 +409,7 @@ const EntityState *AppState::dimmableMember(const config::Widget &w) const {
 }
 
 bool AppState::dimmableLightAt(ui::Point p) const {
-  if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;  // one modal at a time
+  if (screen_ != Screen::Tabs || modalOpen()) return false;  // one modal at a time
   const ui::Hit hit = ui::hitTest(layout_, p);
   if (hit.kind != ui::HitKind::Widget) return false;
   const config::Widget *w = widgetAt(shownTab_, hit.index);
@@ -406,7 +417,7 @@ bool AppState::dimmableLightAt(ui::Point p) const {
 }
 
 bool AppState::openBrightness(int idx, uint32_t now) {
-  if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;
+  if (screen_ != Screen::Tabs || modalOpen()) return false;
   const config::Widget *w = widgetAt(shownTab_, idx);
   const EntityState *m = w ? dimmableMember(*w) : nullptr;
   if (!m) return false;
@@ -427,7 +438,7 @@ bool AppState::longPress(ui::Point p, uint32_t now) {
 // ---- history popup (task 053) ----
 
 bool AppState::historyWidgetAt(ui::Point p) const {
-  if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;
+  if (screen_ != Screen::Tabs || modalOpen()) return false;
   const ui::Hit hit = ui::hitTest(layout_, p);
   if (hit.kind != ui::HitKind::Widget) return false;
   const config::Widget *w = widgetAt(shownTab_, hit.index);
@@ -435,7 +446,7 @@ bool AppState::historyWidgetAt(ui::Point p) const {
 }
 
 bool AppState::openHistory(int idx, uint32_t now) {
-  if (screen_ != Screen::Tabs || popup_.isOpen() || hist_.isOpen()) return false;
+  if (screen_ != Screen::Tabs || modalOpen()) return false;
   const config::Widget *w = widgetAt(shownTab_, idx);
   if (!w || !historyEnabledFor(*w)) return false;
   const EntityState *es = store_.get(w->entity);

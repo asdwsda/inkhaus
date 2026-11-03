@@ -12,6 +12,9 @@
 #include "brightness_popup.h"
 #include "config_model.h"
 #include "history_popup.h"
+#include "media_layout.h"
+#include "media_popup.h"
+#include "media_view.h"
 #include "entity_state.h"
 #include "graph_widgets.h"
 #include "notif_popup.h"
@@ -95,7 +98,7 @@ class AppState {
   bool openHistoryFocused(uint32_t now);  // rocker long push on the focused sensor/binary widget
   bool closeHistory();                    // true if it was open
   bool historyOpen() const { return hist_.isOpen(); }
-  bool modalOpen() const { return popup_.isOpen() || hist_.isOpen() || notif_.isOpen(); }
+  bool modalOpen() const { return popup_.isOpen() || hist_.isOpen() || notif_.isOpen() || media_.isOpen(); }
   const HistoryPopup &history() const { return hist_; }
   HistoryPopup &historyPopup() { return hist_; }
   std::string historyTitle() const { return widgetTitle(hist_.widget()); }
@@ -114,6 +117,18 @@ class AppState {
   bool notifOpen() const { return notif_.isOpen(); }
   const NotifStore &notifStore() const { return notifStore_; }
   const NotifPopup &notifPopup() const { return notif_; }
+  // ---- media popup (task 106, docs/ui/widgets-new.md 4.1; code in app_state_media.cpp) ----
+  // Modal like the others. Opened by a tap / rocker push on the media widget's text block.
+  bool mediaOpen() const { return media_.isOpen(); }
+  const MediaPopup &media() const { return media_; }
+  bool closeMedia(uint32_t now);  // flushes an unsent volume; true if it was open
+  std::string mediaTitle() const { return widgetTitle(media_.widget()); }
+  // What the open popup shows: the player's state with the optimistic volume / mute applied.
+  MediaPopupView mediaPopupData() const;
+  bool mediaAwaiting() const { return media_.sendPending() || maAwaiting_; }  // hourglass
+  bool mediaFailed() const { return maFailed_; }                              // alert
+  // Real mode: sends the volume / mute to Home Assistant. Demo mode applies it to the store.
+  void setMediaSink(MediaSink s) { msink_ = std::move(s); }
 
   // ---- history graph widgets (task 071) ----
   // Rebuilt by init(); call rebuildGraphs() again once the entity states are known (device classes).
@@ -208,6 +223,17 @@ class AppState {
   NotifStore notifStore_;
   NotifPopup notif_;
   NotifDismissSink nsink_;
+  // media popup (task 106)
+  bool openMedia(int widgetIndex, uint32_t now);
+  bool mediaTouch(ui::Point p, uint32_t now);
+  bool mediaRocker(ui::PhysicalKey key, uint32_t now);
+  void onMediaSend(const std::string &id, MediaSend what, int value);
+  void mediaMarks(bool &changed);
+  bool mediaTick(uint32_t now);
+  MediaPopup media_;
+  MediaSink msink_;
+  bool maAwaiting_ = false, maFailed_ = false, maSawPending_ = false;
+  uint32_t maSentAt_ = 0;
   bool bpUnknown_ = false, bpAwaiting_ = false, bpFailed_ = false, bpSawPending_ = false;
   uint32_t bpSentAt_ = 0, lastNow_ = 0;
   mutable EntityState optState_;  // widgetData(): the optimistic light state of the popup's widget

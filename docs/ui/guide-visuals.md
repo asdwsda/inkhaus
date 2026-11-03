@@ -61,7 +61,7 @@ image), alt text, guide section. Captions and alt texts are drafts for step 110.
 | `install-two-files` | Two panels: `secrets.yaml` (Wi-Fi, HA URL, token; "private, never share") and `config.yaml` (tabs, widgets; "safe to share") with example excerpts | Two files: the private one and the shareable one. | Side by side view of secrets.yaml and config.yaml with their contents. | |
 | `install-token` | Home Assistant profile page schematic: Security tab -> Long-lived access tokens -> Create token -> copy; numbered 1..4, no real HA screenshot (changes between versions) | Create a long-lived access token. | Four numbered steps in the Home Assistant profile page. | |
 | `install-first-boot` | Four frames at 25% scale: splash, "Connecting", tab screen with "updated" label, last frame "first full redraw" | What you see on the first start. | Four small screens: splash, connecting, first tab, redraw. | |
-| `install-minimal-config` | Result picture: a 4-line `config.yaml` (one tab, one light, one sensor, one cover) next to the 960x540 screen it makes | The smallest useful config and the screen it produces. | Four line config on the left, resulting tab screen on the right. | |
+| `install-minimal-config` | Result picture: a 4-line `config.yaml` (one tab, one light, one sensor, one cover) next to the 960x540 screen it makes | The smallest useful config and the screen it produces. | Four line config on the left, resulting tab screen on the right. | done |
 | `install-wifi-profiles` | Up to 4 Wi-Fi profiles in priority order, arrow "first one in range wins", HA URL internal / external / auto | Wi-Fi profiles and which HA address is used. | Diagram of Wi-Fi profiles with internal and external URL. | |
 
 ### C. The screens (section "Using the dashboard")
@@ -70,11 +70,11 @@ image), alt text, guide section. Captions and alt texts are drafts for step 110.
 |---|---|---|---|---|
 | `screen-tab-anatomy` | Landscape tab 1:1 with 7 badges: status label, tabs, last slot (sleep pill sample), battery, filled/outline, buttons, free cells | The tab screen, part by part. | Landscape tab screen with seven numbered callouts. | done |
 | `screen-tab-anatomy-portrait` | Same for portrait (status bar on top, tab bar at the bottom, 2 columns x 7 rows) | The same screen held upright. | Portrait tab screen with numbered callouts. | |
-| `screen-popup-anatomy` | Light brightness popup with callouts: title, close, plus/minus, presets, Off; unsent value pending icon | A popup: tap a light's name area to dim it. | Brightness popup with numbered parts. | |
-| `screen-popup-history` | History popup (line graph) with callouts: period, y axis, min/max, close | Long press a sensor to see its history. | History graph popup with callouts. | |
-| `screen-status-icons` | Table of status-bar symbols at 1:1: Wi-Fi, no Wi-Fi, outdated clock, battery levels (100/50/10/charging), warn; meaning each | What the little symbols mean. | Table of status bar symbols with their meaning. | |
-| `screen-orientation` | The same tab in portrait (540x960) and landscape side by side at 50% | Portrait or landscape, set in Settings > Display. | Same dashboard shown upright and sideways. | |
-| `screen-columns-portrait` | `portrait_columns` 2, 3, 4 side by side at 40% with the same widgets; snippet `portrait_columns: 3` | One setting, three densities. | Three portrait screens with 2, 3 and 4 columns. | |
+| `screen-popup-anatomy` | Light brightness popup with callouts: title, close, plus/minus, presets, Off; unsent value pending icon | A popup: tap a light's name area to dim it. | Brightness popup with numbered parts. | done |
+| `screen-popup-history` | History popup (line graph) with callouts: period, y axis, min/max, close | Long press a sensor to see its history. | History graph popup with callouts. | done |
+| `screen-status-icons` | Table of status-bar symbols at 1:1: Wi-Fi, no Wi-Fi, outdated clock, battery levels (100/50/10/charging), warn; meaning each | What the little symbols mean. | Table of status bar symbols with their meaning. | done |
+| `screen-orientation` | The same tab in portrait (540x960) and landscape side by side at 50% | Portrait or landscape, set in Settings > Display. | Same dashboard shown upright and sideways. | done |
+| `screen-columns-portrait` | `portrait_columns` 2, 3, 4 side by side at 40% with the same widgets; snippet `portrait_columns: 3` | One setting, three densities. | Three portrait screens with 2, 3 and 4 columns. | done |
 | `screen-columns-landscape` | `landscape_columns` 5 vs 4 side by side at 50%; wide widgets get two cells at 4 | Five columns by default; four gives wide widgets more room. | Two landscape screens with 5 and 4 columns. | |
 | `screen-pager` | A tab with more widgets than fit: sub-page pager "2 / 3" with prev/next, snippet showing 24 widgets | Too many widgets? The tab splits into pages. | Tab screen with a page switcher at the bottom. | |
 | `screen-tabs-overflow` | Tab bar with 7 tabs: overflow slot "..." and its list | More tabs than slots. | Tab bar with an overflow slot. | |
@@ -86,11 +86,11 @@ Each page: the accepted mockup 1:1 with 3 to 6 badges and a legend; the row mean
 
 | File | Shows | Caption | Alt | Status |
 |---|---|---|---|---|
-| `settings-overview` | Overview: 4 category rows with summaries, Refresh now, Back, unsaved chip, info block | Settings: four categories and the device info. | Settings overview with callouts. | |
-| `settings-display` | Display page: orientation, brightness, (other rows as in spec) | Display. | Display settings page. | |
-| `settings-sleep` | Sleep & wake page: mode, updates, keep awake, while asleep, battery use block | Sleep & wake. | Sleep settings page. | |
-| `settings-network` | Network page: Wi-Fi profile, HA connection | Network. | Network settings page. | |
-| `settings-tools` | Tools page: Demo mode, Debug log, update, config status row | Tools. | Tools settings page. | |
+| `settings-overview` | Overview: 4 category rows with summaries, Refresh now, Back, unsaved chip, info block | Settings: four categories and the device info. | Settings overview with callouts. | done |
+| `settings-display` | Display page: orientation, brightness, (other rows as in spec) | Display. | Display settings page. | done |
+| `settings-sleep` | Sleep & wake page: mode, updates, keep awake, while asleep, battery use block | Sleep & wake. | Sleep settings page. | done |
+| `settings-network` | Network page: Wi-Fi profile, HA connection | Network. | Network settings page. | done |
+| `settings-tools` | Tools page: Demo mode, Debug log, update, config status row | Tools. | Tools settings page. | done |
 | `settings-values-cycle` | One row tapped three times: value cycles (Power off -> Deep sleep -> Touch), no list | A tap on a value switches to the next one. | Three frames of one setting changing value. | |
 | `settings-leave` | Three ways to leave: Back, long push, idle 60 s; "unsaved" chip -> saved on leaving | Leaving Settings saves. | Diagram of the ways to leave Settings. | |
 
@@ -102,7 +102,7 @@ Each page: the accepted mockup 1:1 with 3 to 6 badges and a legend; the row mean
 | `sleep-timeline` | Time line: asleep -> wake (RTC / rocker / touch) -> Wi-Fi -> fetch states -> draw -> sleep, with "scheduled update every 3 h" ticks | What happens each time it wakes. | Timeline of one wake cycle. | |
 | `sleep-ha-talk` | Device <-> router <-> Home Assistant: REST for states, WebSocket for notifications; internal vs external URL | How the device talks to Home Assistant. | Diagram of device, router and Home Assistant with the calls. | |
 | `sleep-pills` | The four sleep pills at 1:1 (Zz replaced by OFF / Deep / Touch / Touch+rocker, next update time) | The pill tells the mode and the next update. | Four pill indicators with their meaning. | |
-| `sleep-screen-variants` | Sleep screen (clock, weather, calendar, notifications), the fallback and `none` (last tab frozen), portrait + landscape at 40% | While asleep: three looks. | Three sleep screens side by side. | |
+| `sleep-screen-variants` | Sleep screen (clock, weather, calendar, notifications), the fallback and `none` (last tab frozen), portrait + landscape at 40% | While asleep: three looks. | Three sleep screens side by side. | done |
 | `sleep-screen-config` | `sleep_screen:` snippet with the block it adds highlighted on the screen (weather / calendar / notifications), one row each | Each line in `sleep_screen` adds one block. | Three snippets, each next to the screen block it adds. | |
 | `sleep-battery-levels` | Battery cluster at 100, 78, 50, 25, 10 % and "learning" note | The battery icon and what it reads. | Battery icons at five levels. | |
 | `sleep-before-after` | Option comparison: "Keep awake Off" vs "On USB" (screen identical, status bar shows plug), and mode Touch vs Power off wake time | What Keep awake changes. | Two status bars, with and without keep awake. | |
@@ -116,20 +116,20 @@ One fragment per row (widgets + states + snippet). Landscape cell widths for 1x1
 |---|---|---|---|
 | `gallery-light-on-off` | light 1x1 on (80 %) and off + snippet with `name:` | A light: filled when on, outline when off. | done |
 | `gallery-light-states` | on / off / pending (hourglass) / unavailable (dotted frame, slash) | A light in each state. | |
-| `gallery-switch` | switch on/off/unavailable (plug icon) | A switch. | |
+| `gallery-switch` | see `gallery-small-widgets` (switch off, binary_sensor open, automation on) | Switch, window sensor, automation. | done |
 | `gallery-automation` | automation enabled/disabled (circular arrows) | An automation: tap to enable or disable. | |
 | `gallery-cover-states` | cover opening (up filled), closed, stopped, pending (dashed hourglass), unavailable | A shutter in five states. | |
-| `gallery-cover-group` | `groups:` entry + `group:` widget with `name:`, all members move | One button for several shutters. | |
+| `gallery-cover-group` | `groups:` entry + `group:` widget with `name:`, all members move | One button for several shutters. | done |
 | `gallery-climate` | climate wide, target 22.0 with - / + | A thermostat. | done |
 | `gallery-climate-states` | heating (flame), off, unavailable; target changing pending | Thermostat states. | |
 | `gallery-sensor-sizes` | sensor 1x1 vs 2x1 with details + snippet | Sensor 1x1 and `size: 2x1`. | done |
 | `gallery-sensor-options` | decimals 0/1/2, `unit:` override, `attribute:` | Format a sensor value. | |
-| `gallery-sensor-states` | value, unavailable (n/a, dotted), loading (-) | A sensor when data is missing. | |
+| `gallery-sensor-states` | value, unavailable (n/a, dotted), loading (-) | A sensor when data is missing. | done |
 | `gallery-binary-sensor` | window open/closed, door, motion, battery (device_class wording) | Open or closed, on or off, in words. | |
-| `gallery-weather` | weather 2x1 and 1x1, condition icons (sunny, cloudy, rain, snow, night) | Current weather. | |
+| `gallery-weather` | weather 2x1 (1x1 and other conditions wait for a mockup) | Current weather. | done (2x1 only) |
 | `gallery-weather-forecast` | weather with forecast (wide) | Weather with a forecast. | |
 | `gallery-vacuum` | vacuum states: docked, cleaning, returning, error, unavailable | A robot vacuum. | |
-| `gallery-graph-types` | `display: graph` with `type: line`, `bar`, `step` and snippet | Same data as line, bars or steps. | |
+| `gallery-graph-types` | `display: graph`: line, step and bar widgets + snippet | Line, step or bars. | done |
 | `gallery-graph-options` | `hours`, `min/max`, `statistic`, `period` before/after | Graph options at a glance. | |
 | `gallery-history-popup` | long press on a sensor opens the popup; snippet `history: 48` | Long press for history; `history: false` turns it off. | |
 | `gallery-notifications` | notification count badge 0 / 3 + list popup | Home Assistant notifications. | |
@@ -139,7 +139,7 @@ One fragment per row (widgets + states + snippet). Landscape cell widths for 1x1
 | `gallery-alarm` | alarm panel states (disarmed, armed home/away, triggered) + keypad popup | An alarm panel with a keypad. | |
 | `gallery-lock-garage` | lock locked/unlocked/jammed, garage open/closed | Locks and garage doors. | |
 | `gallery-energy` | energy 2x1 (kWh) | Energy today. | |
-| `gallery-name-override` | same entity without and with `name:`; truncation with an ellipsis for a long name | Rename a widget. | |
+| `gallery-name-override` | same entity without and with `name:` (no truncation example yet) | Rename a widget. | done |
 | `gallery-icon-override` | `icon:` before/after (only if the option exists, see open question 2) | Pick another icon. | |
 | `gallery-type-override` | `person.alice` with `type: sensor` | Show any entity as a sensor. | |
 | `gallery-size-guide` | the 1x1, 2x1, wide, 2x2 and 3x2 blocks drawn as grey cells with which widget types allow which | Sizes each widget allows. | |
@@ -179,6 +179,15 @@ Batch 1 done: `device-buttons`, `screen-tab-anatomy`, `gallery-light-on-off`, `g
 `install-minimal-config`, `config-to-screen`, `config-before-after-size`, `sleep-before-after`,
 `gallery-size-guide`, `screen-status-icons`, `screen-refresh-what-to-expect`, `device-yesno`,
 `install-two-files`, `install-token`, `fix-sd-card`, `fix-wont-wake`.
+
+Batch 2 additions: `gallery-small-widgets` (covers `gallery-switch` and the binary-sensor row), `gallery-sensor-decimals`
+(`decimals` 0 / default / 2; text-only edit of the accepted sensor widget). Not drawn, no accepted mockup to copy yet:
+`gallery-light-states`, `gallery-automation` (disabled), `gallery-cover-states` (only opening / pending exist),
+`gallery-climate-states`, `gallery-binary-sensor` (only window open), `gallery-vacuum`, `gallery-type-override`,
+`gallery-size-guide`, `gallery-sensor-options` (partly done by `gallery-sensor-decimals`), `gallery-graph-options`.
+Lint: `screen-columns-portrait`, `screen-orientation`, `sleep-screen-variants`, `install-minimal-config` are scaled or
+schematic composites (ids prefixed, no `w-N-frame`): check_mockups reports "no widget frames", checked by eye. The
+portrait columns image uses schematic cells (same grid geometry, no icons), not the real 3 and 4 column widgets.
 
 ## 4. Batches
 

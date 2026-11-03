@@ -104,7 +104,7 @@
 | 103 | [Notifications widget](103-notifications-widget.md) | PC done | 101 |
 | 104 | [Weather widget with forecast](104-weather-widget.md) | PC done | 045 |
 | 105 | [Calendar widget](105-calendar-widget.md) | todo | 045 |
-| 106 | [Media player widget (without album art)](106-media-widget.md) | in-progress | 045 |
+| 106 | [Media player widget (without album art)](106-media-widget.md) | PC done | 045 |
 | 107 | [Media album art](107-media-album-art.md) | todo | 106 |
 | 108 | [Alarm panel, lock and garage widgets + confirm dialog](108-alarm-lock-widgets.md) | todo | 045 |
 | 109 | [Energy widget](109-energy-widget.md) | todo | 082 |

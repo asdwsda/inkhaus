@@ -17,6 +17,10 @@ enum class Action {
   VacuumStart,
   VacuumPause,
   VacuumReturnToBase,
+  MediaPlayPause,  // task 106: media_player.*
+  MediaPrevious,
+  MediaNext,
+  MediaTurnOn,
 };
 
 struct ServiceCall {
@@ -36,6 +40,11 @@ double normalize_target_temperature(double target, double min_temp, double max_t
 bool build_climate_set_temperature(const std::vector<std::string>& ids, double target,
                                    double min_temp, double max_temp, double step,
                                    ServiceCall& out);
+
+// media_player.volume_set with volume_level = pct / 100 (pct clamped to 0..100). Returns false if ids is empty.
+bool build_media_volume_set(const std::vector<std::string>& ids, int pct, ServiceCall& out);
+// media_player.volume_mute with is_volume_muted. Returns false if ids is empty.
+bool build_media_volume_mute(const std::vector<std::string>& ids, bool mute, ServiceCall& out);
 
 // Light brightness in percent: pct <= 0 -> light.turn_off, otherwise light.turn_on with
 // brightness_pct (clamped to 1..100). Returns false if ids is empty.

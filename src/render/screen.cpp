@@ -6,6 +6,7 @@
 #include "brightness_screen.h"
 #include "graph_widget.h"
 #include "notif_widget_draw.h"
+#include "media_widget.h"
 #include "popup_history.h"
 #include "widgets.h"
 
@@ -273,6 +274,7 @@ void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &s
   drawBrightnessPopup(c, app);
   drawHistoryPopup(c, app);
   drawNotifPopup(c, app);  // task 103
+  drawMediaPopup(c, app);
   if (status.sleepKind) drawSleepPill(c, app.orientation(), status.sleepKind, status.sleepNextMin);
   else if (status.awakeKind) drawAwake(c, app.orientation(), status.awakeKind);
 }

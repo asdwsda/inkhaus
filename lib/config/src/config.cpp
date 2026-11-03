@@ -24,6 +24,7 @@ const TypeName kTypes[] = {
     {"binary_sensor", WidgetType::BinarySensor},
     {"weather", WidgetType::Weather},   {"vacuum", WidgetType::Vacuum},
     {"notifications", WidgetType::Notifications},  // task 103
+    {"media_player", WidgetType::MediaPlayer},  // task 106
 };
 
 bool startsWith(const std::string &s, const char *prefix) {

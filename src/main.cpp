@@ -15,6 +15,7 @@
 #include "battery_learn.h"
 #include "battery_limit.h"
 #include "brightness_intent.h"
+#include "media_intent.h"
 #include "history_cache_sd.h"
 #include "deferred_tap.h"
 #include "forecast_glue.h"
@@ -309,7 +310,7 @@ static void showFrame(uint32_t now) {
       if (pl.graph) graphs.push_back({pl.rect.x, pl.rect.y, pl.rect.w, pl.rect.h});
     present::setMergeRegions(graphs);
   }
-  present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen());
+  present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.mediaOpen());
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 
@@ -715,6 +716,13 @@ static void onBrightnessSend(const std::string &id, int pct) {
   if (ev) g_drv->userAction(*ev, millis());
 }
 
+// Media popup send (task 106): media_player.volume_set / volume_mute.
+static void onMediaSend(const std::string &id, uistate::MediaSend what, int value) {
+  if (!g_real || !g_drv) return;
+  auto ev = what == uistate::MediaSend::Volume ? app_logic::mediaVolumeIntent(id, value) : app_logic::mediaMuteIntent(id, value != 0);
+  if (ev) g_drv->userAction(*ev, millis());
+}
+
 // A tap on a dimmable light waits for the release or the long press (task 045).
 static uistate::DeferredTap g_defer;
 
@@ -738,6 +746,7 @@ static void applyOrientation(settings::Orientation o) {
   g_app.init(g_cfg.cfg, o, g_demoMode);
   g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
+  g_app.setMediaSink(onMediaSend);
   g_app.setMarksDriven(g_real);
   if (!g_demoMode) g_app.store().update(keep);
   graphsInit();
@@ -770,6 +779,7 @@ static void reloadConfigSource(settings::Orientation o) {
   g_app.init(g_cfg.cfg, o, g_demoMode);
   g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
+  g_app.setMediaSink(onMediaSend);
   g_app.setMarksDriven(g_real);
   graphsInit();
   boot::log("mode", g_real ? "real" : "demo");
@@ -1029,6 +1039,7 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
   if (!low) {
     historyShutdown();
     g_app.closeNotif();  // task 103
+    g_app.closeMedia(now);  // task 106: flush the unsent volume
     g_app.closeBrightness(now);  // flush the unsent value; the frozen screen never shows the popup (brightness.md rule 5)
     // Settings auto-leave before sleeping (settings.md rule 5). Whether or not Settings was open now,
     // the plan is made again from the settings in effect now: the session machine's plan was made
@@ -1216,6 +1227,7 @@ void setup() {
     if (sleepwake::restoreTabWanted() && g_app.restoreTab(sleepwake::savedTab())) boot::log("tab_restored", (long)g_app.shownTab());  // task 086
     g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
+  g_app.setMediaSink(onMediaSend);
     g_app.setMarksDriven(g_real);
     boot::log("mode", g_real ? "real" : "demo");
     if (g_real) g_restoredEpoch = state_cache::restore(cfg.cfg.entityIds, g_app.store());
@@ -1355,7 +1367,7 @@ void loop() {
       }
     }
   }
-  const bool popupOpen = g_app.brightnessOpen() || g_app.historyPopup().fetching();  // activity: brightness closes itself after 10 s; an open history popup only counts while it fetches, then the idle timer closes it (goToSleep)
+  const bool popupOpen = g_app.brightnessOpen() || g_app.mediaOpen() || g_app.historyPopup().fetching();  // activity: brightness closes itself after 10 s; an open history popup only counts while it fetches, then the idle timer closes it (goToSleep)
   if ((e.kind != input::Event::None || popupOpen) && g_real && g_drv) {
     if (g_sessionOver) startSession(now);  // a new interactive session (real sleep comes later)
     else g_drv->input(now);

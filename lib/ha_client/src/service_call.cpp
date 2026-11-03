@@ -37,6 +37,10 @@ bool build_service_call(Action action, const std::vector<std::string>& ids, Serv
     case Action::VacuumStart: out.domain = "vacuum"; out.service = "start"; break;
     case Action::VacuumPause: out.domain = "vacuum"; out.service = "pause"; break;
     case Action::VacuumReturnToBase: out.domain = "vacuum"; out.service = "return_to_base"; break;
+    case Action::MediaPlayPause: out.domain = "media_player"; out.service = "media_play_pause"; break;
+    case Action::MediaPrevious: out.domain = "media_player"; out.service = "media_previous_track"; break;
+    case Action::MediaNext: out.domain = "media_player"; out.service = "media_next_track"; break;
+    case Action::MediaTurnOn: out.domain = "media_player"; out.service = "turn_on"; break;
     default: return false;
   }
   out.body = body_for(ids, nullptr);
@@ -76,5 +80,30 @@ bool build_light_brightness(const std::vector<std::string>& ids, int pct, Servic
     out.service = "turn_on";
     out.body = body_for(ids, nullptr, &p);
   }
+  return true;
+}
+
+bool build_media_volume_set(const std::vector<std::string>& ids, int pct, ServiceCall& out) {
+  if (ids.empty()) return false;
+  const int p = pct < 0 ? 0 : pct > 100 ? 100 : pct;
+  JsonDocument doc;
+  JsonArray arr = doc["entity_id"].to<JsonArray>();
+  for (const std::string& id : ids) arr.add(id);
+  doc["volume_level"] = p / 100.0;
+  out.domain = "media_player";
+  out.service = "volume_set";
+  serializeJson(doc, out.body);
+  return true;
+}
+
+bool build_media_volume_mute(const std::vector<std::string>& ids, bool mute, ServiceCall& out) {
+  if (ids.empty()) return false;
+  JsonDocument doc;
+  JsonArray arr = doc["entity_id"].to<JsonArray>();
+  for (const std::string& id : ids) arr.add(id);
+  doc["is_volume_muted"] = mute;
+  out.domain = "media_player";
+  out.service = "volume_mute";
+  serializeJson(doc, out.body);
   return true;
 }

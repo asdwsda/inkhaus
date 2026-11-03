@@ -17,7 +17,7 @@ Placeholder: every key of `config.yaml` and `secrets.yaml`. The tables are check
 | `entity` / `group` | Each widget has exactly one of them. |
 | `name` | Widget label. |
 | `size` | Widget size `WxH`. |
-| `type` | Widget type override for a domain without a built-in one. |
+| `type` | Widget type override for a domain without a built-in one. Also `notifications` (no entity) and `media_player` (wide widget with volume popup). |
 | `attribute` / `details` / `unit` / `decimals` | Sensor display options. |
 | `display` | `graph` draws a history graph on the tab. |
 | `forecast` | Weather only: `true` adds the next 3 days (needs a wide widget). Default `false`. |
