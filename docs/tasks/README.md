@@ -108,6 +108,9 @@
 | 107 | [Media album art](107-media-album-art.md) | todo | 106 |
 | 108 | [Alarm panel, lock and garage widgets + confirm dialog](108-alarm-lock-widgets.md) | todo | 045 |
 | 109 | [Energy widget](109-energy-widget.md) | todo | 082 |
+| 110 | [User guide on the website (structure and build)](110-user-guide-site.md) | todo | 065, 102 |
+| 111 | [Guide visuals: widget fragments, annotated screens, diagrams](111-guide-visuals.md) | todo | 110 (page layout), accepted mockups |
+| 112 | [Guide content](112-guide-content.md) | todo | 110, 111; widgets 103-109 for their sections |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
