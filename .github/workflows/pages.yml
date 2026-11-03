@@ -5,7 +5,7 @@ name: pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", "docs/ui/png/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", "docs/ui/png/**", ".github/workflows/pages.yml", "tools/make_webflash_manifest.py", "tools/vendor_esp_web_tools.sh"]
   release:
     types: [published]
   workflow_dispatch:
@@ -37,6 +37,23 @@ jobs:
 
       - name: Build site
         run: python3 site/build.py
+
+      - name: Web flasher tests
+        run: python3 tools/tests/test_make_webflash_manifest.py
+
+      - name: Web flasher files (task 102)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tools/vendor_esp_web_tools.sh site/dist/install/esp-web-tools
+          mkdir -p work/src
+          gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" > work/api.json
+          for tag in $(python3 tools/make_webflash_manifest.py select --api work/api.json); do
+            gh release download "${tag}" --repo "${GITHUB_REPOSITORY}" -D "work/src/${tag}" \
+              -p manifest.json -p bootloader.bin -p partitions.bin -p boot_app0.bin -p firmware.bin
+          done
+          python3 tools/make_webflash_manifest.py build --api work/api.json --src work/src --out site/dist/install
+          du -sh site/dist/install/firmware
 
       - name: Check links and weight
         run: python3 site/check.py
