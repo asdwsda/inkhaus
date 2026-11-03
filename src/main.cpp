@@ -1161,6 +1161,10 @@ static uint32_t firmwareId() {
 SET_LOOP_TASK_STACK_SIZE(16 * 1024);
 
 void setup() {
+  // Task 117: blocks of 512 bytes and more go to PSRAM (the IDF default is 4096). Internal RAM is the scarce
+  // resource (a big dashboard left too little for the Wi-Fi stack); the vectors of widgets, entity states and
+  // graph series are such blocks. DMA, Wi-Fi and TLS buffers ask for internal memory explicitly.
+  heap_caps_malloc_extmem_enable(512);
   ota::earlyBoot();  // task 087: count a boot of a just-installed firmware first, so a crash in setup() counts
   boot::begin();
   ota::logEarly();
