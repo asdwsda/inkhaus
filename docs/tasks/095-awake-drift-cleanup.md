@@ -1,6 +1,6 @@
 # 095: Clear grey drift during long awake sessions
 
-Status: in progress (PC part done; tester review + device check pending)
+Status: PC done (tester review passed 2026-11-03; device check pending)
 Depends on: 092
 UI spec: none
 Needs device: yes
