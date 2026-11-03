@@ -5,20 +5,28 @@ from pathlib import Path
 
 out = Path(__file__).resolve().parent / "dist"
 bad = 0
-for page in [out / "index.html", out / "style.css"]:
+# Task 102: install/esp-web-tools, install/firmware and releases.json are added by the pages workflow.
+WORKFLOW_ONLY = ("esp-web-tools/", "releases.json")
+for page in [out / "index.html", out / "style.css", out / "install" / "index.html"]:
     text = page.read_text()
     refs = re.findall(r'(?:href|src)="([^"]+)"', text) + re.findall(r"url\(([^)]+)\)", text)
     for r in refs:
         r = r.strip("'\"")
         if re.match(r"(https?:|mailto:|#|data:)", r):
             continue
-        if not (page.parent / r.split("#")[0]).is_file():
+        if r.startswith(WORKFLOW_ONLY):
+            continue
+        target = page.parent / r.split("#")[0]
+        if target.is_dir():
+            target = target / "index.html"
+        if not target.is_file():
             print(f"BROKEN {page.name}: {r}"); bad += 1
 ids = set(re.findall(r'id="([^"]+)"', (out / "index.html").read_text()))
 for a in re.findall(r'href="#([^"]+)"', (out / "index.html").read_text()):
     if a not in ids:
         print(f"BROKEN anchor #{a}"); bad += 1
-total = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
+skip = (out / "install" / "firmware", out / "install" / "esp-web-tools")
+total = sum(f.stat().st_size for f in out.rglob("*") if f.is_file() and not any(s in f.parents for s in skip))
 print(f"page weight: {total/1024:.0f} KiB")
 if total > 1024 * 1024:
     print("over 1 MB"); bad += 1

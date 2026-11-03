@@ -26,4 +26,8 @@ html = html.replace("<!--VERSION-->", line)
 for f in ("style.css", "logo-inkhaus.svg"):
     shutil.copy(site / f, out / f)
 shutil.copytree(site / "fonts", out / "fonts")
+# Task 102: /install/ page. The workflow adds esp-web-tools/, firmware/ and releases.json next to it.
+(out / "install").mkdir()
+for f in ("install.html", "install.js"):
+    shutil.copy(site / f, out / "install" / ("index.html" if f == "install.html" else f))
 print(f"built {out} ({len(imgs)} images)")
