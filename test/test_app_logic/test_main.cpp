@@ -1122,6 +1122,77 @@ static NetCommand histCmd(std::shared_ptr<volatile bool> cancel = nullptr) {
   return c;
 }
 
+// ---- device report (task 100) ----
+
+struct ReportHa : HttpTransport {
+  std::vector<std::string> urls, bodies, methods;
+  std::vector<int> statuses;  // per request; the last one repeats
+  HttpResponse request(const std::string &m, const std::string &url, const HttpHeaders &, const std::string &body) override {
+    methods.push_back(m);
+    urls.push_back(url);
+    bodies.push_back(body);
+    HttpResponse r;
+    const size_t i = urls.size() - 1;
+    r.status = statuses.empty() ? 200 : statuses[i < statuses.size() ? i : statuses.size() - 1];
+    if (r.status == 0) r.error = "timeout";
+    return r;
+  }
+};
+
+static NetCommand reportCmd() {
+  NetCommand c;
+  c.type = NetCommand::Type::Report;
+  c.reports = {{"sensor.m5paper_battery", "{\"state\":\"78\"}"},
+               {"sensor.m5paper_humidity", "{\"state\":\"45.0\"}"},
+               {"sensor.m5paper_last_wake", "{\"state\":\"x\"}"}};
+  return c;
+}
+
+void test_report_posts_each_state() {
+  ReportHa ha;
+  HaWorker w(ha, "http://ha.local:8123", "", "SECRET-TOKEN");
+  const NetEvent e = w.run(reportCmd());
+  TEST_ASSERT_TRUE(e.type == NetEvent::Type::ReportDone);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL(3, (int)ha.urls.size());
+  TEST_ASSERT_EQUAL_STRING("POST", ha.methods[0].c_str());
+  TEST_ASSERT_EQUAL_STRING("http://ha.local:8123/api/states/sensor.m5paper_battery", ha.urls[0].c_str());
+  TEST_ASSERT_EQUAL_STRING("http://ha.local:8123/api/states/sensor.m5paper_last_wake", ha.urls[2].c_str());
+  TEST_ASSERT_EQUAL_STRING("{\"state\":\"45.0\"}", ha.bodies[1].c_str());
+  TEST_ASSERT_EQUAL(3, (int)e.reportSent);
+  TEST_ASSERT_EQUAL(0, (int)e.reportSkipped);
+  TEST_ASSERT_EQUAL(3, (int)e.reportOk.size());
+}
+
+void test_report_failure_skips_the_rest() {
+  ReportHa ha;
+  ha.statuses = {201, 500};  // 201 = created: success
+  HaWorker w(ha, "http://ha.local:8123", "", "SECRET-TOKEN");
+  const NetEvent e = w.run(reportCmd());
+  TEST_ASSERT_TRUE(e.error == HaError::Http);
+  TEST_ASSERT_EQUAL(2, (int)ha.urls.size());  // no retry, nothing after the failure
+  TEST_ASSERT_EQUAL(1, (int)e.reportSent);
+  TEST_ASSERT_EQUAL(2, (int)e.reportSkipped);
+  TEST_ASSERT_EQUAL(1, (int)e.reportOk[0]);
+  TEST_ASSERT_EQUAL(0, (int)e.reportOk[1]);
+  TEST_ASSERT_EQUAL(0, (int)e.reportOk[2]);
+}
+
+void test_report_network_failure_and_empty() {
+  ReportHa ha;
+  ha.statuses = {0};
+  HaWorker w(ha, "http://ha.local:8123", "", "SECRET-TOKEN");
+  NetEvent e = w.run(reportCmd());
+  TEST_ASSERT_TRUE(e.error == HaError::Network);
+  TEST_ASSERT_EQUAL(1, (int)ha.urls.size());
+  TEST_ASSERT_EQUAL(0, (int)e.reportSent);
+  NetCommand none;
+  none.type = NetCommand::Type::Report;
+  e = w.run(none);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL(0, (int)e.reportOk.size());
+}
+
 void test_history_job_streams_into_series() {
   HistHa ha;
   ha.body = "[[{\"entity_id\":\"sensor.t\",\"state\":\"20.5\",\"last_changed\":\"2026-01-01T00:00:00+00:00\"},"
@@ -1414,6 +1485,9 @@ int main() {
   RUN_TEST(test_debuglog_filter_format_rotation);
   RUN_TEST(test_brightness_intent_custom_call_expected_state);
   RUN_TEST(test_brightness_intent_session_last_value_wins_and_confirms);
+  RUN_TEST(test_report_posts_each_state);
+  RUN_TEST(test_report_failure_skips_the_rest);
+  RUN_TEST(test_report_network_failure_and_empty);
   RUN_TEST(test_history_job_streams_into_series);
   RUN_TEST(test_statistics_job_over_ws);
   RUN_TEST(test_statistics_job_heap_margin_closes_http);

@@ -50,6 +50,11 @@ class SessionDriver {
   using HistoryHandler = std::function<void(NetEvent &&)>;
   void setHistoryHandler(HistoryHandler h) { historyHandler_ = std::move(h); }
   void postHistory(const NetCommand &cmd) { net_.post(cmd); }
+  // Task 100: device report posts (NetCommand::Type::Report) go through the same port; the handler gets every
+  // ReportDone event.
+  using ReportHandler = std::function<void(NetEvent &&)>;
+  void setReportHandler(ReportHandler h) { reportHandler_ = std::move(h); }
+  void postReport(const NetCommand &cmd) { net_.post(cmd); }
 
   // Task 071 (graph widgets): called when a full state fetch (wake, scheduled, manual refresh) has ended, with
   // its success, before the session machine reacts (so a sleep that follows can be held back).
@@ -93,6 +98,7 @@ class SessionDriver {
   std::function<int64_t()> wallClock_;
   Log log_;
   HistoryHandler historyHandler_;
+  ReportHandler reportHandler_;
   FetchHook fetchHook_;
   SleepHold sleepHold_;
   HttpDateHook httpDateHook_;

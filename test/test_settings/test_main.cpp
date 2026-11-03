@@ -437,6 +437,22 @@ void test_learn_battery_persists() {
     TEST_ASSERT_TRUE(strlen(kKeyLearnBattery) <= 15);
 }
 
+void test_report_ha_persists() {
+    FakeStore st;
+    TEST_ASSERT_FALSE(load(st).report_ha);  // absent = off
+    st.data[kKeyReportHa] = 5;              // invalid -> default
+    TEST_ASSERT_FALSE(load(st).report_ha);
+    Settings s;
+    s.report_ha = true;
+    save(st, s);
+    TEST_ASSERT_EQUAL_INT32(1, st.data[kKeyReportHa]);
+    TEST_ASSERT_TRUE(load(st).report_ha);
+    TEST_ASSERT_TRUE(load(st) == s);
+    Settings d;
+    TEST_ASSERT_FALSE(d == s);
+    TEST_ASSERT_TRUE(strlen(kKeyReportHa) <= 15);
+}
+
 void test_keep_awake_persists() {
     FakeStore st;
     TEST_ASSERT_TRUE(load(st).keep_awake == KeepAwake::Off);  // absent = off
@@ -517,6 +533,7 @@ int main(int, char**) {
     RUN_TEST(test_wifi_profile_by_name_and_ha_link);
     RUN_TEST(test_keep_awake_persists);
     RUN_TEST(test_learn_battery_persists);
+    RUN_TEST(test_report_ha_persists);
     RUN_TEST(test_wifi_profile_index_lookup);
     RUN_TEST(test_wifi_profile_legacy_index_migrates_once);
     return UNITY_END();

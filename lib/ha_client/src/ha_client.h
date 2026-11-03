@@ -57,6 +57,9 @@ class HaClient {
   // to the sink. Never logs the URL or the token.
   HaResult stream_history(const std::string& entity_id, int64_t start_epoch, int64_t end_epoch,
                           const StreamLimits& lim, const ChunkFn& sink, size_t* bytes_out = nullptr);
+  // Task 100: POST /api/states/<entity_id> with a state JSON (creates or updates a state object; HA answers
+  // 200/201 with the state, which is ignored). Same URL fallback as the other calls.
+  HaResult post_state(const std::string& entity_id, const std::string& body);
   HaResult call_service(const ServiceCall& call, const std::vector<std::string>* wanted = nullptr,
                         std::vector<EntityState>* states = nullptr);
 

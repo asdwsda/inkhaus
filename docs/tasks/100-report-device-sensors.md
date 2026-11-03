@@ -36,3 +36,8 @@ the device POSTs `/api/states/<entity>` (REST, existing token, existing HTTP cli
 ## Notes
 - Decision (architect, 2026-11-03): REST `/api/states` over MQTT. Reason: no new protocol/dependency,
   same token; the cost of states disappearing on HA restart is one scheduled wake at most.
+- PC part done (firmware-dev, 2026-11-03): lib/device_report (sht30 CRC/convert, payloads, plan/should-post),
+  `NetCommand::Type::Report` + `HaClient::post_state`, `report_glue` (NVS record, once per wake after the first good
+  fetch, sleep hold while in flight), setting key `reportha` (default Off). Open: Settings row (TODO in
+  lib/settings_ui/src/settings_ui.h, waits for docs/ui/settings.md), device check (docs/device-checks.md), SHT30 pins
+  (UNVERIFIED: M5.Ex_I2C G25/G32).
