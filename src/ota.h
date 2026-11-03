@@ -24,7 +24,10 @@ void begin(bool coldBoot);
 void setQuiesce(void (*fn)());
 // Every loop iteration (cheap). Marks the firmware healthy after 10 s in loop(); runs the due check (blocking, a
 // few seconds) only when Wi-Fi is up and the HA session is done. epoch 0 = clock unset.
-void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone, bool interactive);  // interactive: no automatic check (task 116)
+// interactive: automatic check only after kAutoIdleMs without input and with an empty user lane (task 116).
+void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone, bool interactive, uint32_t msSinceInput, bool userLaneBusy);
+// The automatic check aborts (cancelled) while this returns true (a user command waits). Task 116.
+void setYield(bool (*fn)());
 // Before deep sleep / power off: a session that drew its first frame and then slept on purpose was not a crash.
 void beforeSleep();
 

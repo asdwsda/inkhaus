@@ -70,9 +70,12 @@ static void test_yield_policy() {
 }
 
 static void test_ota_refused_when_interactive() {
-  TEST_ASSERT_FALSE(ota_logic::autoCheckAllowed(true, false));
-  TEST_ASSERT_TRUE(ota_logic::autoCheckAllowed(false, false));  // scheduled wake
-  TEST_ASSERT_TRUE(ota_logic::autoCheckAllowed(true, true));    // Settings > Check now
+  TEST_ASSERT_FALSE(ota_logic::autoCheckAllowed(true, false, 5000, false));   // user active
+  TEST_ASSERT_FALSE(ota_logic::autoCheckAllowed(true, false, 59999, false));
+  TEST_ASSERT_FALSE(ota_logic::autoCheckAllowed(true, false, 90000, true));   // idle but user lane busy
+  TEST_ASSERT_TRUE(ota_logic::autoCheckAllowed(true, false, 60000, false));   // always-awake, idle 60 s
+  TEST_ASSERT_TRUE(ota_logic::autoCheckAllowed(false, false, 0, false));      // scheduled wake
+  TEST_ASSERT_TRUE(ota_logic::autoCheckAllowed(true, true, 0, true));         // Settings > Check now
 }
 
 int main() {

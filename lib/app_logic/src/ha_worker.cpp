@@ -307,6 +307,10 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     bool failed = false;
     for (const auto &item : cmd.reports) {
       uint8_t ok = 0;
+      if (!failed && yield_ && *yield_) {  // task 116: a user command waits; unsent items stay unposted
+        failed = true;
+        e.error = HaError::Cancelled;
+      }
       if (!failed) {
         const HaResult r = client_->post_state(item.first, item.second);
         e.ms += r.ms;

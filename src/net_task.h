@@ -19,6 +19,7 @@ class NetTask : public app_logic::INetPort {
   // Starts a new session: queued commands are dropped and late results of the old one ignored.
   void reset();
   bool running() const { return started_; }
+  bool userWaiting() const { return cmds_.userWaiting(); }  // task 116
   // Smallest free stack of the task so far, in bytes (0 if not running).
   uint32_t stackFreeBytes() const;
 

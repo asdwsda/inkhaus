@@ -131,8 +131,17 @@ uint32_t maxImageSize() {
 uint32_t g_jobStartMs = 0;
 bool g_jobInstall = false;
 volatile bool g_timedOut = false;
+bool (*g_yieldFn)() = nullptr;
+volatile bool g_autoJob = false;
+volatile bool g_yielded = false;
 bool cancelled() {
   if (g_timedOut) return true;
+  if (g_autoJob && g_yieldFn && g_yieldFn()) {  // task 116: a user command waits; the automatic check retries later
+    g_timedOut = true;
+    g_yielded = true;
+    wakelog::logf("OTA: check yielded to a user command\n");
+    return true;
+  }
   const uint32_t el = millis() - g_jobStartMs;
   if (!ota_logic::jobExpired(g_jobInstall, el)) return false;
   g_timedOut = true;
@@ -221,6 +230,10 @@ bool runCheckBody(int64_t epoch, CheckResult &result) {
   } else {
     result = g_failKind;
     wakelog::logf("OTA: check failed err=%s\n", g_err.c_str());  // silent for the user
+  }
+  if (g_yielded) {  // task 116: not an attempt; nothing recorded, the idle check retries
+    result = CheckResult::Skipped;
+    return true;
   }
   g_sched.lastAttempt = epoch;
   if (ok) g_sched.lastSuccess = epoch;
@@ -373,8 +386,10 @@ void begin(bool coldBoot) {
 }
 
 void setQuiesce(void (*fn)()) { g_quiesce = fn; }
+void setYield(bool (*fn)()) { g_yieldFn = fn; }
 
-void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone, bool interactive) {
+void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone, bool interactive, uint32_t msSinceInput,
+          bool userLaneBusy) {
   if (g_busy) return;
   if (!g_loopSeen) {
     g_loopSeen = true;
@@ -382,13 +397,17 @@ void tick(uint32_t nowMs, int64_t epoch, bool wifiUp, bool sessionDone, bool int
   }
   if (g_pending && !g_healthyDone && ota_logic::healthy(g_began, nowMs - g_loopStartMs)) markHealthy();
   if (g_checkedThisBoot || !wifiUp || !sessionDone) return;
-  if (!ota_logic::autoCheckAllowed(interactive, false)) return;  // task 116: UNVERIFIED on device
+  if (!ota_logic::autoCheckAllowed(interactive, false, msSinceInput, userLaneBusy)) return;  // task 116: UNVERIFIED on device
   if (!ota_logic::checkDue(g_sched, epoch, g_cold, wifiUp)) return;
   g_checkedThisBoot = true;  // one attempt per boot/wake; failures retry at the next eligible wake
   g_busy = true;
   CheckResult r;
+  g_autoJob = true;
+  g_yielded = false;
   runCheck(epoch, r);
+  g_autoJob = false;
   g_busy = false;
+  if (g_yielded) g_checkedThisBoot = false;  // yielded: try again when idle
 }
 
 void beforeSleep() {

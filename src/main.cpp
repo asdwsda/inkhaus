@@ -1282,6 +1282,7 @@ void setup() {
   wakelog::writeDeferred();
   ota::begin(splashed);  // task 087: state; splashed = cold boot
   ota::setQuiesce(otaQuiesce);
+  ota::setYield([]() { return g_net.userWaiting(); });
 
   boot::log("version", "017");
   boot::log("orientation", (long)rotation);
@@ -1432,7 +1433,7 @@ void loop() {
   if (g_drv) {
     g_drv->tick(now);
     session_glue::ntpPoll(g_drv->wifiUp());
-    ota::tick(now, session_glue::wallClock(), g_drv->wifiUp(), g_drv->sessionDone(), !g_scheduled);  // task 087: due check; task 116: scheduled wakes only
+    ota::tick(now, session_glue::wallClock(), g_drv->wifiUp(), g_drv->sessionDone(), !g_scheduled, now - g_lastInputMs, g_net.userWaiting());  // task 087: due check; task 116: idle-only when interactive
     if (g_drv->takeRender()) changed = true;
     logFetchApplied();
     if (g_drv->wifiUp()) wakelog::wifiUp(now);
