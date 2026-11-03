@@ -93,6 +93,10 @@ void SessionDriver::onNet(NetEvent &ev, int64_t now) {
     if (notificationsHandler_) notificationsHandler_(std::move(ev));
     return;
   }
+  if (ev.type == NetEvent::Type::ForecastDone) {
+    if (forecastHandler_) forecastHandler_(std::move(ev));
+    return;
+  }
   if (ev.type == NetEvent::Type::ReportDone) {
     if (reportHandler_) reportHandler_(std::move(ev));
     return;

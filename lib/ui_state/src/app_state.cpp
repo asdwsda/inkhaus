@@ -113,6 +113,10 @@ WidgetData AppState::widgetData(int idx) const {
   d.group = !w->group.empty();
   d.cfg = w;
   d.members = membersOf(*w);
+  if (w->forecast && forecasts_) {  // task 104
+    d.forecast = forecasts_->get(w->entity);
+    d.today = forecasts_->today();
+  }
   for (const std::string &id : w->entities) {
     auto it = marks_.find(id);
     if (it != marks_.end() && it->second == Mark::Failed) d.failed = true;

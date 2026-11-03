@@ -136,10 +136,18 @@ WidgetSize clampSize(const SizeLimits &lim, WidgetSize req, const Grid &g, unsig
   return s;
 }
 
+SizeLimits forecastSizeLimits(const Grid &g) {
+  int n = g.cols;  // narrowest width of at least kForecastMinW px (508 portrait / 552 landscape)
+  for (int w = 1; w <= g.cols; ++w)
+    if (cellRect(g, 0, 0, w, 1).w >= kForecastMinW) { n = w; break; }
+  return {{n, 1}, {n, 1}, {g.cols, 1}};
+}
+
 WidgetSize resolveSize(WidgetType type, const config::Widget &w, const Grid &g,
                        unsigned *reasons, WidgetSize *requested) {
   SizeLimits lim = sizeLimits(type, g);
   if (config::isGraphWidget(w)) lim = graphSizeLimits(g);
+  if (type == WidgetType::Weather && w.forecast) lim = forecastSizeLimits(g);  // task 104
   WidgetSize req = w.size ? *w.size : lim.def;
   if (requested) *requested = req;
   return clampSize(lim, req, g, reasons);

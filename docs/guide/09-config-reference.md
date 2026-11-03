@@ -20,6 +20,7 @@ Placeholder: every key of `config.yaml` and `secrets.yaml`. The tables are check
 | `type` | Widget type override for a domain without a built-in one. |
 | `attribute` / `details` / `unit` / `decimals` | Sensor display options. |
 | `display` | `graph` draws a history graph on the tab. |
+| `forecast` | Weather only: `true` adds the next 3 days (needs a wide widget). Default `false`. |
 | `history` | Graph options, or `false`. |
 | `hours` / `statistic` / `period` / `min` / `max` / `source` | The `history` options. |
 

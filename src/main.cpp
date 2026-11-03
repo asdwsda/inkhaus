@@ -17,6 +17,7 @@
 #include "brightness_intent.h"
 #include "history_cache_sd.h"
 #include "deferred_tap.h"
+#include "forecast_glue.h"
 #include "demo_history.h"
 #include "input.h"
 #include "net.h"
@@ -465,6 +466,11 @@ static void graphsLoad(int tab) {
 
 // After g_app.init() and the restore of the cached states.
 static void graphsInit() {
+  g_app.setForecastStore(&forecast_glue::store());  // task 104
+  if (g_demoMode) {
+    const int64_t w = session_glue::wallClock() ? session_glue::wallClock() : 1793361600;
+    forecast_glue::fillDemo(g_cfg.cfg, forecast::dateOf(w, utcOffsetAt(w)));
+  }
   g_app.rebuildGraphs();
   graphsLoad(g_app.shownTab());
   g_app.graphs().takeChanged();  // the first frame is composed anyway
@@ -644,7 +650,9 @@ static void startSession(uint32_t now, bool restart = false) {
   g_drv->setHttpDateHook(session_glue::httpDateObserved);  // task 097
   g_drv->setReportHandler([](app_logic::NetEvent &&ev) { report_glue::onDone(ev, session_glue::wallClock()); });
   g_drv->setNotificationsHandler(notificationsDone);
-  g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy() || g_notifPending; });  // task 087: no sleep during a check / download
+  g_drv->setForecastHandler([](app_logic::NetEvent &&ev) { forecast_glue::onDone(std::move(ev), session_glue::wallClock()); });  // task 104
+  forecast_glue::newSession();
+  g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy() || g_notifPending || forecast_glue::pending(); });  // task 087: no sleep during a check / download
   report_glue::abort();
   g_notifAsked = g_notifPending = g_notifWanted = false;  // the old net session's answer is dropped; the new one asks again
   g_app.graphs().abortFetch();  // the old net session is gone: a graph result will not arrive
@@ -1439,6 +1447,9 @@ void loop() {
   if (g_histChanged) { g_histChanged = false; changed = true; }
   graphsPump();
   notificationsPump();
+  forecast_glue::pump(g_drv.get(), g_cfg.cfg, g_app.shownTab(), g_sessionWake == power::WakeReason::RtcAlarm, graphsBusy(),
+                      session_glue::wallClock(), utcOffsetAt(session_glue::wallClock()));  // task 104
+  if (forecast_glue::takeChanged()) changed = true;
   if (g_app.graphs().takeChanged()) changed = true;
 
   if (!settings_flow::active() && g_app.screen() == uistate::Screen::Tabs) {

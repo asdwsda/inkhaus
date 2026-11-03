@@ -1,6 +1,10 @@
 # 104: Weather widget with forecast
 
+<<<<<<< HEAD
 Status: in-progress
+=======
+Status: PC part done (device check pending)
+>>>>>>> worktree-agent-a5877f5417d65a0a1
 Depends on: 045
 UI spec: docs/ui/widgets-new.md §0, §2 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)
@@ -20,4 +24,9 @@ Out of scope: other new widgets.
 - [ ] docs/CONFIG.md + config.example.yaml document the widget; docs/device-checks.md line; UNVERIFIED tags.
 
 ## Notes
+<<<<<<< HEAD
 - User 2026-11-03: no such entity in the user's HA. Demo mode must show this widget with sample data (all states), so the device look check works without a real entity.
+=======
+- PC part done. New: lib/forecast (request, parser, day selection, Store, fetch rule), lib/ui_state/src/forecast_view.* (view + layout), src/forecast_glue.* (pump/handler), src/render/weather_forecast_draw.*. Shared-file edits: Widget.forecast (config model/parse/cache bit 7 of the display byte, no format bump), `ui::forecastSizeLimits` + 1 line in resolveSize, HaClient::call_service_response, NetCommand/NetEvent Forecast, HaWorker::runForecast, SessionDriver handler, AppState forecast store + WidgetData.forecast/today, 1 case in drawWidget, 6 lines in main.cpp.
+- Spec says WS call_service; the task says REST, REST used. Forecast is RAM only (not in the RTC/SD state cache). Pouring/windy glyphs hand-drawn, not in icon_data (no regeneration, avoids merge conflicts).
+>>>>>>> worktree-agent-a5877f5417d65a0a1

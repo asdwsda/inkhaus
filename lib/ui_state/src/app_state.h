@@ -15,6 +15,7 @@
 #include "entity_state.h"
 #include "graph_widgets.h"
 #include "settings.h"
+#include "forecast.h"  // task 104
 #include "state_store.h"
 #include "ui_layout.h"
 #include "ui_rocker.h"
@@ -50,6 +51,8 @@ struct WidgetData {
   bool optimistic = false;  // members show the requested result of a tap that is still unconfirmed
   int pendingSub = 0;
   bool failed = false;  // the last action on this widget failed: real state plus alert badge
+  const forecast::Data *forecast = nullptr;  // task 104: forecast of a weather widget with `forecast: true`
+  forecast::Ymd today;                       // task 104: local date (invalid: clock unset)
 };
 
 enum class Screen { Tabs, ConfigError };
@@ -128,6 +131,7 @@ class AppState {
   const ui::Layout &layout() const { return layout_; }
   const ui::FocusState &focus() const { return focus_; }
   int shownTab() const { return shownTab_; }
+  void setForecastStore(const forecast::Store *s) { forecasts_ = s; }  // task 104
   StateStore &store() { return store_; }
   const StateStore &store() const { return store_; }
   std::string widgetTitle(int widgetIndex) const;
@@ -152,6 +156,7 @@ class AppState {
   config::Config cfg_;
   std::vector<config::ConfigError> errors_;
   StateStore store_;
+  const forecast::Store *forecasts_ = nullptr;  // task 104, not owned
   ui::Layout layout_;
   ui::FocusState focus_;
   ui::Flow focusFlow_;
