@@ -78,6 +78,10 @@ bool showcase(const std::string &id, EntityState &out) {
     out.device_class = "power";
     attr(out, "today", "7.4");
     attr(out, "today_unit", "kWh");
+  } else if (id == "sensor.house_energy_total" || id == "sensor.solar_energy_total") {  // task 109: running totals
+    out = make(id, id == "sensor.house_energy_total" ? "4821.6" : "1377.2");
+    out.unit_of_measurement = "kWh";
+    out.device_class = "energy";
   } else if (id == "sensor.pressure") {
     out = make(id, "1013");
     out.unit_of_measurement = "hPa";

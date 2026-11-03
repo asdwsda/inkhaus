@@ -2,7 +2,7 @@
 #
 # Shown (with fake values, no Home Assistant) when the SD card has no config.yaml. Embedded in the
 # firmware. It doubles as a showcase of every widget type and state look. No connection, no secrets.
-# Four tabs, each fills one page in portrait (2x7 cells) and landscape (5x4 cells), no pager.
+# Six tabs, each fills one page in portrait (2x7 cells) and landscape (5x4 cells), no pager.
 
 version: 1
 
@@ -111,3 +111,15 @@ tabs:
       - entity: calendar.work                   # running now, then all day tomorrow
       - entity: calendar.holidays               # all day today, then a long title
       - entity: calendar.old_unavailable        # deliberately unavailable
+  - title: New                               # tasks 103, 104, 106, 109: notifications, forecast, media players, energy
+    widgets:
+      - type: notifications
+        name: Alerts
+      - entity: weather.garden                  # partly cloudy with the 3-day forecast (fake days, see forecast_glue.cpp)
+        forecast: true
+      - type: energy                            # fake running totals: today so far, usage and solar
+        usage: sensor.house_energy_total
+        solar: sensor.solar_energy_total
+      - entity: media_player.living_room        # playing
+      - entity: media_player.kitchen            # paused
+      - entity: media_player.bedroom            # off

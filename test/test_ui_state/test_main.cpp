@@ -404,7 +404,20 @@ static config::Config demoConfig() {
 
 void test_demo_yaml_showcase() {
   config::Config cfg = demoConfig();
-  TEST_ASSERT_EQUAL_INT(5, (int)cfg.tabs.size());  // task 105: + Calendar tab
+  TEST_ASSERT_EQUAL_INT(6, (int)cfg.tabs.size());  // + Calendar (105) and New (103, 104, 106, 109) tabs
+  {  // the New tab shows notifications, a weather forecast, energy and three media players
+    int notif = 0, fc = 0, energy = 0, media = 0;
+    for (const auto &w : cfg.tabs[5].widgets) {
+      notif += w.type == WidgetType::Notifications;
+      fc += w.type == WidgetType::Weather && w.forecast;
+      energy += w.type == WidgetType::Energy;
+      media += w.type == WidgetType::MediaPlayer;
+    }
+    TEST_ASSERT_EQUAL_INT(1, notif);
+    TEST_ASSERT_EQUAL_INT(1, fc);
+    TEST_ASSERT_EQUAL_INT(1, energy);
+    TEST_ASSERT_EQUAL_INT(3, media);
+  }
   auto st = demoStates(cfg);
   TEST_ASSERT_EQUAL(cfg.entityIds.size(), st.size());
   int unavailable = 0;
