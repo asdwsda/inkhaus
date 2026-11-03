@@ -1,6 +1,6 @@
 # 093: Task watchdog restart on a scheduled wake
 
-Status: todo
+Status: PC done (device check pending: recovery path untested)
 Depends on: 083, 091
 UI spec: none
 Needs device: yes

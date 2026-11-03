@@ -91,12 +91,12 @@
 | 090 | [Total time cap for an OTA job](090-ota-job-deadline.md) | PC done | 089 |
 | 091 | [Scheduled wake switches back to the first tab](091-tab-lost-on-scheduled-wake.md) | in-progress | 086, 083 |
 | 092 | [Grey drift: find the cause](092-grey-drift-root-cause.md) | in-progress | 083, 091 |
-| 093 | [Task watchdog restart on a scheduled wake](093-wake-task-wdt.md) | todo | 083, 091 |
+| 093 | [Task watchdog restart on a scheduled wake](093-wake-task-wdt.md) | PC done | 083, 091 |
 | 094 | [Portrait 3-column grid](094-portrait-3-columns.md) | in-progress | 043 |
 | 095 | [Clear grey drift during long awake sessions](095-awake-drift-cleanup.md) | in progress | 092 |
+| 096 | [Keep supported_color_modes in the state cache](096-cache-color-modes.md) | in-progress | 045 |
 
 ## Open items (not yet tasks, 2026-10-30)
-- 045: `supported_color_modes` is not in the state cache; a cached boot falls back to the `brightness` attribute.
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
 - User-approved (2026-10-29): Settings overview summary wording (OPEN-S5) and long Wi-Fi names shrink then "..." (OPEN-S6).
 - 056: a scan after a deep-sleep wake fails (aps=-2); rare now (scan only after a failed direct connect). Watch `event_ms=-1` in debug.log.
