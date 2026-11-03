@@ -114,6 +114,7 @@
 | 113 | [Build info in Settings](113-build-info-in-settings.md) | todo | 087 |
 | 114 | [Clean the screen after a burst of taps (factory-app style)](114-tap-burst-cleanup.md) | todo | 092, 095, 099 |
 | 115 | [Slow taps after waking on battery](115-slow-taps-after-wake.md) | todo | 080, 093 |
+| 116 | [User commands jump the net queue](116-user-commands-first.md) | todo | 115 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
