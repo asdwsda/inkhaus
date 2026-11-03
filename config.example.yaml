@@ -29,7 +29,7 @@ groups:
 
 # At least one tab (max 16, up to 24 widgets each).
 # Widget type is inferred from the entity domain: cover, light, switch,
-# automation, climate, sensor, binary_sensor, weather, vacuum, media_player.
+# automation, climate, sensor, binary_sensor, weather, vacuum, media_player, calendar.
 # Optional `size: WxH` (1..4 cells) picks a size within what the widget type allows
 # (docs/ui/layout.md section 3); most types have a fixed size, so it is rarely needed.
 # Sensor options, graphs and history are shown at the end of the "Whole house" tab at the end of this file.
@@ -64,6 +64,7 @@ tabs:
         forecast: true
       - entity: vacuum.robot
         name: Vacuum
+      - entity: calendar.family            # 2x1: the next two events (read only)
       - entity: media_player.living_room   # wide; tap the text for the volume popup
         name: Living room
       - entity: person.alice    # no built-in type for this domain, so set it

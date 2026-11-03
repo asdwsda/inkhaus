@@ -41,6 +41,7 @@ bool isFocusable(WidgetType t, bool history) {
     case WidgetType::Sensor:
     case WidgetType::BinarySensor: return history;
     case WidgetType::Weather: return false;
+    case WidgetType::Calendar: return false;  // task 105: read-only
     default: return true;
   }
 }

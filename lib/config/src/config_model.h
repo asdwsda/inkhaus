@@ -33,6 +33,7 @@ enum class WidgetType {
   Vacuum,
   Notifications,  // task 103: no entity (persistent_notification WS call)
   MediaPlayer,  // task 106 (type name and domain "media_player")
+  Calendar,     // task 105 (type name and domain "calendar")
 };
 
 // Name as used in the `type:` override and as HA domain (e.g. "binary_sensor").

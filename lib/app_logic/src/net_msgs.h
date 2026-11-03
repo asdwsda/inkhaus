@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "cal_events.h"  // task 105
 #include "collector.h"
 #include "entity_state.h"
 #include "forecast.h"
@@ -17,7 +18,7 @@
 namespace app_logic {
 
 struct NetCommand {
-  enum class Type { Fetch, Call, Close, History, Report, Notifications, Forecast, NotifDismiss, OtaCheck };  // OtaCheck (task 116): run by the net task itself, background lane, never reaches HaWorker
+  enum class Type { Fetch, Call, Close, History, Report, Notifications, Forecast, NotifDismiss, OtaCheck, Calendar };  // OtaCheck (task 116): run by the net task itself, background lane, never reaches HaWorker
   // Close: drop the kept-alive connection (before sleep)
   Type type = Type::Fetch;
   bool user = false;             // Fetch: a user refresh / tap follow-up (user lane, task 116); Call and NotifDismiss are always user
@@ -41,10 +42,12 @@ struct NetCommand {
   std::vector<std::pair<std::string, std::string>> reports;
   // Forecast (task 104): weather.get_forecasts for this weather entity (ids unused).
   std::string forecastEntity;
+  // Calendar (task 105): calendar.get_events for this calendar entity.
+  std::string calendarEntity;
 };
 
 struct NetEvent {
-  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone, NotificationsDone, ForecastDone, NotifDismissDone };
+  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone, NotificationsDone, ForecastDone, NotifDismissDone, CalendarDone };
   Type type = Type::FetchDone;
   HaError error = HaError::None;
   int http_status = 0;
@@ -74,6 +77,8 @@ struct NetEvent {
   std::vector<forecast::Day> forecastDays;
   std::vector<NotifItem> notifItems;  // NotificationsDone (task 103): the list, newest first
   std::string dismissId;              // NotifDismissDone (task 103): error None = dismissed
+  std::string calendarEntity;         // CalendarDone (task 105): error None = calendarEvents are valid (may be empty)
+  std::vector<calendar::Event> calendarEvents;
 };
 
 // History fetch failure that means "too much data": over the size cap, or the 15 s deadline hit while data was

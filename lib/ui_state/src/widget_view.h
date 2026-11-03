@@ -7,12 +7,12 @@
 
 #include "config_model.h"
 #include "entity_state.h"
+#include "look.h"
 
 namespace uistate {
 
 constexpr const char *kDeg = "\xC2\xB0";
 
-enum class Look { Normal, Loading, Unavailable };
 
 enum class ActionIcon { None, Flame, Snow, Dry, Fan, Pause, Auto, Power };
 enum class WeatherIcon { Sunny, ClearNight, PartlyCloudy, Cloudy, Rainy, Pouring, Snowy, Fog, Windy,

@@ -65,6 +65,10 @@ class SessionDriver {
   using ForecastHandler = std::function<void(NetEvent &&)>;
   void setForecastHandler(ForecastHandler h) { forecastHandler_ = std::move(h); }
   void postForecast(const NetCommand &cmd) { net_.post(cmd); }
+  // Task 105: the calendar events (NetCommand::Type::Calendar); the handler gets every CalendarDone event.
+  using CalendarHandler = std::function<void(NetEvent &&)>;
+  void setCalendarHandler(CalendarHandler h) { calendarHandler_ = std::move(h); }
+  void postCalendar(const NetCommand &cmd) { net_.post(cmd); }
 
   // Task 071 (graph widgets): called when a full state fetch (wake, scheduled, manual refresh) has ended, with
   // its success, before the session machine reacts (so a sleep that follows can be held back).
@@ -111,6 +115,7 @@ class SessionDriver {
   ReportHandler reportHandler_;
   NotificationsHandler notificationsHandler_;
   ForecastHandler forecastHandler_;
+  CalendarHandler calendarHandler_;  // task 105
   FetchHook fetchHook_;
   SleepHold sleepHold_;
   HttpDateHook httpDateHook_;

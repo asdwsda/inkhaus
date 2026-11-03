@@ -180,6 +180,7 @@ EntityState demoForBase(const std::string &id) {
     e.temperature_unit = "\xC2\xB0" "C";
     return e;
   }
+  if (domain == "calendar") return make(id, "off");  // task 105: the events come from the calendar glue
   if (domain == "media_player") return media(id, "playing", "Player", "Blue in Green", "Miles Davis", "Kind of Blue", 0.45);
   if (domain == "vacuum") {
     EntityState e = make(id, "docked", "Robot");

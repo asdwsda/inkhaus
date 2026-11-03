@@ -20,6 +20,7 @@
 #include "notif_popup.h"
 #include "notif_widget.h"
 #include "settings.h"
+#include "cal_events.h"  // task 105
 #include "forecast.h"  // task 104
 #include "state_store.h"
 #include "ui_layout.h"
@@ -59,6 +60,8 @@ struct WidgetData {
   const forecast::Data *forecast = nullptr;  // task 104: forecast of a weather widget with `forecast: true`
   forecast::Ymd today;                       // task 104: local date (invalid: clock unset)
   NotifView notif;      // Notifications widgets (task 103)
+  const calendar::Data *calendar = nullptr;  // task 105: get_events answer of a calendar widget
+  int64_t nowMin = 0;                        // task 105: local minutes of now (0: clock unset)
 };
 
 enum class Screen { Tabs, ConfigError };
@@ -165,6 +168,7 @@ class AppState {
   const ui::FocusState &focus() const { return focus_; }
   int shownTab() const { return shownTab_; }
   void setForecastStore(const forecast::Store *s) { forecasts_ = s; }  // task 104
+  void setCalendarStore(const calendar::Store *s) { calendars_ = s; }  // task 105
   StateStore &store() { return store_; }
   const StateStore &store() const { return store_; }
   std::string widgetTitle(int widgetIndex) const;
@@ -190,6 +194,7 @@ class AppState {
   std::vector<config::ConfigError> errors_;
   StateStore store_;
   const forecast::Store *forecasts_ = nullptr;  // task 104, not owned
+  const calendar::Store *calendars_ = nullptr;  // task 105, not owned
   ui::Layout layout_;
   ui::FocusState focus_;
   ui::Flow focusFlow_;

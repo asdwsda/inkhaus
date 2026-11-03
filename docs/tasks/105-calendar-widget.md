@@ -20,5 +20,6 @@ Out of scope: other new widgets.
 - [ ] docs/CONFIG.md + config.example.yaml document the widget; docs/device-checks.md line; UNVERIFIED tags.
 
 ## Notes
+- PC part done: lib/calendar (cal_events: request/parser/store/view/layout), src/calendar_glue (fetch rule, demo data), src/render/calendar_widget, test/test_calendar; net via a plain background command (Type::Calendar, no net lanes on this base); demo.yaml got a 5th tab "Calendar" (test_ui_state updated: 5 tabs, 2 unavailable). No new config keys (entity, name, size only); docs/CONFIG.md is now a stub, so the guide reference lists `calendar` as a domain/type. docs/guide/04-widgets.md still lists the calendar under "Coming soon" (not touched).
 - User 2026-11-03: no such entity in the user's HA. Demo mode must show this widget with sample data (all states), so the device look check works without a real entity.
 - 2026-11-03: the guide gallery picture for this widget (docs/guide/img/gallery-*) embeds a config snippet from docs/ui/widgets-new.md; implement those keys exactly (or fix the spec + picture), so the guide snippet parses.
