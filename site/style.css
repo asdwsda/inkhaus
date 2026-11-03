@@ -73,3 +73,24 @@ esp-web-install-button .btn{width:320px;max-width:100%;min-height:56px;margin:0;
 .os .btn.primary{font-weight:700}
 .os .btn{width:192px;min-height:56px;line-height:34px}
 @media (max-width:599px){.row .muted{display:none}select,esp-web-install-button .btn{width:100%}.card{padding:16px}}
+/* User guide (task 110) */
+.guide{display:grid;grid-template-columns:240px 1fr;gap:32px;padding-top:16px;padding-bottom:48px}
+.guide main{min-width:0;max-width:720px}
+.sidebar ul{list-style:none;margin:0;padding:0}
+.sidebar a{display:block;padding:10px 0;text-decoration:none;border-bottom:1px solid #ddd}
+.sidebar a[aria-current]{font-weight:700;text-decoration:underline}
+.toc{border:1px solid #888;padding:12px 16px;margin:0 0 24px}
+.toc ul{margin:8px 0 0;padding-left:20px}
+.anchor{margin-left:8px;color:#888;font-weight:400;text-decoration:none;font-size:.7em}
+.codebox{position:relative}
+.codebox .copy{position:absolute;top:8px;right:8px;min-height:32px;padding:2px 12px;border:2px solid #000;background:#fff;color:#000;font:inherit;font-size:14px;border-radius:4px;cursor:pointer}
+.codebox .copy:hover,.codebox .copy:focus-visible{background:#000;color:#fff}
+.codebox .copy[hidden]{display:none}
+.tablewrap{overflow-x:auto;margin:0 0 16px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #888;padding:8px 12px;text-align:left;vertical-align:top}
+th{background:#f2f2f2}
+.guide figure{margin:0 0 24px}
+.guide img.shot{max-width:360px}
+.pager{display:flex;justify-content:space-between;gap:16px;margin-top:48px}
+@media (max-width:799px){.guide{grid-template-columns:1fr}}

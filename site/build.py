@@ -4,6 +4,10 @@ Optional env INKHAUS_VERSION (e.g. 1.2.3) fills the "Version" line; omitted if u
 import os, re, shutil, sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guide
+
+
 site = Path(__file__).resolve().parent
 root = site.parent
 out = site / "dist"
@@ -30,4 +34,5 @@ shutil.copytree(site / "fonts", out / "fonts")
 (out / "install").mkdir()
 for f in ("install.html", "install.js"):
     shutil.copy(site / f, out / "install" / ("index.html" if f == "install.html" else f))
-print(f"built {out} ({len(imgs)} images)")
+npages = guide.build(root, out, site)
+print(f"built {out} ({len(imgs)} images, {npages} guide pages)")
