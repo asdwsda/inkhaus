@@ -37,20 +37,21 @@
 <text id="rk-push0" x="450" y="224" font-size="18" fill="#000" text-anchor="start" >Activate the focused widget.</text>
 <text id="rk-push1" x="450" y="246" font-size="18" fill="#000" text-anchor="start" >Hold: open Settings.</text>
 <text id="rk-push2" x="450" y="268" font-size="18" fill="#000" text-anchor="start" >Wakes from sleep.</text>
-<text id="rk-push3" x="450" y="290" font-size="18" fill="#000" text-anchor="start" >Yes/no question: skip.</text>
-<text id="rk-down" x="450" y="336" font-size="24" fill="#000" text-anchor="start" font-weight="bold">DOWN</text>
-<text id="rk-down1" x="450" y="360" font-size="18" fill="#000" text-anchor="start" >Next tab or widget.</text>
-<text id="rk-down2" x="450" y="382" font-size="18" fill="#000" text-anchor="start" >No in a yes/no question.</text>
+<text id="rk-push3" x="450" y="290" font-size="18" fill="#000" text-anchor="start" >(Power off mode: hold 3 s.)</text>
+<text id="rk-push4" x="450" y="312" font-size="18" fill="#000" text-anchor="start" >Yes/no question: skip.</text>
+<text id="rk-down" x="450" y="350" font-size="24" fill="#000" text-anchor="start" font-weight="bold">DOWN</text>
+<text id="rk-down1" x="450" y="374" font-size="18" fill="#000" text-anchor="start" >Next tab or widget.</text>
+<text id="rk-down2" x="450" y="396" font-size="18" fill="#000" text-anchor="start" >No in a yes/no question.</text>
 <circle id="rk-d1" cx="430" cy="278" r="4" fill="#000"/>
 <path id="rk-l1" d="M430 278 L442 108" stroke="#000" stroke-width="2" fill="none"/>
 <circle id="rk-d2" cx="430" cy="292" r="4" fill="#000"/>
 <path id="rk-l2" d="M430 292 L442 194" stroke="#000" stroke-width="2" fill="none"/>
 <circle id="rk-d3" cx="430" cy="306" r="4" fill="#000"/>
-<path id="rk-l3" d="M430 306 L442 330" stroke="#000" stroke-width="2" fill="none"/>
-<text id="sd-t1" x="450" y="449" font-size="18" fill="#000" text-anchor="start" >microSD slot</text>
-<text id="sd-t2" x="450" y="471" font-size="18" fill="#444" text-anchor="start" >(right edge, FAT32)</text>
+<path id="rk-l3" d="M430 306 L442 344" stroke="#000" stroke-width="2" fill="none"/>
+<text id="sd-t1" x="450" y="459" font-size="18" fill="#000" text-anchor="start" >microSD slot</text>
+<text id="sd-t2" x="450" y="481" font-size="18" fill="#444" text-anchor="start" >(right edge, FAT32)</text>
 <circle id="sd-d" cx="430" cy="390" r="4" fill="#000"/>
-<path id="sd-l" d="M430 390 L442 443" stroke="#000" stroke-width="2" fill="none"/>
+<path id="sd-l" d="M430 390 L442 453" stroke="#000" stroke-width="2" fill="none"/>
 <text id="gv-t1" x="20" y="385" font-size="18" fill="#000" text-anchor="start" >Grove ports</text>
 <text id="gv-t2" x="20" y="407" font-size="18" fill="#000" text-anchor="start" >B and C</text>
 <text id="gv-t3" x="20" y="429" font-size="18" fill="#444" text-anchor="start" >(left edge)</text>
@@ -67,7 +68,7 @@
 <text id="bk-mag" x="862" y="434" font-size="18" fill="#888" text-anchor="middle" >magnet</text>
 <circle id="rst-hole" cx="767" cy="207" r="7" fill="#fff" stroke="#000" stroke-width="3"/>
 <path id="rst-l" d="M767 214 L767 233" stroke="#000" stroke-width="2" fill="none"/>
-<text id="rst-t1" x="759" y="255" font-size="18" fill="#000" text-anchor="start" font-weight="bold">RST / OFF (pinhole)</text>
+<text id="rst-t1" x="759" y="255" font-size="18" fill="#000" text-anchor="start" font-weight="bold">reset pinhole (back)</text>
 <text id="rst-t2" x="759" y="279" font-size="18" fill="#000" text-anchor="start" >on USB: reset</text>
 <text id="rst-t3" x="759" y="301" font-size="18" fill="#000" text-anchor="start" >on battery: switch off</text>
 <text id="rst-t4" x="759" y="323" font-size="18" fill="#444" text-anchor="start" >(use a paper clip)</text>

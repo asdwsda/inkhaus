@@ -135,9 +135,13 @@ def legend(x,y0,items,pitch=38):
         o+=txt('lg-n%d'%n,x+14,y+7,str(n),20,'#000','middle','font-weight="bold"')
         o+=txt('lg-t%d'%n,x+40,y+6,s,18,'#000')
     return o
-def shot(name,src,badges,items,dash=(),W=1040,note=None):
+def shot(name,src,badges,items,dash=(),W=1040,note=None,edit=()):
     ox,oy=40,30
-    b='<g id="screen" transform="translate(%d,%d)">%s</g>\n'%(ox,oy,inner_of(src))
+    inner=inner_of(src)
+    for a_,b_ in edit:
+        assert a_ in inner,a_
+        inner=inner.replace(a_,b_)
+    b='<g id="screen" transform="translate(%d,%d)">%s</g>\n'%(ox,oy,inner)
     b+='<rect id="screen-edge" x="%d" y="%d" width="960" height="540" fill="none" stroke="#888" stroke-width="2"/>\n'%(ox-1,oy-1)
     for k,d in enumerate(dash): b+=dashed(k,ox+d[0],oy+d[1],d[2],d[3])
     for i,cx,cy in badges: b+=bdg(i,ox+cx,oy+cy)
@@ -170,14 +174,17 @@ shot('screen-popup-history','history-line-landscape',
 # --- settings
 SETBACK='Back: one level up (the overview: leave and save).'
 shot('settings-overview','settings-landscape',
- [(1,300,64),(2,810,26),(3,880,64),(4,478,330),(5,488,390),(6,488,466),(7,722,466)],
+ [(1,300,64),(2,810,26),(3,920,100),(4,588,292),(5,488,390),(6,488,466),(7,722,466)],
  ['Four categories. Tap one to open its page; the line shows its values.',
   'Unsaved: a value changed. It is saved when you leave Settings.',
   'Device info: firmware, battery, Home Assistant link, Wi-Fi.',
-  'Config rows: the first error in config.yaml with its line.',
+  'Config row: the first error in config.yaml and its line; below it the number of errors.',
   'Sleep now: sleep at once (or hold PUSH 2.5 s).',
   'Refresh now: fetch all states again.',
-  'Back: leave Settings and save. Long PUSH does the same.'])
+  'Back: leave Settings and save. Long PUSH does the same.'],
+ edit=[('font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">tabs[0].widgets[2].entity','font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">tabs[0].widgets[2].entity'),
+       ('font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">(line 34)','font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">(line 34)'),
+       ('>HomeNet-5G<','>HomeNet<')])
 shot('settings-display','settings-display-landscape',
  [(1,16,66),(2,100,110),(3,290,158),(4,824,26),(5,722,466)],
  ['Orientation row. Tap (or PUSH) to switch Portrait / Landscape.',
@@ -235,7 +242,7 @@ b+=txt('bl-d',600,y+14,'Zz pill: asleep',20,'#000',extra='font-weight="bold"')
 b+='<rect id="zz-pill" x="600" y="%d" width="96" height="44" rx="12" fill="#000"/>\n'%(y+30)
 b+=txt('zz-t',648,y+61,'Zz',30,'#fff','middle','font-weight="bold"')
 b+=txt('zz-d',714,y+58,'the screen is frozen; touch or press',16,'#444')
-b+=txt('zz-d2',714,y+78,'the side button to wake it',16,'#444')
+b+=txt('zz-d2',714,y+78,'the rocker to wake it',16,'#444')
 write('screen-status-icons',W,y+110,b,syms=all_syms(['status-states','tab-landscape']))
 
 # --- orientation: portrait and landscape at 50 %
@@ -302,30 +309,27 @@ for k,n in enumerate(port):
     b+=scaled(n,x,yp,0.4,'q%d'%k)+'<rect x="%s" y="%s" width="218" height="386" fill="none" stroke="#888" stroke-width="2"/>\n'%(x-1,yp-1)
 write('sleep-screen-variants',1064,yp+386+30,b)
 
-# --- minimal config result
+# --- minimal config result (default: portrait, 2 columns)
 src=['version: 1','tabs:','  - title: Home','    widgets:','      - entity: light.living_room_ceiling','      - entity: sensor.outside_temperature','      - entity: cover.living_room_shutter']
 b=''
-sn,h=snippet(20,30,560,src)
+sn,h=snippet(20,40,570,src)
 b+=sn
-b+='<rect x="620" y="29" width="482" height="272" fill="none" stroke="#888" stroke-width="2"/>\n'
-b+=txt('mc-h',20,20,'config.yaml: 7 lines',18,'#444')
-b+=txt('mc-h2',620,20,'the screen it makes',18,'#444')
-# minimal screen: status bar + one tab + 3 widgets at 50 %
-mini='<rect width="960" height="540" fill="#fff"/>'
-tl=ld('tab-landscape')
-hdr=re.sub(r'<g id="w-\d+" transform.*?</g>\n','',inner_of('tab-landscape'),flags=re.S)
-def pl(n,newn,x,y): return place(tl,n,newn,x,y)
-hdr=re.sub(r'<rect x="\d+" y="\d+" width="\d+" height="56" rx="8"[^>]*/>\s*<text[^>]*>[^<]*</text>','',hdr) if False else hdr
-hdr=re.sub(r'<rect x="(305|437|569|701)" y="5"[^>]*/>','',hdr)
-hdr=re.sub(r'<text x="(364|496|628|760)" y="[0-9]+"[^>]*>[^<]*</text>','',hdr)
-hdr=hdr.replace('>Living</text>','>Home</text>').replace('y="21" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home','y="32" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home')
-hdr=re.sub(r'<text x="232" y="43"[^>]*>room</text>','',hdr)
-mini_body=hdr+pl(3,31,16,72)+pl(8,32,204,72)+pl(1,33,392,72)
-b+='<g transform="translate(621,30) scale(0.5)">%s</g>\n'%re.sub(r'id="','id="mc-',mini_body)
-b+=txt('mc-c1',620,330,'Three widgets, one tab. Names and states come',18,'#000')
-b+=txt('mc-c2',620,356,'from Home Assistant. More widgets or tabs:',18,'#000')
-b+=txt('mc-c3',620,382,'add more lines.',18,'#000')
-write('install-minimal-config',1120,430,b)
+b+=txt('mc-h',20,28,'config.yaml: 7 lines',18,'#444')
+b+=txt('mc-h2',660,28,'the screen it makes (portrait)',18,'#444')
+tpp=ld('tab-portrait')
+ch=inner_of('tab-portrait')
+ch=re.sub(r'<g id="w-\d+" transform.*?</g>\n','',ch,flags=re.S)
+ch=re.sub(r'<rect x="(147|277|407)" y="893"[^>]*/>','',ch)
+ch=re.sub(r'<text x="(205|335|466)" y="[0-9]+"[^>]*>[^<]*</text>','',ch)
+ch=re.sub(r'<use [^>]*i-dots[^>]*/>','',ch)
+ch=re.sub(r'<text x="75" y="909"[^>]*>Living</text>','<text x="75" y="920" font-size="18" fill="#fff" text-anchor="middle" dominant-baseline="central">Home</text>',ch)
+ch=re.sub(r'<text x="75" y="931"[^>]*>room</text>','',ch)
+mini=ch+place(tpp,3,31,16,68)+place(tpp,8,32,276,68)+place(tpp,1,33,16,184)
+b+='<g transform="translate(661,41) scale(0.5)">%s</g>\n'%re.sub(r'id="','id="mc-',mini)
+b+='<rect x="660" y="40" width="272" height="482" fill="none" stroke="#888" stroke-width="2"/>\n'
+for k,l in enumerate(['Three widgets on one tab. The names and','states come from Home Assistant.','','You get portrait with 2 columns first.','Settings > Display turns it to landscape.','More widgets or tabs: add more lines.']):
+    b+=txt('mc-c%d'%k,20,h+90+k*26,l,18,'#000')
+write('install-minimal-config',960,560,b)
 
 # ====================================================================== batch 2: widget gallery (pre-103 types)
 def wh(src,n):
@@ -429,17 +433,17 @@ def device_buttons():
     o+=txt('rk-up1',cx,138,'Previous tab or widget.',18)
     o+=txt('rk-up2',cx,160,'Yes in a yes/no question.',18)
     o+=txt('rk-push',cx,200,'PUSH',24,'#000',extra='font-weight="bold"')
-    for k,s in enumerate(['Activate the focused widget.','Hold: open Settings.','Wakes from sleep.','Yes/no question: skip.']):
+    for k,s in enumerate(['Activate the focused widget.','Hold: open Settings.','Wakes from sleep.','(Power off mode: hold 3 s.)','Yes/no question: skip.']):
         o+=txt('rk-push%d'%k,cx,224+k*22,s,18)
-    o+=txt('rk-down',cx,336,'DOWN',24,'#000',extra='font-weight="bold"')
-    o+=txt('rk-down1',cx,360,'Next tab or widget.',18)
-    o+=txt('rk-down2',cx,382,'No in a yes/no question.',18)
+    o+=txt('rk-down',cx,350,'DOWN',24,'#000',extra='font-weight="bold"')
+    o+=txt('rk-down1',cx,374,'Next tab or widget.',18)
+    o+=txt('rk-down2',cx,396,'No in a yes/no question.',18)
     o+=dot('rk-d1',ex,rt+rh//6)+line('rk-l1',ex,rt+rh//6,cx-8,108)
     o+=dot('rk-d2',ex,rc)+line('rk-l2',ex,rc,cx-8,194)
-    o+=dot('rk-d3',ex,rt+5*rh//6)+line('rk-l3',ex,rt+5*rh//6,cx-8,330)
-    o+=txt('sd-t1',cx,bot-46,'microSD slot',18,'#000')
-    o+=txt('sd-t2',cx,bot-24,'(right edge, FAT32)',18,'#444')
-    o+=dot('sd-d',ex,sdc)+line('sd-l',ex,sdc,cx-8,bot-52)
+    o+=dot('rk-d3',ex,rt+5*rh//6)+line('rk-l3',ex,rt+5*rh//6,cx-8,344)
+    o+=txt('sd-t1',cx,bot-36,'microSD slot',18,'#000')
+    o+=txt('sd-t2',cx,bot-14,'(right edge, FAT32)',18,'#444')
+    o+=dot('sd-d',ex,sdc)+line('sd-l',ex,sdc,cx-8,bot-42)
     # left callout
     o+=txt('gv-t1',20,bot-110,'Grove ports',18,'#000')
     o+=txt('gv-t2',20,bot-88,'B and C',18,'#000')
@@ -458,7 +462,7 @@ def device_buttons():
     rx_=bx+int(6.5*S); ry=bot-int(82.4*S)
     o+='<circle id="rst-hole" cx="%d" cy="%d" r="7" fill="#fff" stroke="#000" stroke-width="3"/>\n'%(rx_,ry)
     o+=line('rst-l',rx_,ry+7,rx_,ry+26)
-    o+=txt('rst-t1',bx+14,ry+48,'RST / OFF (pinhole)',18,'#000',extra='font-weight="bold"')
+    o+=txt('rst-t1',bx+14,ry+48,'reset pinhole (back)',18,'#000',extra='font-weight="bold"')
     o+=txt('rst-t2',bx+14,ry+72,'on USB: reset',18,'#000')
     o+=txt('rst-t3',bx+14,ry+94,'on battery: switch off',18,'#000')
     o+=txt('rst-t4',bx+14,ry+116,'(use a paper clip)',18,'#444')
@@ -652,3 +656,110 @@ gal3('gallery-energy',[(WW,10,20,20,'used and solar, one scale'),(WW,12,404,20,'
  ['- type: energy','  usage: sensor.energy_used_today','  solar: sensor.energy_solar_today'],788)
 gal3('gallery-media-art-states',[(MA,1,20,20,'art decoded'),(MA,2,20,170,'no picture'),(MA,3,20,320,'picture loading'),(MA,4,20,470,'fetch failed')],
  ['- entity: media_player.living_room'],592)
+
+
+# ====================================================================== batch 4: install flow, gestures, fix-* screens (review items)
+def bold(i,x,y,s_,size=20,fill='#000',anc='start'): return txt(i,x,y,s_,size,fill,anc,'font-weight="bold"')
+def arrow(i,x1,y,x2): return '<path id="%s" d="M%d %d H%d M%d %d L%d %d L%d %d" stroke="#000" stroke-width="3" fill="none"/>\n'%(i,x1,y,x2,x2-10,y-8,x2,y,x2-10,y+8)
+def numb(i,n,cx,cy,r=16): return '<circle id="%s-c" cx="%d" cy="%d" r="%d" fill="#000"/>\n'%(i,cx,cy,r)+txt(i+'-n',cx,cy+7,str(n),20,'#fff','middle','font-weight="bold"')
+
+# --- install-flow: five boxes
+steps=[('Install','the software','Web installer,','device on USB,','Chrome or Edge'),
+ ('Token','Home Assistant','Your profile >','Security > create','token, copy it'),
+ ('Two files','on the SD card','secrets.yaml','(private) and','config.yaml'),
+ ('Card in,','restart','card into slot,','press the reset','pinhole once'),
+ ('First screen','','status bar says','"updated 14:05"','tap it: refresh')]
+bw,bh,gp=204,190,26; W=20*2+5*bw+4*gp
+b=''
+for k,(t1,t2,a1,a2,a3) in enumerate(steps):
+    x=20+k*(bw+gp); y=30
+    fill='#000' if k==4 else '#fff'; fg='#fff' if k==4 else '#000'
+    b+='<rect id="fl-box%d" x="%d" y="%d" width="%d" height="%d" rx="10" fill="%s" stroke="#000" stroke-width="3"/>\n'%(k,x,y,bw,bh,fill)
+    b+=txt('fl-num%d'%k,x+16,y+34,'%d'%(k+1),28,fg,extra='font-weight="bold"')
+    b+=bold('fl-t%d'%k,x+16,y+68,t1,22,fg)
+    if t2: b+=txt('fl-u%d'%k,x+16,y+92,t2,18,fg)
+    for j,a_ in enumerate((a1,a2,a3)): b+=txt('fl-d%d%d'%(k,j),x+16,y+(126 if t2 else 102)+j*22-(0 if t2 else -2)*0,a_,16,'#fff' if k==4 else '#444')
+    if k<4: b+=arrow('fl-a%d'%k,x+bw+4,y+bh//2,x+bw+gp-4)
+b+=txt('fl-foot',20,y+bh+40,'Steps 1 and 2 can be done in either order. Details: Getting started, steps 1 to 5.',18,'#444')
+write('install-flow',W,y+bh+60,b,syms='')
+
+# --- device-gestures: touch and rocker cheat sheet with press durations
+def pic_touch(i,cx,cy,long=False,part=None):
+    o='<circle id="%s-r" cx="%d" cy="%d" r="15" fill="#fff" stroke="#000" stroke-width="2"/><circle id="%s-d" cx="%d" cy="%d" r="6" fill="#000"/>\n'%(i,cx,cy,i,cx,cy)
+    if long: o+='<circle id="%s-l" cx="%d" cy="%d" r="21" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 4"/>\n'%(i,cx,cy)
+    return o
+def pic_rocker(i,cx,cy,part,hold=False):
+    o='<rect id="%s-b" x="%d" y="%d" width="18" height="42" rx="6" fill="#fff" stroke="#000" stroke-width="2"/>\n'%(i,cx-9,cy-21)
+    y0={'up':cy-21,'push':cy-7,'down':cy+7}[part]
+    o+='<rect id="%s-f" x="%d" y="%d" width="18" height="14" fill="#000"%s/>\n'%(i,cx-9,y0,' rx="6"' if part!='push' else '')
+    o+='<path d="M%d %d H%d M%d %d H%d" stroke="#000" stroke-width="1"/>\n'%(cx-9,cy-7,cx+9,cx-9,cy+7,cx+9)
+    if hold: o+='<rect id="%s-h" x="%d" y="%d" width="28" height="52" rx="9" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 4"/>\n'%(i,cx-14,cy-26)
+    return o
+rows_t=[('Tap a widget','its main action (light, switch, popup)',None),('Tap a button in a widget','shutter up / stop / down, - / +',None),
+ ('Long press a light, ~0.5 s','brightness popup','l'),('Long press a sensor, ~0.5 s','history graph','l'),
+ ('Tap "updated" (status bar)','fetch fresh states now',None),('Tap the battery','open Settings',None)]
+rows_r=[('UP','previous tab or widget; "yes"','up',False),('DOWN','next tab or widget; "no"','down',False),
+ ('PUSH, short','focus ring, then press the focused widget; "skip"','push',False),
+ ('PUSH, hold 0.5 s','Settings (from the tabs); one step back elsewhere','push',True),
+ ('PUSH, hold 2.5 s','sleep now, from anywhere','push',True),
+ ('PUSH, hold 3 s','wake up in Sleep mode Power off','push',True)]
+W=1040; b=bold('g-h1',20,36,'Touch',24); y=70
+for k,(a_,r_,lg) in enumerate(rows_t):
+    cy=y+k*52
+    b+=pic_touch('gt%d'%k,44,cy,bool(lg))+bold('gt-a%d'%k,90,cy+6,a_,18)+txt('gt-r%d'%k,430,cy+6,r_,18)
+y2=y+6*52+20
+b+=bold('g-h2',20,y2+16,'Rocker (right edge)',24); y2+=50
+for k,(a_,r_,pt,hd) in enumerate(rows_r):
+    cy=y2+k*60
+    b+=pic_rocker('gr%d'%k,44,cy,pt,hd)+bold('gr-a%d'%k,90,cy+6,a_,18)+txt('gr-r%d'%k,330,cy+6,r_,18)
+# duration ruler
+ry=y2+6*60+50; rx0,rx1=60,980
+def tx(sec): return rx0+(rx1-rx0)*sec/3.0
+b+=bold('g-h3',20,ry-22,'How long to hold PUSH',24)
+b+='<rect id="rl-a" x="%d" y="%d" width="%d" height="30" fill="#fff" stroke="#000" stroke-width="2"/>\n'%(tx(0),ry,tx(0.5)-tx(0))
+b+='<rect id="rl-b" x="%d" y="%d" width="%d" height="30" fill="#ccc" stroke="#000" stroke-width="2"/>\n'%(tx(0.5),ry,tx(2.5)-tx(0.5))
+b+='<rect id="rl-c" x="%d" y="%d" width="%d" height="30" fill="#000" stroke="#000" stroke-width="2"/>\n'%(tx(2.5),ry,tx(3)-tx(2.5))
+for sec,lab in ((0,'0'),(0.5,'0.5 s'),(2.5,'2.5 s'),(3,'3 s')):
+    b+='<path d="M%d %d V%d" stroke="#000" stroke-width="2"/>\n'%(tx(sec),ry,ry+42)+txt('rl-t%s'%str(sec).replace('.','_'),tx(sec),ry+64,lab,18,'#000','middle')
+b+=txt('rl-la',(tx(0)+tx(0.5))/2,ry-8,'short',16,'#000','middle')
+b+=txt('rl-lb',(tx(0.5)+tx(2.5))/2,ry+20,'Settings or back (long push)',18,'#000','middle')
+b+=txt('rl-lc',(tx(2.5)+tx(3))/2,ry-8,'sleep / wake',16,'#000','middle')
+b+=txt('rl-note',20,ry+100,'Hold 3 s wakes only in Power off mode; in the other modes any press wakes the device.',16,'#444')
+write('device-gestures',W,ry+120,b,syms='')
+
+# --- fix-* pictures: what you see on the left, what to do on the right
+def fixpic(name,title,see,seeH,todo,W=1040,note=None):
+    b=bold('fx-t',20,38,title,28)+'<rect id="fx-rule" x="20" y="52" width="%d" height="2" fill="#000"/>\n'%(W-40)
+    b+=txt('fx-see',20,88,'What you see',18,'#444')+see
+    b+=txt('fx-do',620,88,'What to do',18,'#444')
+    for k,l in enumerate(todo):
+        if l.startswith('  '): b+=txt('fx-d%d'%k,656,120+k*28,l.strip(),18)
+        else: b+=numb('fx-n%d'%k,k+1,636,114+k*28,12)[:0]+txt('fx-d%d'%k,620,120+k*28,l,18)
+    H=max(seeH,150+len(todo)*28)+20
+    if note: b+=txt('fx-note',20,H+16,note,16,'#444'); H+=36
+    write(name,W,H,b,syms=syms)
+# strips from status-states: x offset 20, 540 wide
+fixpic('fix-offline','Offline',
+  place(ss,5,31,20,110)+txt('fx-c1',20,190,'The clock and the slashed arcs mean: no',18)+txt('fx-c2',20,214,'connection. The widgets show the last',18)+txt('fx-c3',20,238,'known state, so they may be old.',18)
+  +place(ss,3,32,20,290)+txt('fx-c4',20,370,'Back to normal: full arcs, "updated 14:05".',18),
+  400,['1. Wi-Fi: 2.4 GHz, in range, name and','    password right in secrets.yaml.','2. internal_url: http://IP:8123. Open','    it in your phone browser on the','    same Wi-Fi.','3. external_url starts with https://.','4. Settings > Network shows which','    address was tried; force one.'])
+fixpic('fix-token-rejected','Token rejected',
+  place(ss,6,31,20,110)+txt('fx-c1',20,190,'The padlock means Home Assistant said no:',18)+txt('fx-c2',20,214,'the token is wrong, deleted, or has a stray',18)+txt('fx-c3',20,238,'space or line break. Cached values stay.',18),
+  300,['1. In Home Assistant: your name >','    Security > Long-lived access tokens.','2. Create a token and copy it.','3. Paste it into secrets.yaml, on one','    line, inside the quotes.','4. Restart: press the reset pinhole','    once (device on USB).'])
+# entity unavailable: light, sensor, cover in unavailable look
+ua=toggle(1,'Ceiling','i-bulb-off','n/a','un'); us=sensor_txt(1,'n/a','Outside','un'); uc=cover(1,'Shutter','n/a',un=True)
+see=pl(31,20,110,re.sub(r'w-\d+-','w-31-',ua))+pl(32,208,110,re.sub(r'w-\d+-','w-32-',us))+pl(33,20,230,re.sub(r'w-\d+-','w-33-',uc))
+see+=txt('fx-c1',20,372,'Dotted frame, grey name, "n/a": Home Assistant',18)+txt('fx-c2',20,396,'says the entity is unavailable. Taps are ignored.',18)
+see+=txt('fx-c3',20,426,'"-" instead: no value yet, press "updated".',18,'#444')
+fixpic('fix-entity-unavailable','Widget unavailable (dotted frame, n/a)',see,440,
+  ['1. Open the device in Home Assistant:','    is it online?','2. Compare the entity id with Settings','    > Devices & services > Entities.','    Copy it exactly, lowercase.','3. When the entity is back, the next','    update clears the frame.'],note=None)
+# low battery
+bt=''
+for k,(p_,lab) in enumerate(((100,'full'),(10,'low: charge now'))):
+    x=40+k*250; fw=int(32*p_/100)
+    bt+='<g id="lb-%d" transform="translate(%d,150) scale(4)"><rect x="0" y="0" width="36" height="20" fill="#000"/><rect x="2" y="2" width="32" height="16" fill="#fff"/><rect x="2" y="2" width="%d" height="16" fill="#000"/><rect x="36" y="5" width="4" height="10" fill="#000"/></g>\n'%(k,x,max(fw,3)) if False else ''
+    bt+='<g id="lb-%d" transform="translate(%d,120) scale(4)"><rect x="0" y="0" width="36" height="20" fill="#000"/><rect x="2" y="2" width="32" height="16" fill="#fff"/><rect x="2" y="2" width="%d" height="16" fill="#000"/><rect x="36" y="5" width="4" height="10" fill="#000"/></g>\n'%(k,x,fw)
+    bt+=txt('lb-p%d'%k,x+80,230,'%d%%'%p_,28,'#000','middle',extra='font-weight="bold"')+txt('lb-l%d'%k,x+80,258,lab,18,'#444','middle')
+bt+=txt('fx-c1',20,320,'Top right of the screen. A low battery also',18)+txt('fx-c2',20,344,'makes the device sleep sooner.',18)
+fixpic('fix-low-battery','Low battery',bt,380,
+  ['1. Charge with a USB-C data cable','    (not a charge-only cable).','2. Sleep mode Power off or Deep sleep.','3. A longer "Updates while asleep".','4. A shorter Idle timeout.'])

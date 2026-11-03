@@ -15,6 +15,8 @@ Inkhaus is the free software that turns an M5Stack M5Paper (an e-ink touch scree
 
 ## The five steps
 
+![Five boxes: install the software, create a token, write the two files, put the card in and restart, the first screen.](img/install-flow.png "The whole setup at a glance.")
+
 1. Install the software in your browser.
 2. Create a Home Assistant token.
 3. Write two small text files and put them on the SD card.

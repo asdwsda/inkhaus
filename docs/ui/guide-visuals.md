@@ -61,7 +61,7 @@ image), alt text, guide section. Captions and alt texts are drafts for step 110.
 | `install-two-files` | Two panels: `secrets.yaml` (Wi-Fi, HA URL, token; "private, never share") and `config.yaml` (tabs, widgets; "safe to share") with example excerpts | Two files: the private one and the shareable one. | Side by side view of secrets.yaml and config.yaml with their contents. | |
 | `install-token` | Home Assistant profile page schematic: Security tab -> Long-lived access tokens -> Create token -> copy; numbered 1..4, no real HA screenshot (changes between versions) | Create a long-lived access token. | Four numbered steps in the Home Assistant profile page. | |
 | `install-first-boot` | Four frames at 25% scale: splash, "Connecting", tab screen with "updated" label, last frame "first full redraw" | What you see on the first start. | Four small screens: splash, connecting, first tab, redraw. | |
-| `install-minimal-config` | Result picture: a 4-line `config.yaml` (one tab, one light, one sensor, one cover) next to the 960x540 screen it makes | The smallest useful config and the screen it produces. | Four line config on the left, resulting tab screen on the right. | done |
+| `install-minimal-config` | Result picture: a 7-line `config.yaml` (one tab, one light, one sensor, one cover) next to the portrait 2-column screen it makes | The smallest useful config and the screen it produces. | Seven line config.yaml on the left, the portrait two-column screen it makes on the right. | done |
 | `install-wifi-profiles` | Up to 4 Wi-Fi profiles in priority order, arrow "first one in range wins", HA URL internal / external / auto | Wi-Fi profiles and which HA address is used. | Diagram of Wi-Fi profiles with internal and external URL. | |
 
 ### C. The screens (section "Using the dashboard")
@@ -174,6 +174,8 @@ Each image: the real screen for that state 1:1 or at 60%, one badge, and a "Fix:
 ## 3. Counts
 
 Listed: A 5, B 8, C 11, D 7, E 8, F 29, G 5, H 9 (`fix-config-error` is a cross-link row, not an image) = **82 images**.
+Batch 4 (review fixes): added `install-flow`, `device-gestures`, `fix-offline`, `fix-token-rejected`, `fix-entity-unavailable`, `fix-low-battery`; fixed `settings-overview`, `install-minimal-config` (portrait), `screen-status-icons`, `device-buttons`.
+
 Batch 1 done: `device-buttons`, `screen-tab-anatomy`, `gallery-light-on-off`, `gallery-sensor-sizes`,
 `gallery-climate` = 5. Beyond the task's list, the plan adds (marked above by being outside the task text):
 `install-minimal-config`, `config-to-screen`, `config-before-after-size`, `sleep-before-after`,

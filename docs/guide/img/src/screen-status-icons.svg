@@ -37,5 +37,5 @@
 <rect id="zz-pill" x="600" y="620" width="96" height="44" rx="12" fill="#000"/>
 <text id="zz-t" x="648" y="651" font-size="30" fill="#fff" text-anchor="middle" font-weight="bold">Zz</text>
 <text id="zz-d" x="714" y="648" font-size="16" fill="#444" text-anchor="start" >the screen is frozen; touch or press</text>
-<text id="zz-d2" x="714" y="668" font-size="16" fill="#444" text-anchor="start" >the side button to wake it</text>
+<text id="zz-d2" x="714" y="668" font-size="16" fill="#444" text-anchor="start" >the rocker to wake it</text>
 </svg>

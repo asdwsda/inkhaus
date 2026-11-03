@@ -13,11 +13,15 @@ Find what you see, then follow the fix. "Restart the device" below means: plug i
 
 ## Token rejected (padlock in the status bar)
 
+![Left: the screen with the padlock. Right: what to do.](img/fix-token-rejected.png "Token rejected.")
+
 **Cause:** the token is wrong, was deleted in Home Assistant, or has an extra space or line break.
 
 **Fix:** create a new token ([Getting started, Step 2](01-getting-started.md#step-2-create-a-home-assistant-token)) and paste it into `secrets.yaml` on one line, inside the quotes.
 
 ## The status bar says Offline
+
+![Left: the screen saying Offline. Right: what to do.](img/fix-offline.png "Offline.")
 
 ![Table of status bar symbols with their meaning.](img/screen-status-icons.png "What the little symbols mean.")
 
@@ -32,6 +36,8 @@ Find what you see, then follow the fix. "Restart the device" below means: plug i
 6. Open Settings, Network: the hints show which network and which address were used. Force a profile or address if needed.
 
 ## A widget shows `-` or `n/a`
+
+![Left: a widget showing n/a. Right: what to do.](img/fix-entity-unavailable.png "Entity unavailable.")
 
 - **`-`:** no value yet. Press "updated" to refresh. If it stays, the entity id is probably wrong: copy it again in Home Assistant under Settings, Devices & services, Entities.
 - **`n/a` with a dotted frame:** Home Assistant says the entity is unavailable. Check the device in Home Assistant. Taps on it are ignored until it is back.
@@ -72,6 +78,8 @@ That is normal for e-ink. The device cleans it with a full refresh when you chan
 The screen needs about half a second per update. Wait for it, then tap again. A wake from sleep also needs a moment to join Wi-Fi.
 
 ## Low battery
+
+![Left: the low battery screen. Right: what to do.](img/fix-low-battery.png "Low battery.")
 
 Charge with a USB-C **data** cable. To make the battery last, use Sleep mode **Power off** or **Deep sleep**, a longer **Updates while asleep**, and a shorter **Idle timeout**. See [Sleep and battery](07-sleep-and-battery.md).
 

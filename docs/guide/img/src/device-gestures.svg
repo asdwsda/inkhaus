@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1040" height="982" viewBox="0 0 1040 982" font-family="DejaVu Sans">
+<defs><symbol id="i-up" viewBox="0 0 24 24"><polygon points="12,5 21,19 3,19" fill="currentColor"/></symbol><symbol id="i-down" viewBox="0 0 24 24"><polygon points="12,19 21,5 3,5" fill="currentColor"/></symbol><symbol id="i-stop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" fill="currentColor"/></symbol><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M12 2 a7 7 0 0 0 -4 12.7 V18 h8 v-3.3 A7 7 0 0 0 12 2z" fill="currentColor"/><rect x="8.5" y="19.5" width="7" height="2.5" fill="currentColor"/></symbol><symbol id="i-bulb-off" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 a6.5 6.5 0 0 0 -3.6 11.9 V18 h7.2 v-3.1 A6.5 6.5 0 0 0 12 3z"/><path d="M9 21 H15"/></g></symbol><symbol id="i-plug" viewBox="0 0 24 24"><rect x="8" y="2" width="2.5" height="6" fill="currentColor"/><rect x="13.5" y="2" width="2.5" height="6" fill="currentColor"/><path d="M6 8 H18 V12 A6 6 0 0 1 6 12 Z" fill="currentColor"/><rect x="10.75" y="17.5" width="2.5" height="4.5" fill="currentColor"/></symbol><symbol id="i-auto" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.5 12 A7.5 7.5 0 0 1 19.5 12"/><path d="M19.5 12 A7.5 7.5 0 0 1 4.5 12"/></g><polygon points="15.5,10.5 23.5,10.5 19.5,15.5" fill="currentColor"/><polygon points="0.5,13.5 8.5,13.5 4.5,8.5" fill="currentColor"/></symbol><symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2 C12 2 5 10 5 15 a7 7 0 0 0 14 0 C19 10 12 2 12 2z" fill="currentColor"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><rect x="4" y="10.5" width="16" height="3" fill="currentColor"/><rect x="10.5" y="4" width="3" height="16" fill="currentColor"/></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 22 C7.5 22 4.5 19 4.5 15 C4.5 12 6.2 10.2 7.6 8.2 C8.2 9.4 8.6 10.2 9.4 10.8 C9.6 7 11.2 3.6 14 1.5 C14.2 5 16.8 7 18.2 10.2 C19.6 13.4 19.5 15 19.5 15 C19.5 19 16.5 22 12 22 Z M12 20 C10.2 20 8.8 18.8 8.8 17.2 C8.8 15.8 10.2 14.8 12 12.6 C13.8 14.8 15.2 15.8 15.2 17.2 C15.2 18.8 13.8 20 12 20 Z" fill="currentColor"/></symbol><symbol id="i-window-off" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M12 3 V21 M3 12 H21"/></g></symbol><symbol id="i-window-on" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1" fill="currentColor"/><path d="M12 3 V21 M3 12 H21" fill="none" stroke="#fff" stroke-width="2"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 19 A4.5 4.5 0 0 1 6.6 10.05 A6 6 0 0 1 18.2 9.2 A5 5 0 0 1 17.5 19 Z" fill="currentColor"/></symbol><symbol id="i-wifi" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="1.8" fill="currentColor"/></symbol><symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M7 3 H17 V8 L12 12 L17 16 V21 H7 V16 L12 12 L7 8 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.00 19.11 A10 10 0 1 1 6.29 3.96 A10 10 0 0 0 19.00 19.11 Z" fill="currentColor"/></symbol><symbol id="i-finger" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="10.8" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol><symbol id="i-power" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3 V12"/><path d="M6.8 6.6 A8.4 8.4 0 1 0 17.2 6.6"/></g></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2.4"/><polygon points="21,3 21,11 13,11" fill="currentColor"/></symbol><symbol id="i-wifi-join" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7.5 15 A6.5 6.5 0 0 1 16.5 15"/></g><circle cx="12" cy="19.5" r="2.2" fill="currentColor"/></symbol><symbol id="i-wifi-off" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9 A14 14 0 0 1 22 9"/><path d="M5.5 12.5 A9.5 9.5 0 0 1 18.5 12.5"/><path d="M9 16 A5 5 0 0 1 15 16"/></g><circle cx="12" cy="19.5" r="1.8" fill="currentColor"/><line x1="3" y1="2" x2="21" y2="22" stroke="#fff" stroke-width="6"/><line x1="3" y1="2" x2="21" y2="22" stroke="currentColor" stroke-width="2.5"/></symbol><symbol id="i-cloud-down" viewBox="0 0 24 24"><path d="M7 20 A4.5 4.5 0 0 1 6.6 11.05 A6 6 0 0 1 18.2 10.2 A5 5 0 0 1 17.5 20 Z" fill="currentColor"/><rect x="11" y="8" width="2" height="6" fill="#fff"/><polygon points="8.2,13 15.8,13 12,17.5" fill="#fff"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="1.5" fill="currentColor"/><path d="M8 11 V8 a4 4 0 0 1 8 0 V11" fill="none" stroke="currentColor" stroke-width="2.5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 6.5 V12 L16 14.5" fill="none" stroke="currentColor" stroke-width="2.5"/></symbol><symbol id="i-demo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><polygon points="9.5,7 17,12 9.5,17" fill="#fff"/></symbol><symbol id="i-sidebtn" viewBox="0 0 24 24"><line x1="2" y1="12" x2="13" y2="12" stroke="currentColor" stroke-width="2.5"/><polygon points="12,6 18,12 12,18" fill="currentColor"/><rect x="20" y="5" width="3" height="14" rx="1.5" fill="currentColor"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol><symbol id="i-chev-l" viewBox="0 0 24 24"><polyline points="15,4 7,12 15,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="i-chev-r" viewBox="0 0 24 24"><polyline points="9,4 17,12 9,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 L19 19 M19 5 L5 19" fill="none" stroke="currentColor" stroke-width="3"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.6 5.6 L18.4 18.4" stroke="currentColor" stroke-width="2"/></symbol><symbol id="i-dots" viewBox="0 0 24 24"><circle cx="4.5" cy="12" r="2.5" fill="currentColor"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><circle cx="19.5" cy="12" r="2.5" fill="currentColor"/></symbol></defs>
+<rect id="bg" width="1040" height="982" fill="#fff"/>
+<text id="g-h1" x="20" y="36" font-size="24" fill="#000" text-anchor="start" font-weight="bold">Touch</text>
+<circle id="gt0-r" cx="44" cy="70" r="15" fill="#fff" stroke="#000" stroke-width="2"/><circle id="gt0-d" cx="44" cy="70" r="6" fill="#000"/>
+<text id="gt-a0" x="90" y="76" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Tap a widget</text>
+<text id="gt-r0" x="430" y="76" font-size="18" fill="#000" text-anchor="start" >its main action (light, switch, popup)</text>
+<circle id="gt1-r" cx="44" cy="122" r="15" fill="#fff" stroke="#000" stroke-width="2"/><circle id="gt1-d" cx="44" cy="122" r="6" fill="#000"/>
+<text id="gt-a1" x="90" y="128" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Tap a button in a widget</text>
+<text id="gt-r1" x="430" y="128" font-size="18" fill="#000" text-anchor="start" >shutter up / stop / down, - / +</text>
+<circle id="gt2-r" cx="44" cy="174" r="15" fill="#fff" stroke="#000" stroke-width="2"/><circle id="gt2-d" cx="44" cy="174" r="6" fill="#000"/>
+<circle id="gt2-l" cx="44" cy="174" r="21" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 4"/>
+<text id="gt-a2" x="90" y="180" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Long press a light, ~0.5 s</text>
+<text id="gt-r2" x="430" y="180" font-size="18" fill="#000" text-anchor="start" >brightness popup</text>
+<circle id="gt3-r" cx="44" cy="226" r="15" fill="#fff" stroke="#000" stroke-width="2"/><circle id="gt3-d" cx="44" cy="226" r="6" fill="#000"/>
+<circle id="gt3-l" cx="44" cy="226" r="21" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 4"/>
+<text id="gt-a3" x="90" y="232" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Long press a sensor, ~0.5 s</text>
+<text id="gt-r3" x="430" y="232" font-size="18" fill="#000" text-anchor="start" >history graph</text>
+<circle id="gt4-r" cx="44" cy="278" r="15" fill="#fff" stroke="#000" stroke-width="2"/><circle id="gt4-d" cx="44" cy="278" r="6" fill="#000"/>
+<text id="gt-a4" x="90" y="284" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Tap "updated" (status bar)</text>
+<text id="gt-r4" x="430" y="284" font-size="18" fill="#000" text-anchor="start" >fetch fresh states now</text>
+<circle id="gt5-r" cx="44" cy="330" r="15" fill="#fff" stroke="#000" stroke-width="2"/><circle id="gt5-d" cx="44" cy="330" r="6" fill="#000"/>
+<text id="gt-a5" x="90" y="336" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Tap the battery</text>
+<text id="gt-r5" x="430" y="336" font-size="18" fill="#000" text-anchor="start" >open Settings</text>
+<text id="g-h2" x="20" y="418" font-size="24" fill="#000" text-anchor="start" font-weight="bold">Rocker (right edge)</text>
+<rect id="gr0-b" x="35" y="431" width="18" height="42" rx="6" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="gr0-f" x="35" y="431" width="18" height="14" fill="#000" rx="6"/>
+<path d="M35 445 H53 M35 459 H53" stroke="#000" stroke-width="1"/>
+<text id="gr-a0" x="90" y="458" font-size="18" fill="#000" text-anchor="start" font-weight="bold">UP</text>
+<text id="gr-r0" x="330" y="458" font-size="18" fill="#000" text-anchor="start" >previous tab or widget; "yes"</text>
+<rect id="gr1-b" x="35" y="491" width="18" height="42" rx="6" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="gr1-f" x="35" y="519" width="18" height="14" fill="#000" rx="6"/>
+<path d="M35 505 H53 M35 519 H53" stroke="#000" stroke-width="1"/>
+<text id="gr-a1" x="90" y="518" font-size="18" fill="#000" text-anchor="start" font-weight="bold">DOWN</text>
+<text id="gr-r1" x="330" y="518" font-size="18" fill="#000" text-anchor="start" >next tab or widget; "no"</text>
+<rect id="gr2-b" x="35" y="551" width="18" height="42" rx="6" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="gr2-f" x="35" y="565" width="18" height="14" fill="#000"/>
+<path d="M35 565 H53 M35 579 H53" stroke="#000" stroke-width="1"/>
+<text id="gr-a2" x="90" y="578" font-size="18" fill="#000" text-anchor="start" font-weight="bold">PUSH, short</text>
+<text id="gr-r2" x="330" y="578" font-size="18" fill="#000" text-anchor="start" >focus ring, then press the focused widget; "skip"</text>
+<rect id="gr3-b" x="35" y="611" width="18" height="42" rx="6" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="gr3-f" x="35" y="625" width="18" height="14" fill="#000"/>
+<path d="M35 625 H53 M35 639 H53" stroke="#000" stroke-width="1"/>
+<rect id="gr3-h" x="30" y="606" width="28" height="52" rx="9" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 4"/>
+<text id="gr-a3" x="90" y="638" font-size="18" fill="#000" text-anchor="start" font-weight="bold">PUSH, hold 0.5 s</text>
+<text id="gr-r3" x="330" y="638" font-size="18" fill="#000" text-anchor="start" >Settings (from the tabs); one step back elsewhere</text>
+<rect id="gr4-b" x="35" y="671" width="18" height="42" rx="6" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="gr4-f" x="35" y="685" width="18" height="14" fill="#000"/>
+<path d="M35 685 H53 M35 699 H53" stroke="#000" stroke-width="1"/>
+<rect id="gr4-h" x="30" y="666" width="28" height="52" rx="9" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 4"/>
+<text id="gr-a4" x="90" y="698" font-size="18" fill="#000" text-anchor="start" font-weight="bold">PUSH, hold 2.5 s</text>
+<text id="gr-r4" x="330" y="698" font-size="18" fill="#000" text-anchor="start" >sleep now, from anywhere</text>
+<rect id="gr5-b" x="35" y="731" width="18" height="42" rx="6" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="gr5-f" x="35" y="745" width="18" height="14" fill="#000"/>
+<path d="M35 745 H53 M35 759 H53" stroke="#000" stroke-width="1"/>
+<rect id="gr5-h" x="30" y="726" width="28" height="52" rx="9" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 4"/>
+<text id="gr-a5" x="90" y="758" font-size="18" fill="#000" text-anchor="start" font-weight="bold">PUSH, hold 3 s</text>
+<text id="gr-r5" x="330" y="758" font-size="18" fill="#000" text-anchor="start" >wake up in Sleep mode Power off</text>
+<text id="g-h3" x="20" y="840" font-size="24" fill="#000" text-anchor="start" font-weight="bold">How long to hold PUSH</text>
+<rect id="rl-a" x="60" y="862" width="153" height="30" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="rl-b" x="213" y="862" width="613" height="30" fill="#ccc" stroke="#000" stroke-width="2"/>
+<rect id="rl-c" x="826" y="862" width="153" height="30" fill="#000" stroke="#000" stroke-width="2"/>
+<path d="M60 862 V904" stroke="#000" stroke-width="2"/>
+<text id="rl-t0" x="60.0" y="926" font-size="18" fill="#000" text-anchor="middle" >0</text>
+<path d="M213 862 V904" stroke="#000" stroke-width="2"/>
+<text id="rl-t0_5" x="213.33333333333334" y="926" font-size="18" fill="#000" text-anchor="middle" >0.5 s</text>
+<path d="M826 862 V904" stroke="#000" stroke-width="2"/>
+<text id="rl-t2_5" x="826.6666666666666" y="926" font-size="18" fill="#000" text-anchor="middle" >2.5 s</text>
+<path d="M980 862 V904" stroke="#000" stroke-width="2"/>
+<text id="rl-t3" x="980.0" y="926" font-size="18" fill="#000" text-anchor="middle" >3 s</text>
+<text id="rl-la" x="136.66666666666669" y="854" font-size="16" fill="#000" text-anchor="middle" >short</text>
+<text id="rl-lb" x="520.0" y="882" font-size="18" fill="#000" text-anchor="middle" >Settings or back (long push)</text>
+<text id="rl-lc" x="903.3333333333333" y="854" font-size="16" fill="#000" text-anchor="middle" >sleep / wake</text>
+<text id="rl-note" x="20" y="962" font-size="16" fill="#444" text-anchor="start" >Hold 3 s wakes only in Power off mode; in the other modes any press wakes the device.</text>
+</svg>

@@ -19,6 +19,8 @@ Taps on a widget that shows a dotted frame (unavailable) are ignored.
 
 ## The rocker
 
+![Cheat sheet of touch gestures and how long to hold the rocker: 0.5 s, 2.5 s, 3 s.](img/device-gestures.png "Touch and rocker at a glance.")
+
 The rocker is the 3-way button on the right edge of the device. You can push it **up**, push it **down**, or press it in (**push**). Hold the push for a longer press. The durations differ, so here is the whole list:
 
 | Press the push for | Name | What happens |
