@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "notif_widget_draw.h"
+#include "calendar_widget.h"  // task 105
 #include "media_widget.h"
 #include "text_fit.h"
 #include "weather_forecast_draw.h"
@@ -482,6 +483,7 @@ void drawWidget(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData 
     case WidgetType::Vacuum: drawVacuum(x, data, title); break;
     case WidgetType::Notifications: drawNotifWidget(c, pl.rect, data.notif); break;  // task 103
     case WidgetType::MediaPlayer: drawMediaWidget(c, pl, data, title, innerSub); break;  // task 106
+    case WidgetType::Calendar: drawCalendarWidget(c, pl.rect, data); break;  // task 105
   }
 }
 

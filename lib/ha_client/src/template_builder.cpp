@@ -18,7 +18,7 @@ const char* domain_attrs(const std::string& domain) {
   if (domain == "vacuum") return "battery_level,status";
   if (domain == "media_player")  // task 106
     return "media_title,media_artist,media_album_name,volume_level,is_volume_muted,supported_features";
-  if (domain == "calendar") return "message,start_time,all_day";  // task 101: sleep screen next event
+  if (domain == "calendar") return "message,start_time,end_time,all_day";  // task 101: sleep screen next event
   return "";
 }
 

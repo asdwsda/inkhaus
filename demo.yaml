@@ -104,3 +104,10 @@ tabs:
         name: Pump
       - entity: switch.terrace_heater
         name: Heater
+  - title: Calendar                          # task 105: sample events, one case per widget (see calendar_glue.cpp)
+    widgets:
+      - entity: calendar.family                 # a timed event today, then one on another day
+      - entity: calendar.empty                  # nothing planned
+      - entity: calendar.work                   # running now, then all day tomorrow
+      - entity: calendar.holidays               # all day today, then a long title
+      - entity: calendar.old_unavailable        # deliberately unavailable

@@ -122,6 +122,10 @@ WidgetData AppState::widgetData(int idx) const {
     d.forecast = forecasts_->get(w->entity);
     d.today = forecasts_->today();
   }
+  if (w->type == WidgetType::Calendar && calendars_) {  // task 105
+    d.calendar = calendars_->get(w->entity);
+    d.nowMin = calendars_->nowMin();
+  }
   if (w->type == WidgetType::Notifications) d.notif = notifView(notifStore_, w->name);  // task 103
   for (const std::string &id : w->entities) {
     auto it = marks_.find(id);

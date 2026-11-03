@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include "cal_events.h"
 #include "forecast.h"
 #include "scanner.h"
 #include "stats_parser.h"
@@ -244,6 +245,23 @@ void HaWorker::runForecast(const NetCommand &cmd, NetEvent &e) {
   if (r.ok() && !forecast::parseResponse(resp, cmd.forecastEntity, e.forecastDays)) e.error = HaError::Parse;
 }
 
+// Task 105: calendar.get_events over REST, the answer parsed here.
+void HaWorker::runCalendar(const NetCommand &cmd, NetEvent &e) {
+  e.calendarEntity = cmd.calendarEntity;
+  std::string body, resp;
+  if (!calendar::buildRequestBody(cmd.calendarEntity, body)) {
+    e.error = HaError::Parse;
+    return;
+  }
+  const HaResult r = client_->call_service_response("calendar", "get_events", body, resp);
+  e.error = r.error;
+  e.http_status = r.http_status;
+  e.external = isExternal(r.base_url);
+  e.ms = r.ms;
+  e.reused = r.reused;
+  if (r.ok() && !calendar::parseResponse(resp, cmd.calendarEntity, e.calendarEvents)) e.error = HaError::Parse;
+}
+
 // Task 101: persistent_notification/get. Task 103: the same answer also gives the full list.
 void HaWorker::runNotifications(NetEvent &e) {
   std::string body;
@@ -288,6 +306,10 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     e.type = NetEvent::Type::ForecastDone;
     e.ticket = cmd.ticket;
     runForecast(cmd, e);
+  } else if (cmd.type == NetCommand::Type::Calendar) {  // task 105
+    e.type = NetEvent::Type::CalendarDone;
+    e.ticket = cmd.ticket;
+    runCalendar(cmd, e);
   } else if (cmd.type == NetCommand::Type::Notifications) {
     e.type = NetEvent::Type::NotificationsDone;
     e.ticket = cmd.ticket;

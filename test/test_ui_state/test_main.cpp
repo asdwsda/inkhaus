@@ -404,7 +404,7 @@ static config::Config demoConfig() {
 
 void test_demo_yaml_showcase() {
   config::Config cfg = demoConfig();
-  TEST_ASSERT_EQUAL_INT(4, (int)cfg.tabs.size());
+  TEST_ASSERT_EQUAL_INT(5, (int)cfg.tabs.size());  // task 105: + Calendar tab
   auto st = demoStates(cfg);
   TEST_ASSERT_EQUAL(cfg.entityIds.size(), st.size());
   int unavailable = 0;
@@ -412,7 +412,7 @@ void test_demo_yaml_showcase() {
     if (!s.available) { ++unavailable; continue; }
     TEST_ASSERT_TRUE(s.state != "home" || s.id == "person.alice");  // no generic fallback state
   }
-  TEST_ASSERT_EQUAL_INT(1, unavailable);
+  TEST_ASSERT_EQUAL_INT(2, unavailable);  // sensor.old_probe_unavailable, calendar.old_unavailable
   for (auto o : {settings::Orientation::Portrait, settings::Orientation::Landscape}) {
     bool pager = false;
     for (size_t t = 0; t < cfg.tabs.size(); ++t) {
