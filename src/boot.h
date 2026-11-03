@@ -49,6 +49,12 @@ bool controllerStandby();
 // IT8951 SLEEP (task 083, -DEPD_SLEEP_OFF builds): image memory lost, wake needs a hardware reset.
 bool controllerSleep();
 
+// Task 099: wipes the whole panel with the INIT waveform (IT8951 display-area command, mode 0) and waits
+// until the update is finished. Does not change the controller's image memory (the caller pushes the new
+// frame afterwards). Bounded; false if a BUSY wait timed out (caller then forces a full redraw).
+// UNVERIFIED on device: command, argument order, waveform index 0 and the completion wait.
+bool initClearWhole();
+
 // Bounded check that the controller answers (BUSY high). If it does not, resets it (hardware
 // reset pulse, full panel init) and reports it as cold. Returns true when no recovery was needed.
 bool ensureControllerReady(const char* where);

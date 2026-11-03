@@ -10,6 +10,7 @@
 #include "frame_diff.h"
 #include "modal_settle.h"
 #include "screen_track.h"
+#include "tab_clean.h"
 
 using screen_track::Rect;
 
@@ -42,6 +43,9 @@ bool g_havePending = false;     // fastest refreshes since the last full refresh
 bool g_recordValid = false;     // the NVS record still describes the panel
 bool g_recordDirty = false;     // panel content changed since the record was written
 bool g_forceFull = false;       // a refresh failed: next frame is a full redraw
+int g_renderTab = -1;           // tab of the frame being shown (setLogTab)
+int g_lastShownTab = -1;        // task 099: tab of the previous show()/bootFrame (-1: none yet)
+int g_tabClean = 0;             // task 099: variant, see setTabCleanVariant()
 bool g_readOpen = false;        // a refresh wait left the controller in the read state (needs endBurstRead)
 bool g_framesOk = false;
 int g_partialCount = 0;
@@ -265,7 +269,7 @@ void loadDebt() {
 }
 
 // Full-quality refresh of the whole frame (GC16). `whiteFirst`: wipe an unknown picture first.
-void fullRefresh(bool whiteFirst, const char *why) {
+void fullRefresh(bool whiteFirst, const char *why, epd_mode_t fullMode = epd_mode_t::epd_quality) {
   auto &d = M5.Display;
   g_forceFull = false;  // before the refresh: a timeout inside it sets the flag again
   if (g_recordValid) touchRecord();
@@ -276,9 +280,9 @@ void fullRefresh(bool whiteFirst, const char *why) {
     d.endWrite();
     refresh(epd_mode_t::epd_quality, nullptr, "full_white");
   }
-  d.setEpdMode(epd_mode_t::epd_quality);
+  d.setEpdMode(fullMode);
   pushRegion(whole(), false);  // guardController inside
-  refresh(epd_mode_t::epd_quality, nullptr, why);
+  refresh(fullMode, nullptr, why);
   copyAllToPrev();
   g_partialCount = 0;
   g_partialArea = 0;
@@ -441,6 +445,7 @@ const M5Canvas &previous() { return g_panel; }
 
 void bootFrame(bool forceFull, const EarlyClear *early) {
   auto &d = M5.Display;
+  g_lastShownTab = g_renderTab;
   settleEarlyClear();  // before anything is written to the controller
   std::vector<uint16_t> stored;
   // A timed-out early clear left the controller memory untrusted (waitAndCheck set g_forceFull).
@@ -539,7 +544,7 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
   closeRead();
 }
 
-static int g_renderTab = -1;
+
 void setLogTab(int tab) { g_renderTab = tab; }
 static std::vector<screen_track::Rect> g_mergeRegions;
 void setMergeRegions(const std::vector<screen_track::Rect> &regions) { g_mergeRegions = regions; }
@@ -552,12 +557,42 @@ void setModal(bool open) {
   else g_modalClosing = true;
 }
 
+void setTabCleanVariant(int v) {
+  g_tabClean = screen_track::tabCleanValid(v) ? v : 0;
+  Serial.printf("PRESENT: tabclean=%d\n", g_tabClean);
+}
+int tabCleanVariant() { return g_tabClean; }
+
+// Task 099: the full refresh of a tab change, by variant. Variant 0 is the plain GC16 full. The INIT variants
+// replace the GC16 white fill (INIT wipes the panel to white); GL16 is used full-screen only.
+static void tabChangeFull(const char *log) {
+  const screen_track::TabCleanPlan plan = screen_track::tabCleanPlan(g_tabClean);
+  uint32_t initMs = 0;
+  bool initOk = true;
+  const uint32_t t0 = micros();
+  if (plan.init) {
+    initOk = boot::initClearWhole();
+    initMs = (micros() - t0) / 1000;
+    if (!initOk) {  // controller did not take it: recover like any BUSY timeout, then draw as usual
+      boot::log("init_clear_failed", 1);
+      boot::ensureControllerReady("init_clear");
+    }
+  }
+  const uint32_t t1 = micros();
+  if (!initOk) fullRefresh(true, log);  // unknown controller state: GC16 white fill + GC16 as for any failure
+  else if (g_tabClean == 0) fullRefresh(false, log);
+  else fullRefresh(false, "tab_clean",
+                   plan.full == screen_track::FullWave::GL16 ? epd_mode_t::epd_text : epd_mode_t::epd_quality);
+  Serial.printf("PRESENT: refresh=tab_clean v=%d init_ms=%u full_ms=%u\n", g_tabClean, (unsigned)initMs,
+                (unsigned)((micros() - t1) / 1000));
+}
+
 bool show(Mode mode, uint32_t now) {
   auto &d = M5.Display;
   g_lastShowMs = now;
   const bool exempt = g_modalOpening;
   const bool closing = g_modalClosing;
-  struct Clear { ~Clear() { g_modalOpening = false; g_modalClosing = false; } } clearExempt;
+  struct Clear { ~Clear() { g_modalOpening = false; g_modalClosing = false; g_lastShownTab = g_renderTab; } } clearExempt;
   if (g_deferred) {  // task 092: remember the change, draw nothing
     if (mode == Mode::Full || g_forceFull || closing) {
       g_deferChanged = true;
@@ -572,7 +607,10 @@ bool show(Mode mode, uint32_t now) {
   if (mode == Mode::Full || g_forceFull || closing) {
     if (mode != Mode::Full) boot::log("full_after_failure", 1);
     Serial.printf("APP: render tab=%d rects=1 mode=full\n", g_renderTab);
-    fullRefresh(g_forceFull, "full");
+    if (screen_track::isTabChange(mode == Mode::Full, closing, g_forceFull, g_lastShownTab, g_renderTab))
+      tabChangeFull("full");
+    else
+      fullRefresh(g_forceFull, "full");
     saveRecordOfCurrent();
     return true;
   }

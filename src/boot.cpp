@@ -324,6 +324,50 @@ bool controllerSleep() {
     return waitBusyHigh(kReadyWaitMs, "after_sleep");
 }
 
+// Task 099. Raw IT8951 I80 sequence as Panel_IT8951::_write_args does it (private, so repeated here):
+// preamble 0x6000 + command, then 0x0000 + args, each word after a BUSY wait, CS low across the burst.
+bool initClearWhole() {
+    if (M5.getBoard() != m5::board_t::board_M5Paper) return false;
+    auto* p = static_cast<lgfx::Panel_IT8951*>(M5.Display.getPanel());
+    if (!p || !p->getBus()) return false;
+    endBurstRead();
+    // UNVERIFIED: DPY_AREA (0x0034) with 5 words x, y, w, h, mode; mode 0 = INIT waveform; coordinates in the
+    // controller's native (unrotated) frame, so the whole panel is cfg.panel_width x cfg.panel_height.
+    constexpr uint16_t kCmdDpyArea = 0x0034;
+    constexpr uint16_t kWaveInit = 0;  // UNVERIFIED: waveform index 0 = INIT (Panel_IT8951.hpp UPDATE_MODE_INIT)
+    const uint16_t args[5] = {0, 0, (uint16_t)p->config().panel_width, (uint16_t)p->config().panel_height, kWaveInit};
+    if (!waitBusyHigh(kReadyWaitMs, "init_clear")) return false;
+    auto* bus = p->getBus();
+    bool ok = true;
+    p->startWrite();
+    bus->wait();
+    digitalWrite(kPinEpdCs, LOW);
+    bus->writeData(__builtin_bswap16(0x6000) | (uint32_t)__builtin_bswap16(kCmdDpyArea) << 16, 32);
+    bus->wait();
+    digitalWrite(kPinEpdCs, HIGH);
+    ok = waitBusyHigh(kReadyWaitMs, "init_clear_cs");
+    if (ok) {
+        digitalWrite(kPinEpdCs, LOW);
+        bus->writeData(0, 16);  // data preamble 0x0000
+        for (int i = 0; i < 5 && ok; ++i) {
+            bus->wait();
+            ok = waitBusyHigh(kReadyWaitMs, "init_clear_arg");  // CS stays low, as in the library
+            if (ok) bus->writeData(__builtin_bswap16(args[i]), 16);
+        }
+        bus->wait();
+    }
+    digitalWrite(kPinEpdCs, HIGH);
+    p->endWrite();
+    if (!ok) return false;
+    // UNVERIFIED: BUSY reads idle for a moment after a display command (giltal port uses a 30 ms guard);
+    // then wait for the LUT engine (waitDisplay polls LUTAFSR, bounded 3 s by the library; INIT takes 1-2 s).
+    delay(30);
+    feed();
+    M5.Display.waitDisplay();
+    feed();
+    return true;
+}
+
 bool ensureControllerReady(const char* where) {
     if (waitBusyHigh(kReadyWaitMs, where)) return true;
     // Stuck: hardware reset of the controller and a full panel init (rotation is restored by it).

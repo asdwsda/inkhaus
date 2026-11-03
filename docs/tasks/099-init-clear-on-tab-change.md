@@ -39,3 +39,5 @@ Experiment first, then make the winner the default:
 - Expected cost: INIT ~1-2 s with a black/white flash; GL16 full is faster than GC16 but may ghost on
   small boxes (only used full-screen here).
 - Decision owner after the device check: architect; record it in ARCHITECTURE.md.
+
+- 2026-11-03 PC part done: lib/screen_track/src/tab_clean.h + test/test_tab_clean, boot::initClearWhole (raw 0x0034, UNVERIFIED), present tab-change detection via setLogTab (tab differs, Full, not popup close), debug `tabclean N`. Next: device check (docs/device-checks.md).

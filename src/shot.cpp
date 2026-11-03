@@ -7,6 +7,7 @@
 
 #include "boot.h"
 #include "frame_diff.h"
+#include "present.h"
 #include "provision.h"
 #include "wakelog.h"
 
@@ -114,6 +115,12 @@ bool handle(const std::string &line, const Hooks &hk) {
   }
   if (sscanf(line.c_str(), "cleanup %u", &ms) == 1) {
     Serial.printf("CMD: cleanup %u (no-op, clean-up pass removed)\n", ms);
+    return true;
+  }
+  int v;
+  if (sscanf(line.c_str(), "tabclean %d", &v) == 1) {  // task 099
+    present::setTabCleanVariant(v);
+    Serial.printf("CMD: tabclean %d\n", present::tabCleanVariant());
     return true;
   }
   if (sscanf(line.c_str(), "tap %d %d", &x, &y) == 2) {

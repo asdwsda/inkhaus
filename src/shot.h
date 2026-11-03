@@ -7,6 +7,7 @@
 //   shotp           dump the presenter's previous frame (what we believe is on the panel), as shotz
 //   mem x y w h     dump the IT8951 image memory of a rect (screen coordinates): "MEM-BEGIN x y w h rle n"
 //                   + n RLE bytes (the controller's 4-bit level as the R channel of readRectRGB) + "\nMEM-END\n"
+//   tabclean 0..3   tab-change cleanup variant (task 099): 0 GC16 full, 1 INIT+GC16, 2 INIT+GL16, 3 GL16 only
 //   cleanup 0|1     disable/enable the idle clean-up pass (debugging)
 #include <M5Unified.h>
 

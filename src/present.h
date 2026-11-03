@@ -64,7 +64,12 @@ void setModal(bool open);
 // Task 074: rects (display coordinates) refreshed as one when any change lands inside (graph widgets).
 // Call before every show(); an empty list turns it off.
 void setMergeRegions(const std::vector<screen_track::Rect> &regions);
-void setLogTab(int tab);  // tab index shown in the "APP: render" log line
+void setLogTab(int tab);  // tab index shown in the "APP: render" log line; also how show() detects a tab change
+// Task 099: tab-change cleanup variant 0..3 (lib/screen_track/src/tab_clean.h). 0 = GC16 full (default, unchanged);
+// the debug build's `tabclean N` serial command changes it. Applies only to a Full frame whose tab differs from
+// the last shown one; not stored.
+void setTabCleanVariant(int v);
+int tabCleanVariant();
 
 // Call regularly: after 2 s without a frame, runs one GC16 full refresh if the ghost debt is
 // exceeded (30 fastest refreshes or 300 % screen area since the last full refresh) and saves the
