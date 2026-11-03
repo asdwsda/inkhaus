@@ -3,83 +3,84 @@
 <g id="w-1">
 <rect id="w-1-frame" x="0" y="0" width="400" height="150" rx="0" fill="none" stroke="none" stroke-width="1"/>
 <g id="w-1-logo1" transform="translate(24,24) scale(0.48)"><path d="M74 90 H88 V46 L50 12 L12 46 V90 H26" fill="none" stroke="#000" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 28.27 L56.36 34.64 A9 9 0 1 1 43.64 34.64 Z" fill="#000"/><rect x="38" y="55" width="24" height="35" rx="12" fill="#000"/><circle cx="50" cy="67" r="7" fill="#fff"/></g>
-<text id="w-1-t2" x="84" y="59" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">Inkhaus</text>
-<text id="w-1-t3" x="24" y="114" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Features</text>
-<text id="w-1-t4" x="128" y="114" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Install</text>
-<text id="w-1-t5" x="214" y="114" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Set up</text>
-<text id="w-1-t6" x="292" y="114" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">GitHub</text>
+<text xml:space="preserve" id="w-1-t2" x="84" y="59" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">Inkhaus</text>
+<text xml:space="preserve" id="w-1-t3" x="24" y="114" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Features</text>
+<text xml:space="preserve" id="w-1-t4" x="128" y="114" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Install</text>
+<text xml:space="preserve" id="w-1-t5" x="214" y="114" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Set up</text>
+<text xml:space="preserve" id="w-1-t6" x="292" y="114" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">GitHub</text>
 </g>
 <g id="w-2">
 <rect id="w-2-frame" x="0" y="150" width="400" height="255" rx="0" fill="none" stroke="none" stroke-width="1"/>
-<text id="w-2-t7" x="24" y="210" font-family="DejaVu Sans, Verdana, sans-serif" font-size="32" fill="#000" text-anchor="start" font-weight="bold">Install Inkhaus</text>
-<text id="w-2-t8" x="24" y="260" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Connect your M5Paper with a USB</text>
-<text id="w-2-t9" x="24" y="287" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">cable and install Inkhaus here in</text>
-<text id="w-2-t10" x="24" y="314" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">the browser. No tools to download.</text>
-<text id="w-2-t11" x="24" y="341" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Your settings and SD card are kept</text>
-<text id="w-2-t12" x="24" y="368" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">when you update.</text>
+<text xml:space="preserve" id="w-2-t7" x="24" y="210" font-family="DejaVu Sans, Verdana, sans-serif" font-size="32" fill="#000" text-anchor="start" font-weight="bold">Install Inkhaus</text>
+<text xml:space="preserve" id="w-2-t8" x="24" y="260" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Connect your M5Paper with a USB</text>
+<text xml:space="preserve" id="w-2-t9" x="24" y="287" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">cable and install Inkhaus here in</text>
+<text xml:space="preserve" id="w-2-t10" x="24" y="314" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">the browser. No tools to download.</text>
+<text xml:space="preserve" id="w-2-t11" x="24" y="341" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Your settings and SD card are kept</text>
+<text xml:space="preserve" id="w-2-t12" x="24" y="368" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">when you update.</text>
 </g>
 <g id="w-3">
 <rect id="w-3-frame" x="24" y="421" width="352" height="584" rx="0" fill="#fff" stroke="#888" stroke-width="1"/>
-<text id="w-3-t13" x="48" y="471" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">This browser cannot install</text>
-<text id="w-3-t14" x="48" y="497" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">from a page</text>
-<text id="w-3-t15" x="48" y="535" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Firefox, Safari and phone browsers</text>
-<text id="w-3-t16" x="48" y="562" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">do not support Web Serial. Open</text>
-<text id="w-3-t17" x="48" y="589" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">this page in Chrome, Edge or Opera</text>
-<text id="w-3-t18" x="48" y="616" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">on a computer, or use the installer</text>
-<text id="w-3-t19" x="48" y="643" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">app:</text>
+<text xml:space="preserve" id="w-3-t13" x="48" y="471" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">This browser cannot install</text>
+<text xml:space="preserve" id="w-3-t14" x="48" y="497" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">from a page</text>
+<text xml:space="preserve" id="w-3-t15" x="48" y="535" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Firefox, Safari and phone browsers</text>
+<text xml:space="preserve" id="w-3-t16" x="48" y="562" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">do not support Web Serial. Open</text>
+<text xml:space="preserve" id="w-3-t17" x="48" y="589" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">this page in Chrome, Edge or</text>
+<text xml:space="preserve" id="w-3-t18" x="48" y="616" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Opera on a computer, or use the</text>
+<text xml:space="preserve" id="w-3-t19" x="48" y="643" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">installer app:</text>
 <rect x="49.5" y="661.5" width="301" height="53" rx="4" fill="#fff" stroke="#000" stroke-width="3"/>
-<text id="w-3-t20" x="200.0" y="694.0" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle" font-weight="bold">Download for Windows</text>
+<text xml:space="preserve" id="w-3-t20" x="200.0" y="694.0" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle" font-weight="bold">Download for Windows</text>
 <rect x="49.5" y="729.5" width="301" height="53" rx="4" fill="#fff" stroke="#000" stroke-width="3"/>
-<text id="w-3-t21" x="200.0" y="762.0" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle">Download for macOS</text>
+<text xml:space="preserve" id="w-3-t21" x="200.0" y="762.0" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle">Download for macOS</text>
 <rect x="49.5" y="797.5" width="301" height="53" rx="4" fill="#fff" stroke="#000" stroke-width="3"/>
-<text id="w-3-t22" x="200.0" y="830.0" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle">Download for Linux</text>
-<text id="w-3-t23" x="48" y="886" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Offline or other ways: docs/FLASHER.md</text>
+<text xml:space="preserve" id="w-3-t22" x="200.0" y="830.0" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle">Download for Linux</text>
+<text xml:space="preserve" id="w-3-t23" x="48" y="886" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Offline or other ways to install:</text>
+<text xml:space="preserve" id="w-3-t24" x="48" y="913" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">docs/FLASHER.md</text>
 </g>
 <g id="w-4">
 <rect id="w-4-frame" x="0" y="1053" width="400" height="746" rx="0" fill="none" stroke="none" stroke-width="1"/>
 <line x1="0" y1="1053" x2="400" y2="1053" stroke="#888" stroke-width="1"/>
-<text id="w-4-t24" x="24" y="1117" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">Before you start</text>
+<text xml:space="preserve" id="w-4-t25" x="24" y="1117" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">Before you start</text>
 <rect x="24.5" y="1141.5" width="351" height="189" rx="0" fill="#fff" stroke="#888" stroke-width="1"/>
-<text id="w-4-t25" x="40" y="1185" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">1</text>
-<text id="w-4-t26" x="40" y="1217" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Use a data cable</text>
-<text id="w-4-t27" x="40" y="1247" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Some USB cables only</text>
-<text id="w-4-t28" x="40" y="1274" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">charge. Use one that</text>
-<text id="w-4-t29" x="40" y="1301" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">also carries data.</text>
+<text xml:space="preserve" id="w-4-t26" x="40" y="1185" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">1</text>
+<text xml:space="preserve" id="w-4-t27" x="40" y="1217" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Use a data cable</text>
+<text xml:space="preserve" id="w-4-t28" x="40" y="1247" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Some USB cables only</text>
+<text xml:space="preserve" id="w-4-t29" x="40" y="1274" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">charge. Use one that</text>
+<text xml:space="preserve" id="w-4-t30" x="40" y="1301" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">also carries data.</text>
 <rect x="24.5" y="1347.5" width="351" height="225" rx="0" fill="#fff" stroke="#888" stroke-width="1"/>
-<text id="w-4-t30" x="40" y="1391" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">2</text>
-<text id="w-4-t31" x="40" y="1423" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Windows: driver</text>
-<text id="w-4-t32" x="40" y="1453" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Windows may need the</text>
-<text id="w-4-t33" x="40" y="1480" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">CH9102 USB driver once.</text>
-<text id="w-4-t34" x="40" y="1507" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Mac and Linux do not.</text>
-<text id="w-4-t35" x="40" y="1536" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="start" text-decoration="underline">Get the CH9102 driver</text>
+<text xml:space="preserve" id="w-4-t31" x="40" y="1391" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">2</text>
+<text xml:space="preserve" id="w-4-t32" x="40" y="1423" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Windows: driver</text>
+<text xml:space="preserve" id="w-4-t33" x="40" y="1453" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Windows may need the</text>
+<text xml:space="preserve" id="w-4-t34" x="40" y="1480" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">CH9102 USB driver once.</text>
+<text xml:space="preserve" id="w-4-t35" x="40" y="1507" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Mac and Linux do not.</text>
+<text xml:space="preserve" id="w-4-t36" x="40" y="1542" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="start" text-decoration="underline">Get the CH9102 driver</text>
 <rect x="24.5" y="1589.5" width="351" height="189" rx="0" fill="#fff" stroke="#888" stroke-width="1"/>
-<text id="w-4-t36" x="40" y="1633" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">3</text>
-<text id="w-4-t37" x="40" y="1665" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Pick the right browser</text>
-<text id="w-4-t38" x="40" y="1695" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Chrome, Edge or Opera</text>
-<text id="w-4-t39" x="40" y="1722" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">on a computer. Not</text>
-<text id="w-4-t40" x="40" y="1749" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Firefox or Safari.</text>
+<text xml:space="preserve" id="w-4-t37" x="40" y="1633" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">3</text>
+<text xml:space="preserve" id="w-4-t38" x="40" y="1665" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Pick the right browser</text>
+<text xml:space="preserve" id="w-4-t39" x="40" y="1695" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Chrome, Edge or Opera</text>
+<text xml:space="preserve" id="w-4-t40" x="40" y="1722" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">on a computer. Not</text>
+<text xml:space="preserve" id="w-4-t41" x="40" y="1749" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Firefox or Safari.</text>
 </g>
 <g id="w-5">
 <rect id="w-5-frame" x="0" y="1799" width="400" height="560" rx="0" fill="none" stroke="none" stroke-width="1"/>
 <line x1="0" y1="1799" x2="400" y2="1799" stroke="#888" stroke-width="1"/>
-<text id="w-5-t41" x="24" y="1863" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">After the install</text>
-<text id="w-5-t42" x="24" y="1903" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">The M5Paper restarts and asks</text>
-<text id="w-5-t43" x="24" y="1930" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">for its files. Copy these two</text>
-<text id="w-5-t44" x="24" y="1957" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">files to the root of its SD card</text>
-<text id="w-5-t45" x="24" y="1984" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">(FAT32) and restart it:</text>
+<text xml:space="preserve" id="w-5-t42" x="24" y="1863" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">After the install</text>
+<text xml:space="preserve" id="w-5-t43" x="24" y="1903" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">The M5Paper restarts and asks</text>
+<text xml:space="preserve" id="w-5-t44" x="24" y="1930" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">for its files. Copy these two</text>
+<text xml:space="preserve" id="w-5-t45" x="24" y="1957" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">files to the root of its SD card</text>
+<text xml:space="preserve" id="w-5-t46" x="24" y="1984" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">(FAT32) and restart it:</text>
 <rect x="24.5" y="2021.5" width="351" height="107" rx="0" fill="#f2f2f2" stroke="#888" stroke-width="1"/>
-<text id="w-5-t46" x="40" y="2051" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="start">config.yaml</text>
-<text id="w-5-t47" x="40" y="2075" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="start">  your tabs and widgets</text>
-<text id="w-5-t48" x="40" y="2099" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="start">secrets.yaml</text>
-<text id="w-5-t49" x="40" y="2123" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="start">  Wi-Fi and HA token</text>
-<text id="w-5-t50" x="24" y="2171" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">How to write them:</text>
-<text id="w-5-t51" x="24" y="2198" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">docs/CONFIG.md</text>
-<text id="w-5-t52" x="24" y="2255" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Firefox, Safari or offline?</text>
-<text id="w-5-t53" x="24" y="2282" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Use the installer apps.</text>
+<text xml:space="preserve" id="w-5-t47" x="40" y="2051" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="start">config.yaml</text>
+<text xml:space="preserve" id="w-5-t48" x="40" y="2075" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="start">  your tabs and widgets</text>
+<text xml:space="preserve" id="w-5-t49" x="40" y="2099" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="start">secrets.yaml</text>
+<text xml:space="preserve" id="w-5-t50" x="40" y="2123" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="start">  Wi-Fi and HA token</text>
+<text xml:space="preserve" id="w-5-t51" x="24" y="2171" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">How to write them:</text>
+<text xml:space="preserve" id="w-5-t52" x="24" y="2198" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">docs/CONFIG.md</text>
+<text xml:space="preserve" id="w-5-t53" x="24" y="2255" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Firefox, Safari or offline?</text>
+<text xml:space="preserve" id="w-5-t54" x="24" y="2282" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Use the installer apps.</text>
 </g>
 <g id="w-6">
 <rect id="w-6-frame" x="0" y="2359" width="400" height="100" rx="0" fill="none" stroke="none" stroke-width="1"/>
 <line x1="0" y1="2359" x2="400" y2="2359" stroke="#888" stroke-width="1"/>
-<text id="w-6-t54" x="24" y="2413" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Open source on GitHub. ESP Web Tools.</text>
+<text xml:space="preserve" id="w-6-t55" x="24" y="2413" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Open source on GitHub. ESP Web Tools.</text>
 </g>
 </svg>
