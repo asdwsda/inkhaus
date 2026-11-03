@@ -74,14 +74,16 @@ void test_template_golden() {
   std::string t, err;
   TEST_ASSERT_TRUE(build_state_template({"cover.shutter", "foo.bar"}, t, err));
   const char* expected =
-      "{\"cover.shutter\": {% set s = states.cover['shutter'] %}{% if s %}{{ {'s': s.state, "
+      "{%- macro m0(s) -%}{% if s %}{{ {'s': s.state, "
       "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
       "s.attributes.get('friendly_name'), 'current_position': "
       "s.attributes.get('current_position'), 'supported_features': "
-      "s.attributes.get('supported_features')}}|tojson }}{% else %}{\"s\": null}{% endif %}, "
-      "\"foo.bar\": {% set s = states.foo['bar'] %}{% if s %}{{ {'s': s.state, "
+      "s.attributes.get('supported_features')}}|tojson }}{% else %}{\"s\": null}{% endif %}{%- endmacro -%}"
+      "{%- macro m1(s) -%}{% if s %}{{ {'s': s.state, "
       "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
-      "s.attributes.get('friendly_name')}}|tojson }}{% else %}{\"s\": null}{% endif %}}";
+      "s.attributes.get('friendly_name')}}|tojson }}{% else %}{\"s\": null}{% endif %}{%- endmacro -%}"
+      "{\"cover.shutter\": {{ m0(states.cover['shutter']) }}, "
+      "\"foo.bar\": {{ m1(states.foo['bar']) }}}";
   TEST_ASSERT_EQUAL_STRING(expected, t.c_str());
 }
 
@@ -89,10 +91,11 @@ void test_template_binary_sensor_golden() {
   std::string t, err;
   TEST_ASSERT_TRUE(build_state_template({"binary_sensor.window"}, t, err));
   const char* expected =
-      "{\"binary_sensor.window\": {% set s = states.binary_sensor['window'] %}{% if s %}"
+      "{%- macro m0(s) -%}{% if s %}"
       "{{ {'s': s.state, 'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
       "s.attributes.get('friendly_name'), 'device_class': "
-      "s.attributes.get('device_class')}}|tojson }}{% else %}{\"s\": null}{% endif %}}";
+      "s.attributes.get('device_class')}}|tojson }}{% else %}{\"s\": null}{% endif %}{%- endmacro -%}"
+      "{\"binary_sensor.window\": {{ m0(states.binary_sensor['window']) }}}";
   TEST_ASSERT_EQUAL_STRING(expected, t.c_str());
 }
 
@@ -579,13 +582,30 @@ void test_template_extra_attrs_golden() {
   ExtraAttrs extra = {{"sensor.climate", {"humidity", "dew_point", "device_class", "friendly_name"}}};
   TEST_ASSERT_TRUE(build_state_template({"sensor.climate"}, t, err, extra));
   const char* expected =
-      "{\"sensor.climate\": {% set s = states.sensor['climate'] %}{% if s %}{{ {'s': s.state, "
+      "{%- macro m0(s) -%}{% if s %}{{ {'s': s.state, "
       "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
       "s.attributes.get('friendly_name'), 'unit_of_measurement': "
       "s.attributes.get('unit_of_measurement'), 'device_class': s.attributes.get('device_class'), "
       "'humidity': s.attributes.get('humidity'), 'dew_point': s.attributes.get('dew_point')}}"
-      "|tojson }}{% else %}{\"s\": null}{% endif %}}";
+      "|tojson }}{% else %}{\"s\": null}{% endif %}{%- endmacro -%}"
+      "{\"sensor.climate\": {{ m0(states.sensor['climate']) }}}";
   TEST_ASSERT_EQUAL_STRING(expected, t.c_str());
+}
+
+// Task 117: same attribute list = one macro; the template grows by a short call per entity, not a block.
+void test_template_shares_macros_and_stays_small() {
+  std::vector<std::string> ids;
+  for (int i = 0; i < 40; ++i) ids.push_back("climate.c" + std::to_string(i));
+  std::string t, err;
+  TEST_ASSERT_TRUE(build_state_template(ids, t, err));
+  size_t macros = 0;
+  for (size_t at = t.find("{%- macro"); at != std::string::npos; at = t.find("{%- macro", at + 1)) ++macros;
+  TEST_ASSERT_EQUAL(1, macros);
+  TEST_ASSERT_TRUE(t.size() < 2800);
+  TEST_ASSERT_TRUE(t.find("\"climate.c39\": {{ m0(states.climate['c39']) }}") != std::string::npos);
+  ExtraAttrs extra = {{"climate.c1", {"humidity"}}};  // a different list gets its own macro
+  TEST_ASSERT_TRUE(build_state_template(ids, t, err, extra));
+  TEST_ASSERT_TRUE(t.find("macro m1(s)") != std::string::npos);
 }
 
 void test_template_extra_attrs_rejects_bad_names() {
@@ -1171,6 +1191,7 @@ int main() {
   RUN_TEST(test_body_sink);
   RUN_TEST(test_template_extra_attrs_golden);
   RUN_TEST(test_template_extra_attrs_rejects_bad_names);
+  RUN_TEST(test_template_shares_macros_and_stays_small);
   RUN_TEST(test_parser_generic_attributes);
   RUN_TEST(test_client_sends_extra_attrs);
   RUN_TEST(test_parse_service_response);

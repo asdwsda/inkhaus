@@ -81,33 +81,42 @@ bool build_state_template(const std::vector<std::string>& ids, std::string& out,
     error = "no entity ids";
     return false;
   }
-  out = "{";
+  // Task 117: one macro per distinct attribute list, one short call per entity. HA compiles every distinct
+  // template with Jinja (CPU-bound on its event loop); the old inline form (a block per entity) took seconds
+  // for ~50 entities and a 500 at ~190. The output JSON is unchanged.
+  std::vector<std::string> macroBodies;  // index = macro number
+  std::string calls = "{";
   bool first = true;
   for (const std::string& id : ids) {
     if (!is_valid_entity_id(id)) {
       error = "invalid entity id: " + id;
       return false;
     }
-    if (!first) out += ", ";
-    first = false;
-    // states.<domain>['<object>'] (bracket form: object ids may start with a digit) is
-    // None for unknown entities -> {"s": null}. The id is validated to [a-z0-9_.] above,
-    // so it cannot break out of the quotes.
-    const size_t dot = id.find('.');
-    out += "\"" + id + "\": {% set s = states." + id.substr(0, dot) + "['" + id.substr(dot + 1) +
-           "'] %}{% if s %}{{ {'s': s.state, ";
-    out += "'lc': as_timestamp(s.last_changed)|int, 'a': {'friendly_name': "
-           "s.attributes.get('friendly_name')";
     std::vector<std::string> names;
     if (!state_attribute_names_checked(id, extra, names)) {
       error = "invalid attribute name for " + id;
       return false;
     }
-    for (const std::string& name : names)
-      out += ", '" + name + "': s.attributes.get('" + name + "')";
-    out += "}}|tojson }}{% else %}{\"s\": null}{% endif %}";
+    std::string body = "{% if s %}{{ {'s': s.state, 'lc': as_timestamp(s.last_changed)|int, 'a': "
+                       "{'friendly_name': s.attributes.get('friendly_name')";
+    for (const std::string& name : names) body += ", '" + name + "': s.attributes.get('" + name + "')";
+    body += "}}|tojson }}{% else %}{\"s\": null}{% endif %}";
+    size_t k = 0;
+    while (k < macroBodies.size() && macroBodies[k] != body) ++k;
+    if (k == macroBodies.size()) macroBodies.push_back(body);
+    if (!first) calls += ", ";
+    first = false;
+    // states.<domain>['<object>'] (bracket form: object ids may start with a digit) is None for unknown
+    // entities -> {"s": null}. The id is validated to [a-z0-9_.] above, so it cannot break out of the quotes.
+    const size_t dot = id.find('.');
+    calls += "\"" + id + "\": {{ m" + std::to_string(k) + "(states." + id.substr(0, dot) + "['" +
+             id.substr(dot + 1) + "']) }}";
   }
-  out += "}";
+  calls += "}";
+  out.clear();
+  for (size_t k = 0; k < macroBodies.size(); ++k)
+    out += "{%- macro m" + std::to_string(k) + "(s) -%}" + macroBodies[k] + "{%- endmacro -%}";
+  out += calls;
   return true;
 }
 
