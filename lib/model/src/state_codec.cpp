@@ -109,6 +109,7 @@ std::string pack(const std::vector<EntityState>& states, int64_t epoch) {
     w.str(e.device_class);
     w.str(e.temperature_unit);
     w.str(e.status);
+    w.str(e.color_modes);
     const size_t na = e.attrs.size() > 0xFF ? 0xFF : e.attrs.size();
     w.u8(uint8_t(na));
     for (size_t i = 0; i < na; ++i) {
@@ -145,6 +146,7 @@ bool unpack(const std::string& data, int64_t& epoch, std::vector<EntityState>& s
     e.device_class = r.str();
     e.temperature_unit = r.str();
     e.status = r.str();
+    e.color_modes = r.str();
     const uint8_t na = r.u8();
     for (uint8_t i = 0; i < na && r.ok; ++i) {
       std::string a = r.str();

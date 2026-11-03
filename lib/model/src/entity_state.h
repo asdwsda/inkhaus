@@ -22,7 +22,7 @@ struct EntityState {
     return state != "unknown";
   }  // light
   std::optional<int> brightness;
-  // Comma-joined supported_color_modes (e.g. "color_temp,xy"); empty if absent. Not cached.
+  // Comma-joined supported_color_modes (e.g. "color_temp,xy"); empty if absent.
   std::string color_modes;
   // True if the light takes a brightness: it reports one, or supports any mode but onoff.
   bool dimmable() const {

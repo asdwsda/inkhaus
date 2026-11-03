@@ -10,7 +10,7 @@
 
 namespace statecodec {
 
-constexpr uint8_t kFormat = 1;
+constexpr uint8_t kFormat = 2;  // 2: + color_modes (task 096). Older records are rejected (cache refills on the next fetch).
 
 std::string pack(const std::vector<EntityState>& states, int64_t epoch);
 // False on any damage (magic, format, CRC, truncation, trailing bytes); outputs are untouched then.

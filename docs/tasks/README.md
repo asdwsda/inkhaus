@@ -94,7 +94,7 @@
 | 093 | [Task watchdog restart on a scheduled wake](093-wake-task-wdt.md) | PC done | 083, 091 |
 | 094 | [Portrait 3-column grid](094-portrait-3-columns.md) | in-progress | 043 |
 | 095 | [Clear grey drift during long awake sessions](095-awake-drift-cleanup.md) | PC done | 092 |
-| 096 | [Keep supported_color_modes in the state cache](096-cache-color-modes.md) | in-progress | 045 |
+| 096 | [Keep supported_color_modes in the state cache](096-cache-color-modes.md) | done | 045 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
