@@ -27,3 +27,8 @@ With Sleep screen, the last frame before sleep is a dedicated screen instead of 
 - [ ] Native tests: config parsing, which blocks show, text fallbacks (no SHT30 reading, no weather state).
 - [ ] `pio test -e native`, `pio run` (all envs) pass.
 - [ ] Device check: sleep screen shown at sleep, wake returns to the tab, scheduled wake updates it.
+
+## Notes
+- User 2026-11-03: footer "Asleep" + wake hint replaces the sleep pill (OK). Notifications block: HA persistent
+  notifications are no longer entities, so fetch them with one short WebSocket call
+  (`persistent_notification/get`, reusing the stats WS client), only when the block is enabled.
