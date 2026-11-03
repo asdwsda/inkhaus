@@ -41,3 +41,5 @@ Experiment first, then make the winner the default:
 - Decision owner after the device check: architect; record it in ARCHITECTURE.md.
 
 - 2026-11-03 PC part done: lib/screen_track/src/tab_clean.h + test/test_tab_clean, boot::initClearWhole (raw 0x0034, UNVERIFIED), present tab-change detection via setLogTab (tab differs, Full, not popup close), debug `tabclean N`. Next: device check (docs/device-checks.md).
+
+- 2026-11-03 device (camera + log): defaults stay burst = gc16, n=4, 2 s; tab change = variant 0 (GC16). INIT works (0x34 and 0x37, 0x37 ~35 ms faster) but costs 1.1 s with no visible gain; kept debug-only.
