@@ -20,11 +20,11 @@ native installers. The native installers stay as the fallback (Firefox/Safari, o
   (link docs/CONFIG.md); unsupported browser -> link to the native installers.
 - Pin the ESP Web Tools version (self-hosted copy or a pinned CDN URL with SRI); site/check.py keeps the weight check.
 - Several releases (user 2026-11-03): version picker, newest stable preselected, "Show pre-releases" toggle
-  (same idea as the native installer). The workflow copies the last 10 stable releases + any pre-release newer than
+  (same idea as the native installer). The workflow copies the last 5 stable releases (user 2026-11-03) + any pre-release newer than
   the newest stable into `install/firmware/<tag>/` with one ESP Web Tools manifest each, plus `install/releases.json`
   (tag, date, prerelease, size). Releases without a `manifest.json` asset are skipped. Picking an older version than
   the newest shows a downgrade note ("settings from newer versions may be reset").
-- Size: one release is ~2.3 MB (firmware.bin 2.2 MB), so 10-12 releases are ~25-30 MB. GitHub Pages limits: published
+- Size: one release is ~2.3 MB (firmware.bin 2.2 MB), so 5-6 releases are ~12-14 MB. GitHub Pages limits: published
   site <= 1 GB, soft bandwidth 100 GB/month (~40k installs). Files live only in the deploy artifact, not in git.
 - Out of scope: YAML upload over Web Serial (task 020 protocol) -> later task.
 
