@@ -1,0 +1,41 @@
+<!-- Sleep screen, portrait, no optional blocks. Spec: sleep-screen.md. Shown: Tuesday 3 November, updated 14:05, next update 15:30, Touch and rocker wake. Widgets: w-1 date, w-2 updated/next, w-3 battery and indoor, w-4 weather, w-5 calendar, w-6 notifications, w-7 footer. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans">
+<defs>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.00 19.11 A10 10 0 1 1 6.29 3.96 A10 10 0 0 0 19.00 19.11 Z" fill="currentColor"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2 C12 2 5 10 5 15 a7 7 0 0 0 14 0 C19 10 12 2 12 2z" fill="currentColor"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 19 A4.5 4.5 0 0 1 6.6 10.05 A6 6 0 0 1 18.2 9.2 A5 5 0 0 1 17.5 19 Z" fill="currentColor"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.6 5.6 L18.4 18.4" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19 12 a7 7 0 1 1 -2.1 -5" fill="none" stroke="currentColor" stroke-width="2.4"/><polygon points="21,3 21,11 13,11" fill="currentColor"/></symbol>
+</defs>
+<rect width="540" height="960" fill="#fff"/>
+<g id="w-1">
+<rect id="w-1-frame" x="4" y="222" width="532" height="172" fill="none"/>
+<text id="w-1-wd" x="16" y="272" font-size="56" fill="#000" text-anchor="start" dominant-baseline="central">Tuesday</text>
+<text id="w-1-date" x="16" y="344" font-size="56" fill="#000" text-anchor="start" dominant-baseline="central">3 November</text>
+</g>
+<rect x="16" y="394" width="508" height="1" fill="#888"/>
+<g id="w-2">
+<rect id="w-2-frame" x="4" y="394" width="532" height="108" fill="none"/>
+<text id="w-2-upd" x="16" y="430" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">updated 14:05</text>
+<text id="w-2-next" x="16" y="476" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">next update 15:30</text>
+</g>
+<rect x="16" y="502" width="508" height="1" fill="#888"/>
+<g id="w-3">
+<rect id="w-3-frame" x="4" y="502" width="532" height="152" fill="none"/>
+<text id="w-3-bcap" x="16" y="525" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Battery</text>
+<text id="w-3-icap" x="276" y="525" font-size="18" fill="#444" text-anchor="start" dominant-baseline="central">Indoor</text>
+<g id="w-3-batt"><rect x="16" y="546" width="72" height="40" fill="#000"/><rect x="20" y="550" width="64" height="32" fill="#fff"/><rect x="20" y="550" width="50" height="32" fill="#000"/><rect x="88" y="556" width="8" height="20" fill="#000"/></g>
+<text id="w-3-bpct" x="108" y="566" font-size="40" fill="#000" text-anchor="start" dominant-baseline="central">78%</text>
+<text id="w-3-volt" x="16" y="618" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">3.92 V</text>
+<text id="w-3-temp" x="276" y="580" font-size="40" fill="#000" text-anchor="start" dominant-baseline="alphabetic">21.5<tspan font-size="24" dx="2">°C</tspan></text>
+<use id="w-3-dropi" xlink:href="#i-drop" href="#i-drop" x="276" y="606" width="24" height="24" color="#000"/>
+<text id="w-3-hum" x="308" y="632" font-size="40" fill="#000" text-anchor="start" dominant-baseline="alphabetic">48<tspan font-size="24" dx="2">%</tspan></text>
+</g>
+<rect x="16" y="876" width="508" height="1" fill="#888"/>
+<g id="w-7">
+<rect id="w-7-frame" x="4" y="880" width="532" height="80" fill="none"/>
+<use id="w-7-icon" xlink:href="#i-moon" href="#i-moon" x="16" y="900" width="40" height="40" color="#000"/>
+<text id="w-7-lbl" x="68" y="906" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Asleep</text>
+<text id="w-7-hint" x="68" y="936" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Tap or press the side button</text>
+</g>
+</svg>

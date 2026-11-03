@@ -15,6 +15,7 @@ read-only diagnostics.
 | Item | Source |
 |------|--------|
 | Orientation, wake mode, refresh interval, idle timeout (main page); demo mode, debug log (Tools page) | `settings::Settings` (lib/settings). Allowed values and cycle order = `kOrientationValues`, `kWakeModeValues`, `kRefreshIntervalMinValues` = {0, 15, 30, 60, 120, 240}, `kIdleTimeoutSValues` = {10, 20, 30, 60}, `demo_mode` (bool, `Off` -> `On`; task 034), `debug_log` (bool, `Off` -> `On`, NVS `dbglog`, default Off; task 041) |
+| Report to HA (Network page, task 100): `report_to_ha` (bool, `Off` -> `On`, default Off); While asleep (Sleep & wake page, task 101): `sleep_screen` (bool, `Dashboard` = false -> `Sleep screen` = true, default Dashboard) | `settings::Settings` (new keys, architect/firmware-dev name them) |
 | Wi-Fi, HA connection (Network page; task 047) | `settings::Settings` fields `wifi_profile` (`Auto` or a profile name from secrets.yaml) and `ha_link` (`auto` / `internal` / `external`); hints read the connected profile name and the link in use from lib/net / ha_client |
 | Refresh now | the same state fetch as a tap on the "updated" label (ha_client) |
 | Firmware version | build-time constant (firmware-dev: needs a `FW_VERSION` define; architect to confirm where it comes from) |
@@ -45,6 +46,8 @@ No Home Assistant entity or service is used except the shared state fetch.
      sleep (power module reads the saved settings). The sleep badge (one for all wake modes)
      (STYLE.md 5.5) is the same for every wake mode.
    - Idle timeout: used from the moment Settings is left.
+   - While asleep (task 101): used the next time the device prepares to sleep (the last frame is the sleep screen, sleep-screen.md, or today's dashboard with the pill).
+   - Report to HA (task 100): used from the next scheduled wake or session; nothing is sent while Off.
    - Debug log: used from the moment Settings is left (SD logging starts/stops; no SD access while Off).
    - Demo mode: applied on leaving, like orientation: the config source is
      reloaded (embedded demo.yaml when On, the SD config when Off) and the tab
@@ -76,8 +79,8 @@ Settings is a two-level system: the **overview** (main page) lists four **catego
 | Category | Settings (edit buffer fields) |
 |----------|-------------------------------|
 | Display | Orientation |
-| Sleep & wake | Sleep mode, Updates while asleep, Keep awake, Idle timeout, Learn battery limits; battery use bar (8.2, revision 10, task 085) |
-| Network | Wi-Fi (`Auto` / profile names from secrets.yaml), HA connection (`Auto` / `Internal` / `External`) |
+| Sleep & wake | Sleep mode, Updates while asleep, While asleep (task 101), Keep awake, Idle timeout, Learn battery limits; battery use bar (8.2, revision 10, task 085) |
+| Network | Wi-Fi (`Auto` / profile names from secrets.yaml), HA connection (`Auto` / `Internal` / `External`), Report to HA (`Off` / `On`, task 100) |
 | Tools | Demo mode, Debug log, Firmware (update row, 8.6; not part of the edit buffer) |
 
 Rule changes: rule 1a now reads "one edit buffer for all pages"; the `unsaved` chip (header, same place) shows on the overview and on every category page; moving between levels (category row, Back, LONG_PUSH on a category page) saves and applies nothing. Rules 2 to 7 are unchanged, with these additions: **Wi-Fi / HA connection** changes apply on leaving Settings (the network session restarts once, after the tab screen is drawn; Demo mode On starts none). The idle auto-leave (60 s) fires from any page and leaves Settings entirely, saving the buffer. **Value cycling** for Wi-Fi: `Auto` -> profile 1 -> ... -> profile N -> `Auto` (list order of secrets.yaml); HA connection `Auto` -> `Internal` -> `External` -> `Auto`.
@@ -199,35 +202,38 @@ All pages: header (title = category name, chip when the buffer is dirty), no tab
 Portrait: Orientation pip row (16, 68, 508, 72). Below it a static caption F18 DIM at (16, 152) cy 168: `Applied when Settings is left.` Landscape: row (16, 64, 456, 68), caption at (16, 132) cy 148. Mockup shows the changed value (unsaved), focus on the row.
 
 ### 8.2 Sleep & wake (`settings-sleep-*.svg`, revision 10, task 085)
-Replaces Wake mode, Refresh every and Stay awake on USB (old 9.1). Mockups: `settings-sleep-portrait.svg` (Power off, updates 3 h, Keep awake Off, focus on Keep awake), `settings-sleep-landscape.svg` (Touch & rocker, 30 min, Keep awake Off, touch note, focus on Updates), `settings-sleep-states.svg` (every value of the mode and Keep awake rows, forced-Off row, notes, four battery use looks (1, 3, 7, 10)). Row types as 3.1; values F40 INK right edge W - 16; labels F24 INK at x = 16 (row-relative); ids w-N as listed.
+Replaces Wake mode, Refresh every and Stay awake on USB (old 9.1). Mockups (task 101 added the While asleep row: w-8 portrait, w-9 landscape; other ids unchanged, rows below it moved down as in the table): `settings-sleep-portrait.svg` (Power off, updates 3 h, Keep awake Off, focus on Keep awake), `settings-sleep-landscape.svg` (Touch & rocker, 30 min, Keep awake Off, touch note, focus on Updates), `settings-sleep-states.svg` (not updated for the While asleep row, task 101; its rows keep the earlier positions) (every value of the mode and Keep awake rows, forced-Off row, notes, four battery use looks (1, 3, 7, 10)). Row types as 3.1; values F40 INK right edge W - 16; labels F24 INK at x = 16 (row-relative); ids w-N as listed.
 
 | # | Row (id) | Type | Portrait rect | Landscape rect |
 |---|----------|------|---------------|----------------|
 | 1 | Sleep mode (w-1) | hint, 88 | (16, 68, 508, 88) | (16, 64, 456, 88) |
 | 2 | Updates while asleep (w-2) | pip, 72 / 68 | (16, 168, 508, 72) | (16, 164, 456, 68) |
-| 3 | Keep awake (w-3) | hint, 88 | (16, 252, 508, 88) | (16, 244, 456, 88) |
-| 4 | Idle timeout (w-4) | pip, 72 / 68 | (16, 352, 508, 72) | (16, 344, 456, 68) |
-| 5 | Learn battery limits (w-5) | hint, 88 (as before: hint `Raise low limit after brownouts`, `Off` / `On`) | (16, 436, 508, 88) | (488, 64, 456, 88) |
-| - | Note area (w-6, w-7 when shown) | notes 64 high, stacked, pitch 76, in this order | from (16, 536, 508, 64) | from (488, 164, 456, 64) |
+| 3 | While asleep (w-8 portrait, w-9 landscape; task 101) | pip, 72 / 68, 2 pips | (16, 252, 508, 72) | (16, 244, 456, 68) |
+| 4 | Keep awake (w-3) | hint, 88 | (16, 336, 508, 88) | (16, 324, 456, 88) |
+| 5 | Idle timeout (w-4) | pip, 72 / 68 | (16, 436, 508, 72) | (16, 424, 456, 68) |
+| 6 | Learn battery limits (w-5) | hint, 88 (as before: hint `Raise low limit after brownouts`, `Off` / `On`) | (16, 520, 508, 88) | (488, 64, 456, 88) |
+| - | Note area (w-6, w-7 when shown) | notes 64 high, stacked, pitch 76, in this order | from (16, 620, 508, 64) | from (488, 164, 456, 64) |
 | - | Battery use block (next w id) | 124 high, not interactive | (16, 744, 508, 124) | (488, 328, 456, 124) |
 | - | Back (last w id) | 3.4 | (276, 880, 248, 64) | (722, 464, 222, 64) |
 
-Vertical check (portrait): 68 + 88 + 12 + 72 + 12 + 88 + 12 + 72 + 12 + 88 = 524; notes 536..676 (two at most); battery use block 744..868; Back 880 (12 px gap). Landscape: left column ends 412; right column notes end 304 at most; battery use block 328..452; Back 464.
+Vertical check (portrait, task 101 added the 72 px row): 68 + 88 + 12 + 72 + 12 + 72 + 12 + 88 + 12 + 72 + 12 + 88 = 608; note 620..684 (**one at most**: forced Off needs Power off, the touch note needs a Touch mode, so they exclude each other; the old two-note stack can no longer occur); battery use block 744..868 (60 px clear of the note); Back 880 (12 px gap). Landscape: left column ends 492 (rows 64, 164, 244, 324, 424); right column notes end 304 at most; battery use block 328..452; Back 464.
 
 **Row 1, Sleep mode** (hint row; value F40, `Touch & rocker` F24 because F40 does not fit; hint F18 INK, live, label cy +32, hint cy +62, value cy +44). Cycle order = cost order, wraps: `Power off` (hint `Lowest drain, hold 3 s`: from power-off the rocker must be held about 3 s to wake) -> `Deep sleep` (`Rocker, faster wake`) -> `Touch` (`Tap wakes`) -> `Touch & rocker` (`Tap or rocker`). Default `Power off` once task 084 works. Rocker always wakes in the first two and in `Touch & rocker`; `Touch` wakes by tap only. Migration of the old wake mode is firmware (Button -> Deep sleep unless 084 is usable, Touch, Touch & Button).
 
 **Row 2, Updates while asleep** (pip row, 6 pips): `Off` / `30 min` / `1 h` / `3 h` / `6 h` / `12 h` (cycle, wraps; 0 = Off). **Forced Off**: when Sleep mode is `Power off` and 084 cannot make the RTC power-on work, the row takes the unavailable look (STYLE.md section 8: 2 px dotted OFF border, label in OFF grey, no pips, value `Off` INK), ignores tap and PUSH, is skipped by the rocker focus, and the note `This device can't power on by` / `itself: updates stay Off.` shows (first slot). The stored value is kept and returns when the mode changes.
 
-**Row 3, Keep awake** (hint row, value F40): `Off` / `On USB` / `Always`. Live hint: Off `Sleeps as set above`; On USB `Awake while on USB`; Always `Never sleeps`. The cycle is `Off` -> `On USB` -> `Always` -> `Off` in every Sleep mode (task 085: the USB probe is reliable); no mode-dependent hint or fallback. Takes effect when Settings is left.
+**Row 3, While asleep** (pip row, 2 pips, task 101; mockups show `Sleep screen` portrait, `Dashboard` landscape): label F24 `While asleep`, pips as other pip rows (x = 22 + 20 k), value F40 INK right edge W - 16: `Dashboard` (default, today's behaviour: the frozen frame is the active tab with the sleep pill) / `Sleep screen` (the last frame is the dedicated sleep screen, sleep-screen.md). Cycle `Dashboard` -> `Sleep screen` -> `Dashboard`. Placed under Updates while asleep because both decide what the frozen screen shows and how fresh it is; no hint line (the values say it). Worst-case widths at F40: `Sleep screen` about 310 px, label 150 px, so they share one row of 476 px. Fully independent of Sleep mode and Updates (works with Updates Off: then the screen says `no scheduled updates`). Redraw: the row (INK only, `epd_fastest`), chip if dirty flipped; Battery use is not affected. Rocker focus order: Sleep mode, Updates while asleep (skipped when forced), While asleep, Keep awake, Idle timeout, Learn battery limits, Back.
 
-**Row 4, Idle timeout**: unchanged (4 pips, `10 s` / `20 s` / `30 s` / `60 s`). Unused while Keep awake is Always (the row stays editable, no special look).
+**Row 4, Keep awake** (hint row, value F40): `Off` / `On USB` / `Always`. Live hint: Off `Sleeps as set above`; On USB `Awake while on USB`; Always `Never sleeps`. The cycle is `Off` -> `On USB` -> `Always` -> `Off` in every Sleep mode (task 085: the USB probe is reliable); no mode-dependent hint or fallback. Takes effect when Settings is left.
+
+**Row 5, Idle timeout**: unchanged (4 pips, `10 s` / `20 s` / `30 s` / `60 s`). Unused while Keep awake is Always (the row stays editable, no special look).
 
 **Note area.** Alert-icon notes as 3.2 (icon M at (12, 12), lines F18 cy 21 / 43, text x = 64), stacked from the top of the area, at most two, in priority order: (1) forced Off (text above); (2) Sleep mode is `Touch` or `Touch & rocker`: `Touch wake shortens battery life.` / `Rocker wake is recommended.` (replaces the old rule 6 text; no numbers). A note appearing or clearing redraws the whole note area.
 
 **Battery use block** (not a button; no focus stop; replaces the estimate block, no days/weeks text, no estimate wording). Top hairline (0, 0, W, 1) OFF; caption `Battery use` F18 DIM at x = 16, cy = 24; level text `N/10` F40 INK at x = 16, cy = 60; bar of 10 segments at y = 92, h = 16, from x = 16, pitch 46 (portrait, segment 42 wide, gap 4) or 42 (landscape, segment 38, gap 4). Segments 1..N filled INK, the rest 2 px INK outline on PAPER (shape, not grey). Offsets are block-relative. N = 1..10 comes from lib/power (1 = lowest drain, 10 = highest, e.g. Keep awake Always); N is an integer, never 0. Unavailable (model has no constants yet): text `n/10`, all segments outline.
 Redraw: the caption and hairline are static; the live part is the level text and bar, region (0, 36, W, 88) block-relative, INK/PAPER only (`epd_fastest`). A tap changes the row (one partial) and this region together as one update; N is recomputed from the shared edit buffer on every change.
 
-**Interactions.** Row tap or PUSH cycles the value in the buffer (rows 1..3, 4, 5); redraw = the row, the battery use region, the note area if its condition flipped, the `unsaved` chip if the dirty flag flipped (partial; INK-only regions `epd_fastest`; the forced-row dotted OFF border makes its redraw `epd_quality`). Rocker focus order: Sleep mode, Updates while asleep (skipped when forced), Keep awake, Idle timeout, Learn battery limits, Back. LONG_PUSH = back to the overview. Focus ring as section 5. Settings are saved on leaving (rule 2) and used the next time the device sleeps; the status-bar indicator (STYLE.md 5.6) shows the result.
+**Interactions.** Row tap or PUSH cycles the value in the buffer (rows 1..3, 4, 5); redraw = the row, the battery use region, the note area if its condition flipped, the `unsaved` chip if the dirty flag flipped (partial; INK-only regions `epd_fastest`; the forced-row dotted OFF border makes its redraw `epd_quality`). Rocker focus order: Sleep mode, Updates while asleep (skipped when forced), While asleep, Keep awake, Idle timeout, Learn battery limits, Back. LONG_PUSH = back to the overview. Focus ring as section 5. Settings are saved on leaving (rule 2) and used the next time the device sleeps; the status-bar indicator (STYLE.md 5.6) shows the result.
 
 **States.** Loading: none. HA offline / entity unavailable: not relevant (device-local settings). Battery use unavailable: see the block. Demo mode: unchanged.
 
@@ -235,8 +241,9 @@ Redraw: the caption and hairline are static; the live part is the level text and
 Hint rows, 88 high. Portrait: Wi-Fi (16, 68, 508, 88), HA connection (16, 168, 508, 88), note slot (16, 268, 508, 64). Landscape: Wi-Fi (16, 64, 456, 88), HA connection (488, 64, 456, 88), note (16, 164, 456, 64) (under Wi-Fi). Hints are live, read from the network state, never edited:
 - Wi-Fi hint: `Connected: <profile name>`; `Connected: -` / alert icon not used, text `Not connected` when no profile joined; `Demo mode` text `Not used (demo mode)`.
 - HA connection hint: `Link: internal` / `Link: external` (the link in use); when the mode is Auto and the profile decides: `Link: external (profile)`; offline `Link: none (offline)`.
+- **Report to HA row** (task 100, hint row 88, id w-5): label F24 `Report to HA`, value F40 `Off` / `On` (default Off), hint F18 INK `Battery, climate, last wake` (static; says what is sent). Portrait (16, 268, 508, 88), the note slot moves down to (16, 368, 508, 64); landscape (488, 164, 456, 88) under HA connection (note slot unchanged under Wi-Fi). Cycle `Off` -> `On` -> `Off`. Value is part of the edit buffer (`unsaved` chip), applied from the next wake. Why on Network: it is a link to HA, it shows next to HA connection and the page has room. While Demo mode is On the row stays editable and sends nothing (hint unchanged). Rocker focus order: Wi-Fi, HA connection, Report to HA, Back (landscape: left to right, top to bottom: Wi-Fi, HA connection, Report to HA, Back). Redraw: the row, one partial (`epd_fastest`, INK only), chip if dirty flipped.
 - Note slot (alert icon): only while Wi-Fi is a forced profile (not Auto): `Forced profile: other Wi-Fi` / `networks are not tried.` When HA connection is forced and the other link would be the profile's choice, no note (the hint shows the link).
-Mockups: Wi-Fi forced `Hotspot` (note visible), HA connection `Auto` resolving to external, focus on HA connection.
+Mockups: Wi-Fi forced `Hotspot` (note visible), HA connection `Auto` resolving to external, Report to HA `On` (w-5), focus on HA connection.
 Effect: Wi-Fi / HA connection are applied on leaving Settings (rule 3 addition); the hints show the state from when the page opened (snapshot, not live).
 
 ### 8.4 Tools (`settings-tools-*.svg`)

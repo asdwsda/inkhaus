@@ -1,4 +1,4 @@
-<!-- Sleep and wake page, landscape (task 085). Spec: settings.md section 8.2. Shown: Touch & rocker, updates 30 min, keep awake Off, focus on Updates. Widgets: w-1..w-5 rows, w-6 touch note, w-7 estimate, w-8 Back. -->
+<!-- Sleep and wake page, landscape (task 085). Spec: settings.md section 8.2. Shown: Touch & rocker, updates 30 min, keep awake Off, focus on Updates. Widgets (w-9 = While asleep, task 101): w-1..w-5 rows, w-6 touch note, w-7 estimate, w-8 Back. -->
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="540" viewBox="0 0 960 540" font-family="DejaVu Sans">
 <defs>
 <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
@@ -34,6 +34,7 @@
 <circle id="w-2-pip5" cx="138" cy="211" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
 <text id="w-2-value" x="456" y="198" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">30 min</text>
 </g>
+<g transform="translate(0,80)">
 <g id="w-3">
 <rect id="w-3-frame" x="16" y="244" width="456" height="88" rx="8" fill="#fff"/>
 <rect x="17" y="245" width="454" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
@@ -41,6 +42,8 @@
 <text id="w-3-hint" x="32" y="306" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Sleeps as set above</text>
 <text id="w-3-value" x="456" y="288" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Off</text>
 </g>
+</g>
+<g transform="translate(0,80)">
 <g id="w-4">
 <rect id="w-4-frame" x="16" y="344" width="456" height="68" rx="8" fill="#fff"/>
 <rect x="17" y="345" width="454" height="66" rx="8" fill="none" stroke="#000" stroke-width="2"/>
@@ -50,6 +53,15 @@
 <circle id="w-4-pip2" cx="78" cy="391" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
 <circle id="w-4-pip3" cx="98" cy="391" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
 <text id="w-4-value" x="456" y="378" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">20 s</text>
+</g>
+</g>
+<g id="w-9">
+<rect id="w-9-frame" x="16" y="244" width="456" height="68" rx="8" fill="#fff"/>
+<rect x="17" y="245" width="454" height="66" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-9-label" x="32" y="268" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">While asleep</text>
+<circle id="w-9-pip0" cx="38" cy="289" r="6" fill="#000"/>
+<circle id="w-9-pip1" cx="58" cy="289" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<text id="w-9-value" x="456" y="278" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Dashboard</text>
 </g>
 <g id="w-5">
 <rect id="w-5-frame" x="488" y="64" width="456" height="88" rx="8" fill="#fff"/>

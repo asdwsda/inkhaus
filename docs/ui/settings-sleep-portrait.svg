@@ -1,4 +1,4 @@
-<!-- Sleep and wake page, portrait (task 085). Spec: settings.md section 8.2. Shown: Power off, updates 3 h, keep awake Off, unsaved, focus on Keep awake. Widgets: w-1 Sleep mode, w-2 Updates while asleep, w-3 Keep awake, w-4 Idle timeout, w-5 Learn battery limits, w-6 battery use, w-7 Back. -->
+<!-- Sleep and wake page, portrait (task 085). Spec: settings.md section 8.2. Shown: Power off, updates 3 h, keep awake Off, unsaved, focus on Keep awake. Widgets (w-8 = While asleep, task 101): w-1 Sleep mode, w-2 Updates while asleep, w-3 Keep awake, w-4 Idle timeout, w-5 Learn battery limits, w-6 battery use, w-7 Back. -->
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="540" height="960" viewBox="0 0 540 960" font-family="DejaVu Sans">
 <defs>
 <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="6.5" x2="12" y2="13.5" stroke="currentColor" stroke-width="2.5"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/></symbol>
@@ -33,7 +33,10 @@
 <circle id="w-2-pip5" cx="138" cy="217" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
 <text id="w-2-value" x="508" y="204" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">3 h</text>
 </g>
+<g transform="translate(0,84)">
 <rect x="11.5" y="247.5" width="517" height="97" rx="12.5" fill="none" stroke="#000" stroke-width="3"/>
+</g>
+<g transform="translate(0,84)">
 <g id="w-3">
 <rect id="w-3-frame" x="16" y="252" width="508" height="88" rx="8" fill="#fff"/>
 <rect x="17" y="253" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
@@ -41,6 +44,8 @@
 <text id="w-3-hint" x="32" y="314" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Sleeps as set above</text>
 <text id="w-3-value" x="508" y="296" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Off</text>
 </g>
+</g>
+<g transform="translate(0,84)">
 <g id="w-4">
 <rect id="w-4-frame" x="16" y="352" width="508" height="72" rx="8" fill="#fff"/>
 <rect x="17" y="353" width="506" height="70" rx="8" fill="none" stroke="#000" stroke-width="2"/>
@@ -51,12 +56,23 @@
 <circle id="w-4-pip3" cx="98" cy="401" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
 <text id="w-4-value" x="508" y="388" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">20 s</text>
 </g>
+</g>
+<g transform="translate(0,84)">
 <g id="w-5">
 <rect id="w-5-frame" x="16" y="436" width="508" height="88" rx="8" fill="#fff"/>
 <rect x="17" y="437" width="506" height="86" rx="8" fill="none" stroke="#000" stroke-width="2"/>
 <text id="w-5-label" x="32" y="468" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">Learn battery limits</text>
 <text id="w-5-hint" x="32" y="498" font-size="18" fill="#000" text-anchor="start" dominant-baseline="central">Raise low limit after brownouts</text>
 <text id="w-5-value" x="508" y="480" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">On</text>
+</g>
+</g>
+<g id="w-8">
+<rect id="w-8-frame" x="16" y="252" width="508" height="72" rx="8" fill="#fff"/>
+<rect x="17" y="253" width="506" height="70" rx="8" fill="none" stroke="#000" stroke-width="2"/>
+<text id="w-8-label" x="32" y="278" font-size="24" fill="#000" text-anchor="start" dominant-baseline="central">While asleep</text>
+<circle id="w-8-pip0" cx="38" cy="301" r="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<circle id="w-8-pip1" cx="58" cy="301" r="6" fill="#000"/>
+<text id="w-8-value" x="508" y="288" font-size="40" fill="#000" text-anchor="end" dominant-baseline="central">Sleep screen</text>
 </g>
 <g id="w-6">
 <rect id="w-6-frame" x="16" y="744" width="508" height="124" fill="#fff"/>
