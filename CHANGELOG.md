@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0-rc1 - 2026-11-03
+
+Pre-release for testing; not offered as an over-the-air update.
+
+### Changes
+- Release workflow publishes tags with a suffix (v1.4.0-rc1) as pre-releases.
+- Version comparison orders pre-releases below their final release.
+
 ## 1.3.1 - 2026-11-02
 
 ### Fixes

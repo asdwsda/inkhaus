@@ -24,6 +24,20 @@ void test_semver() {
   TEST_ASSERT_TRUE(isNewer("1.2.1", "2.0"));
   TEST_ASSERT_FALSE(isNewer("1.2.1", "1.3.0-rc1"));  // pre-release ignored
   TEST_ASSERT_FALSE(isNewer("1.2.1", "garbage"));
+  // pre-release current: the final release is newer, an rc of the same core is not
+  TEST_ASSERT_TRUE(isNewer("1.4.0-rc1", "1.4.0"));
+  TEST_ASSERT_TRUE(isNewer("1.4.0-rc1", "1.4.1"));
+  TEST_ASSERT_FALSE(isNewer("1.4.0", "1.4.0-rc1"));
+  TEST_ASSERT_FALSE(isNewer("1.3.1", "1.4.0-rc1"));
+  {
+    Version rc, rel, old;
+    TEST_ASSERT_TRUE(parseVersion("1.4.0-rc1", rc));
+    TEST_ASSERT_TRUE(parseVersion("1.4.0", rel));
+    TEST_ASSERT_TRUE(parseVersion("1.3.1", old));
+    TEST_ASSERT_EQUAL(-1, compare(rc, rel));
+    TEST_ASSERT_EQUAL(1, compare(rc, old));
+    TEST_ASSERT_EQUAL(0, compare(rc, rc));
+  }
   TEST_ASSERT_FALSE(isNewer("1.2.1", ""));
   Version v;
   TEST_ASSERT_FALSE(parseVersion("1.2.x", v));

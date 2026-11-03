@@ -44,6 +44,7 @@ int compare(const Version &a, const Version &b) {
   if (a.major != b.major) return a.major < b.major ? -1 : 1;
   if (a.minor != b.minor) return a.minor < b.minor ? -1 : 1;
   if (a.patch != b.patch) return a.patch < b.patch ? -1 : 1;
+  if (a.pre != b.pre) return a.pre ? -1 : 1;  // semver: 1.4.0-rc1 < 1.4.0
   return 0;
 }
 

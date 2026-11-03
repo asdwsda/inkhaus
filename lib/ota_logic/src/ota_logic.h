@@ -11,7 +11,7 @@ struct Version {
 };
 // "1.2.3", "v1.2.3", "1.2" (patch 0), "1.3.0-rc1" (pre = true). False on anything else.
 bool parseVersion(const std::string &s, Version &out);
-// -1 / 0 / 1 on major.minor.patch (numeric: 1.10 > 1.9). Ignores pre.
+// -1 / 0 / 1 on major.minor.patch (numeric: 1.10 > 1.9); at equal numbers a pre-release is older (1.4.0-rc1 < 1.4.0).
 int compare(const Version &a, const Version &b);
 // True if `candidate` is a release (not pre-release) strictly newer than `current`.
 bool isNewer(const std::string &current, const std::string &candidate);
