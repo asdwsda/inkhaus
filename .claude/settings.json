@@ -1,7 +1,19 @@
 {
-  "agent": "architect",
   "permissions": {
-    "allow": ["Bash(pio *)", "Bash(git diff *)", "Bash(git commit *)", "Bash(git status*)", "Bash(git log *)", "Bash(git add *)", "Bash(timeout * pio device monitor*)"],
-    "deny": ["Bash(git push *)", "Read(./include/secrets.h)"]
-  }
+    "allow": [
+      "Bash(pio *)",
+      "Bash(git diff *)",
+      "Bash(git commit *)",
+      "Bash(git status*)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(timeout * pio device monitor*)",
+      "Bash(git push:*)"
+    ],
+    "deny": [
+      "Bash(git push *)",
+      "Read(./include/secrets.h)"
+    ]
+  },
+  "agent": "architect"
 }
