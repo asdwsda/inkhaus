@@ -100,7 +100,7 @@
 | 099 | [INIT clear on tab change (experiment)](099-init-clear-on-tab-change.md) | PC done | 092, 095 |
 | 100 | [Report the M5Paper's own sensors to HA](100-report-device-sensors.md) | PC done | 024, 079 |
 | 101 | [Sleep screen](101-sleep-screen.md) | PC done | 092, 100 |
-| 102 | [Web flasher on the project site](102-web-flasher.md) | todo | 061-065 |
+| 102 | [Web flasher on the project site](102-web-flasher.md) | in-progress | 061-065 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).

@@ -1,6 +1,6 @@
 # 102: Web flasher on the project site
 
-Status: todo
+Status: in-progress
 Depends on: 061-065 (native installer, release workflow, site)
 UI spec: docs/ui/installer.md (states reused; page layout by ui-designer, mockup in docs/ui/experiments/)
 Needs device: yes (one install + one update from Chrome; PC part first)
@@ -19,7 +19,14 @@ native installers. The native installers stay as the fallback (Firefox/Safari, o
 - Page: what it does, browser note, CH9102 driver link (Windows), "then copy config.yaml + secrets.yaml to the SD card"
   (link docs/CONFIG.md); unsupported browser -> link to the native installers.
 - Pin the ESP Web Tools version (self-hosted copy or a pinned CDN URL with SRI); site/check.py keeps the weight check.
-- Out of scope: YAML upload over Web Serial (task 020 protocol) -> later task; pre-releases picker (latest stable only).
+- Several releases (user 2026-11-03): version picker, newest stable preselected, "Show pre-releases" toggle
+  (same idea as the native installer). The workflow copies the last 10 stable releases + any pre-release newer than
+  the newest stable into `install/firmware/<tag>/` with one ESP Web Tools manifest each, plus `install/releases.json`
+  (tag, date, prerelease, size). Releases without a `manifest.json` asset are skipped. Picking an older version than
+  the newest shows a downgrade note ("settings from newer versions may be reset").
+- Size: one release is ~2.3 MB (firmware.bin 2.2 MB), so 10-12 releases are ~25-30 MB. GitHub Pages limits: published
+  site <= 1 GB, soft bandwidth 100 GB/month (~40k installs). Files live only in the deploy artifact, not in git.
+- Out of scope: YAML upload over Web Serial (task 020 protocol) -> later task.
 
 ## Files to touch
 - site/ (build.py, new install page, styles), .github/workflows/pages.yml
@@ -30,6 +37,7 @@ native installers. The native installers stay as the fallback (Firefox/Safari, o
 - [ ] Script test: ESP Web Tools manifest from a sample manifest.json has the 4 parts with correct offsets, no erase.
 - [ ] `python3 site/build.py && python3 site/check.py` pass locally with a sample release folder.
 - [ ] Pages workflow copies the release files (dry run documented; same-origin URLs in the generated manifest).
+- [ ] releases.json + picker: newest stable preselected, pre-release toggle, downgrade note; release count cap tested.
 - [ ] Device check: fresh install from Chrome boots; update install keeps settings (Settings values unchanged).
 - [ ] Page in Firefox shows the "use Chrome/Edge or the native installer" note.
 
