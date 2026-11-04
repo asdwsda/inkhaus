@@ -6,6 +6,7 @@
 #include <string>
 
 #include "notif_popup.h"
+#include "secure_view.h"
 #include "settings.h"
 #include "ui_layout.h"
 #include "ui_rocker.h"
@@ -29,6 +30,15 @@ class ConfirmDialog {
     sub_ = sub;
     at_ = now;
   }
+  // Binds a Yes to the tab, entity and action shown when the dialog opened (checked again at Yes).
+  void bind(int tab, const std::string &entity, SecureAction action) {
+    tab_ = tab;
+    entity_ = entity;
+    action_ = action;
+  }
+  int tab() const { return tab_; }
+  const std::string &entity() const { return entity_; }
+  SecureAction action() const { return action_; }
   bool isOpen() const { return open_; }
   const std::string &title() const { return title_; }
   int widget() const { return widget_; }
@@ -64,7 +74,9 @@ class ConfirmDialog {
   }
   bool open_ = false;
   std::string title_;
-  int widget_ = 0, sub_ = 0;
+  int widget_ = 0, sub_ = 0, tab_ = 0;
+  std::string entity_;
+  SecureAction action_ = SecureAction::None;
   uint32_t at_ = 0;
 };
 

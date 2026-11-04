@@ -322,7 +322,7 @@ bool AppState::tick(uint32_t now) {
     popup_.clearOptimistic();
     changed = true;
   }
-  if (switchDue_ && int32_t(now - switchAt_) >= 0) changed |= applyTabSwitch();
+  if (switchDue_ && !modalOpen() && int32_t(now - switchAt_) >= 0) changed |= applyTabSwitch();
   for (size_t i = 0; i < pending_.size();) {
     if (int32_t(now - pending_[i].commitAt) >= 0) {
       if (!marksDriven_) {

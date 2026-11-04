@@ -36,6 +36,7 @@ bool AppState::activateSecure(int idx, uint32_t now, bool viaRocker) {
   const int sub = act == SecureAction::Stop ? 2 : 0;
   if (needsConfirm(w->type, act, *w)) {
     confirm_.open(confirmTitle(act, widgetTitle(idx)), idx, sub, now);
+    confirm_.bind(shownTab_, w->entities[0], act);
     return true;
   }
   return runAction(idx, sub, now);
@@ -44,7 +45,19 @@ bool AppState::activateSecure(int idx, uint32_t now, bool viaRocker) {
 bool AppState::confirmAnswer(ConfirmAnswer a, uint32_t now) {
   if (a == ConfirmAnswer::None) return false;
   const int idx = confirm_.widget(), sub = confirm_.sub();
-  if (a == ConfirmAnswer::Yes) runAction(idx, sub, now);
+  if (a == ConfirmAnswer::Yes) {
+    // Bound to what was asked: same tab, same entity, same action as live state offers now. Otherwise do nothing.
+    const config::Widget *w = widgetAt(shownTab_, idx);
+    bool ok = shownTab_ == confirm_.tab() && w && !w->entities.empty() && w->entities[0] == confirm_.entity();
+    if (ok) {
+      const WidgetData d = widgetData(idx);
+      const EntityState *st = d.members.empty() ? nullptr : d.members[0];
+      const SecureAction live = w->type == WidgetType::Lock ? lockAction(st)
+                                : w->type == WidgetType::Garage ? garageAction(st) : SecureAction::None;
+      ok = live == confirm_.action();
+    }
+    if (ok) runAction(idx, sub, now);
+  }
   return true;  // the dialog closed (and the widget may show the pending result)
 }
 

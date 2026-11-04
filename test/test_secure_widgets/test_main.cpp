@@ -664,6 +664,47 @@ void test_confirm_times_out_and_rocker_rules() {
   TEST_ASSERT_EQUAL_STRING("3:0:open", r.calls[0].c_str());
 }
 
+// Safety: a pending rocker tab switch must not move the dialog's widget under it.
+void test_confirm_holds_tab_switch_while_open() {
+  config::Config cfg = parsed(
+      "version: 1\ntabs:\n  - title: A\n    widgets:\n      - entity: lock.a\n  - title: B\n    widgets:\n"
+      "      - entity: lock.b\n");
+  AppState app;
+  app.init(cfg, Orientation::Landscape, false);
+  app.store().update({st("lock.a", "locked"), st("lock.b", "locked")});
+  std::vector<std::string> ids;
+  app.setActionSink([&](int, int, int, const std::vector<EntityState> &req) { ids.push_back(req[0].id); });
+  app.setMarksDriven(true);
+  app.rocker(ui::PhysicalKey::Down, 100);  // Tab mode: next tab, debounced
+  TEST_ASSERT_EQUAL(0, app.shownTab());
+  ui::Point c{0, 0};
+  for (const ui::Placement &pl : app.layout().widgets) c = {pl.rect.x + pl.rect.w / 2, pl.rect.y + pl.rect.h / 2};
+  app.touch(c, 200);
+  TEST_ASSERT_TRUE(app.confirmOpen());
+  app.tick(1000);  // the debounce is due, but a modal is open
+  TEST_ASSERT_EQUAL(0, app.shownTab());
+  TEST_ASSERT_TRUE(app.confirmOpen());
+  app.rocker(ui::PhysicalKey::Up, 1100);  // yes: acts on lock.a
+  TEST_ASSERT_EQUAL(1, int(ids.size()));
+  TEST_ASSERT_EQUAL_STRING("lock.a", ids[0].c_str());
+  app.tick(1200);  // the held switch applies after the dialog
+  TEST_ASSERT_EQUAL(1, app.shownTab());
+}
+
+// Safety: Yes re-checks the action; "Close garage?" must not open a garage that is already closed.
+void test_confirm_yes_refused_when_action_changed() {
+  Rig r;
+  r.app.store().update({st("cover.garage", "open")});
+  r.app.touch(r.centre(3), 100);
+  TEST_ASSERT_EQUAL_STRING("Close Garage?", r.app.confirm().title().c_str());
+  r.app.store().update({st("cover.garage", "closed")});  // closed meanwhile
+  const ConfirmLayout l = confirmLayout(Orientation::Landscape);
+  TEST_ASSERT_TRUE(r.app.touch({l.yes.x + 10, l.yes.y + 10}, 200));  // redraw
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_TRUE(r.calls.empty());
+  TEST_ASSERT_FALSE(r.app.widgetData(3).optimistic);
+}
+
 void test_confirm_override_off_and_on() {
   config::Config cfg = parsed(
       "version: 1\ntabs:\n  - title: A\n    widgets:\n      - entity: lock.a\n        confirm: false\n"
@@ -901,6 +942,8 @@ int main(int, char **) {
   RUN_TEST(test_garage_moving_stops_without_dialog);
   RUN_TEST(test_confirm_times_out_and_rocker_rules);
   RUN_TEST(test_confirm_override_off_and_on);
+  RUN_TEST(test_confirm_holds_tab_switch_while_open);
+  RUN_TEST(test_confirm_yes_refused_when_action_changed);
   RUN_TEST(test_unavailable_and_jammed_do_nothing);
   RUN_TEST(test_alarm_keypad_through_appstate_real_mode);
   RUN_TEST(test_alarm_confirmed_by_state_change);
