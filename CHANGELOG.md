@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.4.0-rc2 - 2026-11-04
+
+Pre-release for testing; not offered as an over-the-air update.
+
+### New widgets
+- Notifications (HA persistent notifications, dismiss with confirm).
+- Weather with a 3-day forecast (`forecast: true`).
+- Calendar (upcoming events).
+- Media player, with album art (`art: false` turns it off).
+- Energy (usage, optional solar).
+- Alarm panel with keypad, lock and garage door, with a confirm dialog before unlock/open.
+
+### Changes
+- Report the M5Paper's battery, temperature, humidity and last wake to HA (Settings, default On).
+- Sleep screen option.
+- A tap on a sensor, binary sensor or energy widget opens its history.
+- The screen cleans itself after a burst of taps; tab changes and idle use a full refresh.
+- Taps jump ahead of background network work (faster response after wake).
+- Large dashboards (up to 16 tabs x 24 widgets) work: chunked state fetch, more memory headroom.
+- Build info line in Settings > About.
+- Demo mode shows all widget types.
+- Web installer on the project site (Chrome/Edge); user guide with pictures.
+
 ## 1.4.0-rc1 - 2026-11-03
 
 Pre-release for testing; not offered as an over-the-air update.
