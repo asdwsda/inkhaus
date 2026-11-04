@@ -17,6 +17,7 @@
 #include "battery_limit.h"
 #include "brightness_intent.h"
 #include "media_intent.h"
+#include "secure_intent.h"  // task 108
 #include "history_cache_sd.h"
 #include "deferred_tap.h"
 #include "forecast_glue.h"
@@ -339,7 +340,7 @@ static void showFrame(uint32_t now) {
     }
     present::setGreyRegions(greys);
   }
-  present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.mediaOpen());
+  present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.mediaOpen() || g_app.alarmOpen() || g_app.confirmOpen());
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 
@@ -761,6 +762,13 @@ static void onMediaSend(const std::string &id, uistate::MediaSend what, int valu
   if (ev) g_drv->userAction(*ev, millis());
 }
 
+// Alarm keypad send (task 108): alarm_control_panel.alarm_* with the code. The code is never logged.
+static void onAlarmSend(const std::string &id, AlarmCmd cmd, const std::string &code) {
+  if (!g_real || !g_drv) return;
+  auto ev = app_logic::alarmIntent(id, cmd, code);
+  if (ev) g_drv->userAction(*ev, millis());
+}
+
 // A tap on a dimmable light waits for the release or the long press (task 045).
 static uistate::DeferredTap g_defer;
 
@@ -785,6 +793,7 @@ static void applyOrientation(settings::Orientation o) {
   g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMediaSink(onMediaSend);
+  g_app.setAlarmSink(onAlarmSend);  // task 108
   g_app.setMarksDriven(g_real);
   if (!g_demoMode) g_app.store().update(keep);
   graphsInit();
@@ -819,6 +828,7 @@ static void reloadConfigSource(settings::Orientation o) {
   g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMediaSink(onMediaSend);
+  g_app.setAlarmSink(onAlarmSend);  // task 108
   g_app.setMarksDriven(g_real);
   graphsInit();
   boot::log("mode", g_real ? "real" : "demo");
@@ -1079,6 +1089,8 @@ static void goToSleep(power::SleepPlan plan, power::Session session, bool localI
     historyShutdown();
     g_app.closeNotif();  // task 103
     g_app.closeMedia(now);  // task 106: flush the unsent volume
+    g_app.closeAlarm();  // task 108: clears the typed code
+    g_app.closeConfirm();
     g_app.closeBrightness(now);  // flush the unsent value; the frozen screen never shows the popup (brightness.md rule 5)
     // Settings auto-leave before sleeping (settings.md rule 5). Whether or not Settings was open now,
     // the plan is made again from the settings in effect now: the session machine's plan was made
@@ -1279,6 +1291,7 @@ void setup() {
     g_app.setActionSink(onAppAction);
   g_app.setBrightnessSink(onBrightnessSend);
   g_app.setMediaSink(onMediaSend);
+  g_app.setAlarmSink(onAlarmSend);  // task 108
     g_app.setMarksDriven(g_real);
     boot::log("mode", g_real ? "real" : "demo");
     if (g_real) g_restoredEpoch = state_cache::restore(cfg.cfg.entityIds, g_app.store());
@@ -1436,7 +1449,7 @@ void loop() {
       }
     }
   }
-  const bool popupOpen = g_app.brightnessOpen() || g_app.mediaOpen() || g_app.historyPopup().fetching();  // activity: brightness closes itself after 10 s; an open history popup only counts while it fetches, then the idle timer closes it (goToSleep)
+  const bool popupOpen = g_app.brightnessOpen() || g_app.mediaOpen() || g_app.alarmOpen() || g_app.confirmOpen() || g_app.historyPopup().fetching();  // activity: brightness closes itself after 10 s; an open history popup only counts while it fetches, then the idle timer closes it (goToSleep)
   if ((e.kind != input::Event::None || popupOpen) && g_real && g_drv) {
     if (g_sessionOver) startSession(now);  // a new interactive session (real sleep comes later)
     else g_drv->input(now);
@@ -1592,7 +1605,7 @@ void loop() {
   if (e.kind != input::Event::None || popupOpen) g_lastInputMs = now;
   {  // task 114: clean after a burst of taps (before 095's idle full, which it makes unnecessary by clearing the debt)
     screen_track::BurstContext bc;
-    bc.popup = g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen();
+    bc.popup = g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.alarmOpen() || g_app.confirmOpen();
     bc.settings = settings_flow::active();
     bc.ota = ota::busy();
     bc.tap_pending = g_defer.armed();
@@ -1601,7 +1614,7 @@ void loop() {
   }
   if (!g_scheduled && g_real && !ota::busy() &&
       app_logic::idleFullDue(present::partialDebt(), now - g_lastInputMs,
-                             settings_flow::active() || g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen(),
+                             settings_flow::active() || g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.alarmOpen() || g_app.confirmOpen(),
                              g_defer.armed()))  // task 095: grey drift in a long awake session
     present::idleFull();
   present::idle(millis());

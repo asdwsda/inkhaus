@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "notif_widget_draw.h"
+#include "secure_widget.h"  // task 108
 #include "calendar_widget.h"  // task 105
 #include "media_widget.h"
 #include "energy_widget.h"  // task 109
@@ -486,6 +487,9 @@ void drawWidget(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData 
     case WidgetType::MediaPlayer: drawMediaWidget(c, pl, data, title, innerSub); break;  // task 106
     case WidgetType::Calendar: drawCalendarWidget(c, pl.rect, data); break;  // task 105
     case WidgetType::Energy: drawEnergyWidget(c, pl.rect, data.energy); break;  // task 109
+    case WidgetType::Alarm:  // task 108
+    case WidgetType::Lock:
+    case WidgetType::Garage: drawSecureWidget(c, pl.rect, data, title); break;
   }
 }
 
