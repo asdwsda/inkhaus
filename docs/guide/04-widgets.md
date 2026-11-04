@@ -109,7 +109,7 @@ A wide tile: current temperature, humidity, a target and minus and plus buttons.
 
 ## Sensor
 
-Shows a value: a temperature, a humidity, a power reading. Read only. A **long press** shows its history graph.
+Shows a value: a temperature, a humidity, a power reading. Read only. A **tap** (or long press) shows its history graph.
 
 ![Sensor 1x1 and 2x1 with their snippets.](img/gallery-sensor-sizes.png "Sensor 1x1 and size 2x1.")
 
@@ -225,7 +225,7 @@ The device asks Home Assistant for the events of the next 7 days while the tab i
 
 ## Energy
 
-Today's energy use and solar production as two bars on one scale, in kWh. Read-only: a tap does nothing, a **long press** opens the hourly usage bars (the `usage` sensor only).
+Today's energy use and solar production as two bars on one scale, in kWh. Read-only: a **tap** or **long press** opens the hourly usage bars (the `usage` sensor only).
 
 ![Energy tile with used and solar bars, and with solar missing.](img/gallery-energy.png "Used and solar, one scale.")
 
@@ -282,7 +282,7 @@ Not allowed: `type: bar` with `source: history`, and hourly bars over more than 
 
 ### The history popup
 
-Without `display: graph`, a **long press** on a sensor still opens the history in a popup. Set `history: false` on the sensor to switch the popup off. The popup uses the same `history` options.
+Without `display: graph`, a **tap** or **long press** on a sensor still opens the history in a popup. Set `history: false` on the sensor to switch the popup off. The popup uses the same `history` options.
 
 ![History graph popup with callouts.](img/screen-popup-history.png "Long press a sensor to see its history.")
 

@@ -280,12 +280,13 @@ void test_widget_data_loading_before_states() {
   TEST_ASSERT_TRUE(d.energy.look == Look::Loading);
 }
 
-void test_tap_does_nothing_long_press_opens_usage_bar_history() {
+void test_tap_and_long_press_open_usage_bar_history() {
   AppState a = makeApp();
   const ui::Rect r = a.layout().widgets[0].rect;
   const ui::Point p{r.x + r.w / 2, r.y + r.h / 2};
-  TEST_ASSERT_FALSE(a.touch(p, 100));
-  TEST_ASSERT_FALSE(a.historyOpen());
+  TEST_ASSERT_TRUE(a.touch(p, 100));  // task 118: a tap opens the history too
+  TEST_ASSERT_TRUE(a.historyOpen());
+  a.closeHistory();
   TEST_ASSERT_TRUE(a.historyWidgetAt(p));
   TEST_ASSERT_TRUE(a.longPress(p, 1000));
   TEST_ASSERT_TRUE(a.historyOpen());
@@ -332,7 +333,7 @@ int main(int, char **) {
   RUN_TEST(test_graph_entries_for_both_sensors);
   RUN_TEST(test_widget_data_shows_statistics_value);
   RUN_TEST(test_widget_data_loading_before_states);
-  RUN_TEST(test_tap_does_nothing_long_press_opens_usage_bar_history);
+  RUN_TEST(test_tap_and_long_press_open_usage_bar_history);
   RUN_TEST(test_history_false_disables_popup);
   RUN_TEST(test_rocker_never_focuses_it);
   return UNITY_END();

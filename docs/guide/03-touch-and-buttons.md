@@ -9,7 +9,7 @@ You can use the device with your finger, with the rocker, or both.
 | **Tap** a widget | Does its main action: switches a light, a switch or an automation, opens a popup for a media player or notifications. |
 | **Tap a button inside a widget** | Shutter up / stop / down, thermostat minus / plus, vacuum start / pause / dock. |
 | **Long press** a light (about half a second) | Opens the brightness popup. |
-| **Long press** a sensor | Opens its history graph. |
+| **Tap** a sensor, binary sensor or energy widget | Opens its history graph. A long press does too. |
 | **Tap a tab** | Switches the tab. |
 | **Tap "updated"** (status bar) | Fetches fresh states now. |
 | **Tap the battery** (status bar) | Opens Settings. |
