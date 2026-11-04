@@ -913,6 +913,92 @@ void test_demo_lock_commits_after_pending() {
   TEST_ASSERT_EQUAL_STRING("unlocked", app.store().get("lock.front_door")->state.c_str());
 }
 
+// Bug (device check 108): in the demo, No / Skip on the garage confirm still changed the state.
+void test_demo_garage_no_skip_change_nothing() {
+  const config::Config cfg = demoCfg();
+  int tab = 0;
+  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Doors") tab = int(i);
+  const auto &ws = cfg.tabs[size_t(tab)].widgets;
+  for (Orientation o : {Orientation::Landscape, Orientation::Portrait}) {
+    const ConfirmLayout l = confirmLayout(o);
+    const ui::Point answers[] = {{l.no.x + 5, l.no.y + 5}, {l.skip.x + 5, l.skip.y + 5}, {1, 1}};
+    for (size_t gi = 0; gi < ws.size(); ++gi) {
+      if (ws[gi].type != config::WidgetType::Garage) continue;
+      const std::string id = ws[gi].entities[0];
+      for (const ui::Point &a : answers) {
+        AppState app;
+        app.init(cfg, o, true);
+        app.restoreTab(tab);
+        ui::Point p{0, 0};
+        for (const ui::Placement &pl : app.layout().widgets) if (pl.index == int(gi)) p = {pl.rect.x + 20, pl.rect.y + 20};
+        const std::string before = app.store().get(id)->state;
+        app.touch(p, 100);
+        const bool asked = app.confirmOpen();
+        if (asked) app.touch(a, 200);
+        TEST_ASSERT_FALSE(app.confirmOpen());
+        app.tick(200 + kPendingMs + 1);
+        app.tick(20000);
+        if (asked) {  // "Stop" (moving gate) runs without a question by design
+          TEST_ASSERT_EQUAL_STRING(before.c_str(), app.store().get(id)->state.c_str());
+          TEST_ASSERT_FALSE(app.widgetData(int(gi)).optimistic);
+        }
+      }
+    }
+  }
+}
+
+void test_demo_garage_rocker_no_skip_change_nothing() {
+  const config::Config cfg = demoCfg();
+  int tab = 0;
+  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Doors") tab = int(i);
+  for (ui::PhysicalKey k : {ui::PhysicalKey::Down, ui::PhysicalKey::Push, ui::PhysicalKey::LongPush}) {
+    AppState app;
+    app.init(cfg, Orientation::Landscape, true);
+    app.restoreTab(tab);
+    app.rocker(ui::PhysicalKey::Push, 100);  // Tab mode -> widgets
+    int guard = 0;
+    while (app.focusedWidgetIndex() != 5 && guard++ < 20) app.rocker(ui::PhysicalKey::Down, 110);
+    TEST_ASSERT_EQUAL(5, app.focusedWidgetIndex());
+    app.rocker(ui::PhysicalKey::Push, 200);
+    TEST_ASSERT_TRUE(app.confirmOpen());
+    app.rocker(k, 300);
+    TEST_ASSERT_FALSE(app.confirmOpen());
+    app.tick(300 + kPendingMs + 1);
+    TEST_ASSERT_EQUAL_STRING("closed", app.store().get("cover.garage")->state.c_str());
+  }
+}
+
+void test_demo_garage_brute_force_points() {
+  const config::Config cfg = demoCfg();
+  int tab = 0;
+  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Doors") tab = int(i);
+  for (Orientation o : {Orientation::Landscape, Orientation::Portrait}) {
+    const ConfirmLayout l = confirmLayout(o);
+    const int W = o == Orientation::Landscape ? 960 : 540, H = o == Orientation::Landscape ? 540 : 960;
+    AppState probe;
+    probe.init(cfg, o, true);
+    probe.restoreTab(tab);
+    ui::Point g{0, 0};
+    for (const ui::Placement &pl : probe.layout().widgets) if (pl.index == 5) g = {pl.rect.x + 20, pl.rect.y + 20};
+    for (int y = 0; y < H; y += 6) for (int x = 0; x < W; x += 6) {
+      AppState app;
+      app.init(cfg, o, true);
+      app.restoreTab(tab);
+      app.touch(g, 100);
+      TEST_ASSERT_TRUE(app.confirmOpen());
+      app.touch({x, y}, 200);
+      app.tick(5000);
+      const bool yes = l.yes.contains({x, y});
+      const char *st = app.store().get("cover.garage")->state.c_str();
+      if (!yes) TEST_ASSERT_EQUAL_STRING("closed", st);
+      for (const char *id : {"lock.front_door", "lock.back_door", "cover.garage_open"}) {
+        const std::string &s2 = app.store().get(id)->state;
+        TEST_ASSERT_TRUE(s2 == (std::string(id) == "lock.front_door" ? "locked" : std::string(id) == "lock.back_door" ? "unlocked" : "open"));
+      }
+    }
+  }
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_config_types_and_confirm);
@@ -953,5 +1039,8 @@ int main(int, char **) {
   RUN_TEST(test_demo_security_tab_shows_all_states);
   RUN_TEST(test_demo_keypad_wrong_and_right_code);
   RUN_TEST(test_demo_lock_commits_after_pending);
+  RUN_TEST(test_demo_garage_no_skip_change_nothing);
+  RUN_TEST(test_demo_garage_brute_force_points);
+  RUN_TEST(test_demo_garage_rocker_no_skip_change_nothing);
   return UNITY_END();
 }
