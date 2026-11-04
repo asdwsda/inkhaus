@@ -106,7 +106,7 @@
 | 105 | [Calendar widget](105-calendar-widget.md) | PC done | 045 |
 | 106 | [Media player widget (without album art)](106-media-widget.md) | PC done | 045 |
 | 107 | [Media album art](107-media-album-art.md) | PC part done | 106 |
-| 108 | [Alarm panel, lock and garage widgets + confirm dialog](108-alarm-lock-widgets.md) | todo | 045 |
+| 108 | [Alarm panel, lock and garage widgets + confirm dialog](108-alarm-lock-widgets.md) | PC part done | 045 |
 | 109 | [Energy widget](109-energy-widget.md) | PC done | 082 |
 | 110 | [User guide on the website (structure and build)](110-user-guide-site.md) | done | 065, 102 |
 | 111 | [Guide visuals: widget fragments, annotated screens, diagrams](111-guide-visuals.md) | todo | 110 (page layout), accepted mockups |
