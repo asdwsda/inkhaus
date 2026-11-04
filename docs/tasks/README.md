@@ -105,7 +105,7 @@
 | 104 | [Weather widget with forecast](104-weather-widget.md) | PC done | 045 |
 | 105 | [Calendar widget](105-calendar-widget.md) | PC done | 045 |
 | 106 | [Media player widget (without album art)](106-media-widget.md) | PC done | 045 |
-| 107 | [Media album art](107-media-album-art.md) | todo | 106 |
+| 107 | [Media album art](107-media-album-art.md) | PC part done | 106 |
 | 108 | [Alarm panel, lock and garage widgets + confirm dialog](108-alarm-lock-widgets.md) | todo | 045 |
 | 109 | [Energy widget](109-energy-widget.md) | PC done | 082 |
 | 110 | [User guide on the website (structure and build)](110-user-guide-site.md) | done | 065, 102 |
@@ -116,7 +116,7 @@
 | 115 | [Slow taps after waking on battery](115-slow-taps-after-wake.md) | todo | 080, 093 |
 | 116 | [User commands jump the net queue](116-user-commands-first.md) | PC part done | 115 |
 | 117 | [Stress test before the 1.4.0 release](117-stress-test.md) | done | 116 |
-| 118 | [Tap opens history on read-only widgets](118-tap-opens-history.md) | todo | 046 |
+| 118 | [Tap opens history on read-only widgets](118-tap-opens-history.md) | PC part done | 046 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
