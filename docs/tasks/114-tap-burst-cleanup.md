@@ -1,6 +1,6 @@
 # 114: Clean the screen after a burst of taps (factory-app style)
 
-Status: pc-part-done (device look pending)
+Status: done
 Depends on: 092, 095, 099
 UI spec: none
 Needs device: yes (look + timing)

@@ -112,10 +112,11 @@
 | 111 | [Guide visuals: widget fragments, annotated screens, diagrams](111-guide-visuals.md) | todo | 110 (page layout), accepted mockups |
 | 112 | [Guide content](112-guide-content.md) | todo | 110, 111; widgets 103-109 for their sections |
 | 113 | [Build info in Settings](113-build-info-in-settings.md) | todo | 087 |
-| 114 | [Clean the screen after a burst of taps (factory-app style)](114-tap-burst-cleanup.md) | todo | 092, 095, 099 |
+| 114 | [Clean the screen after a burst of taps (factory-app style)](114-tap-burst-cleanup.md) | done | 092, 095, 099 |
 | 115 | [Slow taps after waking on battery](115-slow-taps-after-wake.md) | todo | 080, 093 |
 | 116 | [User commands jump the net queue](116-user-commands-first.md) | PC part done | 115 |
 | 117 | [Stress test before the 1.4.0 release](117-stress-test.md) | done | 116 |
+| 118 | [Tap opens history on read-only widgets](118-tap-opens-history.md) | todo | 046 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
