@@ -425,7 +425,7 @@ void test_demo_yaml_showcase() {
     if (!s.available) { ++unavailable; continue; }
     TEST_ASSERT_TRUE(s.state != "home" || s.id == "person.alice");  // no generic fallback state
   }
-  TEST_ASSERT_EQUAL_INT(2, unavailable);  // sensor.old_probe_unavailable, calendar.old_unavailable
+  TEST_ASSERT_EQUAL_INT(5, unavailable);  // sensor.old_probe_unavailable, calendar.old_unavailable, and the Security tab (108): alarm, lock, garage
   for (auto o : {settings::Orientation::Portrait, settings::Orientation::Landscape}) {
     bool pager = false;
     for (size_t t = 0; t < cfg.tabs.size(); ++t) {
