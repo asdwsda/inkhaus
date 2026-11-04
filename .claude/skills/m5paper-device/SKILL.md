@@ -148,3 +148,4 @@ Room light (user, 2026-11-03): `tools/cam_light.sh on|off` switches the room's c
 in git). Plan camera shots in batches: one `on` before the batch, one `off` right after. No toggling per shot; keep each on/off state at least 1 min; leave
 it off when no camera work is planned.
 `tools/provision.py` takes the device lock itself: run it without the `device_lock.sh` wrapper (wrapping deadlocks).
+Camera off (user, 2026-11-04): no camera shots or room-light use until the user says it is back.
