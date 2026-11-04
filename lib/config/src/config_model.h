@@ -35,6 +35,9 @@ enum class WidgetType {
   MediaPlayer,  // task 106 (type name and domain "media_player")
   Calendar,     // task 105 (type name and domain "calendar")
   Energy,  // task 109: `type: energy` with `usage:` / `solar:` entities (no entity / group key)
+  Alarm,   // task 108 (type name and domain "alarm_control_panel")
+  Lock,    // task 108 (type name and domain "lock")
+  Garage,  // task 108: `type: garage` on a cover entity
 };
 
 // Name as used in the `type:` override and as HA domain (e.g. "binary_sensor").
@@ -120,6 +123,7 @@ struct Widget {
   std::optional<int> decimals;          // 0..3, rounds numeric main/detail values
   std::string usage, solar;  // task 109: energy widget entities (either may be empty; `entity` = usage, else solar)
   bool art = true;        // task 107: media player shows the cover art (`art: false` = text only, old layout)
+  std::optional<bool> confirm;  // task 108: lock / garage: overrides the default confirm dialog (lock: unlock only, garage: both)
   bool forecast = false;  // task 104: weather widget with the 3-day forecast (wide, single entity)
   HistoryConfig history;  // defaults when the key is absent
   // Entities this widget acts on: {entity} or the group members.

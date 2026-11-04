@@ -27,6 +27,9 @@ const TypeName kTypes[] = {
     {"media_player", WidgetType::MediaPlayer},  // task 106
     {"calendar", WidgetType::Calendar},         // task 105
     {"energy", WidgetType::Energy},  // task 109
+    {"alarm_control_panel", WidgetType::Alarm},  // task 108
+    {"lock", WidgetType::Lock},                  // task 108
+    {"garage", WidgetType::Garage},              // task 108 (type only; a cover entity)
 };
 
 bool startsWith(const std::string &s, const char *prefix) {
@@ -663,6 +666,23 @@ class Validator {
     else w.art = a == "true";
   }
 
+  // Task 108: `confirm: true|false`, lock and garage widgets only.
+  void parseConfirmOption(JsonObjectConst o, const std::string &path, Widget &w) {
+    std::string f;
+    if (!str(o, "confirm", path, false, f)) return;
+    if (f != "true" && f != "false") err(path + ".confirm", "must be true or false");
+    else if (w.type != WidgetType::Lock && w.type != WidgetType::Garage) err(path + ".confirm", "only available for lock and garage widgets");
+    else w.confirm = f == "true";
+  }
+
+  // Task 108: alarm, lock and garage are single entities with fixed behaviour.
+  void checkSecureWidget(const std::string &path, const Widget &w) {
+    if (w.type != WidgetType::Alarm && w.type != WidgetType::Lock && w.type != WidgetType::Garage) return;
+    const char *want = w.type == WidgetType::Alarm ? "alarm_control_panel" : w.type == WidgetType::Lock ? "lock" : "cover";
+    if (!w.group.empty()) err(path + ".group", std::string(widgetTypeName(w.type)) + " widgets need a single entity, not a group");
+    else if (domainOf(w.entity) != want) err(path + ".entity", std::string("must be a ") + want + " entity id");
+  }
+
   // Task 103: `type: notifications`, optional `name` and `size`; no entity, no group.
   void notificationsWidget(JsonObjectConst o, const std::string &path, Tab &tb) {
     Widget w;
@@ -817,6 +837,8 @@ class Validator {
     }
     parseForecastOption(o, path, w);  // task 104
     parseArtOption(o, path, w);       // task 107
+    parseConfirmOption(o, path, w);   // task 108
+    checkSecureWidget(path, w);       // task 108
     for (const auto &e : w.entities) addEntity(e);
     tb.widgets.push_back(std::move(w));
   }
