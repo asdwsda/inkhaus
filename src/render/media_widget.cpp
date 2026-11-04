@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "art_store.h"
 #include "media_layout.h"
 #include "media_view.h"
 
@@ -92,6 +93,52 @@ void glyphButton(M5Canvas &c, const Rect &b, Glyph g, Btn kind, bool focus = fal
   drawGlyph(c, g, b.x + (b.w - 40) / 2, b.y + (b.h - 40) / 2, glyphColor(kind));
 }
 
+// ---- album art (task 107, docs/ui/widgets-new-media-art.md) ----
+// UNVERIFIED (device): the look of the 16-grey art on the panel and the ghosting of its GC16 partial; the tile
+// glyphs (the speaker is the 40 px primitive glyph, also used where the spec says L / 48).
+
+// The 4-bit picture at (x, y), one 8-bit grey per pixel (v * 17), edge outside. Pixels are written in one batch.
+void drawArtPixels(M5Canvas &c, const art::Gray4 &g, int x, int y) {
+  c.drawRect(x - 1, y - 1, g.w + 2, g.h + 2, INK);
+  c.startWrite();
+  for (int py = 0; py < g.h; ++py)
+    for (int px = 0; px < g.w; ++px) c.drawPixel(x + px, y + py, uint32_t(art::grey4to8(g.at(px, py))) * 0x010101U);
+  c.endWrite();
+}
+
+// 2 px INK square tile with PAPER fill (r = outer rect), or the dotted OFF one (unavailable).
+void artTile(M5Canvas &c, const Rect &r, bool dotted) {
+  if (dotted) {
+    c.fillRect(r.x, r.y, r.w, r.h, PAPER);
+    drawDashedBox(c, float(r.x + 1), float(r.y + 1), float(r.w - 2), float(r.h - 2), 1.0f, 2, 2.0f, 4.0f, OFFGREY);
+    return;
+  }
+  c.fillRect(r.x, r.y, r.w, r.h, INK);
+  c.fillRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4, PAPER);
+}
+
+// Tile contents by state. `big` = popup (200 px art): hourglass L, failed alert M at the lower right.
+void artTileContent(M5Canvas &c, const Rect &art, const Rect &tile, art::ArtState st, bool big) {
+  const int cx = tile.x + tile.w / 2, cy = tile.y + tile.h / 2;
+  switch (st) {
+    case art::ArtState::Loading: {
+      const int sz = big ? 48 : 40;
+      drawIcon(c, Icon::Hourglass, sz, cx - sz / 2, cy - sz / 2, INK);
+      break;
+    }
+    case art::ArtState::Failed:
+      if (big) {
+        drawGlyph(c, Glyph::Volume, cx - 20, cy - 20, INK);
+        drawIcon(c, Icon::Alert, 40, tile.x + tile.w - 52, tile.y + tile.h - 52, INK);
+      } else {
+        drawGlyph(c, Glyph::Volume, art.x + 6, art.y + 8, INK);
+        drawIcon(c, Icon::Alert, 24, art.x + 48, art.y + 48, INK);
+      }
+      break;
+    default: drawGlyph(c, Glyph::Volume, cx - 20, cy - 20, INK); break;
+  }
+}
+
 Icon playIcon(PlayGlyph g) { return g == PlayGlyph::Pause ? Icon::Pause : g == PlayGlyph::Power ? Icon::Power : Icon::Play; }
 
 }  // namespace
@@ -109,12 +156,25 @@ void drawMediaWidget(M5Canvas &c, const ui::Placement &pl, const uistate::Widget
   } else {
     drawBox(c, r, PAPER, INK);
   }
-  drawTextCy(c, Font::F24, fitText(c, Font::F24, v.line1, W - 252), r.x + 12, r.y + 36, Align::Left, una ? OFFGREY : INK);
-  drawTextCy(c, Font::F24, fitText(c, Font::F24, v.line2, W - 284), r.x + 12, r.y + 69, Align::Left, INK);
+  const uistate::MediaWidgetLayout wl = uistate::mediaWidgetLayout(W, d.art);
+  drawTextCy(c, Font::F24, fitText(c, Font::F24, v.line1, wl.line1MaxW), r.x + wl.textX, r.y + wl.line1Cy, Align::Left, una ? OFFGREY : INK);
+  drawTextCy(c, Font::F24, fitText(c, Font::F24, v.line2, wl.line2MaxW), r.x + wl.textX, r.y + wl.line2Cy, Align::Left, INK);
+  if (d.art) {
+    const Rect ar{r.x + wl.artRect.x, r.y + wl.artRect.y, wl.artRect.w, wl.artRect.h};
+    const Rect tile{r.x + wl.tile.x, r.y + wl.tile.y, wl.tile.w, wl.tile.h};
+    if (una) {
+      artTile(c, tile, true);
+    } else if (d.artState == art::ArtState::Ready && d.artPx) {
+      drawArtPixels(c, *d.artPx, ar.x, ar.y);
+    } else {
+      artTile(c, tile, false);
+      artTileContent(c, ar, tile, d.artState, false);
+    }
+  }
   if (una) drawIcon(c, Icon::Warn, 24, r.x + W - 264, r.y + 57, OFFGREY);
   else if (d.failed) drawIcon(c, Icon::Alert, 24, r.x + W - 264, r.y + 57, INK);
 
-  const auto subs = ui::subRegions(config::WidgetType::MediaPlayer, config::WidgetSize{}, r);
+  const auto subs = ui::subRegions(config::WidgetType::MediaPlayer, config::WidgetSize{}, r, d.art);
   const Btn skip = v.skipDotted ? Btn::Dotted : Btn::Outline;
   const Btn play = v.allDotted ? Btn::Dotted : v.playFilled ? Btn::Filled : Btn::Outline;
   glyphButton(c, subs[0].rect, Glyph::Prev, skip, innerSub == uistate::kMediaSubPrev);
@@ -125,7 +185,7 @@ void drawMediaWidget(M5Canvas &c, const ui::Placement &pl, const uistate::Widget
 
 void drawMediaPopup(M5Canvas &c, const uistate::AppState &app) {
   if (!app.mediaOpen()) return;
-  const uistate::MediaLayout l = uistate::mediaLayout(app.orientation());
+  const uistate::MediaLayout l = uistate::mediaLayout(app.orientation(), app.mediaArt());
   const uistate::MediaPopupView v = app.mediaPopupData();
 
   // Shadow (6 px solid INK, right and bottom), then the framed panel.
@@ -135,6 +195,16 @@ void drawMediaPopup(M5Canvas &c, const uistate::AppState &app) {
 
   drawTextCy(c, Font::F24, fitText(c, Font::F24, app.mediaTitle(), l.nameMaxW), l.nameX, l.nameCy, Align::Left, INK);
   iconButton(c, l.close, Icon::Close, Btn::Outline);
+
+  if (l.art) {
+    const art::ArtState st = app.mediaArtState();
+    if (st == art::ArtState::Ready && app.mediaArtPixels()) {
+      drawArtPixels(c, *app.mediaArtPixels(), l.artRect.x, l.artRect.y);
+    } else {
+      artTile(c, l.tile, false);
+      artTileContent(c, l.artRect, l.tile, st, true);
+    }
+  }
 
   drawTextCy(c, Font::F40, fitText(c, Font::F40, v.title, l.titleMaxW), l.titleX, l.titleCy, Align::Left, INK);
   if (!v.artist.empty())
@@ -146,7 +216,7 @@ void drawMediaPopup(M5Canvas &c, const uistate::AppState &app) {
   iconButton(c, l.play, playIcon(v.glyph), v.look == Look::Unavailable ? Btn::Dotted : v.playFilled ? Btn::Filled : Btn::Outline);
   glyphButton(c, l.next, Glyph::Next, v.skipDotted ? Btn::Dotted : Btn::Outline);
   drawTextCy(c, Font::F24, v.stateWord, l.stateX, l.stateCy, Align::Left, INK);
-  const char *hint = "Rocker: volume, PUSH play/pause";
+  const char *hint = l.hint;
   if (l.hintLeft) drawTextCy(c, Font::F18, hint, l.hintRight, l.hintCy, Align::Left, DIM);
   else drawTextCy(c, Font::F18, hint, l.hintRight, l.hintCy, Align::Right, DIM);
 
