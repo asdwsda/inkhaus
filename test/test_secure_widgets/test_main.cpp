@@ -2,7 +2,10 @@
 #include <unity.h>
 
 #include "app_state.h"
+#include "alarm_popup.h"
 #include "config_cache.h"
+#include "confirm_dialog.h"
+#include "secure_view.h"
 #include "secure_intent.h"
 #include "service_call.h"
 #include "tap_intent.h"
@@ -135,6 +138,388 @@ void test_intents() {
   TEST_ASSERT_EQUAL_STRING("alarm_disarm", al->custom_call.service.c_str());
 }
 
+// ---- views ----
+namespace {
+EntityState st(const char *id, const char *state, bool avail = true) {
+  EntityState s;
+  s.id = id;
+  s.state = state;
+  s.available = avail;
+  return s;
+}
+void attr(EntityState &s, const char *k, const char *v) { s.attrs.emplace_back(k, v); }
+}  // namespace
+
+void test_alarm_view_table() {
+  struct Row { const char *state; const char *text; SecureIcon icon; bool fill; };
+  const Row rows[] = {
+      {"disarmed", "Off", SecureIcon::ShieldOff, false}, {"armed_home", "Home", SecureIcon::Shield, false},
+      {"armed_away", "Away", SecureIcon::Shield, false}, {"armed_night", "Night", SecureIcon::Shield, false},
+      {"armed_vacation", "Vacat.", SecureIcon::Shield, false}, {"armed_custom_bypass", "Custom", SecureIcon::Shield, false},
+      {"arming", "Arming", SecureIcon::ShieldOff, false}, {"pending", "Entry", SecureIcon::ShieldOff, false},
+      {"triggered", "ALARM", SecureIcon::ShieldAlert, true}};
+  for (const Row &r : rows) {
+    const EntityState s = st("alarm_control_panel.h", r.state);
+    const SecureView v = alarmView(&s);
+    TEST_ASSERT_EQUAL_STRING(r.text, v.text.c_str());
+    TEST_ASSERT_EQUAL(int(r.icon), int(v.icon));
+    TEST_ASSERT_EQUAL(r.fill, v.fill);
+    TEST_ASSERT_EQUAL(int(Look::Normal), int(v.look));
+  }
+  const EntityState una = st("alarm_control_panel.h", "unavailable", false);
+  SecureView v = alarmView(&una);
+  TEST_ASSERT_EQUAL(int(Look::Unavailable), int(v.look));
+  TEST_ASSERT_EQUAL_STRING("n/a", v.text.c_str());
+  TEST_ASSERT_EQUAL(int(SecureIcon::Warn), int(v.icon));
+  v = alarmView(nullptr);
+  TEST_ASSERT_EQUAL(int(Look::Loading), int(v.look));
+  TEST_ASSERT_EQUAL_STRING("-", v.text.c_str());
+  TEST_ASSERT_EQUAL(int(SecureIcon::ShieldOff), int(v.icon));
+}
+
+void test_lock_view_table() {
+  struct Row { const char *state; const char *text; SecureIcon icon; bool fill; };
+  const Row rows[] = {{"locked", "Locked", SecureIcon::Lock, false}, {"unlocked", "Open", SecureIcon::LockOpen, true},
+                      {"open", "Open", SecureIcon::LockOpen, true}, {"locking", "Locking", SecureIcon::Lock, false},
+                      {"unlocking", "Opening", SecureIcon::LockOpen, false}, {"jammed", "Jammed", SecureIcon::Alert, true}};
+  for (const Row &r : rows) {
+    const EntityState s = st("lock.a", r.state);
+    const SecureView v = lockView(&s);
+    TEST_ASSERT_EQUAL_STRING(r.text, v.text.c_str());
+    TEST_ASSERT_EQUAL(int(r.icon), int(v.icon));
+    TEST_ASSERT_EQUAL(r.fill, v.fill);
+    TEST_ASSERT_FALSE(v.alertBadge);
+  }
+  EntityState coded = st("lock.a", "locked");
+  attr(coded, "code_format", "^\\d{4}$");
+  TEST_ASSERT_TRUE(lockView(&coded).alertBadge);
+  TEST_ASSERT_EQUAL(int(SecureAction::None), int(lockAction(&coded)));
+  const EntityState una = st("lock.a", "unavailable", false);
+  TEST_ASSERT_EQUAL(int(Look::Unavailable), int(lockView(&una).look));
+  TEST_ASSERT_EQUAL(int(Look::Loading), int(lockView(nullptr).look));
+}
+
+void test_garage_view_table() {
+  struct Row { const char *state; const char *text; SecureIcon icon; bool fill; };
+  const Row rows[] = {{"closed", "Closed", SecureIcon::GarageOff, false}, {"open", "Open", SecureIcon::GarageOn, true},
+                      {"opening", "Opening", SecureIcon::GarageOn, false}, {"closing", "Closing", SecureIcon::GarageOff, false}};
+  for (const Row &r : rows) {
+    const EntityState s = st("cover.g", r.state);
+    const SecureView v = garageView(&s);
+    TEST_ASSERT_EQUAL_STRING(r.text, v.text.c_str());
+    TEST_ASSERT_EQUAL(int(r.icon), int(v.icon));
+    TEST_ASSERT_EQUAL(r.fill, v.fill);
+  }
+  const EntityState una = st("cover.g", "unavailable", false);
+  TEST_ASSERT_EQUAL_STRING("n/a", garageView(&una).text.c_str());
+  TEST_ASSERT_EQUAL_STRING("-", garageView(nullptr).text.c_str());
+  const EntityState odd = st("cover.g", "stopped");
+  TEST_ASSERT_EQUAL_STRING("Stopped", garageView(&odd).text.c_str());
+}
+
+void test_actions_and_confirm_defaults() {
+  using T = config::WidgetType;
+  const EntityState locked = st("lock.a", "locked"), unlocked = st("lock.a", "unlocked"), jam = st("lock.a", "jammed");
+  TEST_ASSERT_EQUAL(int(SecureAction::Unlock), int(lockAction(&locked)));
+  TEST_ASSERT_EQUAL(int(SecureAction::Lock), int(lockAction(&unlocked)));
+  TEST_ASSERT_EQUAL(int(SecureAction::None), int(lockAction(&jam)));
+  TEST_ASSERT_EQUAL(int(SecureAction::None), int(lockAction(nullptr)));
+  const EntityState closed = st("cover.g", "closed"), open = st("cover.g", "open"), opening = st("cover.g", "opening");
+  TEST_ASSERT_EQUAL(int(SecureAction::Open), int(garageAction(&closed)));
+  TEST_ASSERT_EQUAL(int(SecureAction::Close), int(garageAction(&open)));
+  TEST_ASSERT_EQUAL(int(SecureAction::Stop), int(garageAction(&opening)));
+  config::Widget w;
+  TEST_ASSERT_TRUE(needsConfirm(T::Lock, SecureAction::Unlock, w));
+  TEST_ASSERT_FALSE(needsConfirm(T::Lock, SecureAction::Lock, w));
+  TEST_ASSERT_TRUE(needsConfirm(T::Garage, SecureAction::Open, w));
+  TEST_ASSERT_TRUE(needsConfirm(T::Garage, SecureAction::Close, w));
+  TEST_ASSERT_FALSE(needsConfirm(T::Garage, SecureAction::Stop, w));
+  w.confirm = true;
+  TEST_ASSERT_TRUE(needsConfirm(T::Lock, SecureAction::Lock, w));
+  TEST_ASSERT_FALSE(needsConfirm(T::Garage, SecureAction::Stop, w));
+  w.confirm = false;
+  TEST_ASSERT_FALSE(needsConfirm(T::Garage, SecureAction::Open, w));
+  TEST_ASSERT_FALSE(needsConfirm(T::Lock, SecureAction::Unlock, w));
+  TEST_ASSERT_EQUAL_STRING("Unlock Front door?", confirmTitle(SecureAction::Unlock, "Front door").c_str());
+  TEST_ASSERT_EQUAL_STRING("Open Garage?", confirmTitle(SecureAction::Open, "Garage").c_str());
+  TEST_ASSERT_EQUAL_STRING("Close Garage?", confirmTitle(SecureAction::Close, "Garage").c_str());
+}
+
+void test_alarm_panel_info() {
+  EntityState s = st("alarm_control_panel.h", "armed_away");
+  attr(s, "code_format", "number");
+  attr(s, "code_arm_required", "false");
+  s.supported_features = 1 | 2;  // home + away
+  AlarmPanelInfo i = alarmPanelInfo(&s);
+  TEST_ASSERT_EQUAL(int(CodeFormat::Number), int(i.codeFormat));
+  TEST_ASSERT_FALSE(i.codeArmRequired);
+  TEST_ASSERT_TRUE(i.canHome && i.canAway && !i.canNight);
+  TEST_ASSERT_EQUAL(2, i.currentMode);
+  TEST_ASSERT_EQUAL_STRING("Armed away", i.stateLine.c_str());
+  s.state = "triggered";
+  TEST_ASSERT_EQUAL_STRING("TRIGGERED", alarmPanelInfo(&s).stateLine.c_str());
+  TEST_ASSERT_EQUAL(-1, alarmPanelInfo(&s).currentMode);
+  attr(s, "x", "y");
+  EntityState t = st("alarm_control_panel.h", "disarmed");
+  attr(t, "code_format", "text");
+  TEST_ASSERT_EQUAL(int(CodeFormat::Text), int(alarmPanelInfo(&t).codeFormat));
+  TEST_ASSERT_TRUE(alarmPanelInfo(nullptr).canNight);
+}
+
+// ---- confirm dialog ----
+void test_confirm_dialog_layout_and_answers() {
+  const ConfirmLayout l = confirmLayout(Orientation::Landscape);
+  TEST_ASSERT_TRUE(l.panel == (ui::Rect{200, 188, 560, 220}));
+  TEST_ASSERT_TRUE(l.yes == (ui::Rect{228, 316, 160, 64}));
+  TEST_ASSERT_TRUE(l.no == (ui::Rect{400, 316, 160, 64}));
+  TEST_ASSERT_TRUE(l.skip == (ui::Rect{572, 316, 160, 64}));
+  TEST_ASSERT_EQUAL(232, l.titleCy);
+  TEST_ASSERT_EQUAL(266, l.subCy);
+  const ConfirmLayout p = confirmLayout(Orientation::Portrait);
+  TEST_ASSERT_TRUE(p.panel == (ui::Rect{30, 356, 480, 224}));
+  TEST_ASSERT_TRUE(p.yes == (ui::Rect{54, 484, 136, 64}));
+
+  ConfirmDialog d;
+  d.open("Open Garage?", 3, 0, 1000);
+  TEST_ASSERT_TRUE(d.isOpen());
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::None), int(d.touch({480, 220}, Orientation::Landscape)));  // inside the panel, no button
+  TEST_ASSERT_TRUE(d.isOpen());
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::Yes), int(d.touch({300, 340}, Orientation::Landscape)));
+  TEST_ASSERT_FALSE(d.isOpen());
+  d.open("x", 0, 0, 0);
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::No), int(d.touch({480, 340}, Orientation::Landscape)));
+  d.open("x", 0, 0, 0);
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::Skip), int(d.touch({650, 340}, Orientation::Landscape)));
+  d.open("x", 0, 0, 0);
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::Skip), int(d.touch({10, 10}, Orientation::Landscape)));  // outside = skip
+}
+
+void test_confirm_dialog_rocker_and_timeout() {
+  ConfirmDialog d;
+  d.open("x", 0, 0, 0);
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::Yes), int(d.rocker(ui::PhysicalKey::Up)));
+  TEST_ASSERT_FALSE(d.isOpen());
+  d.open("x", 0, 0, 0);
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::No), int(d.rocker(ui::PhysicalKey::Down)));
+  d.open("x", 0, 0, 0);
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::Skip), int(d.rocker(ui::PhysicalKey::Push)));  // push is never yes
+  d.open("x", 0, 0, 0);
+  TEST_ASSERT_EQUAL(int(ConfirmAnswer::Skip), int(d.rocker(ui::PhysicalKey::LongPush)));
+  d.open("x", 0, 0, 100);
+  TEST_ASSERT_FALSE(d.tick(100 + kConfirmTimeoutMs - 1));
+  TEST_ASSERT_TRUE(d.tick(100 + kConfirmTimeoutMs));
+  TEST_ASSERT_FALSE(d.isOpen());
+  TEST_ASSERT_FALSE(d.tick(100 + 2 * kConfirmTimeoutMs));
+}
+
+// ---- keypad geometry and model ----
+void test_alarm_layout_numbers() {
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  TEST_ASSERT_TRUE(l.panel == (ui::Rect{40, 94, 880, 408}));
+  TEST_ASSERT_TRUE(l.close == (ui::Rect{840, 110, 64, 64}));
+  TEST_ASSERT_TRUE(l.codeBox == (ui::Rect{56, 262, 300, 64}));
+  TEST_ASSERT_TRUE(l.keys[0] == (ui::Rect{380, 186, 96, 64}));
+  TEST_ASSERT_TRUE(l.keys[4] == (ui::Rect{488, 262, 96, 64}));  // "5"
+  TEST_ASSERT_TRUE(l.keys[11] == (ui::Rect{596, 414, 96, 64}));
+  TEST_ASSERT_TRUE(l.modes[0] == (ui::Rect{728, 186, 176, 64}));
+  TEST_ASSERT_TRUE(l.modes[3] == (ui::Rect{728, 414, 176, 64}));
+  TEST_ASSERT_EQUAL(142, l.nameCy);
+  TEST_ASSERT_EQUAL(222, l.stateCy);
+  TEST_ASSERT_EQUAL(358, l.msgCy);
+  const AlarmLayout p = alarmLayout(Orientation::Portrait);
+  TEST_ASSERT_TRUE(p.panel == (ui::Rect{16, 116, 508, 704}));
+  TEST_ASSERT_TRUE(p.close == (ui::Rect{444, 132, 64, 64}));
+  TEST_ASSERT_TRUE(p.codeBox == (ui::Rect{32, 268, 476, 64}));
+  TEST_ASSERT_TRUE(p.keys[0] == (ui::Rect{32, 380, 150, 64}));
+  TEST_ASSERT_TRUE(p.keys[2] == (ui::Rect{358, 380, 150, 64}));
+  TEST_ASSERT_TRUE(p.keys[9] == (ui::Rect{32, 608, 150, 64}));
+  TEST_ASSERT_TRUE(p.modes[0] == (ui::Rect{32, 688, 110, 64}));
+  TEST_ASSERT_TRUE(p.modes[3] == (ui::Rect{398, 688, 110, 64}));
+  TEST_ASSERT_EQUAL(784, p.hint1Cy);
+  // every control lies inside its panel
+  for (const AlarmLayout *L : {&l, &p}) {
+    for (const ui::Rect &r : L->keys) TEST_ASSERT_TRUE(L->panel.contains(r.x, r.y) && L->panel.contains(r.x + r.w - 1, r.y + r.h - 1));
+    for (const ui::Rect &r : L->modes) TEST_ASSERT_TRUE(L->panel.contains(r.x, r.y) && L->panel.contains(r.x + r.w - 1, r.y + r.h - 1));
+  }
+}
+
+namespace {
+AlarmPanelInfo numberPanel() {
+  AlarmPanelInfo i;
+  i.codeFormat = CodeFormat::Number;
+  i.currentMode = 0;
+  return i;
+}
+ui::Point at(const ui::Rect &r) { return {r.x + r.w / 2, r.y + r.h / 2}; }
+}  // namespace
+
+void test_alarm_keypad_code_entry() {
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  const AlarmPanelInfo info = numberPanel();
+  AlarmPopup p;
+  p.open("alarm_control_panel.h", 0, 0, false, 0);
+  TEST_ASSERT_EQUAL(int(AlarmMsg::EnterCode), int(p.message(info)));
+  p.touch(at(l.keys[0]), Orientation::Landscape, info, 10);  // 1
+  p.touch(at(l.keys[10]), Orientation::Landscape, info, 20);  // 0
+  p.touch(at(l.keys[8]), Orientation::Landscape, info, 30);  // 9
+  TEST_ASSERT_EQUAL(3, p.codeLen());
+  TEST_ASSERT_EQUAL(int(AlarmMsg::CodeEntered), int(p.message(info)));
+  p.touch(at(l.keys[9]), Orientation::Landscape, info, 40);  // backspace
+  TEST_ASSERT_EQUAL(2, p.codeLen());
+  p.touch(at(l.keys[11]), Orientation::Landscape, info, 50);  // C
+  TEST_ASSERT_EQUAL(0, p.codeLen());
+  for (int i = 0; i < 12; ++i) p.touch(at(l.keys[1]), Orientation::Landscape, info, 60);
+  TEST_ASSERT_EQUAL(kAlarmMaxCode, p.codeLen());  // max 8 digits
+}
+
+void test_alarm_send_rules() {
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  AlarmPanelInfo info = numberPanel();
+  AlarmPopup p;
+  p.open("alarm_control_panel.h", 0, 0, false, 0);
+  // Disarm without a code: no send, message stays "Enter code"
+  AlarmResult r = p.touch(at(l.modes[0]), Orientation::Landscape, info, 5);
+  TEST_ASSERT_FALSE(r.send);
+  // arm needs a code when code_arm_required (default)
+  r = p.touch(at(l.modes[2]), Orientation::Landscape, info, 6);
+  TEST_ASSERT_FALSE(r.send);
+  p.touch(at(l.keys[0]), Orientation::Landscape, info, 7);
+  p.touch(at(l.keys[1]), Orientation::Landscape, info, 8);
+  r = p.touch(at(l.modes[2]), Orientation::Landscape, info, 9);
+  TEST_ASSERT_TRUE(r.send);
+  TEST_ASSERT_EQUAL(int(AlarmCmd::ArmAway), int(r.cmd));
+  TEST_ASSERT_EQUAL_STRING("12", r.code.c_str());
+  TEST_ASSERT_EQUAL(0, p.codeLen());  // cleared on send
+  TEST_ASSERT_EQUAL(2, p.awaitingMode());
+  TEST_ASSERT_EQUAL(int(AlarmMsg::Sent), int(p.message(info)));
+  // a second press while awaiting does nothing
+  p.touch(at(l.keys[0]), Orientation::Landscape, info, 10);
+  r = p.touch(at(l.modes[1]), Orientation::Landscape, info, 11);
+  TEST_ASSERT_FALSE(r.send);
+  // wrong code reply
+  p.sendFailed(true);
+  TEST_ASSERT_EQUAL(-1, p.awaitingMode());
+  TEST_ASSERT_EQUAL(0, p.codeLen());
+  TEST_ASSERT_EQUAL(int(AlarmMsg::WrongCode), int(p.message(info)));
+  p.touch(at(l.keys[0]), Orientation::Landscape, info, 12);  // a key press replaces the message
+  TEST_ASSERT_EQUAL(int(AlarmMsg::CodeEntered), int(p.message(info)));
+  // arming without a code when the panel does not require it
+  info.codeArmRequired = false;
+  p.touch(at(l.keys[11]), Orientation::Landscape, info, 13);
+  r = p.touch(at(l.modes[1]), Orientation::Landscape, info, 14);
+  TEST_ASSERT_TRUE(r.send);
+  TEST_ASSERT_EQUAL(int(AlarmCmd::ArmHome), int(r.cmd));
+  p.sendFailed(false);
+  TEST_ASSERT_EQUAL(int(AlarmMsg::Failed), int(p.message(info)));
+  // disarm always needs the code
+  r = p.touch(at(l.modes[0]), Orientation::Landscape, info, 15);
+  TEST_ASSERT_FALSE(r.send);
+}
+
+void test_alarm_no_code_format_and_text_format() {
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  AlarmPanelInfo none;  // no code_format
+  AlarmPopup p;
+  p.open("a.b", 0, 0, false, 0);
+  AlarmResult r = p.touch(at(l.modes[0]), Orientation::Landscape, none, 1);
+  TEST_ASSERT_TRUE(r.send);
+  TEST_ASSERT_TRUE(r.code.empty());
+  AlarmPanelInfo text;
+  text.codeFormat = CodeFormat::Text;
+  text.codeArmRequired = false;
+  p.open("a.b", 0, 0, false, 0);
+  TEST_ASSERT_EQUAL(int(AlarmMsg::TextUnsupported), int(p.message(text)));
+  p.touch(at(l.keys[0]), Orientation::Landscape, text, 2);
+  TEST_ASSERT_EQUAL(0, p.codeLen());  // keys are inert
+  r = p.touch(at(l.modes[0]), Orientation::Landscape, text, 3);
+  TEST_ASSERT_FALSE(r.send);  // disarm needs a code that cannot be typed
+  r = p.touch(at(l.modes[2]), Orientation::Landscape, text, 4);
+  TEST_ASSERT_TRUE(r.send);  // arming without a code still works
+  TEST_ASSERT_TRUE(r.code.empty());
+}
+
+void test_alarm_inert_modes_and_close() {
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  AlarmPanelInfo info = numberPanel();
+  info.canNight = false;
+  AlarmPopup p;
+  p.open("a.b", 0, 0, false, 0);
+  TEST_ASSERT_FALSE(p.modeActive(3, info));
+  p.touch(at(l.keys[0]), Orientation::Landscape, info, 1);
+  AlarmResult r = p.touch(at(l.modes[3]), Orientation::Landscape, info, 2);
+  TEST_ASSERT_FALSE(r.send);
+  TEST_ASSERT_EQUAL(1, p.codeLen());
+  r = p.touch(at(l.close), Orientation::Landscape, info, 3);
+  TEST_ASSERT_TRUE(r.closed);
+  TEST_ASSERT_FALSE(p.isOpen());
+  TEST_ASSERT_EQUAL(0, p.codeLen());  // cleared on close
+  p.open("a.b", 0, 0, false, 0);
+  TEST_ASSERT_TRUE(p.touch({5, 5}, Orientation::Landscape, info, 4).closed);  // outside closes
+  // panel tap on empty area: nothing
+  p.open("a.b", 0, 0, false, 0);
+  r = p.touch({60, 460}, Orientation::Landscape, info, 4);
+  TEST_ASSERT_FALSE(r.changed || r.closed);
+}
+
+void test_alarm_idle_close_clears_code() {
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  const AlarmPanelInfo info = numberPanel();
+  AlarmPopup p;
+  p.open("a.b", 0, 0, false, 1000);
+  p.touch(at(l.keys[0]), Orientation::Landscape, info, 2000);
+  TEST_ASSERT_FALSE(p.tick(2000 + kAlarmIdleCloseMs - 1));
+  TEST_ASSERT_TRUE(p.tick(2000 + kAlarmIdleCloseMs));
+  TEST_ASSERT_EQUAL(0, p.codeLen());
+}
+
+void test_alarm_rocker_walk() {
+  AlarmPanelInfo info = numberPanel();
+  info.canNight = false;
+  AlarmPopup p;
+  p.open("a.b", 0, 0, true, 0);
+  TEST_ASSERT_TRUE(p.ringVisible());
+  TEST_ASSERT_EQUAL(kEntryFocus, p.focus());  // key "5"
+  const std::vector<int> st = p.stops(info);
+  TEST_ASSERT_EQUAL(12 + 3 + 1, int(st.size()));  // 12 keys, 3 usable modes, close
+  p.rocker(ui::PhysicalKey::Down, Orientation::Portrait, info, 1);
+  TEST_ASSERT_EQUAL(5, p.focus());
+  // PUSH presses the focused key: key index 5 = "6"
+  p.rocker(ui::PhysicalKey::Push, Orientation::Portrait, info, 2);
+  TEST_ASSERT_EQUAL(1, p.codeLen());
+  // walk to the end: wraps from close to key 0
+  for (int i = 0; i < 40 && p.focus() != kStopClose; ++i) p.rocker(ui::PhysicalKey::Down, Orientation::Portrait, info, 3);
+  TEST_ASSERT_EQUAL(kStopClose, p.focus());
+  p.rocker(ui::PhysicalKey::Down, Orientation::Portrait, info, 4);
+  TEST_ASSERT_EQUAL(0, p.focus());
+  p.rocker(ui::PhysicalKey::Up, Orientation::Portrait, info, 5);
+  TEST_ASSERT_EQUAL(kStopClose, p.focus());
+  // the mode "Night" is skipped
+  p.rocker(ui::PhysicalKey::Up, Orientation::Portrait, info, 6);
+  TEST_ASSERT_EQUAL(kStopKeys + 2, p.focus());
+  // a mode press with the code: send
+  p.rocker(ui::PhysicalKey::Up, Orientation::Portrait, info, 7);  // Home
+  TEST_ASSERT_EQUAL(kStopKeys + 1, p.focus());
+  AlarmResult r = p.rocker(ui::PhysicalKey::Push, Orientation::Portrait, info, 8);
+  TEST_ASSERT_TRUE(r.send);
+  TEST_ASSERT_EQUAL(int(AlarmCmd::ArmHome), int(r.cmd));
+  // push on close, long push closes anywhere
+  p.sendConfirmed();
+  while (p.focus() != kStopClose) p.rocker(ui::PhysicalKey::Down, Orientation::Portrait, info, 9);
+  TEST_ASSERT_TRUE(p.rocker(ui::PhysicalKey::Push, Orientation::Portrait, info, 10).closed);
+  p.open("a.b", 0, 0, true, 0);
+  TEST_ASSERT_TRUE(p.rocker(ui::PhysicalKey::LongPush, Orientation::Portrait, info, 1).closed);
+}
+
+void test_alarm_rocker_first_event_reveals_ring() {
+  AlarmPanelInfo info = numberPanel();
+  AlarmPopup p;
+  p.open("a.b", 0, 0, false, 0);  // by touch: no ring
+  TEST_ASSERT_FALSE(p.ringVisible());
+  p.rocker(ui::PhysicalKey::Push, Orientation::Portrait, info, 1);
+  TEST_ASSERT_TRUE(p.ringVisible());
+  TEST_ASSERT_EQUAL(0, p.codeLen());  // the first event only reveals the ring
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_config_types_and_confirm);
@@ -142,5 +527,20 @@ int main(int, char **) {
   RUN_TEST(test_config_cache_roundtrip);
   RUN_TEST(test_service_calls);
   RUN_TEST(test_intents);
+  RUN_TEST(test_alarm_view_table);
+  RUN_TEST(test_lock_view_table);
+  RUN_TEST(test_garage_view_table);
+  RUN_TEST(test_actions_and_confirm_defaults);
+  RUN_TEST(test_alarm_panel_info);
+  RUN_TEST(test_confirm_dialog_layout_and_answers);
+  RUN_TEST(test_confirm_dialog_rocker_and_timeout);
+  RUN_TEST(test_alarm_layout_numbers);
+  RUN_TEST(test_alarm_keypad_code_entry);
+  RUN_TEST(test_alarm_send_rules);
+  RUN_TEST(test_alarm_no_code_format_and_text_format);
+  RUN_TEST(test_alarm_inert_modes_and_close);
+  RUN_TEST(test_alarm_idle_close_clears_code);
+  RUN_TEST(test_alarm_rocker_walk);
+  RUN_TEST(test_alarm_rocker_first_event_reveals_ring);
   return UNITY_END();
 }

@@ -18,6 +18,8 @@ const char* domain_attrs(const std::string& domain) {
   if (domain == "vacuum") return "battery_level,status";
   if (domain == "media_player")  // task 106, entity_picture: task 107
     return "media_title,media_artist,media_album_name,volume_level,is_volume_muted,supported_features,entity_picture";
+  if (domain == "alarm_control_panel") return "code_format,code_arm_required,supported_features";  // task 108
+  if (domain == "lock") return "code_format";  // task 108: a locks that needs a code is not supported
   if (domain == "calendar") return "message,start_time,end_time,all_day";  // task 101: sleep screen next event
   return "";
 }
