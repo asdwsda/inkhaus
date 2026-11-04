@@ -1,6 +1,6 @@
 # 102: Web flasher on the project site
 
-Status: in-progress (PC part done; device checks left)
+Status: done
 Depends on: 061-065 (native installer, release workflow, site)
 UI spec: docs/ui/installer.md (states reused; page layout by ui-designer, mockup in docs/ui/experiments/)
 Needs device: yes (one install + one update from Chrome; PC part first)

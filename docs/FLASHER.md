@@ -8,7 +8,7 @@ Next step after installing: create `secrets.yaml` and `config.yaml`, see the [RE
 ## Web install (recommended)
 Open <https://asdwsda.github.io/inkhaus/install/> in **Chrome, Edge or Opera on a computer** (Web Serial;
 Firefox, Safari and phones cannot do it).
-1. Connect the M5Paper with a USB data cable. On Windows install the CH9102 driver once if no port shows up.
+1. Connect the M5Paper with a USB data cable. On Windows, if no port shows up, install the USB driver once: CP210x (older boards, CP2104 chip) or CH9102 (newer boards).
 2. Pick a version (the newest stable one is preselected; tick "Show pre-releases" for test versions; the page
    offers the last 5 stable releases). Older versions show a note: settings saved by newer versions may be reset.
 3. Press **Install**, pick the new USB port in the browser window and wait for "done". Do not unplug meanwhile.
@@ -44,7 +44,7 @@ File contents are never displayed or logged. After the last file the flasher sen
 by itself with the new files (no extra button). Limit: 64 KB per file. Opening the port resets the board once.
 
 ## Problems
-- **No device found**: use a data cable; on Windows install the CH9102 USB driver (WCH CH343 driver).
+- **No device found**: use a data cable; on Windows install the USB driver: Silicon Labs CP210x (older boards) or WCH CH343/CH9102 (newer boards).
 - **Port cannot be opened**: close serial monitors, Arduino IDE, PlatformIO.
 - **Checksum does not match**: the download was damaged; go back and press Install again. Nothing is written in that case.
 - **Windows SmartScreen / macOS Gatekeeper warn**: the binary is unsigned. Windows: "More info", then "Run anyway".
