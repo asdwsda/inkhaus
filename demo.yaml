@@ -122,3 +122,43 @@ tabs:
         solar: sensor.solar_energy_total
       - entity: media_player.living_room        # playing, with the built-in sample cover (task 107)
       - entity: media_player.kitchen            # paused, no picture (tile)
+  - title: Security                          # task 108: alarm panels, locks and garage doors in every state (fake data)
+    widgets:
+      - entity: alarm_control_panel.home        # disarmed; tap for the keypad, the demo code is 1234
+        name: Alarm
+      - entity: alarm_control_panel.away        # armed away
+        name: Away
+      - entity: alarm_control_panel.night       # armed night
+        name: Night
+      - entity: alarm_control_panel.garden      # armed home
+        name: Garden
+      - entity: alarm_control_panel.arming      # arming
+        name: Arming
+      - entity: alarm_control_panel.entry       # pending (entry delay)
+        name: Entry
+      - entity: alarm_control_panel.triggered   # triggered: INK fill
+        name: Siren
+      - entity: alarm_control_panel.old_unavailable  # deliberately unavailable
+        name: Old panel
+      - entity: lock.front_door                 # locked; unlocking asks first
+        name: Front door
+      - entity: lock.back_door                  # open (unlocked): INK fill, locking does not ask
+        name: Back door
+      - entity: lock.cellar                     # jammed: INK fill, alert glyph
+        name: Cellar
+      - entity: lock.shed                       # unlocking
+        name: Shed
+      - entity: lock.old_unavailable            # deliberately unavailable
+        name: Old lock
+      - entity: cover.garage                    # closed; both directions ask first
+        type: garage
+        name: Garage
+      - entity: cover.garage_open               # open: INK fill
+        type: garage
+        name: Carport
+      - entity: cover.garage_moving             # opening: a tap stops it, no question
+        type: garage
+        name: Gate
+      - entity: cover.garage_unavailable        # deliberately unavailable
+        type: garage
+        name: Old door

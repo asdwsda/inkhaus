@@ -36,6 +36,9 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   art_.clear();
   media_.setSink([this](const std::string &id, MediaSend what, int v) { onMediaSend(id, what, v); });
   maAwaiting_ = maFailed_ = maSawPending_ = false;
+  alarm_.close();  // task 108
+  confirm_.cancel();
+  aAwaiting_ = aSawPending_ = false;
   relayout();
   refreshFocusFlow();
   rebuildGraphs();
@@ -133,6 +136,8 @@ WidgetData AppState::widgetData(int idx) const {
     d.calendar = calendars_->get(w->entity);
     d.nowMin = calendars_->nowMin();
   }
+  if (w->type == WidgetType::Alarm && aAwaiting_ && alarm_.isOpen() && alarm_.tab() == shownTab_ && alarm_.widget() == idx)
+    d.pending = true;  // task 108: the keypad command is unconfirmed
   if (w->type == WidgetType::Notifications) d.notif = notifView(notifStore_, w->name);  // task 103
   if (w->type == WidgetType::Energy) {  // task 109
     int pw = 0;
@@ -286,6 +291,7 @@ bool AppState::setMarks(const std::map<std::string, Mark> &marks) {
   }
   brightnessMarks(changed);
   mediaMarks(changed);
+  alarmMarks(changed);  // task 108
   return changed;
 }
 
@@ -295,6 +301,7 @@ bool AppState::tick(uint32_t now) {
   if (hist_.tick(now)) changed = true;  // the Loading frame appears after its delay
   if (notif_.tick(now)) changed = true;  // task 103: the confirm dialog skips by itself
   changed |= mediaTick(now);
+  changed |= alarmTick(now);  // task 108
   changed |= artSync();  // task 107
   if (popup_.isOpen()) {
     const EntityState *s = store_.get(popup_.entityId());
@@ -337,6 +344,8 @@ bool AppState::tick(uint32_t now) {
 bool AppState::touch(ui::Point p, uint32_t now) {
   if (screen_ != Screen::Tabs) return false;
   lastNow_ = now;
+  if (confirm_.isOpen()) return confirmAnswer(confirm_.touch(p, orientation_), now);  // task 108
+  if (alarm_.isOpen()) return alarmTouch(p, now);
   if (hist_.isOpen()) return historyTouch(p);
   if (notif_.isOpen()) return notifTouch(p, now);  // task 103
   if (popup_.isOpen()) return popupTouch(p, now);
@@ -373,6 +382,8 @@ bool AppState::touch(ui::Point p, uint32_t now) {
       const config::Widget *w = widgetAt(shownTab_, hit.index);
       if (!w) return false;
       if (w->type == WidgetType::Notifications) return openNotif(now, false);  // task 103
+      if (w->type == WidgetType::Alarm || w->type == WidgetType::Lock || w->type == WidgetType::Garage)
+        return activateSecure(hit.index, now, false);  // task 108
       // Task 118: a tap on a read-only widget opens its history (no HA call, so no pending-tap feedback).
       if (w->type == WidgetType::Sensor || w->type == WidgetType::BinarySensor || w->type == WidgetType::Energy)
         return openHistory(hit.index, now);
@@ -390,6 +401,8 @@ bool AppState::touch(ui::Point p, uint32_t now) {
 bool AppState::rocker(ui::PhysicalKey key, uint32_t now) {
   if (screen_ != Screen::Tabs) return false;
   lastNow_ = now;
+  if (confirm_.isOpen()) return confirmAnswer(confirm_.rocker(key), now);  // task 108
+  if (alarm_.isOpen()) return alarmRocker(key, now);
   if (hist_.isOpen()) {  // UP / DOWN do nothing; PUSH and long push close
     if (key == ui::PhysicalKey::Push || key == ui::PhysicalKey::LongPush) return closeHistory();
     return false;
@@ -424,6 +437,8 @@ bool AppState::rocker(ui::PhysicalKey key, uint32_t now) {
     case ui::Effect::WidgetAction: {
       const config::Widget *mw = widgetAt(shownTab_, r.widgetIndex);
       if (mw && mw->type == WidgetType::MediaPlayer && r.sub == kMediaSubText) return openMedia(r.widgetIndex, now);
+      if (mw && (mw->type == WidgetType::Alarm || mw->type == WidgetType::Lock || mw->type == WidgetType::Garage))
+        return activateSecure(r.widgetIndex, now, true) || true;  // task 108
       return runAction(r.widgetIndex, r.sub, now) || true;
     }
   }

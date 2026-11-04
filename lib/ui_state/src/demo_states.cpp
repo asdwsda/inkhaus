@@ -112,6 +112,21 @@ bool showcase(const std::string &id, EntityState &out) {
   else if (id == "cover.hall_shutter") out = cover(id, "closing", 70);
   else if (id == "cover.bedroom_shutter") out = cover(id, "open", 25);
   else if (id == "cover.kitchen_shutter") out = cover(id, "closed", 0);
+  else if (id == "cover.garage_open") out = cover(id, "open", 100);  // task 108: garage widgets (`type: garage`)
+  else if (id == "cover.garage_moving") out = cover(id, "opening", 30);
+  else if (id.rfind("alarm_control_panel.", 0) == 0) {  // task 108: every demo panel takes a number code (1234); arming needs none
+    const char *state = id == "alarm_control_panel.away" ? "armed_away" : id == "alarm_control_panel.night" ? "armed_night"
+                        : id == "alarm_control_panel.garden" ? "armed_home" : id == "alarm_control_panel.arming" ? "arming"
+                        : id == "alarm_control_panel.entry" ? "pending" : id == "alarm_control_panel.triggered" ? "triggered"
+                        : "disarmed";
+    out = make(id, state);
+    attr(out, "code_format", "number");
+    attr(out, "code_arm_required", "false");
+    out.supported_features = 7;  // home + away + night
+  } else if (id == "lock.front_door") out = make(id, "locked", "Front door");
+  else if (id == "lock.back_door") out = make(id, "unlocked", "Back door");
+  else if (id == "lock.cellar") out = make(id, "jammed", "Cellar");
+  else if (id == "lock.shed") out = make(id, "unlocking", "Shed");
   else if (id == "vacuum.upstairs") out = vacuum(id, "cleaning", 64);
   else if (id == "vacuum.basement") out = vacuum(id, "returning", 15);
   else if (id == "vacuum.attic") out = vacuum(id, "error", 40, "Brush stuck");
@@ -183,6 +198,14 @@ EntityState demoForBase(const std::string &id) {
     e.temperature = 12;
     e.humidity = 76;
     e.temperature_unit = "\xC2\xB0" "C";
+    return e;
+  }
+  if (domain == "lock") return make(id, "locked");  // task 108
+  if (domain == "alarm_control_panel") {
+    EntityState e = make(id, "disarmed");
+    attr(e, "code_format", "number");
+    attr(e, "code_arm_required", "false");
+    e.supported_features = 7;
     return e;
   }
   if (domain == "calendar") return make(id, "off");  // task 105: the events come from the calendar glue

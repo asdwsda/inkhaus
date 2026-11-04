@@ -404,7 +404,7 @@ static config::Config demoConfig() {
 
 void test_demo_yaml_showcase() {
   config::Config cfg = demoConfig();
-  TEST_ASSERT_EQUAL_INT(6, (int)cfg.tabs.size());  // + Calendar (105) and New (103, 104, 106, 109) tabs
+  TEST_ASSERT_EQUAL_INT(7, (int)cfg.tabs.size());  // + Calendar (105), New (103, 104, 106, 109) and Security (108) tabs
   {  // the New tab shows notifications, a weather forecast, energy and two media players
     int notif = 0, fc = 0, energy = 0, media = 0;
     for (const auto &w : cfg.tabs[5].widgets) {

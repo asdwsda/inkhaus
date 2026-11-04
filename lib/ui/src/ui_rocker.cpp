@@ -47,7 +47,8 @@ bool isFocusable(WidgetType t, bool history) {
   }
 }
 bool isSingleAction(WidgetType t) {
-  return t == WidgetType::Light || t == WidgetType::Switch || t == WidgetType::Automation;
+  return t == WidgetType::Light || t == WidgetType::Switch || t == WidgetType::Automation || t == WidgetType::Alarm ||
+         t == WidgetType::Lock || t == WidgetType::Garage;  // task 108
 }
 
 std::vector<int> focusStops(const FocusEnv &env, int subPage) {

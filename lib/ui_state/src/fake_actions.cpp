@@ -56,6 +56,28 @@ ActionResult fakeAction(config::WidgetType type, int sub, const std::vector<cons
       r.changed = !r.states.empty();
       return r;
     }
+    case T::Lock: {  // task 108: the requested result of a lock / unlock
+      if (members.empty() || !members[0] || !members[0]->available) return r;
+      EntityState s = *members[0];
+      if (s.state == "locked") s.state = "unlocked";
+      else if (s.state == "unlocked" || s.state == "open") s.state = "locked";
+      else return r;
+      r.states.push_back(s);
+      r.changed = true;
+      return r;
+    }
+    case T::Garage: {  // task 108: sub 2 = stop (keeps the state), else the opposite of open / closed
+      if (members.empty() || !members[0] || !members[0]->available) return r;
+      EntityState s = *members[0];
+      if (sub != 2) {
+        if (s.state == "closed") s.state = "open";
+        else if (s.state == "open") s.state = "closed";
+        else return r;
+      }
+      r.states.push_back(s);
+      r.changed = true;
+      return r;
+    }
     case T::Climate: {
       if ((sub != 1 && sub != 2) || members.empty() || !members[0] || !members[0]->available) return r;
       EntityState s = *members[0];

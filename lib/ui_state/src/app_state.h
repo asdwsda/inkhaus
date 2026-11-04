@@ -9,7 +9,10 @@
 #include <vector>
 
 #include "brightness_layout.h"
+#include "alarm_popup.h"  // task 108
 #include "brightness_popup.h"
+#include "confirm_dialog.h"  // task 108
+#include "secure_view.h"
 #include "config_model.h"
 #include "history_popup.h"
 #include "art_store.h"
@@ -30,6 +33,7 @@
 
 namespace uistate {
 
+constexpr const char *kDemoAlarmCode = "1234";  // task 108: the code the demo alarm panel accepts
 constexpr uint32_t kPendingMs = 600;        // demo: how long a fake action stays pending
 constexpr uint32_t kTabDebounceMs = 400;    // rocker tab switch: content follows after this
 
@@ -55,7 +59,7 @@ struct WidgetData {
   bool group = false;
   const config::Widget *cfg = nullptr;  // the widget's config (sensor options: decimals, attribute, unit)
   std::vector<const EntityState *> members;
-  bool pending = false;     // the hourglass state; no longer set (taps are optimistic, task 036)
+  bool pending = false;     // the hourglass state; no longer set (taps are optimistic, task 036); task 108: set on an alarm widget while its keypad command is unconfirmed
   bool optimistic = false;  // members show the requested result of a tap that is still unconfirmed
   int pendingSub = 0;
   bool failed = false;  // the last action on this widget failed: real state plus alert badge
@@ -107,7 +111,9 @@ class AppState {
   bool openHistoryFocused(uint32_t now);  // rocker long push on the focused sensor/binary widget
   bool closeHistory();                    // true if it was open
   bool historyOpen() const { return hist_.isOpen(); }
-  bool modalOpen() const { return popup_.isOpen() || hist_.isOpen() || notif_.isOpen() || media_.isOpen(); }
+  bool modalOpen() const {
+    return popup_.isOpen() || hist_.isOpen() || notif_.isOpen() || media_.isOpen() || alarm_.isOpen() || confirm_.isOpen();
+  }
   const HistoryPopup &history() const { return hist_; }
   HistoryPopup &historyPopup() { return hist_; }
   std::string historyTitle() const { return widgetTitle(hist_.widget()); }
@@ -149,6 +155,22 @@ class AppState {
   bool mediaFailed() const { return maFailed_; }                              // alert
   // Real mode: sends the volume / mute to Home Assistant. Demo mode applies it to the store.
   void setMediaSink(MediaSink s) { msink_ = std::move(s); }
+
+  // ---- alarm keypad, lock / garage confirm dialog (task 108, docs/ui/widgets-new.md 5-7; code in app_state_secure.cpp) ----
+  // Both modal. The keypad opens on a tap / rocker push on an alarm widget; the dialog on a lock / garage widget
+  // whose action needs a confirmation (Yes runs the action, No / Skip / timeout change nothing).
+  using AlarmSink = std::function<void(const std::string &entityId, AlarmCmd cmd, const std::string &code)>;
+  // Real mode: sends the service (the code is only in the call; never log it). Demo mode applies it locally: the
+  // demo panel accepts the code kDemoAlarmCode.
+  void setAlarmSink(AlarmSink s) { asink_ = std::move(s); }
+  bool alarmOpen() const { return alarm_.isOpen(); }
+  const AlarmPopup &alarm() const { return alarm_; }
+  AlarmPanelInfo alarmInfo() const;  // the open keypad's panel
+  std::string alarmTitle() const { return widgetTitle(alarm_.widget()); }
+  bool closeAlarm();  // clears the code; true if it was open
+  bool confirmOpen() const { return confirm_.isOpen(); }
+  const ConfirmDialog &confirm() const { return confirm_; }
+  bool closeConfirm() { const bool was = confirm_.isOpen(); confirm_.cancel(); return was; }
 
   // ---- history graph widgets (task 071) ----
   // Rebuilt by init(); call rebuildGraphs() again once the entity states are known (device classes).
@@ -257,6 +279,20 @@ class AppState {
   MediaSink msink_;
   bool maAwaiting_ = false, maFailed_ = false, maSawPending_ = false;
   uint32_t maSentAt_ = 0;
+  // alarm keypad / confirm dialog (task 108)
+  bool activateSecure(int widgetIndex, uint32_t now, bool viaRocker);
+  bool alarmTouch(ui::Point p, uint32_t now);
+  bool alarmRocker(ui::PhysicalKey key, uint32_t now);
+  bool alarmResult(const AlarmResult &r, uint32_t now);
+  bool confirmAnswer(ConfirmAnswer a, uint32_t now);
+  bool alarmTick(uint32_t now);
+  void alarmMarks(bool &changed);
+  AlarmPopup alarm_;
+  ConfirmDialog confirm_;
+  AlarmSink asink_;
+  bool aAwaiting_ = false, aSawPending_ = false, aCodeSent_ = false;
+  std::string aStateAtSend_;
+  uint32_t aSentAt_ = 0;
   bool bpUnknown_ = false, bpAwaiting_ = false, bpFailed_ = false, bpSawPending_ = false;
   uint32_t bpSentAt_ = 0, lastNow_ = 0;
   mutable EntityState optState_;  // widgetData(): the optimistic light state of the popup's widget

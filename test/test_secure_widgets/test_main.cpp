@@ -1,6 +1,10 @@
 // Task 108: alarm panel, lock and garage widgets: config, views, confirm dialog, keypad popup, AppState wiring.
 #include <unity.h>
 
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+
 #include "app_state.h"
 #include "alarm_popup.h"
 #include "config_cache.h"
@@ -520,6 +524,350 @@ void test_alarm_rocker_first_event_reveals_ring() {
   TEST_ASSERT_EQUAL(0, p.codeLen());  // the first event only reveals the ring
 }
 
+// ---- AppState wiring ----
+namespace {
+
+const char *kAppYaml = R"(version: 1
+tabs:
+  - title: A
+    widgets:
+      - entity: alarm_control_panel.home
+        name: Alarm
+      - entity: lock.front
+        name: Front door
+      - entity: lock.back
+        name: Back door
+      - entity: cover.garage
+        type: garage
+        name: Garage
+      - entity: cover.moving
+        type: garage
+        name: Gate
+)";
+
+struct Rig {
+  AppState app;
+  std::vector<std::string> calls;       // action sink log: "type:sub:state"
+  std::vector<std::string> alarmCalls;  // "id:cmd" (the code is checked separately)
+  std::string lastCode;
+  Rig(bool demo = false, Orientation o = Orientation::Landscape) {
+    config::Config cfg = parsed(kAppYaml);
+    app.init(cfg, o, demo);
+    if (!demo) {
+      EntityState a = st("alarm_control_panel.home", "disarmed");
+      attr(a, "code_format", "number");
+      app.store().update({a, st("lock.front", "locked"), st("lock.back", "unlocked"), st("cover.garage", "closed"),
+                          st("cover.moving", "opening")});
+    }
+    app.setActionSink([this](int, int w, int sub, const std::vector<EntityState> &req) {
+      calls.push_back(std::to_string(w) + ":" + std::to_string(sub) + ":" + req[0].state);
+    });
+    app.setAlarmSink([this](const std::string &id, AlarmCmd c, const std::string &code) {
+      alarmCalls.push_back(id + ":" + std::to_string(int(c)));
+      lastCode = code;
+    });
+    app.setMarksDriven(!demo);
+  }
+  ui::Point centre(int idx) const {
+    for (const ui::Placement &pl : app.layout().widgets)
+      if (pl.index == idx) return {pl.rect.x + pl.rect.w / 2, pl.rect.y + pl.rect.h / 2};
+    TEST_FAIL_MESSAGE("widget not placed");
+    return {0, 0};
+  }
+};
+
+}  // namespace
+
+void test_layout_is_1x1() {
+  Rig r;
+  for (const ui::Placement &pl : r.app.layout().widgets) {
+    TEST_ASSERT_EQUAL(1, pl.cellW);
+    TEST_ASSERT_EQUAL(1, pl.cellH);
+    TEST_ASSERT_EQUAL(176, pl.rect.w);  // landscape 5 columns (spec: W = 176)
+  }
+  TEST_ASSERT_EQUAL(5, int(r.app.layout().widgets.size()));
+}
+
+void test_lock_unlock_asks_first_and_yes_acts() {
+  Rig r;
+  r.app.touch(r.centre(1), 100);  // locked front door
+  TEST_ASSERT_TRUE(r.app.confirmOpen());
+  TEST_ASSERT_EQUAL_STRING("Unlock Front door?", r.app.confirm().title().c_str());
+  TEST_ASSERT_TRUE(r.calls.empty());
+  TEST_ASSERT_TRUE(r.app.modalOpen());
+  // a tap on another widget while the dialog is open is a skip, not an action
+  const ConfirmLayout l = confirmLayout(Orientation::Landscape);
+  r.app.touch({l.yes.x + 10, l.yes.y + 10}, 200);
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_EQUAL(1, int(r.calls.size()));
+  TEST_ASSERT_EQUAL_STRING("1:0:unlocked", r.calls[0].c_str());
+  // optimistic: the widget already shows the requested state
+  const WidgetData d = r.app.widgetData(1);
+  TEST_ASSERT_TRUE(d.optimistic);
+  TEST_ASSERT_EQUAL_STRING("unlocked", d.members[0]->state.c_str());
+}
+
+void test_lock_lock_does_not_ask() {
+  Rig r;
+  r.app.touch(r.centre(2), 100);  // unlocked back door: locking is safe
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_EQUAL(1, int(r.calls.size()));
+  TEST_ASSERT_EQUAL_STRING("2:0:locked", r.calls[0].c_str());
+}
+
+void test_garage_asks_both_ways_skip_changes_nothing() {
+  Rig r;
+  r.app.touch(r.centre(3), 100);
+  TEST_ASSERT_TRUE(r.app.confirmOpen());
+  TEST_ASSERT_EQUAL_STRING("Open Garage?", r.app.confirm().title().c_str());
+  const ConfirmLayout l = confirmLayout(Orientation::Landscape);
+  r.app.touch({l.skip.x + 5, l.skip.y + 5}, 200);
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_TRUE(r.calls.empty());
+  TEST_ASSERT_FALSE(r.app.widgetData(3).optimistic);
+  // close direction asks too
+  r.app.store().update({st("cover.garage", "open")});
+  r.app.touch(r.centre(3), 300);
+  TEST_ASSERT_EQUAL_STRING("Close Garage?", r.app.confirm().title().c_str());
+}
+
+void test_garage_moving_stops_without_dialog() {
+  Rig r;
+  r.app.touch(r.centre(4), 100);
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_EQUAL(1, int(r.calls.size()));
+  TEST_ASSERT_EQUAL_STRING("4:2:opening", r.calls[0].c_str());
+}
+
+void test_confirm_times_out_and_rocker_rules() {
+  Rig r;
+  r.app.touch(r.centre(3), 1000);
+  TEST_ASSERT_FALSE(r.app.tick(1000 + kConfirmTimeoutMs - 1));
+  TEST_ASSERT_TRUE(r.app.confirmOpen());
+  TEST_ASSERT_TRUE(r.app.tick(1000 + kConfirmTimeoutMs));
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_TRUE(r.calls.empty());
+  // rocker: PUSH on the focused widget opens the dialog; PUSH inside = skip; UP = yes
+  r.app.rocker(ui::PhysicalKey::Push, 2000);  // Tab mode -> the first widget
+  TEST_ASSERT_EQUAL(0, r.app.focusedWidgetIndex());
+  while (r.app.focusedWidgetIndex() != 3) r.app.rocker(ui::PhysicalKey::Down, 2100);
+  r.app.rocker(ui::PhysicalKey::Push, 2200);
+  TEST_ASSERT_TRUE(r.app.confirmOpen());
+  r.app.rocker(ui::PhysicalKey::Push, 2300);  // skip
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_TRUE(r.calls.empty());
+  r.app.rocker(ui::PhysicalKey::Push, 2400);
+  TEST_ASSERT_TRUE(r.app.confirmOpen());
+  r.app.rocker(ui::PhysicalKey::Up, 2500);  // yes
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_EQUAL(1, int(r.calls.size()));
+  TEST_ASSERT_EQUAL_STRING("3:0:open", r.calls[0].c_str());
+}
+
+void test_confirm_override_off_and_on() {
+  config::Config cfg = parsed(
+      "version: 1\ntabs:\n  - title: A\n    widgets:\n      - entity: lock.a\n        confirm: false\n"
+      "      - entity: lock.b\n        confirm: true\n");
+  AppState app;
+  app.init(cfg, Orientation::Landscape, false);
+  app.store().update({st("lock.a", "locked"), st("lock.b", "unlocked")});
+  int acts = 0;
+  app.setActionSink([&](int, int, int, const std::vector<EntityState> &) { ++acts; });
+  app.setMarksDriven(true);
+  ui::Point p0, p1;
+  for (const ui::Placement &pl : app.layout().widgets) (pl.index == 0 ? p0 : p1) = {pl.rect.x + 20, pl.rect.y + 20};
+  app.touch(p0, 100);
+  TEST_ASSERT_FALSE(app.confirmOpen());  // confirm: false unlocks at once
+  TEST_ASSERT_EQUAL(1, acts);
+  app.touch(p1, 200);
+  TEST_ASSERT_TRUE(app.confirmOpen());  // confirm: true asks even for locking
+}
+
+void test_unavailable_and_jammed_do_nothing() {
+  Rig r;
+  r.app.store().update({st("lock.front", "jammed"), st("cover.garage", "unavailable", false)});
+  r.app.touch(r.centre(1), 100);
+  r.app.touch(r.centre(3), 200);
+  TEST_ASSERT_FALSE(r.app.confirmOpen());
+  TEST_ASSERT_TRUE(r.calls.empty());
+}
+
+void test_alarm_keypad_through_appstate_real_mode() {
+  Rig r;
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  r.app.touch(r.centre(0), 100);
+  TEST_ASSERT_TRUE(r.app.alarmOpen());
+  TEST_ASSERT_TRUE(r.app.modalOpen());
+  r.app.touch(at(l.keys[0]), 110);
+  r.app.touch(at(l.keys[1]), 120);
+  r.app.touch(at(l.keys[2]), 130);
+  r.app.touch(at(l.keys[10]), 140);
+  TEST_ASSERT_EQUAL(4, r.app.alarm().codeLen());
+  r.app.touch(at(l.modes[2]), 150);  // Away
+  TEST_ASSERT_EQUAL(1, int(r.alarmCalls.size()));
+  TEST_ASSERT_EQUAL_STRING("alarm_control_panel.home:2", r.alarmCalls[0].c_str());
+  TEST_ASSERT_EQUAL_STRING("1230", r.lastCode.c_str());
+  TEST_ASSERT_EQUAL(0, r.app.alarm().codeLen());
+  TEST_ASSERT_TRUE(r.app.widgetData(0).pending);  // the widget shows the pending look
+  // driver: Pending, then cleared with the state unchanged -> Wrong code (a code was sent)
+  r.app.setMarks({{"alarm_control_panel.home", Mark::Pending}});
+  r.app.setMarks({});
+  TEST_ASSERT_EQUAL(int(AlarmMsg::WrongCode), int(r.app.alarm().message(r.app.alarmInfo())));
+  TEST_ASSERT_EQUAL(-1, r.app.alarm().awaitingMode());
+  TEST_ASSERT_FALSE(r.app.widgetData(0).pending);
+}
+
+void test_alarm_confirmed_by_state_change() {
+  Rig r;
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  r.app.touch(r.centre(0), 100);
+  r.app.touch(at(l.keys[0]), 110);
+  r.app.touch(at(l.modes[1]), 150);  // Home
+  r.app.setMarks({{"alarm_control_panel.home", Mark::Pending}});
+  EntityState a = st("alarm_control_panel.home", "armed_home");
+  attr(a, "code_format", "number");
+  r.app.store().update({a});
+  r.app.setMarks({});
+  TEST_ASSERT_EQUAL(int(AlarmMsg::Sent), int(r.app.alarm().message(r.app.alarmInfo())));
+  TEST_ASSERT_EQUAL(1, r.app.alarmInfo().currentMode);
+}
+
+void test_alarm_service_error_and_safety_timeout() {
+  Rig r;
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  r.app.touch(r.centre(0), 100);
+  r.app.touch(at(l.keys[0]), 110);
+  r.app.touch(at(l.modes[0]), 150);
+  r.app.setMarks({{"alarm_control_panel.home", Mark::Failed}});
+  TEST_ASSERT_EQUAL(int(AlarmMsg::WrongCode), int(r.app.alarm().message(r.app.alarmInfo())));
+  // no code typed in a no-code panel: "Failed"
+  r.app.closeAlarm();
+  r.app.setMarks({});
+  EntityState a = st("alarm_control_panel.home", "disarmed");
+  r.app.store().update({a});  // no code_format any more
+  r.app.touch(r.centre(0), 1000);
+  r.app.touch(at(l.modes[1]), 1010);
+  TEST_ASSERT_EQUAL(2, int(r.alarmCalls.size()));
+  TEST_ASSERT_TRUE(r.lastCode.empty());
+  r.app.setMarksDriven(true, 5000);
+  r.app.tick(1010 + 5000);  // the driver never answered
+  TEST_ASSERT_EQUAL(int(AlarmMsg::Failed), int(r.app.alarm().message(r.app.alarmInfo())));
+}
+
+void test_alarm_closes_clear_code_and_unavailable_closes() {
+  Rig r;
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  r.app.touch(r.centre(0), 100);
+  r.app.touch(at(l.keys[0]), 110);
+  TEST_ASSERT_EQUAL(1, r.app.alarm().codeLen());
+  TEST_ASSERT_TRUE(r.app.closeAlarm());  // what goToSleep calls
+  TEST_ASSERT_EQUAL(0, r.app.alarm().codeLen());
+  TEST_ASSERT_FALSE(r.app.alarmOpen());
+  r.app.touch(r.centre(0), 200);
+  r.app.touch(at(l.keys[0]), 210);
+  r.app.store().update({st("alarm_control_panel.home", "unavailable", false)});
+  r.app.tick(300);
+  TEST_ASSERT_FALSE(r.app.alarmOpen());
+  TEST_ASSERT_EQUAL(0, r.app.alarm().codeLen());
+  // unavailable / loading panels do not open
+  r.app.touch(r.centre(0), 400);
+  TEST_ASSERT_FALSE(r.app.alarmOpen());
+}
+
+void test_alarm_rocker_push_opens_keypad() {
+  Rig r;
+  r.app.rocker(ui::PhysicalKey::Push, 100);  // Tab mode -> the first widget
+  TEST_ASSERT_EQUAL(0, r.app.focusedWidgetIndex());
+  r.app.rocker(ui::PhysicalKey::Push, 200);
+  TEST_ASSERT_TRUE(r.app.alarmOpen());
+  TEST_ASSERT_TRUE(r.app.alarm().ringVisible());
+  TEST_ASSERT_EQUAL(kEntryFocus, r.app.alarm().focus());
+  r.app.rocker(ui::PhysicalKey::LongPush, 300);
+  TEST_ASSERT_FALSE(r.app.alarmOpen());
+}
+
+// ---- demo mode ----
+namespace {
+config::Config demoCfg() {
+  std::ifstream f("demo.yaml");
+  std::stringstream ss;
+  ss << f.rdbuf();
+  return parsed(ss.str().c_str());
+}
+}  // namespace
+
+void test_demo_security_tab_shows_all_states() {
+  const config::Config cfg = demoCfg();
+  int tab = -1;
+  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Security") tab = int(i);
+  TEST_ASSERT_TRUE(tab >= 0);
+  AppState app;
+  app.init(cfg, Orientation::Landscape, true);
+  app.restoreTab(tab);
+  TEST_ASSERT_EQUAL(tab, app.shownTab());
+  std::vector<std::string> texts;
+  bool fill = false, una = false;
+  const auto &ws = cfg.tabs[size_t(tab)].widgets;
+  for (size_t i = 0; i < ws.size(); ++i) {
+    const WidgetData d = app.widgetData(int(i));
+    const SecureView v = secureView(ws[i].type, d.members.empty() ? nullptr : d.members[0]);
+    texts.push_back(ws[i].type == config::WidgetType::Alarm ? "A:" + v.text : ws[i].type == config::WidgetType::Lock ? "L:" + v.text : "G:" + v.text);
+    fill |= v.fill;
+    una |= v.look == Look::Unavailable;
+  }
+  TEST_ASSERT_TRUE(fill && una);
+  auto has = [&](const char *t) { return std::find(texts.begin(), texts.end(), t) != texts.end(); };
+  for (const char *t : {"A:Off", "A:Away", "A:Night", "A:Home", "A:Arming", "A:Entry", "A:ALARM", "A:n/a", "L:Locked", "L:Open", "L:Jammed",
+                        "L:Opening", "L:n/a", "G:Closed", "G:Open", "G:Opening", "G:n/a"})
+    TEST_ASSERT_TRUE_MESSAGE(has(t), t);
+}
+
+void test_demo_keypad_wrong_and_right_code() {
+  const config::Config cfg = demoCfg();
+  int tab = 0;
+  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Security") tab = int(i);
+  AppState app;
+  app.init(cfg, Orientation::Landscape, true);
+  app.restoreTab(tab);
+  ui::Point p0{0, 0};
+  for (const ui::Placement &pl : app.layout().widgets) if (pl.index == 0) p0 = {pl.rect.x + 20, pl.rect.y + 20};
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  app.touch(p0, 100);
+  TEST_ASSERT_TRUE(app.alarmOpen());
+  // arming needs no code in the demo
+  app.touch(at(l.modes[1]), 110);
+  TEST_ASSERT_EQUAL(1, app.alarmInfo().currentMode);
+  // disarming with a wrong code
+  app.touch(at(l.keys[0]), 120);
+  app.touch(at(l.modes[0]), 130);
+  TEST_ASSERT_EQUAL(int(AlarmMsg::WrongCode), int(app.alarm().message(app.alarmInfo())));
+  TEST_ASSERT_EQUAL(1, app.alarmInfo().currentMode);
+  // with 1234
+  app.touch(at(l.keys[11]), 160);  // clear
+  for (int k : {0, 1, 2, 3}) app.touch(at(l.keys[k]), 170);
+  app.touch(at(l.modes[0]), 180);
+  TEST_ASSERT_EQUAL(0, app.alarmInfo().currentMode);
+  TEST_ASSERT_EQUAL(int(AlarmMsg::Sent), int(app.alarm().message(app.alarmInfo())));
+}
+
+void test_demo_lock_commits_after_pending() {
+  const config::Config cfg = demoCfg();
+  int tab = 0, lockIdx = 0;
+  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Security") tab = int(i);
+  const auto &ws = cfg.tabs[size_t(tab)].widgets;
+  for (size_t i = 0; i < ws.size(); ++i) if (ws[i].entity == "lock.front_door") lockIdx = int(i);
+  AppState app;
+  app.init(cfg, Orientation::Landscape, true);
+  app.restoreTab(tab);
+  ui::Point p{0, 0};
+  for (const ui::Placement &pl : app.layout().widgets) if (pl.index == lockIdx) p = {pl.rect.x + 20, pl.rect.y + 20};
+  app.touch(p, 100);
+  TEST_ASSERT_TRUE(app.confirmOpen());
+  app.rocker(ui::PhysicalKey::Up, 110);
+  app.tick(110 + kPendingMs + 1);
+  TEST_ASSERT_EQUAL_STRING("unlocked", app.store().get("lock.front_door")->state.c_str());
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_config_types_and_confirm);
@@ -542,5 +890,21 @@ int main(int, char **) {
   RUN_TEST(test_alarm_idle_close_clears_code);
   RUN_TEST(test_alarm_rocker_walk);
   RUN_TEST(test_alarm_rocker_first_event_reveals_ring);
+  RUN_TEST(test_layout_is_1x1);
+  RUN_TEST(test_lock_unlock_asks_first_and_yes_acts);
+  RUN_TEST(test_lock_lock_does_not_ask);
+  RUN_TEST(test_garage_asks_both_ways_skip_changes_nothing);
+  RUN_TEST(test_garage_moving_stops_without_dialog);
+  RUN_TEST(test_confirm_times_out_and_rocker_rules);
+  RUN_TEST(test_confirm_override_off_and_on);
+  RUN_TEST(test_unavailable_and_jammed_do_nothing);
+  RUN_TEST(test_alarm_keypad_through_appstate_real_mode);
+  RUN_TEST(test_alarm_confirmed_by_state_change);
+  RUN_TEST(test_alarm_service_error_and_safety_timeout);
+  RUN_TEST(test_alarm_closes_clear_code_and_unavailable_closes);
+  RUN_TEST(test_alarm_rocker_push_opens_keypad);
+  RUN_TEST(test_demo_security_tab_shows_all_states);
+  RUN_TEST(test_demo_keypad_wrong_and_right_code);
+  RUN_TEST(test_demo_lock_commits_after_pending);
   return UNITY_END();
 }
