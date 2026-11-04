@@ -22,7 +22,7 @@
 <div class="card">
 <div id="app" hidden>
 <h3>1. Choose a version</h3>
-<div class="row"><select id="ver" aria-label="Version"><option>Loading versions...</option></select><span id="size" class="muted"></span></div>
+<div class="row"><select id="ver" aria-label="Version"><option>Loading versions...</option></select><button id="clbtn" class="btn" type="button" disabled>Changelog</button><span id="size" class="muted"></span></div>
 <label class="chk"><input type="checkbox" id="pre"> Show pre-releases</label>
 <p id="note" class="note" hidden></p>
 <h3>2. Install</h3>
@@ -33,6 +33,13 @@
 </esp-web-install-button>
 <p class="cap">A browser window asks for the USB port: pick the new entry that appears when you plug in the M5Paper. Your settings and SD card are kept.</p>
 </div>
+
+<dialog id="cl" aria-labelledby="cltitle">
+<h3 id="cltitle">Changelog</h3>
+<div id="clbody" class="notes"></div>
+<p class="cap"><a id="cllink" href="https://github.com/asdwsda/inkhaus/releases">View this release on GitHub</a></p>
+<button id="clclose" class="btn primary" type="button">Close</button>
+</dialog>
 
 <div id="nosupport">
 <h3>This browser cannot install from a page</h3>

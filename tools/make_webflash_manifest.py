@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Web flasher support (task 102): ESP Web Tools manifests and releases.json.
 
-  select --api releases.json [--cap 5]
+  select --api releases.json [--cap 3]
       Print the tags to publish, newest first (one per line).
-  build  --api releases.json --src DIR --out DIST/install [--cap 5]
+  build  --api releases.json --src DIR --out DIST/install [--cap 3]
       DIR/<tag>/ holds a release's manifest.json + segment files. For every selected tag that has
       a folder: copy the segment files to OUT/firmware/<tag>/, write the ESP Web Tools manifest
       (manifest.json there) and write OUT/releases.json.
@@ -11,8 +11,9 @@
       One manifest conversion only.
 
 --api is the JSON list from `gh api "repos/OWNER/REPO/releases?per_page=100"`.
-Rules: drafts and releases without a manifest.json asset are skipped; the newest CAP stable
-releases are kept, plus any pre-release newer than the newest kept stable one.
+Rules: drafts and releases without a manifest.json asset are skipped; the newest CAP (3) stable
+releases are kept, plus the single latest pre-release (user 2026-11-04). releases.json also carries
+each release's notes (GitHub body, capped) and page URL for the page's Changelog button.
 Offsets come from our manifest.json, never hard-coded. No erase, so NVS survives an update.
 """
 import argparse
@@ -21,7 +22,8 @@ import os
 import shutil
 import sys
 
-CAP = 5
+CAP = 3
+NOTES_MAX = 6000
 CHIPS = {"esp32": "ESP32"}
 
 
@@ -52,14 +54,19 @@ def usable(rel):
     return any(a.get("name") == "manifest.json" for a in rel.get("assets", []))
 
 
+def entry_notes(rel):
+    """(notes text, release page URL); the page renders the notes as escaped text."""
+    body = (rel.get("body") or "").replace("\r\n", "\n").strip()[:NOTES_MAX]
+    return body, rel.get("html_url") or ""
+
+
 def select(releases, cap=CAP):
     """Return the releases to publish, newest first."""
     rels = sorted((r for r in releases if usable(r)), key=_date, reverse=True)
     stable = [r for r in rels if not r.get("prerelease")][:cap]
     if not stable:
         return []
-    newest = _date(stable[0])
-    pre = [r for r in rels if r.get("prerelease") and _date(r) > newest]
+    pre = [r for r in rels if r.get("prerelease")][:1]
     return sorted(pre + stable, key=_date, reverse=True)
 
 
@@ -83,12 +90,15 @@ def build(releases, src, out, cap=CAP):
         with open(os.path.join(ddir, "manifest.json"), "w") as f:
             json.dump(convert(m), f, indent=2)
             f.write("\n")
+        notes, url = entry_notes(rel)
         entries.append({
             "tag": tag,
             "version": m["version"],
             "date": _date(rel)[:10],
             "prerelease": bool(rel.get("prerelease")),
             "size": size,
+            "notes": notes,
+            "url": url,
             "manifest": "firmware/%s/manifest.json" % tag,
         })
     os.makedirs(out, exist_ok=True)

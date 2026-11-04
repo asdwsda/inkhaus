@@ -72,6 +72,13 @@ esp-web-install-button .btn{width:320px;max-width:100%;min-height:56px;margin:0;
 .btn[disabled]{border-style:dashed;border-color:#888;color:#888;cursor:default}.btn[disabled]:hover{background:#fff;color:#888}
 .os .btn.primary{font-weight:700}
 .os .btn{width:192px;min-height:56px;line-height:34px}
+dialog{border:3px solid #000;padding:24px;max-width:680px;width:calc(100% - 32px);background:#fff;color:#000;border-radius:4px}
+dialog::backdrop{background:rgba(255,255,255,.85)}
+dialog h3{margin:0 0 12px}
+.notes{max-height:55vh;overflow:auto;border:1px solid #888;padding:12px 16px;margin-bottom:16px}
+.notes h4{margin:12px 0 6px}.notes p{margin:0 0 8px}.notes ul{margin:0 0 8px;padding-left:24px}
+.notes code{font-family:monospace;background:#f2f2f2;padding:0 4px}
+.row .btn{margin:0;min-height:48px;padding:6px 16px}
 @media (max-width:599px){.row .muted{display:none}select,esp-web-install-button .btn{width:100%}.card{padding:16px}}
 /* User guide (task 110) */
 .guide{display:grid;grid-template-columns:240px 1fr;gap:32px;padding-top:16px;padding-bottom:48px}

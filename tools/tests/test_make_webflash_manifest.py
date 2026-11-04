@@ -45,22 +45,30 @@ class T(unittest.TestCase):
 
     def test_cap_and_prerelease(self):
         r = [rel("v%d" % i, "2026-02-%02d" % i) for i in range(1, 16)]
-        r += [rel("pre-new", "2026-03-01", pre=True), rel("pre-old", "2026-02-05", pre=True)]
+        r += [rel("pre-new", "2026-03-01", pre=True), rel("pre-old", "2026-02-20", pre=True)]
         tags = [x["tag_name"] for x in w.select(r)]
-        self.assertEqual(len(tags), 6)  # 5 stable + the newer pre-release
-        self.assertEqual(tags[0], "pre-new")
-        self.assertEqual(tags[1], "v15")
-        self.assertEqual(tags[-1], "v11")
-        self.assertNotIn("pre-old", tags)
-        self.assertEqual(w.CAP, 5)
+        self.assertEqual(tags, ["pre-new", "v15", "v14", "v13"])  # 3 stable + the latest pre-release
+        self.assertEqual(w.CAP, 3)
+        # an older pre-release is still the "latest pre-release" when no newer one exists
+        r2 = [rel("v1", "2026-02-01"), rel("v2", "2026-02-10"), rel("p", "2026-02-05", pre=True)]
+        self.assertEqual([x["tag_name"] for x in w.select(r2)], ["v2", "p", "v1"])
         self.assertEqual(w.select([rel("p", "2026-01-01", pre=True)]), [])
+
+    def test_notes(self):
+        r = rel("v1", "2026-01-01")
+        r["body"] = "## New\r\n- a <b>\r\n"
+        r["html_url"] = "https://github.com/x/y/releases/tag/v1"
+        self.assertEqual(w.entry_notes(r), ("## New\n- a <b>", "https://github.com/x/y/releases/tag/v1"))
+        r["body"] = "x" * (w.NOTES_MAX + 10)
+        self.assertEqual(len(w.entry_notes(r)[0]), w.NOTES_MAX)
+        self.assertEqual(w.entry_notes(rel("v2", "2026-01-01")), ("", ""))
 
     def test_build_sample(self):
         with open(os.path.join(SAMPLE, "api.json")) as f:
             api = json.load(f)
         with tempfile.TemporaryDirectory() as out:
             e = w.build(api, os.path.join(SAMPLE, "src"), out)
-            self.assertEqual([x["tag"] for x in e], ["v1.4.0-rc1", "v1.3.1", "v1.3.0", "v1.2.1"])
+            self.assertEqual([x["tag"] for x in e], ["v1.4.0-rc1", "v1.3.1", "v1.3.0", "v1.2.1"])  # v1.1.0 and 1.2.0-rc1 are dropped
             with open(os.path.join(out, "releases.json")) as f:
                 self.assertEqual(json.load(f), e)
             self.assertTrue(e[0]["prerelease"])
