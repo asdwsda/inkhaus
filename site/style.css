@@ -91,6 +91,6 @@ table{border-collapse:collapse;width:100%}
 th,td{border:1px solid #888;padding:8px 12px;text-align:left;vertical-align:top}
 th{background:#f2f2f2}
 .guide figure{margin:0 0 24px}
-.guide img.shot{max-width:360px}
+.guide img.shot{max-width:100%}
 .pager{display:flex;justify-content:space-between;gap:16px;margin-top:48px}
 @media (max-width:799px){.guide{grid-template-columns:1fr}}
