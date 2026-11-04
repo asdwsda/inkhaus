@@ -20,8 +20,7 @@ native installers. The native installers stay as the fallback (Firefox/Safari, o
   (link docs/CONFIG.md); unsupported browser -> link to the native installers.
 - Pin the ESP Web Tools version (self-hosted copy or a pinned CDN URL with SRI); site/check.py keeps the weight check.
 - Several releases (user 2026-11-03): version picker, newest stable preselected, "Show pre-releases" toggle
-  (same idea as the native installer). The workflow copies the last 5 stable releases (user 2026-11-03) + any pre-release newer than
-  the newest stable into `install/firmware/<tag>/` with one ESP Web Tools manifest each, plus `install/releases.json`
+  (same idea as the native installer). The workflow copies the last 3 stable releases + the single latest pre-release (user 2026-11-04, was 5 + newer pre-releases) into `install/firmware/<tag>/` with one ESP Web Tools manifest each, plus `install/releases.json`
   (tag, date, prerelease, size). Releases without a `manifest.json` asset are skipped. Picking an older version than
   the newest shows a downgrade note ("settings from newer versions may be reset").
 - Size: one release is ~2.3 MB (firmware.bin 2.2 MB), so 5-6 releases are ~12-14 MB. GitHub Pages limits: published
@@ -44,6 +43,7 @@ native installers. The native installers stay as the fallback (Firefox/Safari, o
 ## Notes
 - Decision (architect, 2026-11-03): ESP Web Tools on GitHub Pages, firmware copied into the site per release.
   Reason: Web Serial needs HTTPS and same-origin/CORS files; Pages gives both for free.
-- Round 2 (2026-11-03): /install/ page built per docs/ui/web-flasher.md (cap 5, workflow_run trigger, FLASHER.md/README).
+- Round 2 (2026-11-03): /install/ page built per docs/ui/web-flasher.md (cap 5 then 3, workflow_run trigger, FLASHER.md/README).
   Dry run: `python3 tools/make_webflash_manifest.py build --api tools/testdata/webflash/api.json --src tools/testdata/webflash/src --out /tmp/x`
   writes firmware/<tag>/ + releases.json (4 releases, relative same-origin manifest paths). Page weight 1012 KiB (limit 1024).
+- Follow-up (2026-11-04): cap 3 stable + latest pre-release; Changelog button (notes + url in releases.json, safe-text dialog).

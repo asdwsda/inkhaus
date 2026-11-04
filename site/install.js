@@ -25,9 +25,50 @@
     pick();
   }
 
-  function pick() {
-    var r = all.filter(function (x) { return x.tag === $("ver").value; })[0];
+  function cur() { return all.filter(function (x) { return x.tag === $("ver").value; })[0]; }
+
+  // Safe markdown subset: headings, "-"/"*" lists, `code`. Everything goes through textContent.
+  function inline(el, text) {
+    text.split(/(`[^`]+`)/).forEach(function (p) {
+      if (!p) return;
+      if (p.length > 2 && p[0] === "`" && p[p.length - 1] === "`") {
+        var c = document.createElement("code"); c.textContent = p.slice(1, -1); el.appendChild(c);
+      } else el.appendChild(document.createTextNode(p));
+    });
+  }
+  function notes(box, text) {
+    box.textContent = "";
+    var ul = null;
+    (text || "").split("\n").forEach(function (line) {
+      var m;
+      if ((m = /^\s*[-*]\s+(.*)$/.exec(line))) {
+        if (!ul) { ul = document.createElement("ul"); box.appendChild(ul); }
+        var li = document.createElement("li"); inline(li, m[1]); ul.appendChild(li); return;
+      }
+      ul = null;
+      if (!line.trim()) return;
+      var h = /^#{1,6}\s+(.*)$/.exec(line), e = document.createElement(h ? "h4" : "p");
+      inline(e, h ? h[1] : line.trim());
+      box.appendChild(e);
+    });
+    if (!box.firstChild) { var p = document.createElement("p"); p.textContent = "No release notes."; box.appendChild(p); }
+  }
+  function changelog() {
+    var r = cur();
     if (!r) return;
+    $("cltitle").textContent = "Changelog " + r.version;
+    notes($("clbody"), r.notes);
+    var u = r.url && /^https:\/\/github\.com\//.test(r.url) ? r.url : "https://github.com/asdwsda/inkhaus/releases/tag/" + encodeURIComponent(r.tag);
+    $("cllink").href = u;
+    var d = $("cl");
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+  }
+  function closeCl() { var d = $("cl"); if (d.close) d.close(); else d.removeAttribute("open"); }
+
+  function pick() {
+    var r = cur();
+    if (!r) return;
+    $("clbtn").disabled = false;
     $("btn").setAttribute("manifest", r.manifest);
     $("go").disabled = false;
     $("go").textContent = "Install " + r.version + (r !== newest && !r.prerelease ? " anyway" : "");
@@ -50,6 +91,9 @@
     if (!newest) throw new Error("empty");
     $("ver").addEventListener("change", pick);
     $("pre").addEventListener("change", render);
+    $("clbtn").addEventListener("click", changelog);
+    $("clclose").addEventListener("click", closeCl);
+    $("cl").addEventListener("keydown", function (e) { if (e.key === "Escape") closeCl(); });
     render();
   }).catch(fail);
 })();

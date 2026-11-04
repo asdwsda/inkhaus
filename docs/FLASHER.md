@@ -10,7 +10,7 @@ Open <https://asdwsda.github.io/inkhaus/install/> in **Chrome, Edge or Opera on 
 Firefox, Safari and phones cannot do it).
 1. Connect the M5Paper with a USB data cable. On Windows, if no port shows up, install the USB driver once: CP210x (older boards, CP2104 chip) or CH9102 (newer boards).
 2. Pick a version (the newest stable one is preselected; tick "Show pre-releases" for test versions; the page
-   offers the last 5 stable releases). Older versions show a note: settings saved by newer versions may be reset.
+   offers the last 3 stable releases and the latest pre-release; the Changelog button shows a version's release notes). Older versions show a note: settings saved by newer versions may be reset.
 3. Press **Install**, pick the new USB port in the browser window and wait for "done". Do not unplug meanwhile.
 Settings and the SD card are kept (no erase). The page copies the firmware from the release, so a brand new
 release may take a few minutes to appear.
