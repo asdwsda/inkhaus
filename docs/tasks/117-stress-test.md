@@ -1,6 +1,6 @@
 # 117: Stress test before the 1.4.0 release
 
-Status: todo
+Status: done
 Depends on: 116, stability fix 5efddc4
 UI spec: none
 Needs device: yes
@@ -21,5 +21,8 @@ Final check before tagging (user 2026-11-03): can the device handle a large dash
   limit with a clear config error instead of crashing.
 
 ## Acceptance criteria
-- [ ] Report with the numbers above at max size; any limit found is enforced and documented in docs/guide/09-config-reference.md.
-- [ ] No crash in 15 min; user's config restored (diff equal).
+- [x] Report with the numbers above at max size; any limit found is enforced and documented in docs/guide/09-config-reference.md.
+- [x] No crash in 15 min; user's config restored (diff equal).
+
+## Notes
+- 2026-11-04: max config (16 x 24, 384 widgets) passes; 19 min cycle, no crash/WDT. Fixes: chunked state fetch (40 ids), state template, malloc >= 512 B to PSRAM, MEM log. Config restored (crc 7991c3c9), device on release build. Limits in docs/guide/09-config-reference.md. Sleep/wake at max size not separately measured.

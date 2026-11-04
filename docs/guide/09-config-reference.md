@@ -126,6 +126,15 @@ Inside `history:`, `type` has its own values: `auto`, `line`, `bar` and `step` (
 - Unknown keys inside a widget are ignored without an error, so a typo such as `entty:` shows up as "one of 'entity' or 'group' is required".
 - Old format: a `connection:` section in `config.yaml` still works if there is no `secrets.yaml`. Once `secrets.yaml` exists, it is an error.
 
+### Size limits
+
+Tested on the device with the largest allowed dashboard (16 tabs of 24 widgets, 384 widgets, every widget type, long names, 25 % unknown ids): it boots, fetches the states in chunks of 40 ids, cycles tabs and takes taps for 19 minutes without a crash.
+
+- 16 tabs, 24 widgets per tab, 16 entities per group. More is refused with a config error.
+- The config file is at most 64 KB.
+- A first start from the SD card takes about 3 to 7 seconds for the largest file; later starts use the cache (about 0.1 s).
+- Home Assistant is asked for the states in chunks of 40 entities, so the number of entities is not limited by the request size.
+
 ## secrets.yaml
 
 Private: your Wi-Fi password and the Home Assistant token. Keep it off the internet. It is stored as plain text on the card, so treat the card like a key.
