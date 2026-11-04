@@ -28,7 +28,7 @@ document.querySelectorAll(".codebox").forEach(function (box) {
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") { hide(); } });
   document.querySelectorAll(".guide img.shot").forEach(function (img) {
     img.tabIndex = 0;
-    var open = function () { big.src = img.currentSrc || img.src; big.alt = img.alt; box.hidden = false; close.focus(); };
+    var open = function () { big.src = img.getAttribute("data-zoom") || img.currentSrc || img.src; big.alt = img.alt; box.hidden = false; close.focus(); };
     img.addEventListener("click", open);
     img.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
   });
