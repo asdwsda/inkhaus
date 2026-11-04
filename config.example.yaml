@@ -65,8 +65,9 @@ tabs:
       - entity: vacuum.robot
         name: Vacuum
       - entity: calendar.family            # 2x1: the next two events (read only)
-      - entity: media_player.living_room   # wide; tap the text for the volume popup
+      - entity: media_player.living_room   # wide; tap the text or the cover for the volume popup
         name: Living room
+        art: true                          # cover art of the track (default); false = text only
       - entity: person.alice    # no built-in type for this domain, so set it
         type: sensor
       - entity: cover.living_room_shutter   # also used above: fetched once

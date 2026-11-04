@@ -187,7 +187,7 @@ A wide tile with start, pause and back to dock buttons.
 
 ## Media player
 
-A wide tile with the title and artist (your `name` while nothing plays) and previous, play or pause, and next buttons. **Tap the text** to open a popup with title, artist, album, the buttons, a volume bar (minus and plus in 5 % steps, or rocker up and down) and mute. Volume and mute are dotted when the player does not support them.
+A wide tile with the cover art of the playing track on the left, the title and artist (your `name` while nothing plays) and previous, play or pause, and next buttons. **Tap the text or the cover** to open a popup with a large cover, title, artist, album, the buttons, a volume bar (minus and plus in 5 % steps, or rocker up and down) and mute. Volume and mute are dotted when the player does not support them.
 
 ![Media player playing, paused and unavailable, and its popup.](img/gallery-media.png "A media player.")
 
@@ -197,6 +197,21 @@ A wide tile with the title and artist (your `name` while nothing plays) and prev
 ```
 
 One entity per tile (no groups). With several players, give each a `name`.
+
+### Cover art
+
+The picture comes from Home Assistant (`entity_picture`), is fetched once per track and shown in 16 greys. A player that is off, or has no picture, shows an empty square with a speaker; while the picture loads it shows an hourglass; if it cannot be fetched (too large, not a JPEG or PNG, no answer) it shows the square with a speaker and an alert, and tries again at the next wake or when the track changes. Because the cover sits beside the text there is room for about 14 characters in landscape and 11 in portrait; longer titles end in `...`.
+
+![Cover art: shown, no picture, loading and failed.](img/gallery-media-art-states.png "The cover art states.")
+
+Add `art: false` for the text-only tile and popup:
+
+```yaml
+- entity: media_player.living_room
+  art: false        # default is true (picture fetched once per track)
+```
+
+![A media player with and without cover art.](img/gallery-media-art-off.png "Cover art on and off.")
 
 ## Notifications
 
@@ -303,4 +318,4 @@ A size a widget does not allow is changed to the nearest allowed one.
 
 ## Coming soon
 
-These widgets are being built and do not work yet: an **alarm panel** and **locks and garage doors**, and **album art** in the media player. Do not use their entities yet: the device would report an unsupported entity.
+These widgets are being built and do not work yet: an **alarm panel** and **locks and garage doors**. Do not use their entities yet: the device would report an unsupported entity.

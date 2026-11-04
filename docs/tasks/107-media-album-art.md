@@ -1,6 +1,6 @@
 # 107: Media album art
 
-Status: todo
+Status: PC done (device part open)
 Depends on: 106
 UI spec: docs/ui/widgets-new-media-art.md (+ mockups docs/ui/png/widgets-new-media-art-*.png)
 Needs device: yes (look + a real entity; PC part first)
@@ -24,3 +24,5 @@ Out of scope: other new widgets.
 - 2026-11-03: the guide gallery picture for this widget (docs/guide/img/gallery-*) embeds a config snippet from docs/ui/widgets-new.md; implement those keys exactly (or fix the spec + picture), so the guide snippet parses.
 - User 2026-11-04: demo "New" tab keeps 2 media tiles (playing with album art, paused); drop the "off" tile so the art version fits.
   Demo art is a built-in sample image (no network in demo mode).
+- PC part done (2026-11-04): lib/media_art (art_image: crop/scale/16-grey dither/sample cover; art_fetch: URL plan, token rule, 150 KB cap; art_store: per-URL state machine, popup 200 px buffer, demo serving), `art` config key (+ cache bit 6), media_layout (widget + popup rects of the art spec, art:false keeps the 106 layout), ui_layout sub-region 5 (art, touch only), AppState::artSync / takeArtRequests, src/render/media_widget (art, tiles, popup), demo "New" tab (living room playing with the sample cover, kitchen paused without a picture; off tile dropped), docs (guide, config.example.yaml, device-checks 107). Tests: test/test_media_art.
+- Open for the device part: HTTP fetch of `entity_picture` (ArtStore::takeRequests -> planFetch -> download with caps -> JPEG/PNG decode -> Gray8 -> ArtStore::deliver/fail; retryFailed on wake), the GC16 art-rect-only partial refresh (today the generic frame diff in src/present picks the mode), real icons `volume` L for the tiles (primitive glyph used), look check on the demo tab.

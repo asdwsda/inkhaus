@@ -83,6 +83,12 @@ Each widget has exactly one of `entity` or `group` (except `type: notifications`
 |---|---|---|---|
 | `forecast` | `true` or `false` | `false` | Adds the next 3 days to a weather widget. Single entity only. Needs a wide tile; the size is raised. |
 
+### Media player option
+
+| Key | Values | Default | Effect |
+|---|---|---|---|
+| `art` | `true` or `false` | `true` | Shows the cover art of the playing track. `false` keeps the text-only tile and popup. Media player widgets only. |
+
 ### Energy widget
 
 `type: energy`, no `entity` or `group`. At least one of `usage` and `solar` is needed. Size is always 2x1. `name` and `size` are accepted but not shown.
