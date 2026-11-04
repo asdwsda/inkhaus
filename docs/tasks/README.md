@@ -116,7 +116,7 @@
 | 115 | [Slow taps after waking on battery](115-slow-taps-after-wake.md) | todo | 080, 093 |
 | 116 | [User commands jump the net queue](116-user-commands-first.md) | PC part done | 115 |
 | 117 | [Stress test before the 1.4.0 release](117-stress-test.md) | done | 116 |
-| 118 | [Tap opens history on read-only widgets](118-tap-opens-history.md) | PC part done | 046 |
+| 118 | [Tap opens history on read-only widgets](118-tap-opens-history.md) | done | 046 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).

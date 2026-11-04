@@ -1,6 +1,6 @@
 # 118: Tap opens history on read-only widgets
 
-Status: done (PC part)
+Status: done
 Depends on: 046 (history popup)
 UI spec: docs/ui/history.md (open rule changes as below)
 Needs device: no (PC part; device look later)
