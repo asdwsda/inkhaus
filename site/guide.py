@@ -17,8 +17,14 @@ def pages(src):
     return out
 
 
-def fix_links(body, slugs):
-    """img/x.png -> ../img/x.png ; NN-name.md#a -> ../name/#a"""
+def fix_links(body, slugs, imgdir=None):
+    """img/x.png -> ../img/x.png ; NN-name.md#a -> ../name/#a ; adds data-zoom for pictures with an img/2x/ version"""
+    def zoom(m):
+        name = m.group(2)
+        if imgdir is not None and (imgdir / "2x" / name).is_file():
+            return f'{m.group(1)}data-zoom="../img/2x/{name}" src="img/{name}"'
+        return m.group(0)
+    body = re.sub(r'(<img class="shot" )src="img/([^"/]+)"', zoom, body)
     body = re.sub(r'(<img [^>]*src=")img/', r"\1../img/", body)
 
     def link(m):
@@ -78,7 +84,7 @@ def build(root, out, site):
 
     for i, p in enumerate(ps):
         body, heads = mdlite.render(p["md"])
-        body = fix_links(body, slugs)
+        body = fix_links(body, slugs, src / "img")
         sub = [h for h in heads if h[0] == 2]
         toc = ""
         if len(sub) > 1:

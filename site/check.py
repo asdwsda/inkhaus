@@ -92,6 +92,9 @@ for page in pages:
             decorative = img.get("alt") == "" and img.get("src", "").endswith("logo-inkhaus.svg")
             if not decorative and not (img.get("alt") or "").strip():
                 fail(f"NO ALT {page.relative_to(out)}: {img.get('src')}")
+for f2 in sorted((out / "guide/img/2x").glob("*.png")):
+    if not (f2.parent.parent / f2.name).is_file():
+        fail(f"2x picture without 1x sibling: {f2.name}")
 
 
 def weight(page):
