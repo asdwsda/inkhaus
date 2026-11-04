@@ -18,14 +18,23 @@ const ArtStore::Entry *ArtStore::find(const std::string &entity) const {
   return nullptr;
 }
 
+void ArtStore::beginSync() {
+  for (Entry &e : entries_) e.wanted = false;
+}
+
 bool ArtStore::want(const std::string &entity, const std::string &picture) {
   Entry *e = find(entity);
   if (!e) {
     if (picture.empty()) return false;  // nothing known, nothing shown: no entry needed
-    if (entries_.size() >= kMaxArtEntries) entries_.erase(entries_.begin());
-    entries_.push_back(Entry{entity, "", ArtState::None, false, {}, {}});
+    if (entries_.size() >= kMaxArtEntries) {
+      auto it = std::find_if(entries_.begin(), entries_.end(), [](const Entry &x) { return !x.wanted; });
+      if (it == entries_.end()) return false;  // every entry is wanted: no thrash, this one shows the fallback
+      entries_.erase(it);
+    }
+    entries_.push_back(Entry{entity, "", ArtState::None, false, false, {}, {}});
     e = &entries_.back();
   }
+  e->wanted = true;
   if (e->picture == picture) return false;
   const bool hadArt = e->state != ArtState::None;
   e->picture = picture;

@@ -243,10 +243,27 @@ void test_store_demo_and_entry_limit() {
   TEST_ASSERT_TRUE(s.state("media_player.b") == ArtState::Loading);  // real downloads are left alone
   TEST_ASSERT_EQUAL(1, (int)s.takeRequests().size());
   TEST_ASSERT_FALSE(s.serveDemo());
+  s.beginSync();  // a new round: the old entries may go, the new ones stay (the first kMaxArtEntries)
   for (int i = 0; i < 12; ++i) s.want("media_player.x" + std::to_string(i), "/p");
   int loading = 0;
   for (int i = 0; i < 12; ++i) loading += s.state("media_player.x" + std::to_string(i)) == ArtState::Loading;
-  TEST_ASSERT_EQUAL((int)kMaxArtEntries, loading);  // oldest entries evicted
+  TEST_ASSERT_EQUAL((int)kMaxArtEntries, loading);  // the rest shows the fallback
+}
+
+void test_store_no_eviction_of_wanted_entries() {
+  ArtStore s;
+  int downloads = 0;
+  for (int round = 0; round < 5; ++round) {  // 10 widgets, repeated syncs: bounded downloads, no loop
+    s.beginSync();
+    for (int i = 0; i < 10; ++i) s.want("media_player.w" + std::to_string(i), "/p" + std::to_string(i));
+    downloads += (int)s.takeRequests().size();
+  }
+  TEST_ASSERT_EQUAL((int)kMaxArtEntries, downloads);
+  TEST_ASSERT_TRUE(s.state("media_player.w9") == ArtState::None);  // over the cap: fallback tile
+  // a tab with other players frees the old slots
+  s.beginSync();
+  s.want("media_player.n", "/n");
+  TEST_ASSERT_TRUE(s.state("media_player.n") == ArtState::Loading);
 }
 
 // ---- config ----
@@ -648,6 +665,7 @@ int main() {
   RUN_TEST(test_store_failure_and_retry);
   RUN_TEST(test_store_popup_big_buffer);
   RUN_TEST(test_store_demo_and_entry_limit);
+  RUN_TEST(test_store_no_eviction_of_wanted_entries);
   RUN_TEST(test_config_art_option);
   RUN_TEST(test_config_art_errors);
   RUN_TEST(test_template_requests_entity_picture);

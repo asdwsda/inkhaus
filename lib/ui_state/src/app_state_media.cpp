@@ -45,13 +45,14 @@ bool AppState::mediaArt() const {
 bool AppState::artSync() {
   if (screen_ != Screen::Tabs || shownTab_ < 0 || size_t(shownTab_) >= cfg_.tabs.size()) return false;
   bool changed = false;
+  art_.beginSync();
+  if (media_.isOpen()) {  // the open popup first: it keeps a slot even with a full tab
+    const config::Widget *w = widgetAt(media_.tab(), media_.widget());
+    if (w && w->art && !w->entities.empty()) changed |= art_.want(w->entities[0], mediaPicture(store_.get(w->entities[0])));
+  }
   for (const config::Widget &w : cfg_.tabs[size_t(shownTab_)].widgets) {
     if (w.type != WidgetType::MediaPlayer || !w.art || w.entities.empty()) continue;
     changed |= art_.want(w.entities[0], mediaPicture(store_.get(w.entities[0])));
-  }
-  if (media_.isOpen()) {  // the open popup follows its player's picture too (a hidden tab's widget)
-    const config::Widget *w = widgetAt(media_.tab(), media_.widget());
-    if (w && w->art && !w->entities.empty()) changed |= art_.want(w->entities[0], mediaPicture(store_.get(w->entities[0])));
   }
   changed |= art_.serveDemo();
   return changed;

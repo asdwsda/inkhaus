@@ -24,6 +24,9 @@ class ArtStore {
  public:
   // The picture URL a visible widget shows now ("" = no picture: off, idle without cover, no attribute).
   // Returns true if what the widget draws changed (URL differs: previous picture dropped, Loading or None).
+  // Call before a round of want(): entries not asked for again in the round may be evicted, wanted ones never.
+  void beginSync();
+  // An entry over the cap with no evictable slot is not created (fallback tile, no download).
   bool want(const std::string &entity, const std::string &picture);
 
   ArtState state(const std::string &entity) const;
@@ -58,6 +61,7 @@ class ArtStore {
     std::string entity, picture;
     ArtState state = ArtState::None;
     bool inFlight = false;
+    bool wanted = false;  // asked for in the current sync round
     Gray4 small, big;
   };
   bool needsDownload(const Entry &e) const;

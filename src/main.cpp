@@ -316,6 +316,7 @@ static void logFetchApplied() {
 
 static void showFrame(uint32_t now) {
   if (settings_flow::active()) {
+    present::setGreyRegions({});  // the settings screen has no album art
     drawSettingsFrame(present::Mode::Partial, now);
     return;
   }

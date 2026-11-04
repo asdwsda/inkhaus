@@ -77,8 +77,8 @@ void pump(app_logic::SessionDriver *drv, uistate::AppState &app, bool graphsBusy
 void onDone(app_logic::NetEvent &&ev, uistate::AppState &app) {
   g_pending = false;
   if (ev.error == HaError::Cancelled) {  // yielded to a user command: ask again later
-    app.art().requeue(g_asking.entity, g_asking.picture);
-    wakelog::logf("APP: art dropped (yield), retry later\n");
+    if (app.art().fail(g_asking.entity, g_asking.picture)) g_changed = true;  // like Failed: no backoff-free loop, retried at the next session
+    wakelog::logf("APP: art dropped (yield), retry at next session\n");
     return;
   }
   const uint32_t t0 = millis();

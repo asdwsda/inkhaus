@@ -269,6 +269,8 @@ void HaWorker::runCalendar(const NetCommand &cmd, NetEvent &e) {
 
 // Task 107: GET the entity_picture (binary, capped at art::kMaxArtBytes and art::kMaxArtFetchMs); the decode is the
 // caller's. Relative URLs go through the client's URL fallback; absolute ones as planned (token only to HA itself).
+constexpr size_t kArtReserveBytes = 64 * 1024;
+
 void HaWorker::runArt(const NetCommand &cmd, NetEvent &e) {
   e.artEntity = cmd.artEntity;
   e.artPicture = cmd.artPicture;
@@ -284,6 +286,7 @@ void HaWorker::runArt(const NetCommand &cmd, NetEvent &e) {
   lim.yield = yield_;
   std::string &body = e.artBody;
   const ChunkFn sink = [&body](const char *d, size_t n) {
+    if (body.empty()) body.reserve(kArtReserveBytes);  // one allocation for a typical cover (length is not exposed)
     body.append(d, n);
     return true;
   };
