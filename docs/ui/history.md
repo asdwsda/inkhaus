@@ -14,7 +14,7 @@ A read-only modal panel that draws the history of one entity as a graph. Opens o
 state) or a `binary_sensor` widget (on/off state). Reads `friendly_name`, the current `state`, `unit_of_measurement`
 and the widget's `decimals`; the history itself comes from `GET /api/history/period/...` (phase 1) or
 `recorder/statistics_during_period` (phase 2, bars and `hours > 24`) per 046. No service is called. Widgets that
-show an attribute (`attribute:`) or whose `history: false` do nothing on long press. Config keys (046 section 4):
+show an attribute (`attribute:`) or whose `history: false` do nothing on tap and long press. Open rule (task 118): a short tap opens it on read-only widgets (sensor, binary_sensor, energy); a long press opens it on every widget where it applies; actionable widgets keep tap = action. Config keys (046 section 4):
 `history: { hours, type: auto|line|bar|step, statistic, period, min, max, source }`; absent block = 24 h, line for
 numeric, step for on/off.
 

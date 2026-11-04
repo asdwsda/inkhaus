@@ -1473,6 +1473,7 @@ void loop() {
     } else {
       g_tapNow = now;
       changed |= g_app.touch(e.point, now);
+      if (g_app.historyOpen()) historyOpened();  // task 118: a tap on a sensor opened the history
     }
   } else if (e.kind == input::Event::Key) {
     if (e.key == ui::PhysicalKey::LongPush && !g_app.modalOpen() && g_app.screen() == uistate::Screen::Tabs &&

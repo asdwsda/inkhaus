@@ -373,6 +373,9 @@ bool AppState::touch(ui::Point p, uint32_t now) {
       const config::Widget *w = widgetAt(shownTab_, hit.index);
       if (!w) return false;
       if (w->type == WidgetType::Notifications) return openNotif(now, false);  // task 103
+      // Task 118: a tap on a read-only widget opens its history (no HA call, so no pending-tap feedback).
+      if (w->type == WidgetType::Sensor || w->type == WidgetType::BinarySensor || w->type == WidgetType::Energy)
+        return openHistory(hit.index, now);
       if (!ui::isFocusable(w->type)) return false;
       if (w->type == WidgetType::MediaPlayer && (hit.sub == kMediaSubText || hit.sub == kMediaSubArt)) return openMedia(hit.index, now);
       const bool single = ui::isSingleAction(w->type);

@@ -412,6 +412,23 @@ void test_app_long_press_opens_for_sensor_and_binary_only() {
   TEST_ASSERT_FALSE(a.historyOpen());
 }
 
+void test_app_tap_opens_history_on_read_only_widgets() {  // task 118
+  AppState a = makeApp();
+  TEST_ASSERT_TRUE(a.touch(centre(a, 0), 0));  // sensor
+  TEST_ASSERT_TRUE(a.historyOpen());
+  TEST_ASSERT_EQUAL_STRING("sensor.temp", a.history().entity().c_str());
+  a.closeHistory();
+  TEST_ASSERT_TRUE(a.touch(centre(a, 1), 0));  // binary sensor
+  TEST_ASSERT_EQUAL(HistChart::Step, a.history().spec().chart);
+  a.closeHistory();
+  a.touch(centre(a, 2), 0);  // light: tap = action, no popup
+  TEST_ASSERT_FALSE(a.historyOpen());
+  TEST_ASSERT_FALSE(a.touch(centre(a, 3), 0));  // history: false
+  TEST_ASSERT_FALSE(a.touch(centre(a, 4), 0));  // attribute widget
+  TEST_ASSERT_FALSE(a.historyOpen());
+  TEST_ASSERT_TRUE(a.longPress(centre(a, 0), 0));  // long press unchanged
+}
+
 void test_app_lights_keep_brightness_popup() {
   AppState a = makeApp();
   EntityState l;
@@ -552,6 +569,7 @@ int main() {
   RUN_TEST(test_spec_chart_choice_and_columns);
   RUN_TEST(test_layout_hit);
   RUN_TEST(test_app_long_press_opens_for_sensor_and_binary_only);
+  RUN_TEST(test_app_tap_opens_history_on_read_only_widgets);
   RUN_TEST(test_app_lights_keep_brightness_popup);
   RUN_TEST(test_app_modal_input);
   RUN_TEST(test_app_tick_reveals_loading);
