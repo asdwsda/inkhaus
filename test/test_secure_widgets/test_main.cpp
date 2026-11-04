@@ -3,6 +3,10 @@
 
 #include "app_state.h"
 #include "config_cache.h"
+#include "secure_intent.h"
+#include "service_call.h"
+#include "tap_intent.h"
+#include <ArduinoJson.h>
 
 using namespace uistate;
 using settings::Orientation;
@@ -80,10 +84,63 @@ void test_config_cache_roundtrip() {
   TEST_ASSERT_TRUE(w[4].confirm.has_value() && !*w[4].confirm);
 }
 
+// ---- service calls and intents ----
+void test_service_calls() {
+  ServiceCall c;
+  TEST_ASSERT_TRUE(build_service_call(Action::LockLock, {"lock.a"}, c));
+  TEST_ASSERT_EQUAL_STRING("lock", c.domain.c_str());
+  TEST_ASSERT_EQUAL_STRING("lock", c.service.c_str());
+  TEST_ASSERT_TRUE(build_service_call(Action::LockUnlock, {"lock.a"}, c));
+  TEST_ASSERT_EQUAL_STRING("unlock", c.service.c_str());
+  TEST_ASSERT_TRUE(build_alarm_call({"alarm_control_panel.h"}, AlarmCmd::ArmAway, "1234", c));
+  TEST_ASSERT_EQUAL_STRING("alarm_control_panel", c.domain.c_str());
+  TEST_ASSERT_EQUAL_STRING("alarm_arm_away", c.service.c_str());
+  JsonDocument d;
+  TEST_ASSERT_TRUE(!deserializeJson(d, c.body));
+  TEST_ASSERT_EQUAL_STRING("1234", d["code"].as<const char *>());
+  TEST_ASSERT_EQUAL_STRING("alarm_control_panel.h", d["entity_id"][0].as<const char *>());
+  TEST_ASSERT_TRUE(build_alarm_call({"alarm_control_panel.h"}, AlarmCmd::Disarm, "", c));
+  TEST_ASSERT_EQUAL_STRING("alarm_disarm", c.service.c_str());
+  TEST_ASSERT_FALSE(c.body.find("code") != std::string::npos);  // no code key without a code
+  TEST_ASSERT_TRUE(build_alarm_call({"alarm_control_panel.h"}, AlarmCmd::ArmHome, "1", c));
+  TEST_ASSERT_EQUAL_STRING("alarm_arm_home", c.service.c_str());
+  TEST_ASSERT_TRUE(build_alarm_call({"a.b"}, AlarmCmd::ArmNight, "1", c));
+  TEST_ASSERT_EQUAL_STRING("alarm_arm_night", c.service.c_str());
+  TEST_ASSERT_FALSE(build_alarm_call({}, AlarmCmd::Disarm, "", c));
+}
+
+void test_intents() {
+  using T = config::WidgetType;
+  EntityState lk;
+  lk.id = "lock.a";
+  lk.state = "locked";
+  auto ev = app_logic::intentFromRequest(T::Lock, 0, {lk});
+  TEST_ASSERT_TRUE(ev.has_value());
+  TEST_ASSERT_EQUAL(int(Action::LockLock), int(ev->action));
+  lk.state = "unlocked";
+  ev = app_logic::intentFromRequest(T::Lock, 0, {lk});
+  TEST_ASSERT_EQUAL(int(Action::LockUnlock), int(ev->action));
+  EntityState g;
+  g.id = "cover.g";
+  g.state = "open";
+  ev = app_logic::intentFromRequest(T::Garage, 0, {g});
+  TEST_ASSERT_EQUAL(int(Action::CoverOpen), int(ev->action));
+  g.state = "closed";
+  ev = app_logic::intentFromRequest(T::Garage, 0, {g});
+  TEST_ASSERT_EQUAL(int(Action::CoverClose), int(ev->action));
+  ev = app_logic::intentFromRequest(T::Garage, 2, {g});
+  TEST_ASSERT_EQUAL(int(Action::CoverStop), int(ev->action));
+  auto al = app_logic::alarmIntent("alarm_control_panel.h", AlarmCmd::Disarm, "9999");
+  TEST_ASSERT_TRUE(al.has_value());
+  TEST_ASSERT_EQUAL_STRING("alarm_disarm", al->custom_call.service.c_str());
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
   RUN_TEST(test_config_types_and_confirm);
   RUN_TEST(test_config_errors);
   RUN_TEST(test_config_cache_roundtrip);
+  RUN_TEST(test_service_calls);
+  RUN_TEST(test_intents);
   return UNITY_END();
 }

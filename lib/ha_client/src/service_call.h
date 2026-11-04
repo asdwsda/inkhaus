@@ -21,6 +21,8 @@ enum class Action {
   MediaPrevious,
   MediaNext,
   MediaTurnOn,
+  LockLock,  // task 108: lock.*
+  LockUnlock,
 };
 
 struct ServiceCall {
@@ -49,3 +51,8 @@ bool build_media_volume_mute(const std::vector<std::string>& ids, bool mute, Ser
 // Light brightness in percent: pct <= 0 -> light.turn_off, otherwise light.turn_on with
 // brightness_pct (clamped to 1..100). Returns false if ids is empty.
 bool build_light_brightness(const std::vector<std::string>& ids, int pct, ServiceCall& out);
+
+// Alarm panel commands (task 108): alarm_control_panel.alarm_disarm / alarm_arm_home / alarm_arm_away / alarm_arm_night.
+enum class AlarmCmd { Disarm, ArmHome, ArmAway, ArmNight };
+// `code` goes into the body as "code" when not empty (digits only; callers never log the body). Returns false if ids is empty.
+bool build_alarm_call(const std::vector<std::string>& ids, AlarmCmd cmd, const std::string& code, ServiceCall& out);

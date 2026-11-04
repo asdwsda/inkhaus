@@ -41,6 +41,8 @@ bool build_service_call(Action action, const std::vector<std::string>& ids, Serv
     case Action::MediaPrevious: out.domain = "media_player"; out.service = "media_previous_track"; break;
     case Action::MediaNext: out.domain = "media_player"; out.service = "media_next_track"; break;
     case Action::MediaTurnOn: out.domain = "media_player"; out.service = "turn_on"; break;
+    case Action::LockLock: out.domain = "lock"; out.service = "lock"; break;
+    case Action::LockUnlock: out.domain = "lock"; out.service = "unlock"; break;
     default: return false;
   }
   out.body = body_for(ids, nullptr);
@@ -104,6 +106,24 @@ bool build_media_volume_mute(const std::vector<std::string>& ids, bool mute, Ser
   doc["is_volume_muted"] = mute;
   out.domain = "media_player";
   out.service = "volume_mute";
+  serializeJson(doc, out.body);
+  return true;
+}
+
+bool build_alarm_call(const std::vector<std::string>& ids, AlarmCmd cmd, const std::string& code, ServiceCall& out) {
+  if (ids.empty()) return false;
+  out.domain = "alarm_control_panel";
+  switch (cmd) {
+    case AlarmCmd::Disarm: out.service = "alarm_disarm"; break;
+    case AlarmCmd::ArmHome: out.service = "alarm_arm_home"; break;
+    case AlarmCmd::ArmAway: out.service = "alarm_arm_away"; break;
+    case AlarmCmd::ArmNight: out.service = "alarm_arm_night"; break;
+  }
+  JsonDocument doc;
+  JsonArray arr = doc["entity_id"].to<JsonArray>();
+  for (const std::string& id : ids) arr.add(id);
+  if (!code.empty()) doc["code"] = code;
+  out.body.clear();
   serializeJson(doc, out.body);
   return true;
 }

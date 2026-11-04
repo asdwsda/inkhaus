@@ -35,6 +35,16 @@ std::optional<session::Event> intentFromRequest(T type, int sub, const std::vect
       const A a = sub == 1 ? A::MediaPrevious : sub == 3 ? A::MediaNext : req[0].state == "on" ? A::MediaTurnOn : A::MediaPlayPause;
       return session::Event::user_action(ids, a);
     }
+    case T::Lock: {  // task 108: requested state "locked" -> lock, else unlock
+      ids.resize(1);
+      return session::Event::user_action(ids, req[0].state == "locked" ? A::LockLock : A::LockUnlock);  // no expected state: locks and doors pass through locking / opening
+    }
+    case T::Garage: {  // task 108: sub 2 = stop (opening / closing); else the requested state decides
+      ids.resize(1);
+      if (sub == 2) return session::Event::user_action(ids, A::CoverStop);
+      const bool open = req[0].state == "open" || req[0].state == "opening";
+      return session::Event::user_action(ids, open ? A::CoverOpen : A::CoverClose);
+    }
     case T::Climate: {
       const EntityState &s = req[0];
       if (!s.temperature) return std::nullopt;
