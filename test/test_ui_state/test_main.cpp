@@ -404,7 +404,7 @@ static config::Config demoConfig() {
 
 void test_demo_yaml_showcase() {
   config::Config cfg = demoConfig();
-  TEST_ASSERT_EQUAL_INT(7, (int)cfg.tabs.size());  // + Calendar (105), New (103, 104, 106, 109) and Security (108) tabs
+  TEST_ASSERT_EQUAL_INT(8, (int)cfg.tabs.size());  // + Calendar (105), New (103, 104, 106, 109), Alarm and Doors (108) tabs
   {  // the New tab shows notifications, a weather forecast, energy and two media players
     int notif = 0, fc = 0, energy = 0, media = 0;
     for (const auto &w : cfg.tabs[5].widgets) {
@@ -425,7 +425,7 @@ void test_demo_yaml_showcase() {
     if (!s.available) { ++unavailable; continue; }
     TEST_ASSERT_TRUE(s.state != "home" || s.id == "person.alice");  // no generic fallback state
   }
-  TEST_ASSERT_EQUAL_INT(5, unavailable);  // sensor.old_probe_unavailable, calendar.old_unavailable, and the Security tab (108): alarm, lock, garage
+  TEST_ASSERT_EQUAL_INT(5, unavailable);  // sensor.old_probe_unavailable, calendar.old_unavailable, and the Alarm and Doors tabs (108)
   for (auto o : {settings::Orientation::Portrait, settings::Orientation::Landscape}) {
     bool pager = false;
     for (size_t t = 0; t < cfg.tabs.size(); ++t) {

@@ -122,7 +122,7 @@ tabs:
         solar: sensor.solar_energy_total
       - entity: media_player.living_room        # playing, with the built-in sample cover (task 107)
       - entity: media_player.kitchen            # paused, no picture (tile)
-  - title: Security                          # task 108: alarm panels, locks and garage doors in every state (fake data)
+  - title: Alarm                             # task 108: alarm panels in every state (fake data)
     widgets:
       - entity: alarm_control_panel.home        # disarmed; tap for the keypad, the demo code is 1234
         name: Alarm
@@ -140,6 +140,8 @@ tabs:
         name: Siren
       - entity: alarm_control_panel.old_unavailable  # deliberately unavailable
         name: Old panel
+  - title: Doors                             # task 108: locks and garage doors in every state (fake data)
+    widgets:
       - entity: lock.front_door                 # locked; unlocking asks first
         name: Front door
       - entity: lock.back_door                  # open (unlocked): INK fill, locking does not ask

@@ -798,22 +798,26 @@ config::Config demoCfg() {
 
 void test_demo_security_tab_shows_all_states() {
   const config::Config cfg = demoCfg();
-  int tab = -1;
-  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Security") tab = int(i);
-  TEST_ASSERT_TRUE(tab >= 0);
   AppState app;
   app.init(cfg, Orientation::Landscape, true);
-  app.restoreTab(tab);
-  TEST_ASSERT_EQUAL(tab, app.shownTab());
   std::vector<std::string> texts;
   bool fill = false, una = false;
-  const auto &ws = cfg.tabs[size_t(tab)].widgets;
-  for (size_t i = 0; i < ws.size(); ++i) {
-    const WidgetData d = app.widgetData(int(i));
-    const SecureView v = secureView(ws[i].type, d.members.empty() ? nullptr : d.members[0]);
-    texts.push_back(ws[i].type == config::WidgetType::Alarm ? "A:" + v.text : ws[i].type == config::WidgetType::Lock ? "L:" + v.text : "G:" + v.text);
-    fill |= v.fill;
-    una |= v.look == Look::Unavailable;
+  for (const char *title : {"Alarm", "Doors"}) {
+    int tab = -1;
+    for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == title) tab = int(i);
+    TEST_ASSERT_TRUE(tab >= 0);
+    app.restoreTab(tab);
+    TEST_ASSERT_EQUAL(tab, app.shownTab());
+    const auto &ws = cfg.tabs[size_t(tab)].widgets;
+    for (size_t i = 0; i < ws.size(); ++i) {
+      const WidgetData d = app.widgetData(int(i));
+      const SecureView v = secureView(ws[i].type, d.members.empty() ? nullptr : d.members[0]);
+      texts.push_back(ws[i].type == config::WidgetType::Alarm ? "A:" + v.text : ws[i].type == config::WidgetType::Lock ? "L:" + v.text : "G:" + v.text);
+      fill |= v.fill;
+      una |= v.look == Look::Unavailable;
+    }
+    TEST_ASSERT_FALSE(ui::computeFlow(Orientation::Landscape, ws).pagerVisible);  // each tab fits one page
+    TEST_ASSERT_FALSE(ui::computeFlow(Orientation::Portrait, ws).pagerVisible);
   }
   TEST_ASSERT_TRUE(fill && una);
   auto has = [&](const char *t) { return std::find(texts.begin(), texts.end(), t) != texts.end(); };
@@ -825,7 +829,7 @@ void test_demo_security_tab_shows_all_states() {
 void test_demo_keypad_wrong_and_right_code() {
   const config::Config cfg = demoCfg();
   int tab = 0;
-  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Security") tab = int(i);
+  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Alarm") tab = int(i);
   AppState app;
   app.init(cfg, Orientation::Landscape, true);
   app.restoreTab(tab);
@@ -853,7 +857,7 @@ void test_demo_keypad_wrong_and_right_code() {
 void test_demo_lock_commits_after_pending() {
   const config::Config cfg = demoCfg();
   int tab = 0, lockIdx = 0;
-  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Security") tab = int(i);
+  for (size_t i = 0; i < cfg.tabs.size(); ++i) if (cfg.tabs[i].title == "Doors") tab = int(i);
   const auto &ws = cfg.tabs[size_t(tab)].widgets;
   for (size_t i = 0; i < ws.size(); ++i) if (ws[i].entity == "lock.front_door") lockIdx = int(i);
   AppState app;
