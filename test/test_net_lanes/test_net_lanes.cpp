@@ -26,6 +26,7 @@ static void test_lanes() {
   TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::Notifications)));
   TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::Forecast)));
   TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::Calendar)));
+  TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::Art)));
   TEST_ASSERT_EQUAL(Lane::Background, laneOf(mk(T::OtaCheck)));  // the automatic OTA check never outranks a tap
 }
 
@@ -67,6 +68,7 @@ static void test_yield_policy() {
   TEST_ASSERT_EQUAL(YieldPolicy::Requeue, yieldPolicyOf(T::Notifications));
   TEST_ASSERT_EQUAL(YieldPolicy::Requeue, yieldPolicyOf(T::Forecast));
   TEST_ASSERT_EQUAL(YieldPolicy::Requeue, yieldPolicyOf(T::Calendar));
+  TEST_ASSERT_EQUAL(YieldPolicy::Requeue, yieldPolicyOf(T::Art));
   TEST_ASSERT_EQUAL(YieldPolicy::Drop, yieldPolicyOf(T::Report));
   TEST_ASSERT_EQUAL(YieldPolicy::None, yieldPolicyOf(T::Call));
   TEST_ASSERT_EQUAL(YieldPolicy::None, yieldPolicyOf(T::Fetch));

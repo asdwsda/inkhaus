@@ -1,6 +1,6 @@
 # 107: Media album art
 
-Status: PC done (device part open)
+Status: PC done, device path written (UNVERIFIED, no device yet)
 Depends on: 106
 UI spec: docs/ui/widgets-new-media-art.md (+ mockups docs/ui/png/widgets-new-media-art-*.png)
 Needs device: yes (look + a real entity; PC part first)
@@ -26,3 +26,4 @@ Out of scope: other new widgets.
   Demo art is a built-in sample image (no network in demo mode).
 - PC part done (2026-11-04): lib/media_art (art_image: crop/scale/16-grey dither/sample cover; art_fetch: URL plan, token rule, 150 KB cap; art_store: per-URL state machine, popup 200 px buffer, demo serving), `art` config key (+ cache bit 6), media_layout (widget + popup rects of the art spec, art:false keeps the 106 layout), ui_layout sub-region 5 (art, touch only), AppState::artSync / takeArtRequests, src/render/media_widget (art, tiles, popup), demo "New" tab (living room playing with the sample cover, kitchen paused without a picture; off tile dropped), docs (guide, config.example.yaml, device-checks 107). Tests: test/test_media_art.
 - Open for the device part: HTTP fetch of `entity_picture` (ArtStore::takeRequests -> planFetch -> download with caps -> JPEG/PNG decode -> Gray8 -> ArtStore::deliver/fail; retryFailed on wake), the GC16 art-rect-only partial refresh (today the generic frame diff in src/present picks the mode), real icons `volume` L for the tiles (primitive glyph used), look check on the demo tab.
+- Device path written 2026-11-04 (all UNVERIFIED, build + native tests only): NetCommand::Art / NetEvent::ArtDone on the background lane (yield -> requeue like Forecast), HaWorker::runArt (HaClient::stream_get / stream_url, 150 KB and 6 s caps, token only to HA), src/art_glue (pump one download at a time, M5GFX drawJpg/drawPng into a 16-bit PSRAM sprite with 1/2/4/8 reduction, luma -> squareScale 200 -> ArtStore::deliver; Cancelled -> ArtStore::requeue; failed ones retried per net session), present::setGreyRegions (a changed rect touching ready art = one GC16 with real greys, reason=art). Pure helpers art::imageInfo / planDecode tested. Open: device look, real PSRAM use of the 150 KB std::string body, decode time, real `volume` glyph.

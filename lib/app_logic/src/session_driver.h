@@ -64,6 +64,10 @@ class SessionDriver {
   // Task 104: the weather forecast (NetCommand::Type::Forecast); the handler gets every ForecastDone event.
   using ForecastHandler = std::function<void(NetEvent &&)>;
   void setForecastHandler(ForecastHandler h) { forecastHandler_ = std::move(h); }
+  // Task 107: album art download (NetCommand::Type::Art); the handler gets every ArtDone event.
+  using ArtHandler = std::function<void(NetEvent &&)>;
+  void setArtHandler(ArtHandler h) { artHandler_ = std::move(h); }
+  void postArt(const NetCommand &cmd) { net_.post(cmd); }
   void postForecast(const NetCommand &cmd) { net_.post(cmd); }
   // Task 105: the calendar events (NetCommand::Type::Calendar); the handler gets every CalendarDone event.
   using CalendarHandler = std::function<void(NetEvent &&)>;
@@ -115,6 +119,7 @@ class SessionDriver {
   ReportHandler reportHandler_;
   NotificationsHandler notificationsHandler_;
   ForecastHandler forecastHandler_;
+  ArtHandler artHandler_;
   CalendarHandler calendarHandler_;  // task 105
   FetchHook fetchHook_;
   SleepHold sleepHold_;

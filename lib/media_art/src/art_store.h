@@ -42,6 +42,9 @@ class ArtStore {
   bool deliver(const std::string &entity, const std::string &picture, const Gray8 &square);
   bool fail(const std::string &entity, const std::string &picture);
 
+  // A download that was dropped (yielded to a user command): reported again by takeRequests. False if stale.
+  bool requeue(const std::string &entity, const std::string &picture);
+
   // Next wake: failed entries are tried again (state Loading). True if any changed.
   bool retryFailed();
 

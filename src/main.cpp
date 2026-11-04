@@ -21,6 +21,7 @@
 #include "deferred_tap.h"
 #include "forecast_glue.h"
 #include "calendar_glue.h"  // task 105
+#include "art_glue.h"       // task 107
 #include "demo_history.h"
 #include "input.h"
 #include "net.h"
@@ -327,6 +328,15 @@ static void showFrame(uint32_t now) {
     for (const ui::Placement &pl : g_app.layout().widgets)
       if (pl.graph) graphs.push_back({pl.rect.x, pl.rect.y, pl.rect.w, pl.rect.h});
     present::setMergeRegions(graphs);
+    std::vector<screen_track::Rect> greys;  // task 107: ready album art (the 1 px edge included)
+    for (const ui::Placement &pl : g_app.layout().widgets) {
+      if (!pl.art) continue;
+      const uistate::WidgetData wd = g_app.widgetData(pl.index);
+      if (wd.artState != art::ArtState::Ready || !wd.artPx) continue;
+      const uistate::MediaWidgetLayout wl = uistate::mediaWidgetLayout(pl.rect.w, true);
+      greys.push_back({pl.rect.x + wl.edge.x, pl.rect.y + wl.edge.y, wl.edge.w, wl.edge.h});
+    }
+    present::setGreyRegions(greys);
   }
   present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.mediaOpen());
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
@@ -702,7 +712,9 @@ static void startSession(uint32_t now, bool restart = false) {
   forecast_glue::newSession();
   g_drv->setCalendarHandler([](app_logic::NetEvent &&ev) { calendar_glue::onDone(std::move(ev), session_glue::wallClock()); });  // task 105
   calendar_glue::newSession();
-  g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy() || g_notifPending || forecast_glue::pending() || calendar_glue::pending(); });  // task 087: no sleep during a check / download
+  g_drv->setArtHandler([](app_logic::NetEvent &&ev) { art_glue::onDone(std::move(ev), g_app); });  // task 107
+  art_glue::newSession(g_app);
+  g_drv->setSleepHold([] { return graphsBusy() || ota::busy() || report_glue::busy() || g_notifPending || forecast_glue::pending() || calendar_glue::pending() || art_glue::pending(); });  // task 087: no sleep during a check / download
   g_app.setNotifDismissSink(notifDismissSink);  // task 103
   report_glue::abort();
   g_notifAsked = g_notifPending = g_notifWanted = false;  // the old net session's answer is dropped; the new one asks again
@@ -1550,6 +1562,8 @@ void loop() {
   calendar_glue::pump(g_drv.get(), g_app.config(), g_app.shownTab(), g_sessionWake == power::WakeReason::RtcAlarm, graphsBusy(),
                       session_glue::wallClock(), utcOffsetAt(session_glue::wallClock()));  // task 105
   if (calendar_glue::takeChanged()) changed = true;
+  art_glue::pump(g_drv.get(), g_app, graphsBusy());  // task 107
+  if (art_glue::takeChanged()) changed = true;
   if (g_app.graphs().takeChanged()) changed = true;
 
   if (!settings_flow::active() && g_app.screen() == uistate::Screen::Tabs) {

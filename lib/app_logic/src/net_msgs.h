@@ -18,7 +18,7 @@
 namespace app_logic {
 
 struct NetCommand {
-  enum class Type { Fetch, Call, Close, History, Report, Notifications, Forecast, NotifDismiss, OtaCheck, Calendar };  // OtaCheck (task 116): run by the net task itself, background lane, never reaches HaWorker
+  enum class Type { Fetch, Call, Close, History, Report, Notifications, Forecast, NotifDismiss, OtaCheck, Calendar, Art };  // OtaCheck (task 116): run by the net task itself, background lane, never reaches HaWorker
   // Close: drop the kept-alive connection (before sleep)
   Type type = Type::Fetch;
   bool user = false;             // Fetch: a user refresh / tap follow-up (user lane, task 116); Call and NotifDismiss are always user
@@ -44,10 +44,12 @@ struct NetCommand {
   std::string forecastEntity;
   // Calendar (task 105): calendar.get_events for this calendar entity.
   std::string calendarEntity;
+  // Art (task 107): download `artPicture` (entity_picture) of `artEntity`; the body goes to NetEvent::artBody.
+  std::string artEntity, artPicture;
 };
 
 struct NetEvent {
-  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone, NotificationsDone, ForecastDone, NotifDismissDone, CalendarDone };
+  enum class Type { FetchDone, ServiceDone, Closed, HistoryDone, ReportDone, NotificationsDone, ForecastDone, NotifDismissDone, CalendarDone, ArtDone };
   Type type = Type::FetchDone;
   HaError error = HaError::None;
   int http_status = 0;
@@ -79,6 +81,8 @@ struct NetEvent {
   std::string dismissId;              // NotifDismissDone (task 103): error None = dismissed
   std::string calendarEntity;         // CalendarDone (task 105): error None = calendarEvents are valid (may be empty)
   std::vector<calendar::Event> calendarEvents;
+  // ArtDone (task 107): error None = artBody holds the whole picture file (at most art::kMaxArtBytes).
+  std::string artEntity, artPicture, artBody;
 };
 
 // History fetch failure that means "too much data": over the size cap, or the 15 s deadline hit while data was

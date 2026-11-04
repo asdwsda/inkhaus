@@ -139,19 +139,26 @@ HaResult HaClient::stream_history(const std::string& entity_id, int64_t start_ep
                                   int64_t end_epoch, const StreamLimits& lim, const ChunkFn& sink,
                                   size_t* bytes_out) {
   if (bytes_out) *bytes_out = 0;
-  HaResult r;
   std::string path;
   if (!build_history_path(entity_id, start_epoch, end_epoch, path)) {
+    HaResult r;
     r.error = HaError::Parse;
     r.message = "bad history request";
     return r;
   }
+  return stream_get(path, "application/json", lim, sink, bytes_out);
+}
+
+HaResult HaClient::stream_get(const std::string& path, const std::string& accept, const StreamLimits& lim,
+                              const ChunkFn& sink, size_t* bytes_out) {
+  if (bytes_out) *bytes_out = 0;
+  HaResult r;
   std::vector<std::string> bases;
   for (const std::string& b : {remembered_, internal_, external_}) {
     if (b.empty() || std::find(bases.begin(), bases.end(), b) != bases.end()) continue;
     bases.push_back(b);
   }
-  HttpHeaders headers = {{"Authorization", "Bearer " + token_}, {"Accept", "application/json"}};
+  HttpHeaders headers = {{"Authorization", "Bearer " + token_}, {"Accept", accept}};
   r.error = HaError::Network;
   r.message = "no base URL configured";
   uint32_t spent = 0;  // one deadline budget for the whole call, fallbacks included
@@ -181,5 +188,26 @@ HaResult HaClient::stream_history(const std::string& entity_id, int64_t start_ep
     else { r.error = HaError::None; r.message.clear(); remembered_ = base; }  // only a complete 2xx body
     return r;
   }
+  return r;
+}
+
+// Task 107: one absolute URL (album art on another host); the token only when asked to.
+HaResult HaClient::stream_url(const std::string& url, bool send_token, const std::string& accept,
+                              const StreamLimits& lim, const ChunkFn& sink, size_t* bytes_out) {
+  if (bytes_out) *bytes_out = 0;
+  HaResult r;
+  HttpHeaders headers = {{"Accept", accept}};
+  if (send_token) headers.insert(headers.begin(), {"Authorization", "Bearer " + token_});
+  const StreamResult s = transport_.stream("GET", url, headers, "", lim, sink);
+  if (bytes_out) *bytes_out = s.bytes;
+  r.ms = s.ms;
+  r.reused = s.reused;
+  r.http_status = s.status;
+  if (s.cancelled) { r.error = HaError::Cancelled; r.message = "cancelled"; }
+  else if (s.too_large) { r.error = HaError::TooLarge; r.message = "response too large"; }
+  else if (s.deadline) { r.error = HaError::Timeout; r.message = "deadline exceeded"; }
+  else if (s.status == 0) { r.error = HaError::Network; r.message = s.error; }
+  else if (s.status == 401) { r.error = HaError::Auth; r.message = "unauthorized"; }
+  else if (s.status < 200 || s.status >= 300) { r.error = HaError::Http; r.message = "HTTP " + std::to_string(s.status); }
   return r;
 }

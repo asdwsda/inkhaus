@@ -58,6 +58,12 @@ class HaClient {
   // to the sink. Never logs the URL or the token.
   HaResult stream_history(const std::string& entity_id, int64_t start_epoch, int64_t end_epoch,
                           const StreamLimits& lim, const ChunkFn& sink, size_t* bytes_out = nullptr);
+  // Task 107: GET `path` (HA-relative, e.g. an entity_picture) with the same URL fallback; `accept` header.
+  HaResult stream_get(const std::string& path, const std::string& accept, const StreamLimits& lim,
+                      const ChunkFn& sink, size_t* bytes_out = nullptr);
+  // Task 107: GET an absolute URL, no fallback; Authorization only when send_token.
+  HaResult stream_url(const std::string& url, bool send_token, const std::string& accept, const StreamLimits& lim,
+                      const ChunkFn& sink, size_t* bytes_out = nullptr);
   // Task 100: POST /api/states/<entity_id> with a state JSON (creates or updates a state object; HA answers
   // 200/201 with the state, which is ignored). Same URL fallback as the other calls.
   HaResult post_state(const std::string& entity_id, const std::string& body);

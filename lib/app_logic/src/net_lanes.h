@@ -28,7 +28,8 @@ inline YieldPolicy yieldPolicyOf(NetCommand::Type t) {
     case NetCommand::Type::History:        // the graph still matters: retry after the user command
     case NetCommand::Type::Notifications:
     case NetCommand::Type::Forecast:
-    case NetCommand::Type::Calendar: return YieldPolicy::Requeue;
+    case NetCommand::Type::Calendar:
+    case NetCommand::Type::Art: return YieldPolicy::Requeue;
     case NetCommand::Type::Report: return YieldPolicy::Drop;  // no value later; not retried within the session
     default: return YieldPolicy::None;
   }

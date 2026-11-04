@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include "art_fetch.h"
 #include "cal_events.h"
 #include "forecast.h"
 #include "net_lanes.h"
@@ -266,6 +267,39 @@ void HaWorker::runCalendar(const NetCommand &cmd, NetEvent &e) {
   if (r.ok() && !calendar::parseResponse(resp, cmd.calendarEntity, e.calendarEvents)) e.error = HaError::Parse;
 }
 
+// Task 107: GET the entity_picture (binary, capped at art::kMaxArtBytes and art::kMaxArtFetchMs); the decode is the
+// caller's. Relative URLs go through the client's URL fallback; absolute ones as planned (token only to HA itself).
+void HaWorker::runArt(const NetCommand &cmd, NetEvent &e) {
+  e.artEntity = cmd.artEntity;
+  e.artPicture = cmd.artPicture;
+  const std::string &base = !client_->remembered_base().empty() ? client_->remembered_base() : internal_;
+  const art::FetchPlan plan = art::planFetch(base, cmd.artPicture);
+  if (!plan.ok) {
+    e.error = HaError::Parse;
+    return;
+  }
+  StreamLimits lim;
+  lim.max_bytes = art::kMaxArtBytes;
+  lim.deadline_ms = art::kMaxArtFetchMs;
+  lim.yield = yield_;
+  std::string &body = e.artBody;
+  const ChunkFn sink = [&body](const char *d, size_t n) {
+    body.append(d, n);
+    return true;
+  };
+  size_t bytes = 0;
+  HaResult r;
+  if (cmd.artPicture[0] == '/') r = client_->stream_get(cmd.artPicture, "image/*", lim, sink, &bytes);
+  else r = client_->stream_url(plan.url, plan.sendToken, "image/*", lim, sink, &bytes);
+  e.error = r.error;
+  e.http_status = r.http_status;
+  e.external = isExternal(r.base_url);
+  e.ms = r.ms;
+  e.reused = r.reused;
+  e.bytes = bytes;
+  if (e.error != HaError::None) body.clear();
+}
+
 // Task 101: persistent_notification/get. Task 103: the same answer also gives the full list.
 void HaWorker::runNotifications(NetEvent &e) {
   std::string body;
@@ -311,6 +345,10 @@ NetEvent HaWorker::run(const NetCommand &cmd) {
     e.type = NetEvent::Type::ForecastDone;
     e.ticket = cmd.ticket;
     runForecast(cmd, e);
+  } else if (cmd.type == NetCommand::Type::Art) {  // task 107
+    e.type = NetEvent::Type::ArtDone;
+    e.ticket = cmd.ticket;
+    runArt(cmd, e);
   } else if (cmd.type == NetCommand::Type::Calendar) {  // task 105
     e.type = NetEvent::Type::CalendarDone;
     e.ticket = cmd.ticket;

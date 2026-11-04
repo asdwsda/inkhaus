@@ -97,6 +97,10 @@ void SessionDriver::onNet(NetEvent &ev, int64_t now) {
     if (forecastHandler_) forecastHandler_(std::move(ev));
     return;
   }
+  if (ev.type == NetEvent::Type::ArtDone) {  // task 107
+    if (artHandler_) artHandler_(std::move(ev));
+    return;
+  }
   if (ev.type == NetEvent::Type::CalendarDone) {  // task 105
     if (calendarHandler_) calendarHandler_(std::move(ev));
     return;

@@ -30,4 +30,23 @@ bool isDemoPicture(const std::string &picture);
 // A body of this declared/received size may be downloaded (contentLength < 0: unknown, checked while reading).
 bool bodyWithinCap(long contentLength);
 
+enum class ImageKind { Unknown, Jpeg, Png };
+struct ImageInfo {
+  ImageKind kind = ImageKind::Unknown;
+  int w = 0, h = 0;
+};
+// Sniffs JPEG/PNG and reads the pixel size from the header (JPEG: first SOF marker). Unknown/truncated -> kind
+// Unknown or w/h 0.
+ImageInfo imageInfo(const uint8_t *data, size_t len);
+
+constexpr long kMaxDecodePixels = 512L * 1024;  // decoded RGB565 sprite cap (1 MB of PSRAM)
+// How to decode a w x h picture: halve it `shift` times (0..3) while the short side stays >= 200 (the popup size);
+// refuse (ok=false) pictures over kMaxSourceDim or whose decoded area is over kMaxDecodePixels.
+struct DecodePlan {
+  bool ok = false;
+  int shift = 0;
+  int outW = 0, outH = 0;
+};
+DecodePlan planDecode(int w, int h);
+
 }  // namespace art

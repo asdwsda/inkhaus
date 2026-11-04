@@ -305,16 +305,27 @@ bool g_modalOpening = false;  // the next show() is the opening one
 bool g_modalClosing = false;  // the next show() is the closing one
 screen_track::ModalSettle g_settle(1000);  // popup fastest updates: one quality refresh ~1 s after the last
 
+std::vector<screen_track::Rect> g_greyRegions;  // task 107: album art rects of the shown frame
+
+bool touchesGrey(const Rect &r) {
+  for (const Rect &g : g_greyRegions)
+    if (r.x < g.x + g.w && g.x < r.x + r.w && r.y < g.y + g.h && g.y < r.y + r.h) return true;
+  return false;
+}
+
 void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   auto &d = M5.Display;
   storeDebt(true);  // before the refresh: a crash in between must not lose it
-  const bool grey = unknownPanel || g_modalOpening || panelHasGrey(r);
-  const char *reason = unknownPanel ? "boot_unknown_panel" : g_modalOpening ? "modal" : (grey ? "panel_has_grey" : "panel_bw");
+  // Task 107 (UNVERIFIED): a rect touching the album art is one GC16 refresh with the real greys, nothing else
+  // redraws the art (a rect is only refreshed when its pixels changed, i.e. when the picture URL changed).
+  const bool art = touchesGrey(r);
+  const bool grey = unknownPanel || g_modalOpening || art || panelHasGrey(r);
+  const char *reason = unknownPanel ? "boot_unknown_panel" : g_modalOpening ? "modal" : art ? "art" : (grey ? "panel_has_grey" : "panel_bw");
   Serial.printf("PRESENT: rect=%d,%d,%d,%d mode=%s reason=%s\n", r.x, r.y, r.w, r.h, grey ? "quality" : "fastest",
                 reason);
   if (grey) {
     d.setEpdMode(epd_mode_t::epd_quality);
-    pushRegion(r, !(kQualityPushesGrey || g_modal));  // popup: real greys, g_panel records them
+    pushRegion(r, !(kQualityPushesGrey || g_modal || art));  // popup: real greys, g_panel records them
     refresh(epd_mode_t::epd_quality, &r, tag);
   } else {
     d.setEpdMode(epd_mode_t::epd_fastest);
@@ -584,6 +595,7 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
 void setLogTab(int tab) { g_renderTab = tab; }
 static std::vector<screen_track::Rect> g_mergeRegions;
 void setMergeRegions(const std::vector<screen_track::Rect> &regions) { g_mergeRegions = regions; }
+void setGreyRegions(const std::vector<screen_track::Rect> &regions) { g_greyRegions = regions; }
 
 void setModal(bool open) {
   if (open == g_modal) return;

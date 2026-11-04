@@ -1,6 +1,8 @@
 // Task 107: album art (pixels, fetch plan, store, config option, layouts, app state, demo).
 #include <unity.h>
 
+#include "ha_worker.h"
+
 #include <string>
 
 #include "app_state.h"
@@ -529,6 +531,105 @@ void test_demo_new_tab_media_with_sample_art() {
   TEST_ASSERT_EQUAL(200, a.mediaArtPixels()->w);
 }
 
+static void test_image_info_and_decode_plan() {
+  const uint8_t png[24] = {0x89, 'P', 'N', 'G', 13, 10, 26, 10, 0, 0, 0, 13, 'I', 'H', 'D', 'R', 0, 0, 2, 0, 0, 0, 1, 0x80};
+  art::ImageInfo i = art::imageInfo(png, sizeof png);
+  TEST_ASSERT_TRUE(i.kind == art::ImageKind::Png);
+  TEST_ASSERT_EQUAL(512, i.w);
+  TEST_ASSERT_EQUAL(384, i.h);
+  const uint8_t jpg[] = {0xFF, 0xD8, 0xFF, 0xE0, 0, 4, 0, 0, 0xFF, 0xC0, 0, 11, 8, 0x01, 0x90, 0x02, 0x58, 3, 0, 0, 0};
+  i = art::imageInfo(jpg, sizeof jpg);
+  TEST_ASSERT_TRUE(i.kind == art::ImageKind::Jpeg);
+  TEST_ASSERT_EQUAL(600, i.w);
+  TEST_ASSERT_EQUAL(400, i.h);
+  TEST_ASSERT_TRUE(art::imageInfo(jpg, 12).w == 0);  // truncated before the SOF
+  const uint8_t junk[] = {1, 2, 3, 4, 5, 6, 7, 8};
+  TEST_ASSERT_TRUE(art::imageInfo(junk, sizeof junk).kind == art::ImageKind::Unknown);
+  TEST_ASSERT_TRUE(art::imageInfo(junk, 0).kind == art::ImageKind::Unknown);
+
+  art::DecodePlan p = art::planDecode(300, 300);  // 150 < 200: no reduction
+  TEST_ASSERT_TRUE(p.ok);
+  TEST_ASSERT_EQUAL(0, p.shift);
+  p = art::planDecode(1000, 1000);  // 500 >= 200, 250 >= 200, 125 < 200
+  TEST_ASSERT_EQUAL(2, p.shift);
+  TEST_ASSERT_EQUAL(250, p.outW);
+  p = art::planDecode(4096, 4096);
+  TEST_ASSERT_EQUAL(3, p.shift);
+  TEST_ASSERT_TRUE(p.ok);
+  TEST_ASSERT_FALSE(art::planDecode(5000, 100).ok);
+  TEST_ASSERT_FALSE(art::planDecode(0, 100).ok);
+  TEST_ASSERT_FALSE(art::planDecode(4096, 399).ok);  // thin and long: decoded area over the cap
+}
+
+static void test_store_requeue() {
+  art::ArtStore s;
+  s.want("media_player.a", "/api/x");
+  TEST_ASSERT_EQUAL(1, (int)s.takeRequests().size());
+  TEST_ASSERT_EQUAL(0, (int)s.takeRequests().size());
+  TEST_ASSERT_FALSE(s.requeue("media_player.a", "/api/other"));
+  TEST_ASSERT_TRUE(s.requeue("media_player.a", "/api/x"));
+  TEST_ASSERT_EQUAL(1, (int)s.takeRequests().size());
+}
+
+namespace {
+struct ArtTransport : HttpTransport {
+  std::vector<std::string> urls;
+  std::vector<bool> tokenSent;
+  HttpResponse reply;
+  HttpResponse request(const std::string &, const std::string &u, const HttpHeaders &h, const std::string &) override {
+    urls.push_back(u);
+    bool t = false;
+    for (const auto &kv : h)
+      if (kv.first == "Authorization") t = true;
+    tokenSent.push_back(t);
+    return reply;
+  }
+};
+app_logic::NetCommand artCmd(const char *pic) {
+  app_logic::NetCommand c;
+  c.type = app_logic::NetCommand::Type::Art;
+  c.artEntity = "media_player.a";
+  c.artPicture = pic;
+  return c;
+}
+}  // namespace
+
+static void test_worker_art_relative_and_absolute() {
+  ArtTransport t;
+  t.reply.status = 200;
+  t.reply.body = std::string("\xFF\xD8 jpeg bytes");
+  app_logic::HaWorker w(t, "http://ha.local:8123", "", "TOKEN");
+  app_logic::NetEvent e = w.run(artCmd("/api/media_player_proxy/media_player.a?token=x"));
+  TEST_ASSERT_TRUE(e.type == app_logic::NetEvent::Type::ArtDone);
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL_UINT(t.reply.body.size(), e.artBody.size());
+  TEST_ASSERT_EQUAL_STRING("media_player.a", e.artEntity.c_str());
+  TEST_ASSERT_EQUAL_STRING("http://ha.local:8123/api/media_player_proxy/media_player.a?token=x", t.urls[0].c_str());
+  TEST_ASSERT_TRUE(t.tokenSent[0]);
+  e = w.run(artCmd("https://cdn.example.com/c.jpg"));  // foreign host: as is, no token
+  TEST_ASSERT_TRUE(e.error == HaError::None);
+  TEST_ASSERT_EQUAL_STRING("https://cdn.example.com/c.jpg", t.urls[1].c_str());
+  TEST_ASSERT_FALSE(t.tokenSent[1]);
+  e = w.run(artCmd("http://ha.local:8123/local/c.png"));  // HA itself: token
+  TEST_ASSERT_TRUE(t.tokenSent[2]);
+}
+
+static void test_worker_art_failures() {
+  ArtTransport t;
+  app_logic::HaWorker w(t, "http://ha.local:8123", "", "TOKEN");
+  t.reply.status = 404;
+  TEST_ASSERT_TRUE(w.run(artCmd("/api/x")).error == HaError::Http);
+  t.reply.status = 200;
+  t.reply.body.assign(art::kMaxArtBytes + 1, 'a');  // over the cap: nothing kept
+  app_logic::NetEvent e = w.run(artCmd("/api/x"));
+  TEST_ASSERT_TRUE(e.error == HaError::TooLarge);
+  TEST_ASSERT_TRUE(e.artBody.empty());
+  const size_t n = t.urls.size();
+  TEST_ASSERT_TRUE(w.run(artCmd("demo:sample")).error == HaError::Parse);  // never touches the network
+  TEST_ASSERT_TRUE(w.run(artCmd("")).error == HaError::Parse);
+  TEST_ASSERT_EQUAL_UINT(n, t.urls.size());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_gray4_pack);
@@ -539,6 +640,10 @@ int main() {
   RUN_TEST(test_sample_image_deterministic_and_varied);
   RUN_TEST(test_plan_fetch);
   RUN_TEST(test_body_cap);
+  RUN_TEST(test_image_info_and_decode_plan);
+  RUN_TEST(test_store_requeue);
+  RUN_TEST(test_worker_art_relative_and_absolute);
+  RUN_TEST(test_worker_art_failures);
   RUN_TEST(test_store_lifecycle_and_redraw_rule);
   RUN_TEST(test_store_failure_and_retry);
   RUN_TEST(test_store_popup_big_buffer);

@@ -104,6 +104,13 @@ bool ArtStore::fail(const std::string &entity, const std::string &picture) {
   return true;
 }
 
+bool ArtStore::requeue(const std::string &entity, const std::string &picture) {
+  Entry *e = find(entity);
+  if (!e || e->picture != picture) return false;
+  e->inFlight = false;
+  return true;
+}
+
 bool ArtStore::retryFailed() {
   bool any = false;
   for (Entry &e : entries_)
