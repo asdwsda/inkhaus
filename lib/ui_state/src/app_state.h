@@ -12,6 +12,7 @@
 #include "brightness_popup.h"
 #include "config_model.h"
 #include "history_popup.h"
+#include "art_store.h"
 #include "media_layout.h"
 #include "media_popup.h"
 #include "media_view.h"
@@ -64,6 +65,9 @@ struct WidgetData {
   const calendar::Data *calendar = nullptr;  // task 105: get_events answer of a calendar widget
   int64_t nowMin = 0;                        // task 105: local minutes of now (0: clock unset)
   EnergyView energy;    // Energy widgets (task 109)
+  bool art = false;                                 // task 107: media widget with cover art
+  art::ArtState artState = art::ArtState::None;     // None = no picture
+  const art::Gray4 *artPx = nullptr;                // 80 x 80, valid when artState == Ready
 };
 
 enum class Screen { Tabs, ConfigError };
@@ -130,6 +134,17 @@ class AppState {
   std::string mediaTitle() const { return widgetTitle(media_.widget()); }
   // What the open popup shows: the player's state with the optimistic volume / mute applied.
   MediaPopupView mediaPopupData() const;
+  // ---- album art (task 107, docs/ui/widgets-new-media-art.md; code in app_state_media.cpp) ----
+  bool mediaArt() const;  // the open popup's widget has `art` on (new layout)
+  art::ArtState mediaArtState() const { return art_.popupState(); }
+  const art::Gray4 *mediaArtPixels() const { return art_.popupArt(); }
+  // Follows the pictures of the shown tab's media widgets (URL change -> Loading / None) and serves demo
+  // pictures. Called from tick(); the device code also calls it after a state update. True if a widget's art changed.
+  bool artSync();
+  // Downloads the device code should run now (each once); answer with art().deliver / fail.
+  std::vector<art::ArtRequest> takeArtRequests() { return art_.takeRequests(); }
+  art::ArtStore &art() { return art_; }
+  const art::ArtStore &art() const { return art_; }
   bool mediaAwaiting() const { return media_.sendPending() || maAwaiting_; }  // hourglass
   bool mediaFailed() const { return maFailed_; }                              // alert
   // Real mode: sends the volume / mute to Home Assistant. Demo mode applies it to the store.
@@ -238,6 +253,7 @@ class AppState {
   void mediaMarks(bool &changed);
   bool mediaTick(uint32_t now);
   MediaPopup media_;
+  art::ArtStore art_;
   MediaSink msink_;
   bool maAwaiting_ = false, maFailed_ = false, maSawPending_ = false;
   uint32_t maSentAt_ = 0;

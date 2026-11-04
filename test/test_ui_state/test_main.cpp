@@ -405,7 +405,7 @@ static config::Config demoConfig() {
 void test_demo_yaml_showcase() {
   config::Config cfg = demoConfig();
   TEST_ASSERT_EQUAL_INT(6, (int)cfg.tabs.size());  // + Calendar (105) and New (103, 104, 106, 109) tabs
-  {  // the New tab shows notifications, a weather forecast, energy and three media players
+  {  // the New tab shows notifications, a weather forecast, energy and two media players
     int notif = 0, fc = 0, energy = 0, media = 0;
     for (const auto &w : cfg.tabs[5].widgets) {
       notif += w.type == WidgetType::Notifications;
@@ -416,7 +416,7 @@ void test_demo_yaml_showcase() {
     TEST_ASSERT_EQUAL_INT(1, notif);
     TEST_ASSERT_EQUAL_INT(1, fc);
     TEST_ASSERT_EQUAL_INT(1, energy);
-    TEST_ASSERT_EQUAL_INT(3, media);
+    TEST_ASSERT_EQUAL_INT(2, media);  // playing with the sample cover, paused (task 107)
   }
   auto st = demoStates(cfg);
   TEST_ASSERT_EQUAL(cfg.entityIds.size(), st.size());

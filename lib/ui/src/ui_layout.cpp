@@ -225,6 +225,7 @@ Flow computeFlow(Orientation o, const std::vector<config::Widget> &widgets, int 
     p.index = (int)i;
     p.type = widgets[i].type;
     p.graph = config::isGraphWidget(widgets[i]);
+    p.art = p.type == config::WidgetType::MediaPlayer && widgets[i].art;  // task 107
     p.history = !p.graph && (p.type == config::WidgetType::Sensor || p.type == config::WidgetType::BinarySensor) &&
                 widgets[i].attribute.empty() && widgets[i].history.enabled && !widgets[i].entity.empty();
     p.page = slots[i].page;
@@ -304,7 +305,7 @@ Layout computeLayout(Orientation o, const std::vector<config::Tab> &tabs, int ac
   return L;
 }
 
-std::vector<SubRegion> subRegions(WidgetType type, WidgetSize, const Rect &r) {
+std::vector<SubRegion> subRegions(WidgetType type, WidgetSize, const Rect &r, bool mediaArt) {
   std::vector<SubRegion> out;
   const int W = r.w, y = r.y + 20;
   switch (type) {
@@ -318,7 +319,12 @@ std::vector<SubRegion> subRegions(WidgetType type, WidgetSize, const Rect &r) {
       out.push_back({1, {r.x + W - 228, y, 64, 64}});
       out.push_back({2, {r.x + W - 152, y, 64, 64}});
       out.push_back({3, {r.x + W - 76, y, 64, 64}});
-      out.push_back({4, {r.x + 12, r.y + 12, W - 264, 80}});
+      if (mediaArt) {  // task 107
+        out.push_back({4, {r.x + 104, r.y + 12, W - 344, 80}});
+        out.push_back({5, {r.x + 12, r.y + 12, 80, 80}});
+      } else {
+        out.push_back({4, {r.x + 12, r.y + 12, W - 264, 80}});
+      }
       break;
     case WidgetType::Climate:
       out.push_back({1, {r.x + (W < 400 ? 94 : W - 276), y, 64, 64}});  // compact 2x1: minus at 94
@@ -344,7 +350,7 @@ Hit hitTest(const Layout &L, Point p) {
   }
   for (const Placement &w : L.widgets) {
     if (!w.rect.contains(p)) continue;
-    for (const SubRegion &s : subRegions(w.type, {w.cellW, w.cellH}, w.rect))
+    for (const SubRegion &s : subRegions(w.type, {w.cellW, w.cellH}, w.rect, w.art))
       if (s.rect.contains(p)) return {HitKind::Widget, w.index, s.id};
     return {HitKind::Widget, w.index, 0};
   }

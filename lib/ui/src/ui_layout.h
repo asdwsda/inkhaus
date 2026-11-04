@@ -98,6 +98,7 @@ struct Placement {
   int cellX = 0, cellY = 0, cellW = 1, cellH = 1;
   bool clamped = false;
   bool graph = false;    // `display: graph` (task 071): read-only history graph, never focusable, taps do nothing
+  bool art = false;      // task 107: media player widget with cover art (`art` option; text block moves right)
   bool history = false;  // sensor/binary_sensor with history enabled: rocker-focusable (opens the popup)
 };
 
@@ -159,8 +160,10 @@ struct SubRegion {
 // rect is the widget's pixel rect; result rects are absolute. All buttons are 64 x 64 at
 // y = 20: cover/vacuum at W-228, W-152, W-76; climate minus W-276, plus W-76. `size` is
 // unused (every type has one row layout) and kept for call-site stability.
+// mediaArt (task 107, media player only): the text block starts at x 104 (W-344 wide) and sub-region 5 is the art
+// (12, 12, 80, 80), which also opens the popup; false = old layout, text block (12, 12, W-264, 80).
 std::vector<SubRegion> subRegions(config::WidgetType type, config::WidgetSize size,
-                                  const Rect &rect);
+                                  const Rect &rect, bool mediaArt = false);
 
 // ---- hit testing (section 6) ----
 enum class HitKind { None, Tab, TabOverflow, Refresh, Settings, PagerPrev, PagerNext, Widget };

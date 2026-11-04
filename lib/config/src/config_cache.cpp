@@ -153,7 +153,8 @@ std::string serializeConfig(const Config &cfg) {
       w.f32(h.min ? *h.min : 0.f);
       w.u8(h.max.has_value());
       w.f32(h.max ? *h.max : 0.f);
-      w.u8(uint32_t(wd.display) | (wd.forecast ? 0x80u : 0u));  // bit 7: forecast (task 104)
+      w.u8(uint32_t(wd.display) | (wd.forecast ? 0x80u : 0u) |
+               (wd.art ? 0u : 0x40u));  // bit 7: forecast (task 104); bit 6: art off (task 107)
       w.str(wd.usage);  // task 109
       w.str(wd.solar);
     }
@@ -263,7 +264,8 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       uint32_t disp = 0;
       r.u8(disp);
       const bool fc = (disp & 0x80u) != 0;
-      disp &= 0x7Fu;
+      const bool noArt = (disp & 0x40u) != 0;
+      disp &= 0x3Fu;
       if (!r.ok || disp > uint32_t(WidgetDisplay::Graph) || hHours < uint32_t(kMinHistoryHours) || hHours > uint32_t(kMaxHistoryHours) ||
           hType > uint32_t(HistoryType::Step) || hHasStat > 1 ||
           hStat > uint32_t(HistoryStatistic::Change) || hPeriod > uint32_t(HistoryPeriod::Day) ||
@@ -282,6 +284,7 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       wd.type = WidgetType(type);
       wd.display = WidgetDisplay(disp);
       wd.forecast = fc && wd.type == WidgetType::Weather;
+      wd.art = !(noArt && wd.type == WidgetType::MediaPlayer);  // task 107
       if (hasSize) {
         if (sw < 1 || sw > uint32_t(kMaxWidgetSize) || sh < 1 || sh > uint32_t(kMaxWidgetSize))
           return false;

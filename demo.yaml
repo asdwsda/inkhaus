@@ -111,7 +111,7 @@ tabs:
       - entity: calendar.work                   # running now, then all day tomorrow
       - entity: calendar.holidays               # all day today, then a long title
       - entity: calendar.old_unavailable        # deliberately unavailable
-  - title: New                               # tasks 103, 104, 106, 109: notifications, forecast, media players, energy
+  - title: New                               # tasks 103, 104, 106, 107, 109: notifications, forecast, media players with art, energy
     widgets:
       - type: notifications
         name: Alerts
@@ -120,6 +120,5 @@ tabs:
       - type: energy                            # fake running totals: today so far, usage and solar
         usage: sensor.house_energy_total
         solar: sensor.solar_energy_total
-      - entity: media_player.living_room        # playing
-      - entity: media_player.kitchen            # paused
-      - entity: media_player.bedroom            # off
+      - entity: media_player.living_room        # playing, with the built-in sample cover (task 107)
+      - entity: media_player.kitchen            # paused, no picture (tile)

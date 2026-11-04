@@ -26,6 +26,9 @@ struct MediaView {
 // name: the widget title (config name or friendly_name). st: nullptr = loading.
 MediaView mediaView(const EntityState *st, const std::string &name);
 
+// The picture to show (entity_picture), "" for none: nullptr, unavailable, off, or no attribute (task 107).
+std::string mediaPicture(const EntityState *st);
+
 // State word of the player: "Playing", "Paused", "Idle", "On", "Standby", "Buffering", "Off", "-", "n/a".
 std::string mediaStateWord(const std::string &state);
 // The media_title is only used while the player is active (playing, paused, buffering, on).

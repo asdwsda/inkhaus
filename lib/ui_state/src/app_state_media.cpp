@@ -32,11 +32,34 @@ bool AppState::openMedia(int idx, uint32_t now) {
   const int vol = st ? mediaVolumePct(*st) : -1;
   const std::string *m = st ? st->attr("is_volume_muted") : nullptr;
   media_.open(w->entities[0], shownTab_, idx, vol, m && *m == "true", now);
+  if (w->art) art_.setPopup(w->entities[0]);  // task 107: the 200 px version, from the same download if possible
+  artSync();
   return true;
+}
+
+bool AppState::mediaArt() const {
+  const config::Widget *w = media_.isOpen() ? widgetAt(media_.tab(), media_.widget()) : nullptr;
+  return w && w->art;
+}
+
+bool AppState::artSync() {
+  if (screen_ != Screen::Tabs || shownTab_ < 0 || size_t(shownTab_) >= cfg_.tabs.size()) return false;
+  bool changed = false;
+  for (const config::Widget &w : cfg_.tabs[size_t(shownTab_)].widgets) {
+    if (w.type != WidgetType::MediaPlayer || !w.art || w.entities.empty()) continue;
+    changed |= art_.want(w.entities[0], mediaPicture(store_.get(w.entities[0])));
+  }
+  if (media_.isOpen()) {  // the open popup follows its player's picture too (a hidden tab's widget)
+    const config::Widget *w = widgetAt(media_.tab(), media_.widget());
+    if (w && w->art && !w->entities.empty()) changed |= art_.want(w->entities[0], mediaPicture(store_.get(w->entities[0])));
+  }
+  changed |= art_.serveDemo();
+  return changed;
 }
 
 bool AppState::closeMedia(uint32_t now) {
   const bool was = media_.isOpen();
+  art_.setPopup("");  // drops the 200 px buffer
   media_.done(now);
   if (maFailed_) media_.clearOptimistic();  // the real state shows again
   maFailed_ = false;
@@ -52,7 +75,7 @@ MediaPopupView AppState::mediaPopupData() const {
 }
 
 bool AppState::mediaTouch(ui::Point p, uint32_t now) {
-  const MediaLayout l = mediaLayout(orientation_);
+  const MediaLayout l = mediaLayout(orientation_, mediaArt());
   const MediaPopupView v = mediaPopupData();
   bool changed = false;
   switch (mediaHitTest(l, p)) {

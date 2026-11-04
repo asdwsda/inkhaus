@@ -654,6 +654,15 @@ class Validator {
     }
   }
 
+  // Task 107: `art: true|false`, media player widgets only (default true).
+  void parseArtOption(JsonObjectConst o, const std::string &path, Widget &w) {
+    std::string a;
+    if (!str(o, "art", path, false, a)) return;
+    if (a != "true" && a != "false") err(path + ".art", "must be true or false");
+    else if (w.type != WidgetType::MediaPlayer) err(path + ".art", "only available for media_player widgets");
+    else w.art = a == "true";
+  }
+
   // Task 103: `type: notifications`, optional `name` and `size`; no entity, no group.
   void notificationsWidget(JsonObjectConst o, const std::string &path, Tab &tb) {
     Widget w;
@@ -807,6 +816,7 @@ class Validator {
         w.display = WidgetDisplay::Graph;
     }
     parseForecastOption(o, path, w);  // task 104
+    parseArtOption(o, path, w);       // task 107
     for (const auto &e : w.entities) addEntity(e);
     tb.widgets.push_back(std::move(w));
   }

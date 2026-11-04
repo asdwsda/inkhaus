@@ -119,6 +119,7 @@ struct Widget {
   std::optional<std::string> unit;      // unit override for the main value (<= kMaxUnitChars chars)
   std::optional<int> decimals;          // 0..3, rounds numeric main/detail values
   std::string usage, solar;  // task 109: energy widget entities (either may be empty; `entity` = usage, else solar)
+  bool art = true;        // task 107: media player shows the cover art (`art: false` = text only, old layout)
   bool forecast = false;  // task 104: weather widget with the 3-day forecast (wide, single entity)
   HistoryConfig history;  // defaults when the key is absent
   // Entities this widget acts on: {entity} or the group members.

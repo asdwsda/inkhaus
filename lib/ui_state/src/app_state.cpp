@@ -33,11 +33,13 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   popup_.setSink([this](const std::string &id, int pct) { onBrightnessSend(id, pct); });
   bpUnknown_ = bpAwaiting_ = bpFailed_ = bpSawPending_ = false;
   media_ = MediaPopup();
+  art_.clear();
   media_.setSink([this](const std::string &id, MediaSend what, int v) { onMediaSend(id, what, v); });
   maAwaiting_ = maFailed_ = maSawPending_ = false;
   relayout();
   refreshFocusFlow();
   rebuildGraphs();
+  artSync();
 }
 
 void AppState::rebuildGraphs() {
@@ -118,6 +120,11 @@ WidgetData AppState::widgetData(int idx) const {
   d.group = !w->group.empty();
   d.cfg = w;
   d.members = membersOf(*w);
+  if (w->type == WidgetType::MediaPlayer && w->art && !w->entities.empty()) {  // task 107
+    d.art = true;
+    d.artState = art_.state(w->entities[0]);
+    d.artPx = art_.widgetArt(w->entities[0]);
+  }
   if (w->forecast && forecasts_) {  // task 104
     d.forecast = forecasts_->get(w->entity);
     d.today = forecasts_->today();
@@ -205,6 +212,7 @@ bool AppState::applyTabSwitch() {
   shownTab_ = focus_.tab;
   shownSubPage_ = focus_.subPage;
   relayout();
+  artSync();  // task 107: decode before the full refresh, no second pass
   full_ = true;
   return true;
 }
@@ -287,6 +295,7 @@ bool AppState::tick(uint32_t now) {
   if (hist_.tick(now)) changed = true;  // the Loading frame appears after its delay
   if (notif_.tick(now)) changed = true;  // task 103: the confirm dialog skips by itself
   changed |= mediaTick(now);
+  changed |= artSync();  // task 107
   if (popup_.isOpen()) {
     const EntityState *s = store_.get(popup_.entityId());
     bool closed = false;
@@ -365,7 +374,7 @@ bool AppState::touch(ui::Point p, uint32_t now) {
       if (!w) return false;
       if (w->type == WidgetType::Notifications) return openNotif(now, false);  // task 103
       if (!ui::isFocusable(w->type)) return false;
-      if (w->type == WidgetType::MediaPlayer && hit.sub == kMediaSubText) return openMedia(hit.index, now);
+      if (w->type == WidgetType::MediaPlayer && (hit.sub == kMediaSubText || hit.sub == kMediaSubArt)) return openMedia(hit.index, now);
       const bool single = ui::isSingleAction(w->type);
       if (single ? hit.sub != 0 : hit.sub == 0) return false;
       return runAction(hit.index, hit.sub, now);

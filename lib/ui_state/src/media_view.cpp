@@ -57,6 +57,12 @@ bool mediaSupportsMute(const EntityState &st) {
   return st.attr("is_volume_muted") != nullptr;
 }
 
+std::string mediaPicture(const EntityState *st) {
+  if (!st || !st->available || st->state == "off" || st->state == "unknown") return "";
+  const std::string *p = nonEmptyAttr(*st, "entity_picture");
+  return p ? *p : "";
+}
+
 MediaView mediaView(const EntityState *st, const std::string &name) {
   MediaView v;
   v.look = lookOf(st);

@@ -241,7 +241,7 @@ void test_widget_sizes() {
 }
 
 void test_popup_layout_landscape_numbers() {
-  const MediaLayout l = mediaLayout(LS);
+  const MediaLayout l = mediaLayout(LS, false);
   TEST_ASSERT_TRUE((l.panel == L::Rect{40, 94, 880, 408}));
   TEST_ASSERT_TRUE((l.dirty == L::Rect{38, 92, 890, 418}));
   TEST_ASSERT_TRUE((l.close == L::Rect{840, 110, 64, 64}));
@@ -263,7 +263,7 @@ void test_popup_layout_landscape_numbers() {
 }
 
 void test_popup_layout_portrait_numbers() {
-  const MediaLayout l = mediaLayout(P);  // panel (16, 188, 508, 560); spec numbers are panel-relative
+  const MediaLayout l = mediaLayout(P, false);  // panel (16, 188, 508, 560); spec numbers are panel-relative
   const int px = 16, py = 188;
   TEST_ASSERT_TRUE((l.panel == L::Rect{16, 188, 508, 560}));
   TEST_ASSERT_TRUE((l.close == L::Rect{px + 428, py + 16, 64, 64}));
@@ -287,7 +287,7 @@ void test_popup_layout_portrait_numbers() {
 
 void test_popup_hit_test() {
   for (auto o : {LS, P}) {
-    const MediaLayout l = mediaLayout(o);
+    const MediaLayout l = mediaLayout(o, false);
     auto at = [&](const L::Rect &r) { return mediaHitTest(l, {r.x + r.w / 2, r.y + r.h / 2}); };
     TEST_ASSERT_EQUAL(int(MediaHit::Outside), int(mediaHitTest(l, {1, 1})));
     TEST_ASSERT_EQUAL(int(MediaHit::Close), int(at(l.close)));
@@ -403,7 +403,7 @@ static AppState mediaApp(settings::Orientation o, bool marks) {
 }
 
 static L::Point subCentre(const AppState &a, int idx, int sub) {
-  for (const auto &s : L::subRegions(WidgetType::MediaPlayer, {}, widgetRect(a, idx)))
+  for (const auto &s : L::subRegions(WidgetType::MediaPlayer, {}, widgetRect(a, idx), true))
     if (s.id == sub) return {s.rect.x + s.rect.w / 2, s.rect.y + s.rect.h / 2};
   return {0, 0};
 }
@@ -438,7 +438,7 @@ void test_app_text_block_opens_popup_and_volume_sends() {
   MediaPopupView v = a.mediaPopupData();
   TEST_ASSERT_TRUE(v.hasVolume);
   TEST_ASSERT_EQUAL(40, v.volumePct);
-  const MediaLayout l = mediaLayout(P);
+  const MediaLayout l = mediaLayout(P, true);
   TEST_ASSERT_TRUE(a.touch({l.volPlus.x + 5, l.volPlus.y + 5}, 100));
   TEST_ASSERT_TRUE(a.touch({l.volPlus.x + 5, l.volPlus.y + 5}, 200));
   TEST_ASSERT_EQUAL(50, a.mediaPopupData().volumePct);  // optimistic at once
@@ -467,7 +467,7 @@ void test_app_popup_transport_and_confirmation() {
   std::vector<int> vols;
   a.setMediaSink([&](const std::string &, MediaSend w, int v) { if (w == MediaSend::Volume) vols.push_back(v); });
   a.touch(subCentre(a, mediaIdx(a), 4), 0);
-  const MediaLayout l = mediaLayout(P);
+  const MediaLayout l = mediaLayout(P, true);
   a.touch({l.prev.x + 5, l.prev.y + 5}, 10);
   a.touch({l.play.x + 5, l.play.y + 5}, 20);
   TEST_ASSERT_EQUAL(2, (int)subs.size());
@@ -586,7 +586,7 @@ void test_app_demo_mode_applies_volume_to_store() {
   a.init(parsed(), P, true);  // demo: states from demoStates
   const int idx = mediaIdx(a);
   TEST_ASSERT_TRUE(a.touch(subCentre(a, idx, 4), 0));
-  const MediaLayout l = mediaLayout(P);
+  const MediaLayout l = mediaLayout(P, true);
   const int before = a.mediaPopupData().volumePct;
   a.touch({l.volPlus.x + 5, l.volPlus.y + 5}, 10);
   a.tick(1100);
