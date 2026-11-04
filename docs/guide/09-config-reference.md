@@ -62,11 +62,11 @@ Each widget has exactly one of `entity` or `group` (except `type: notifications`
 
 | Key | Values | Default | Effect |
 |---|---|---|---|
-| `entity` | entity id, `domain.object_id` | none | The Home Assistant thing. Supported domains: `cover`, `light`, `switch`, `automation`, `climate`, `sensor`, `binary_sensor`, `weather`, `vacuum`, `media_player`, `calendar`. |
+| `entity` | entity id, `domain.object_id` | none | The Home Assistant thing. Supported domains: `cover`, `light`, `switch`, `automation`, `climate`, `sensor`, `binary_sensor`, `weather`, `vacuum`, `media_player`, `calendar`, `alarm_control_panel`, `lock`. |
 | `group` | a name from `groups` | none | A widget for all members of the group. Needs `name`. |
 | `name` | text | the Home Assistant name | The label. Required for groups. Default `Alerts` for notifications. |
 | `size` | `WxH` | depends on the type | See [Widgets, Sizes](04-widgets.md#sizes). Sizes a type does not allow are corrected. |
-| `type` | `sensor`, `cover`, `light`, `switch`, `automation`, `climate`, `binary_sensor`, `weather`, `vacuum`, `media_player`, `calendar`, `notifications`, `energy` | from the entity | Pick the widget type yourself, for example `type: sensor` for `person.alice`. `notifications` needs no entity. |
+| `type` | `sensor`, `cover`, `light`, `switch`, `automation`, `climate`, `binary_sensor`, `weather`, `vacuum`, `media_player`, `calendar`, `alarm_control_panel`, `lock`, `garage`, `notifications`, `energy` | from the entity | Pick the widget type yourself, for example `type: sensor` for `person.alice`. `notifications` needs no entity. `garage` is a `cover` entity shown as a garage door. |
 
 ### Sensor options
 
@@ -88,6 +88,14 @@ Each widget has exactly one of `entity` or `group` (except `type: notifications`
 | Key | Values | Default | Effect |
 |---|---|---|---|
 | `art` | `true` or `false` | `true` | Shows the cover art of the playing track. `false` keeps the text-only tile and popup. Media player widgets only. |
+
+### Lock and garage option
+
+| Key | Values | Default | Effect |
+|---|---|---|---|
+| `confirm` | `true` or `false` | lock: ask before unlocking only; garage: ask both ways | Whether a tap asks before it acts. Lock and garage widgets only. Stopping a moving door never asks. |
+
+Alarm panel, lock and garage widgets are single-entity, 1x1 tiles (no group, no size). See [Widgets](04-widgets.md#alarm-panel).
 
 ### Energy widget
 

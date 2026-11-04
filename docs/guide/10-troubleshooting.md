@@ -56,7 +56,7 @@ Fix the first error, restart the device, and check again. The row [is explained 
 
 ## "unsupported entity domain, set 'type' explicitly"
 
-The entity is of a kind that has no widget (for example `person.`). Add `type: sensor` to show it as a sensor. For locks, alarm panels and similar this shows the state as text only: you can read it but not operate it. See [Widgets, Show any entity as a sensor](04-widgets.md#show-any-entity-as-a-sensor).
+The entity is of a kind that has no widget (for example `person.`). Add `type: sensor` to show it as a sensor. For other kinds without a widget (a `scene`, say) this shows the state as text only: you can read it but not operate it. Locks, alarm panels and garage doors have their own widgets. See [Widgets, Show any entity as a sensor](04-widgets.md#show-any-entity-as-a-sensor).
 
 ## The screen stays blank or does not wake
 

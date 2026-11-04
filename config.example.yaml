@@ -106,3 +106,14 @@ tabs:
       # `history: 48` is the shorthand for hours only; `history: false` turns the long-press history off.
       - entity: sensor.outside_temperature
         history: 48
+      # Alarm panel (task 108): tap opens a keypad (number code, then Disarm / Home / Away / Night).
+      - entity: alarm_control_panel.home
+        name: Alarm
+      # Lock: a tap asks before unlocking (not before locking). `confirm: true|false` changes that.
+      - entity: lock.front_door
+        name: Front door
+      # Garage door: a cover with `type: garage`; a tap asks before opening and before closing.
+      - entity: cover.garage
+        type: garage
+        name: Garage
+        confirm: true         # optional

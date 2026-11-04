@@ -226,6 +226,54 @@ A bell with the number of Home Assistant notifications. It has no `entity`. Tap 
 
 `name` is optional and defaults to `Alerts`. The tile is outline at 0 and filled when there is at least one. It shows `99+` above 99, `-` while loading and `n/a` when the list cannot be fetched.
 
+## Alarm panel
+
+A shield with the mode of a Home Assistant alarm panel: `Off`, `Home`, `Away`, `Night`, `Arming`, `Entry` (the entry delay) or `ALARM` (filled while it is triggered). **Tap it** to open a keypad: type the code, then pick `Disarm`, `Home`, `Away` or `Night`.
+
+![Alarm panel tiles and the keypad.](img/gallery-alarm.png "An alarm panel and its keypad.")
+
+```yaml
+- entity: alarm_control_panel.home
+  name: Alarm
+```
+
+- The code is numbers only, up to 8 digits, shown as dots. It stays in the device memory, is sent only with the command, and is cleared when you send, close the keypad, or the device sleeps. It is never written to a log.
+- Disarming needs the code. Arming needs it only when your panel asks for it (`code_arm_required`).
+- A mode your panel does not support is dotted and does nothing. A panel that wants a text code (not only digits) is not supported: the keypad says so, and you can still arm without a code if the panel allows it.
+- With the rocker: a ring walks the keys, then the four modes, then the close button. Up and down move the ring, push presses, hold push closes. The keypad also closes after 30 seconds without input.
+- If the panel refuses the command, the keypad says `Wrong code` (or `Failed` when no code was sent) and you can try again.
+
+In the demo, the panels on the Alarm tab accept the code `1234` to disarm.
+
+## Lock and garage door
+
+A padlock or a garage with its state. **A tap asks first, then acts.** The question has three buttons: **Yes** (rocker up), **No** (rocker down) and **Skip** (push, or a tap outside). It skips by itself after 15 seconds. Nothing happens unless you answer Yes.
+
+![Lock and garage tiles.](img/gallery-lock-garage.png "A lock and a garage door.")
+
+```yaml
+- entity: lock.front_door
+  name: Front door
+- entity: cover.garage
+  type: garage
+  name: Garage
+```
+
+| | Looks | A tap |
+|---|---|---|
+| Lock, locked | `Locked`, outline | asks `Unlock Front door?` |
+| Lock, unlocked | `Open`, filled | locks at once (locking is safe) |
+| Lock, locking, unlocking, jammed | `Locking`, `Opening`, `Jammed` (filled) | nothing |
+| Garage, closed | `Closed`, outline | asks `Open Garage?` |
+| Garage, open | `Open`, filled | asks `Close Garage?` |
+| Garage, opening or closing | `Opening`, `Closing` | stops the door, without a question |
+
+- A garage door is a `cover` entity. Add `type: garage`: without it a cover is shown as a shutter with up, stop and down buttons.
+- `confirm: true` or `confirm: false` replaces the default (a lock asks only before unlocking, a garage door asks both ways).
+- A lock that needs a code is not supported: it shows an alert badge and a tap does nothing.
+- Filled means "needs attention": an unlocked lock, an open garage, a triggered alarm. Everything else is an outline.
+- A group is not possible for these three: one entity per tile.
+
 ## Calendar
 
 The next two events of a Home Assistant calendar, each with its time and title ("14:30", "now", "Tue 09:00", "all day"). Read-only: a tap does nothing. It is 2x1; a wider tile is allowed where the screen has room.
@@ -307,7 +355,7 @@ Without `display: graph`, a **tap** or **long press** on a sensor still opens th
 
 | Widget | Default | Other sizes |
 |---|---|---|
-| Light, switch, automation, binary sensor, notifications | 1x1 | none |
+| Light, switch, automation, binary sensor, notifications, alarm panel, lock, garage door | 1x1 | none |
 | Energy | 2x1 | none |
 | Sensor | 1x1 | `2x1` |
 | Weather | 2x1 | `1x1` (and wider with the forecast) |
@@ -315,7 +363,3 @@ Without `display: graph`, a **tap** or **long press** on a sensor still opens th
 | Graph | 2x2 | 2x1 up to a full-width, 3 row block |
 
 A size a widget does not allow is changed to the nearest allowed one.
-
-## Coming soon
-
-These widgets are being built and do not work yet: an **alarm panel** and **locks and garage doors**. Do not use their entities yet: the device would report an unsupported entity.

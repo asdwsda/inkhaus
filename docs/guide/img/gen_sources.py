@@ -651,7 +651,7 @@ gal3('gallery-alarm',[(SW,2,20,20,'disarmed'),(SW,10,208,20,'pending (Away)'),(S
  ['- entity: alarm_control_panel.home','  name: Alarm','# tap: keypad popup; the code never leaves the device'],1060,
  pop=('widgets-new-popup-alarm',584,20,0.45,'the keypad'))
 gal3('gallery-lock-garage',[(SW,3,20,20,'lock: locked'),(SW,7,208,20,'lock: open (filled)'),(SW,4,396,20,'garage: closed'),(SW,8,584,20,'garage: open (filled)')],
- ['- entity: lock.front_door','  name: Front door','- entity: cover.garage    # device_class garage, or  type: garage','# a tap asks first: UP = yes, DOWN = no, PUSH = skip'],772)
+ ['- entity: lock.front_door','  name: Front door','- entity: cover.garage','  type: garage      # needed: without it a cover is a shutter','# a tap asks first: UP = yes, DOWN = no, PUSH = skip'],772)
 gal3('gallery-energy',[(WW,10,20,20,'used and solar, one scale'),(WW,12,404,20,'solar missing')],
  ['- type: energy','  usage: sensor.energy_used_today','  solar: sensor.energy_solar_today'],788)
 gal3('gallery-media-art-states',[(MA,1,20,20,'art decoded'),(MA,2,20,170,'no picture'),(MA,3,20,320,'picture loading'),(MA,4,20,470,'fetch failed')],
