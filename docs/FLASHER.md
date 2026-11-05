@@ -15,6 +15,15 @@ Firefox, Safari and phones cannot do it).
 Settings and the SD card are kept (no erase). The page copies the firmware from the release, so a brand new
 release may take a few minutes to appear.
 
+### Edit the config in the browser (task 119, optional)
+The same page has an "Edit device config" section (same browsers). **Read config from device** loads
+`config.yaml` over USB into a text area (it needs Inkhaus 1.5+ with the `getfile` command), the page checks it as you
+type (YAML, known keys, entity ids, limits) and **Write to device** sends it back and restarts the M5Paper.
+"Set up secrets..." writes `secrets.yaml` (Wi-Fi, Home Assistant address and token, optional outside address and a
+second network). Secrets are write-only: the device never sends them back (`getfile` only accepts `config.yaml`), the
+page does not store, log or send them (`site/check.py` enforces it), and the fields are cleared after a write. Writing
+replaces the whole file. Nothing leaves the browser except the bytes sent over the USB cable.
+
 ## Installer app (fallback: Firefox/Safari, offline, YAML upload)
 The rest of this page describes the native installer app.
 

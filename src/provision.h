@@ -5,6 +5,9 @@
 //   host:   <size> raw bytes, in pieces; after every 1 KB it waits for
 //   device: PUT-ACK <offset>                        (offset = 1024, 2048, ...; none at the end)
 //   device: PUT-OK <size> <crc32>   then   PUT-CONFIG ok|error ...      (or PUT-ERR <reason>)
+//   host:   getfile config.yaml                     (task 119; config.yaml ONLY, secrets can't be read)
+//   device: GET-BEGIN <size> <crc32 hex8>, <size> raw bytes, "\n", GET-END     (or GET-ERR <reason>)
+//           reasons: bad-command bad-name no-card no-file too-big no-memory read-failed
 //   host:   reboot                                  device restarts (endBurstRead first)
 // Reasons: bad-command bad-name bad-size bad-crc no-memory timeout crc-mismatch no-card write-failed
 // verify-failed. The file content is never logged or echoed.

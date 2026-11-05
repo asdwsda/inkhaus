@@ -15,6 +15,7 @@ namespace provision {
 namespace {
 
 void err(const char *reason) { Serial.printf("PUT-ERR %s\n", reason); }
+void err2(const char *reason) { Serial.printf("GET-ERR %s\n", reason); }
 
 // Writes `data` to /<name>.tmp, reads it back to verify size + CRC, then replaces /<name>.
 // Returns nullptr on success, else the PUT-ERR reason. An existing target is only removed once the
@@ -131,6 +132,57 @@ void receive(const Request &req) {
   free(buf);
 }
 
+// `getfile config.yaml` (task 119): sends /config.yaml as GET-BEGIN <size> <crc>, raw bytes, GET-END.
+// The name was whitelisted by parseGetfile (config.yaml only); nothing else is ever read here.
+void sendConfig() {
+  settleDisplay();
+  if (!config_sd::mount()) {
+    config_sd::unmount();
+    Serial.print("GET-ERR no-card\n");
+    return;
+  }
+  uint8_t *buf = nullptr;
+  size_t len = 0;
+  const char *result = nullptr;
+  File f = SD.open("/config.yaml", FILE_READ);
+  if (!f) {
+    result = "no-file";
+  } else {
+    len = f.size();
+    if (len == 0) result = "no-file";
+    else if (len > kMaxFileBytes) result = "too-big";
+    else {
+      buf = static_cast<uint8_t *>(heap_caps_malloc(len, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM));
+      if (!buf) buf = static_cast<uint8_t *>(malloc(len));
+      if (!buf) result = "no-memory";
+      else {
+        size_t off = 0;
+        int n;
+        while (off < len && (n = f.read(buf + off, len - off)) > 0) off += size_t(n);
+        if (off != len) result = "read-failed";
+      }
+    }
+    f.close();
+  }
+  config_sd::unmount();
+  if (result) {
+    Serial.printf("GET-ERR %s\n", result);
+    free(buf);
+    return;
+  }
+  Serial.printf("%s\n", getBegin(uint32_t(len), crc32(buf, len)).c_str());
+  size_t off = 0;
+  while (off < len) {
+    const size_t n = len - off > 256 ? 256 : len - off;
+    Serial.write(buf + off, n);
+    off += n;
+    boot::feed();
+  }
+  Serial.print("\nGET-END\n");
+  Serial.flush();
+  free(buf);
+}
+
 }  // namespace
 
 bool handleLine(const std::string &line) {
@@ -140,6 +192,16 @@ bool handleLine(const std::string &line) {
     settleDisplay();  // ends with endBurstRead(): the last controller operation before the restart
     ESP.restart();
     return true;  // not reached
+  }
+  std::string getName;
+  const GetStatus gs = parseGetfile(line, getName);
+  if (gs != GetStatus::NotGetfile) {
+    if (gs != GetStatus::Ok) err2(getStatusReason(gs));
+    else {
+      Serial.print("CMD: getfile config.yaml\n");
+      sendConfig();
+    }
+    return true;
   }
   Request req;
   const ParseStatus ps = parsePutfile(line, req);

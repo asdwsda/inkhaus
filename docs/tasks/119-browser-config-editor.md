@@ -1,6 +1,6 @@
 # 119: Edit config.yaml (and optionally secrets.yaml) from the web installer page
 
-Status: todo
+Status: PC part done, device checks pending (UNVERIFIED, docs/device-checks.md)
 Depends on: 102 (web installer), 020 (provisioning protocol)
 UI spec: docs/ui/config-editor.md (accepted 2026-11-05)
 Needs device: yes (read/write over Web Serial; PC part first)
@@ -33,3 +33,12 @@ protocol (lib/provision/src/provision_proto.*, tools/provision.py is the referen
   outside HA address (`external_url`, https) and an optional second Wi-Fi network (name/ssid/password, `ha_url` choice).
   Static IP and more networks: hand-written file. Keep the password 8-63 check and the "token looks short" warning.
 - The protocol has only `putfile`: reading config.yaml back needs a new firmware read command (config.yaml only; never secrets).
+- Done (firmware-dev, branch worktree-agent-a451140ef622f1221): `getfile config.yaml` (lib/provision parseGetfile, config.yaml only;
+  tests refuse secrets.yaml and 16 other spellings), src/provision.cpp sendConfig; site/provision-client.js (+ record_frames.py ->
+  frames.json from tools/provision.py, node test); site/config-check.js (config.yaml checker, secrets validation + YAML build);
+  site/config-editor.js + install.html/style.css section; site/check.py security scan (no fetch/storage/console/location in the
+  editor JS, secrets inputs autocomplete off and no name) and runs the node tests; FLASHER.md, guide getting-started.
+- Decisions: the port stays open between Read and Write (closed on error, after a write, pagehide, install click); a write sends `reboot`;
+  the key table in config-check.js is hand-kept from the reference page (config.cpp is being split, so no extraction from it);
+  an entity with `type:` skips the domain check; secrets are emitted as JSON-quoted YAML scalars, empty password omitted.
+- Open: not looked at in a browser (no DOM test), the page version line ("Inkhaus 1.5.0") is not shown (the protocol has no version command).

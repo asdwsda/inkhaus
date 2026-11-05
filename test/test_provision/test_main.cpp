@@ -221,6 +221,61 @@ void test_secrets_summary() {
   TEST_ASSERT_TRUE(e.find("SECRETpw") == std::string::npos);
 }
 
+// Output of site/config-check.js buildSecretsYaml (JSON-quoted scalars) for hostile values must round-trip
+// through the firmware parser unchanged (task 119 review).
+void test_builder_secrets_roundtrip() {
+  struct C { const char *yaml; const char *ssid; const char *pw; };
+  const C cases[] = {
+    {"wifi:\n  - ssid: \"net0 #x\"\n    password: \"p\\\"q\\\\r#x: y\\nz\"\nhome_assistant:\n  internal_url: \"http://192.168.1.10:8123\"\n  token: \"t.o-k_0\"\n",
+     "net0 #x", "p\"q\\r#x: y\nz"},
+    {"wifi:\n  - ssid: \"net1 #x\"\n    password: \"it's #1 - [a]{b}\"\nhome_assistant:\n  internal_url: \"http://192.168.1.10:8123\"\n  token: \"t.o-k_1\"\n",
+     "net1 #x", "it's #1 - [a]{b}"},
+    {"wifi:\n  - ssid: \"net2 #x\"\n    password: \"tab\\there\"\nhome_assistant:\n  internal_url: \"http://192.168.1.10:8123\"\n  token: \"t.o-k_2\"\n",
+     "net2 #x", "tab\there"},
+    {"wifi:\n  - ssid: \"net3 #x\"\n    password: \"\xc3\xbcn\xc3\xaf \xe6\x97\xa5\xe6\x9c\xac \xf0\x9f\x98\x80\"\nhome_assistant:\n  internal_url: \"http://192.168.1.10:8123\"\n  token: \"t.o-k_3\"\n",
+     "net3 #x", "\xc3\xbcn\xc3\xaf \xe6\x97\xa5\xe6\x9c\xac \xf0\x9f\x98\x80"},
+  };
+  for (const C &c : cases) {
+    auto r = config::parseSecrets(std::string(c.yaml));
+    TEST_ASSERT_TRUE_MESSAGE(r.ok(), c.yaml);
+    TEST_ASSERT_EQUAL_STRING(c.ssid, r.connection.wifi.ssid.c_str());
+    TEST_ASSERT_EQUAL_STRING(c.pw, r.connection.wifi.password.c_str());
+  }
+}
+
+void test_getfile_config_only() {
+  std::string n;
+  TEST_ASSERT_TRUE(parseGetfile("getfile config.yaml", n) == GetStatus::Ok);
+  TEST_ASSERT_EQUAL_STRING("config.yaml", n.c_str());
+  TEST_ASSERT_TRUE(parseGetfile("putfile config.yaml 5 00000000", n) == GetStatus::NotGetfile);
+  TEST_ASSERT_TRUE(parseGetfile("getfiles", n) == GetStatus::NotGetfile);
+  TEST_ASSERT_TRUE(parseGetfile("getfile", n) == GetStatus::BadCommand);
+  TEST_ASSERT_TRUE(parseGetfile("getfile ", n) == GetStatus::BadCommand);
+  TEST_ASSERT_TRUE(parseGetfile("getfile config.yaml extra", n) == GetStatus::BadCommand);
+}
+
+// Secrets must be unreadable: every name except config.yaml is refused, whatever the spelling.
+void test_getfile_refuses_secrets() {
+  const char *names[] = {"secrets.yaml", "/secrets.yaml", "Secrets.yaml", "SECRETS.YAML", "secrets.yaml.tmp",
+                         "config.yaml.tmp", "../secrets.yaml", "./config.yaml", "/config.yaml", "config.yaml/",
+                         "test-x.yaml", "secrets", "config.yaml\\0", "CONFIG.YAML", "config.yml", ""};
+  for (const char *nm : names) {
+    std::string n = "untouched";
+    const GetStatus s = parseGetfile(std::string("getfile ") + nm, n);
+    TEST_ASSERT_TRUE_MESSAGE(s != GetStatus::Ok, nm);
+    TEST_ASSERT_EQUAL_STRING("untouched", n.c_str());
+    TEST_ASSERT_FALSE_MESSAGE(getNameAllowed(nm), nm);
+  }
+  std::string n;
+  TEST_ASSERT_EQUAL_STRING("bad-name", getStatusReason(parseGetfile("getfile secrets.yaml", n)));
+  TEST_ASSERT_EQUAL_STRING("bad-command", getStatusReason(parseGetfile("getfile", n)));
+  TEST_ASSERT_TRUE(getNameAllowed("config.yaml"));
+}
+
+void test_get_begin() {
+  TEST_ASSERT_EQUAL_STRING("GET-BEGIN 1204 0000ff0a", getBegin(1204, 0xff0a).c_str());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_crc32_known);
@@ -238,5 +293,9 @@ int main() {
   RUN_TEST(test_summary_error);
   RUN_TEST(test_summary_garbage);
   RUN_TEST(test_secrets_summary);
+  RUN_TEST(test_builder_secrets_roundtrip);
+  RUN_TEST(test_getfile_config_only);
+  RUN_TEST(test_getfile_refuses_secrets);
+  RUN_TEST(test_get_begin);
   return UNITY_END();
 }
