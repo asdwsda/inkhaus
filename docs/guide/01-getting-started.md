@@ -93,6 +93,8 @@ An **entity** is one thing in Home Assistant, such as a light. Find the ids unde
 
 **If it doesn't work:** the file must be called exactly `config.yaml`, and the spaces at the start of the lines matter. [Troubleshooting](10-troubleshooting.md) shows how to read the error.
 
+**Optional, in the browser:** with Chrome, Edge or Opera you can also change `config.yaml` (and write `secrets.yaml`) over the USB cable from the [install page](https://asdwsda.github.io/inkhaus/install/#config), section "Edit device config". It needs Inkhaus 1.5 or newer already on the M5Paper and a card with a first `config.yaml`. Nothing you type is uploaded; secrets are write-only and cleared after writing.
+
 ## Step 4: First start
 
 1. Switch the device off. It is **not** off after the installation: it shows the logo. Unplug the USB cable, then press the pinhole on the back once with your pin (on battery this switches it off; the screen keeps its last picture, which is normal). If it does not turn off, hold the rocker push for 2.5 seconds: that puts it to sleep, which is enough for changing the card.
