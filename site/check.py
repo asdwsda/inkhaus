@@ -116,6 +116,59 @@ for page in pages:
 total = sum(f.stat().st_size for f in out.rglob("*") if f.is_file() and not any(s in f.parents for s in SKIP_DIRS))
 print(f"site total (information only): {total/1024:.0f} KiB")
 
+# Config editor security (task 119): secrets are write-only and stay in memory. The editor code may not
+# talk to the network, store anything, log, or change the URL; the secrets form may not invite a password
+# manager to save it. Comments are stripped before the scan.
+EDITOR_JS = ("config-editor.js", "provision-client.js", "config-check.js")
+FORBIDDEN = [
+    (r"\bfetch\s*\(", "fetch"), (r"XMLHttpRequest", "XMLHttpRequest"), (r"sendBeacon", "sendBeacon"),
+    (r"\bWebSocket\b", "WebSocket"), (r"\bEventSource\b", "EventSource"), (r"\bimportScripts\b", "importScripts"),
+    (r"new\s+Image\b", "new Image"), (r"localStorage", "localStorage"), (r"sessionStorage", "sessionStorage"),
+    (r"indexedDB", "indexedDB"), (r"document\.cookie", "cookie"), (r"\bconsole\b", "console"),
+    (r"\blocation\b", "location"), (r"pushState|replaceState", "history state"), (r"\bcaches\b", "Cache API"),
+    (r"navigator\.clipboard", "clipboard"), (r"\beval\s*\(|new\s+Function\b", "eval"), (r"postMessage", "postMessage"),
+    (r"document\.write", "document.write"), (r"\.src\s*=|\.href\s*=", "dynamic src/href"),
+]
+for js in EDITOR_JS:
+    f = out / "install" / js
+    if not f.is_file():
+        fail(f"EDITOR file missing in dist: {js}")
+        continue
+    code = re.sub(r"/\*.*?\*/|(?<![:\"'\\])//[^\n]*", "", f.read_text(), flags=re.S)
+    for pat, name in FORBIDDEN:
+        if re.search(pat, code):
+            fail(f"EDITOR SECURITY {js}: forbidden use of {name}")
+inst = (out / "install" / "index.html").read_text()
+for need in ("This page does not store, send or log what you type here.", "Write-only: the device never sends secrets back"):
+    if need not in inst:
+        fail(f"EDITOR notice missing in install page: {need!r}")
+sec = re.search(r'<form id="sf".*?</form>', inst, re.S)
+if not sec:
+    fail("EDITOR secrets form not found")
+else:
+    for tag in re.findall(r"<input[^>]*>", sec.group(0)):
+        if 'type="radio"' in tag or 'type="checkbox"' in tag:
+            continue
+        if 'autocomplete="off"' not in tag and 'autocomplete="new-password"' not in tag:
+            fail(f"EDITOR secrets input without autocomplete off: {tag[:60]}")
+        if re.search(r"\sname=", tag) or "value=" in tag:
+            fail(f"EDITOR secrets input with name/value attribute: {tag[:60]}")
+    if re.search(r"<form[^>]*\s(action|method)=", sec.group(0)):
+        fail("EDITOR secrets form has action/method")
+if re.search(r"<(script|link)[^>]+(src|href)=\"https?://", inst) and "esp-web-tools" not in inst:
+    fail("EDITOR external script on the install page")
+# The JS unit tests (no device needed). Skipped, with a note, when node is missing.
+import shutil, subprocess
+if shutil.which("node"):
+    for t in sorted((here / "test").glob("*.test.js")):
+        r = subprocess.run(["node", str(t)], capture_output=True, text=True)
+        if r.returncode != 0:
+            fail(f"JS TEST failed: {t.name}\n{r.stdout[-800:]}{r.stderr[-400:]}")
+        else:
+            print(f"js test ok: {t.name}")
+else:
+    print("note: node not found, JS tests skipped")
+
 # Config-key lint (task 110).
 ref_md = next((here.parent / "docs/guide").glob("*config-reference.md"), None)
 if ref_md is None:

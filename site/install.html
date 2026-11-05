@@ -56,6 +56,61 @@
 </div>
 </div></section>
 
+<section id="config" hidden><div class="wrap">
+<h2>Edit device config</h2>
+<p>Read config.yaml from the M5Paper, change it here and write it back over USB. Everything stays in this browser. Nothing is uploaded. Needs Inkhaus 1.5 or newer on the device.</p>
+
+<div class="card" id="cfgcard">
+<h3>1. Connect and read</h3>
+<div class="row"><button id="rd" class="btn primary" type="button">Read config from device</button><span class="muted">Reads config.yaml only. Secrets are never read.</span></div>
+<div id="strip" class="strip" role="status" aria-live="polite"><span id="sg" class="glyph" aria-hidden="true"></span><div><strong id="sh">Not connected</strong><span id="sd">Click the button, then pick the M5Paper in the browser window.</span></div></div>
+<div id="bar" class="bar" hidden><span id="barfill"></span></div>
+<p id="barcap" class="cap" hidden></p>
+
+<h3>2. Edit config.yaml</h3>
+<div class="editor off" id="ed"><pre id="gut" aria-hidden="true"></pre><textarea id="txt" spellcheck="false" wrap="off" autocomplete="off" autocapitalize="off" aria-label="config.yaml" disabled></textarea><p id="edhint" class="edhint">Read the device first.</p></div>
+<div id="chk" class="chkbox" aria-live="polite"><strong id="chkh"></strong><ul id="chkl"></ul></div>
+
+<h3>3. Write to device</h3>
+<div class="row"><button id="wr" class="btn primary" type="button" disabled>Write to device</button><button id="dis" class="btn" type="button" disabled>Discard edits</button></div>
+<p class="cap">Disabled while the check shows an error. The M5Paper restarts and loads the new layout (about 10 s). Limit 64 KB.</p>
+</div>
+
+<div class="card" id="seccard">
+<h3>Optional: Wi-Fi and Home Assistant token</h3>
+<p class="cap">Only needed on a new device or when they change. Nothing you type is stored or sent.</p>
+<button id="secopen" class="btn" type="button" aria-expanded="false" aria-controls="secform">Set up secrets...</button>
+<div id="secform" hidden>
+<div class="note"><strong>Your secrets stay in this browser</strong><br>This page does not store, send or log what you type here.<br>It goes from this browser to the M5Paper over the USB cable, nowhere else.<br>Write-only: the device never sends secrets back, so these fields start empty.<br>Writing replaces the whole secrets.yaml on the device, all Wi-Fi networks included.</div>
+<form id="sf" autocomplete="off" onsubmit="return false">
+<div class="grid">
+<div class="fld"><label for="f_ssid">Wi-Fi name (SSID)</label><input id="f_ssid" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-f="ssid"><p class="fmsg" id="m_ssid"></p></div>
+<div class="fld"><label for="f_password">Wi-Fi password</label><input id="f_password" type="password" autocomplete="new-password" data-f="password"><p class="fmsg" id="m_password"></p></div>
+<div class="fld"><label for="f_internal_url">Home Assistant address (at home)</label><input id="f_internal_url" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="http://192.168.1.10:8123" data-f="internal_url"><p class="fmsg" id="m_internal_url"></p></div>
+<div class="fld"><label for="f_token">Access token</label><input id="f_token" type="password" autocomplete="new-password" data-f="token"><p class="fmsg" id="m_token"></p></div>
+<div class="fld"><label for="f_external_url">Outside address (optional)</label><input id="f_external_url" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://example.ui.nabu.casa" data-f="external_url"><p class="fmsg" id="m_external_url"></p></div>
+<p class="cap side">Used away from home. Must start with https://. Leave empty if you only use it at home.</p>
+</div>
+<label class="chk"><input type="checkbox" id="showch"> Show characters</label>
+<h3>Second Wi-Fi network (optional)</h3>
+<label class="chk"><input type="checkbox" id="sec2"> Add a second network</label>
+<div id="sec2box" hidden>
+<div class="grid">
+<div class="fld"><label for="f_second_name">Network name (optional, max 20 characters)</label><input id="f_second_name" type="text" maxlength="20" autocomplete="off" data-f="second_name"><p class="fmsg" id="m_second_name"></p></div>
+<div class="fld"><span class="lbl" id="hal">Home Assistant address on this network</span>
+<div class="seg" role="radiogroup" aria-labelledby="hal"><label><input type="radio" name="hauri" value="auto" checked><span>Automatic</span></label><label><input type="radio" name="hauri" value="internal"><span>At home</span></label><label><input type="radio" name="hauri" value="external" id="r_ext" disabled><span>Outside</span></label></div>
+<p class="fmsg" id="m_second_ha_url"></p><p class="cap" id="exthint" hidden>Needs the outside address above.</p></div>
+<div class="fld"><label for="f_second_ssid">Wi-Fi name (SSID)</label><input id="f_second_ssid" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-f="second_ssid"><p class="fmsg" id="m_second_ssid"></p></div>
+<div class="fld"><label for="f_second_password">Wi-Fi password</label><input id="f_second_password" type="password" autocomplete="new-password" data-f="second_password"><p class="fmsg" id="m_second_password"></p></div>
+</div>
+</div>
+</form>
+<div class="row"><button id="secwr" class="btn primary" type="button" disabled>Write secrets to device</button><button id="secclr" class="btn" type="button">Clear fields</button></div>
+<div id="secstrip" class="strip" role="status" aria-live="polite" hidden><span id="secg" class="glyph" aria-hidden="true"></span><div><strong id="sech"></strong><span id="secd"></span></div></div>
+</div>
+</div>
+</div></section>
+
 <section><div class="wrap">
 <h2>Before you start</h2>
 <ol class="steps">
@@ -77,5 +132,8 @@ secrets.yaml   Wi-Fi and Home Assistant token</pre>
 <p>Inkhaus, open source on <a href="https://github.com/asdwsda/inkhaus">GitHub</a>. Install page powered by ESP Web Tools.</p>
 </div></footer>
 <script src="install.js"></script>
+<script src="provision-client.js"></script>
+<script src="config-check.js"></script>
+<script src="config-editor.js"></script>
 </body>
 </html>
