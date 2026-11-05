@@ -1401,11 +1401,13 @@ void loop() {
       stackLogged = true;
       Serial.printf("BOOT: loop_stack_free=%u\n", (unsigned)uxTaskGetStackHighWaterMark(nullptr));
     }
+#ifdef DEBUG_SERIAL
     static uint32_t lastMem = 0;
-    if (millis() - lastMem > 30000) {  // every 30 s while awake
+    if (millis() - lastMem > 30000) {  // every 30 s while awake (debug builds only)
       lastMem = millis();
       logMem("tick");
     }
+#endif
   }
 #if defined(OTA_TEST_BAD) && defined(DEBUG_SERIAL)
   if (millis() > 4000) { Serial.println("OTA-TEST: bad firmware restarting"); Serial.flush(); boot::endBurstRead(); ESP.restart(); }  // rollback test: never healthy
