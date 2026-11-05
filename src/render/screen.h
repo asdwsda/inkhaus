@@ -9,7 +9,8 @@
 namespace render {
 
 // Link phase shown by the status bar (STYLE.md 5.3). None: nothing drawn (config error screen).
-enum class Link { None, ConnectingWifi, Fetching, Online, Offline, AuthError, Demo };
+// NotReady / Ready: the wake-time states of task 120 (docs/ui/experiments/ready-indicator.md).
+enum class Link { None, ConnectingWifi, Fetching, Online, Offline, AuthError, Demo, NotReady, Ready };
 
 struct StatusInfo {
   int batteryPct = 100;
@@ -17,6 +18,7 @@ struct StatusInfo {
   // Refresh label (one line in portrait, two in landscape); outdated = clock icon after it (STYLE.md 5.3).
   std::string label1, label2;
   bool outdated = false;
+  bool queued = false;  // task 120: a tap waits (NotReady / Offline): hourglass icon instead of the link icon
   // Sleep pill (STYLE.md 5.6), drawn last, only in the frame that is on the panel while the device sleeps.
   // sleepKind: 0 none, 1 OFF (power off), 2 DEEP, 3 TAP (= app_logic::Indicator); sleepNextMin: local minute of
   // day of the next scheduled update, -1 = off. Region: ui::sleepBadgeRect(orientation).

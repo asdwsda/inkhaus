@@ -29,7 +29,9 @@ void drawStatusBar(M5Canvas &c, const uistate::AppState &app, const StatusInfo &
       drawTextCy(c, Font::F18, "updated 14:05", 48, cy, Align::Left, INK);
     }
   } else if (st.link != Link::None) {
-    const Icon icon = st.link == Link::Online           ? Icon::Wifi
+    const Icon icon = st.queued                         ? Icon::Hourglass  // task 120 (UNVERIFIED look on the panel)
+                      : st.link == Link::Online || st.link == Link::Ready ? Icon::Wifi
+                      : st.link == Link::NotReady       ? Icon::WifiJoin
                       : st.link == Link::ConnectingWifi ? Icon::WifiJoin
                       : st.link == Link::Fetching       ? Icon::CloudDown
                       : st.link == Link::AuthError      ? Icon::Lock
