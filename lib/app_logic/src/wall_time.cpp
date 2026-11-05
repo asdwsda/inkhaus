@@ -83,7 +83,7 @@ Label refreshLabel(int64_t lastOk, int64_t now, int32_t off, int refreshMin, boo
 }
 
 Label statusLabel(Phase phase, int64_t lastOk, int64_t now, int32_t off, int refreshMin, bool failed,
-                  bool landscape) {
+                  bool landscape, bool queued) {
   Label l;
   auto two = [&](const char *a, const char *b, const char *whole) {
     if (landscape) { l.line1 = a; l.line2 = b; }
@@ -99,11 +99,23 @@ Label statusLabel(Phase phase, int64_t lastOk, int64_t now, int32_t off, int ref
       two("fetching", "states", "fetching states");
       l.stale = have && refreshLabel(lastOk, now, off, refreshMin, failed, landscape).stale;
       return l;
+    case Phase::NotReady:
+      if (queued) two("queued", "connecting", "queued, connecting");
+      else two("not ready", "connecting", "not ready, connecting");
+      return l;  // no clock icon while connecting
+    case Phase::Ready:
+      l.line1 = "ready";  // landscape: one line
+      return l;
     case Phase::Demo: two("demo", "mode", "demo mode"); return l;
     case Phase::Online: return refreshLabel(lastOk, now, off, refreshMin, failed, landscape);
     case Phase::AuthError: two("token", "rejected", "token rejected"); l.stale = have; return l;
     case Phase::Offline: {
       l.stale = have;
+      if (queued) {
+        if (landscape) { l.line1 = "queued"; l.line2 = "offline"; }
+        else l.line1 = "offline, queued";
+        return l;
+      }
       if (!have) {
         if (landscape) { l.line1 = "offline"; l.line2 = "never"; }
         else l.line1 = "offline";

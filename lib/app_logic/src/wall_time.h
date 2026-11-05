@@ -34,11 +34,13 @@ Label refreshLabel(int64_t lastOkEpoch, int64_t nowEpoch, int32_t utcOffsetS, in
 
 
 // Link phase of the status bar (STYLE.md 5.3). The bar is never blank: every phase has a label.
-enum class Phase { ConnectingWifi, Fetching, Online, Offline, AuthError, Demo };
+enum class Phase { ConnectingWifi, Fetching, Online, Offline, AuthError, Demo, NotReady, Ready };
 // Label + outdated-clock flag for a phase. lastOk: last good fetch (or the epoch restored from the cache,
 // task 037), 0 = none. `outdated` (the clock icon) = the refreshLabel stale rule, and always with Offline /
 // AuthError when values from an earlier fetch exist.
+// Task 120: NotReady / Ready are the wake-time phases of docs/ui/experiments/ready-indicator.md; `queued` (a tap waits)
+// changes the NotReady and Offline labels only.
 Label statusLabel(Phase phase, int64_t lastOkEpoch, int64_t nowEpoch, int32_t utcOffsetS, int refreshIntervalMin,
-                  bool lastFetchFailed, bool landscape);
+                  bool lastFetchFailed, bool landscape, bool queued = false);
 
 }  // namespace app_logic
