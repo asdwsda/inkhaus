@@ -1,4 +1,4 @@
-# Device config editor on /install/ (DRAFT, in experiments)
+# Device config editor on /install/ (accepted 2026-11-05)
 
 Task 119. A section on the install page (docs/ui/web-flasher.md, site/install.html), not an e-ink screen: it follows
 site/style.css (white page, black text, DejaVu Sans, 1 px #888 card borders, 3 px black buttons with 4 px radius, #444
@@ -8,7 +8,7 @@ protocol over Web Serial (lib/provision, tools/provision.py). The protocol has `
 firmware dependency (task 119 "Files to touch"). Without Web Serial the section is hidden and the existing
 "This browser cannot install from a page" card stays.
 
-Mockups (docs/ui/experiments/png/): `config-editor-desktop.svg` (1200 wide; read, edited, 1 error + 1 warning, secrets
+Mockups (docs/ui/png/): `config-editor-desktop.svg` (1200 wide; read, edited, 1 error + 1 warning, secrets
 collapsed), `config-editor-secrets.svg` (secrets step open, one invalid field), `config-editor-states.svg` (flow states A-F).
 Narrow (< 600 px) reflows as the flasher: single column, buttons full width 56 high, editor full width, field pairs stacked.
 
@@ -47,11 +47,20 @@ Open (`config-editor-secrets.svg`):
   "Write-only: the device never sends secrets back, so these fields start empty." /
   "Writing replaces the whole secrets.yaml on the device, all Wi-Fi networks included."
 - Fields, two columns of 420x56 (3 px black border, 4 px radius, 18 px text, label 16 bold above): Wi-Fi name (SSID),
-  Wi-Fi password (masked), Home Assistant address, Access token (masked). Rows 120 px apart. Message line under a
+  Wi-Fi password (masked), Home Assistant address (at home, `internal_url`), Access token (masked), then
+  "Outside address (optional)" (`external_url`, left column, placeholder `https://example.ui.nabu.casa` in #888; right
+  column caption 16 #444 "Used away from home. Must start with https://. Leave empty if you only use it at home.").
+  Rows 120 px apart (the outside row 150 below the address row, room for the message line). Message line under a
   field: marker 22 px + 16 px text. Invalid field: 6 px black bar inside the left edge + "!" message.
-  Checkbox "Show characters" (28 px box, 18 label, row >= 48 high) unmasks the two masked fields; reset on write/clear.
-- Caption: "More Wi-Fi networks, a fixed IP or an outside address: write secrets.yaml as a file (see docs/CONFIG.md), or
-  paste a whole file instead." ("paste a whole file" swaps the four fields for one text area, same rules, same notice.)
+  Checkbox "Show characters" (28 px box, 18 label, row >= 48 high) unmasks all masked fields; reset on write/clear.
+- Second network (optional): H3 "Second Wi-Fi network (optional)" 20 bold; checkbox "Add a second network" (filled box
+  with check = on, off by default; off hides the fields and writes a one-entry list). When on, two rows of 420x56:
+  Network name (optional, max 20 chars, unique, left) and "Home Assistant address on this network" (right): a
+  3-segment control, each segment 140x56, selected = black fill + white bold text, others outline: "Automatic"
+  (default, `ha_url: auto`), "At home" (`internal`), "Outside" (`external`; dashed and disabled while the outside
+  address is empty, hint "Needs the outside address above."). Then Wi-Fi name (SSID, required) and Wi-Fi password
+  (masked, 8-63 or empty). Same blur/Write validation and messages as the first network. The first network has no
+  name and no `ha_url` (auto). Arrow keys move inside the segment control (one tab stop).
 - Buttons: "Write secrets to device" primary 320 (dashed disabled until required fields valid), "Clear fields" secondary 240.
 - Fields use `autocomplete="off"`, no `name` attributes that a password manager would save, never read back, never in
   localStorage/sessionStorage/URL/console. They are cleared after a successful write, on "Clear fields", on pagehide,
@@ -72,8 +81,8 @@ Warnings (do not block):
 - "Unknown key '<key>'. The device ignores it." (with "Did you mean '<x>'?" when the edit distance is <= 2)
 - "Two widgets use '<entity>'." / "Tab '<title>' has no widgets."
 Secrets fields (checked as typed, shown after the first blur or on Write click):
-- "Required." (SSID, address, token) / "Must start with http:// or https://" (address) /
-  "The outside address must use https" (only in pasted-file mode) / "Looks short. Tokens have over 100 characters." (warning)
+- "Required." (SSID, address, token; second SSID when the second network is on) / "Must start with http:// or https://" (address) /
+  "The outside address must use https" (outside field and pasted file) / "Looks short. Tokens have over 100 characters." (warning)
 - Password: "Wi-Fi password must be 8 to 63 characters, or empty for an open network." (error if 1-7).
 
 ## Flow states (`config-editor-states.svg`)

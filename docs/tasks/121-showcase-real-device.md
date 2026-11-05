@@ -2,7 +2,7 @@
 
 Status: todo
 Depends on: 111 (guide visuals)
-UI spec: docs/ui/experiments/showcase-device.md (ui-designer, to be written)
+UI spec: docs/ui/showcase-device.md (accepted 2026-11-05)
 Needs device: no
 
 ## Scope
@@ -13,7 +13,7 @@ the tour GIF and guide pictures that show the whole device. Screen content stays
 Out of scope: photos taken of the user's device.
 
 ## Files to touch
-- docs/ui/experiments/ (new frame), docs/ui/showcase-*.svg, docs/guide/img/src, tools/render_* if needed, site/
+- docs/ui/showcase-device-*.svg (new frame), docs/ui/showcase-*.svg, docs/guide/img/src, tools/render_* if needed, site/
 
 ## Acceptance criteria
 - [ ] Frame dimensions match the official drawing (numbers listed in the spec with the source).

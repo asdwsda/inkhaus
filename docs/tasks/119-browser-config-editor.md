@@ -2,7 +2,7 @@
 
 Status: todo
 Depends on: 102 (web installer), 020 (provisioning protocol)
-UI spec: docs/ui/experiments/config-editor.md (ui-designer, to be written)
+UI spec: docs/ui/config-editor.md (accepted 2026-11-05)
 Needs device: yes (read/write over Web Serial; PC part first)
 
 ## Scope
@@ -29,7 +29,7 @@ protocol (lib/provision/src/provision_proto.*, tools/provision.py is the referen
 - [ ] Device check: read, edit, write config.yaml from Chrome; device reloads the new layout.
 
 ## Notes
-- User 2026-11-05: spec approved (docs/ui/experiments/config-editor.md, moving to docs/ui/). Secrets form adds an optional
+- User 2026-11-05: spec approved (docs/ui/config-editor.md). Secrets form adds an optional
   outside HA address (`external_url`, https) and an optional second Wi-Fi network (name/ssid/password, `ha_url` choice).
   Static IP and more networks: hand-written file. Keep the password 8-63 check and the "token looks short" warning.
 - The protocol has only `putfile`: reading config.yaml back needs a new firmware read command (config.yaml only; never secrets).

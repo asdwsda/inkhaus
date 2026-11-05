@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="720" height="1200" viewBox="0 0 720 1200" font-family="DejaVu Sans">
-<!-- Task 121 experiment: real M5Paper frame (clean, portrait). Case 118.6 x 67 x 10 mm, screen 58.32 x 103.68 mm, 9.259 px/mm (screen = 540x960 px at 1:1). Screen content = docs/ui/showcase-tab-portrait.svg. Numbers and sources: showcase-device.md. -->
+<!-- Task 121: real M5Paper frame (clean, portrait). Case 118.6 x 67 x 10 mm, screen 58.32 x 103.68 mm, 9.259 px/mm (screen = 540x960 px at 1:1). Screen content = docs/ui/showcase-tab-portrait.svg. Numbers and sources: showcase-device.md. -->
 <defs></defs>
 <rect x="0" y="0" width="720" height="1200" fill="#fff"/>
 <g id="dev-body" transform="translate(49.82,50.94) scale(9.259)">

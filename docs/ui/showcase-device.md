@@ -1,6 +1,6 @@
-# Showcase device frame with the real M5Paper shape (task 121, experiment)
+# Showcase device frame with the real M5Paper shape (task 121)
 
-Owner: ui-designer. Status: proposal, not accepted (nothing in `docs/ui/` or `docs/guide/` is replaced).
+Owner: ui-designer. Status: accepted 2026-11-05 (clean: guide/GIF; photo: landing hero).
 Mockups (1:1 px, DejaVu Sans, `check_mockups`: 0 problems; PNGs in `png/`):
 
 | File | Variant | Canvas |
