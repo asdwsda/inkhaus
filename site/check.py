@@ -7,7 +7,7 @@
 - config keys: the guide's config reference vs lib/config (parser) and the example files.
   Errors: parser key missing from the reference or vice versa; secrets.yaml key mismatch.
   Warnings: reference keys missing from config.example.yaml (known gap while widget tasks add examples)."""
-import re, sys
+import re, shutil, subprocess, sys
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote
@@ -15,6 +15,7 @@ from urllib.parse import unquote
 here = Path(__file__).resolve().parent
 sys.path.insert(0, str(here))
 import configkeys
+from jsguard import forbidden_in, strip_js_comments
 
 out = here / "dist"
 bad = 0
@@ -118,26 +119,15 @@ print(f"site total (information only): {total/1024:.0f} KiB")
 
 # Config editor security (task 119): secrets are write-only and stay in memory. The editor code may not
 # talk to the network, store anything, log, or change the URL; the secrets form may not invite a password
-# manager to save it. Comments are stripped before the scan.
+# manager to save it. Comments are stripped (string-aware) before the scan.
 EDITOR_JS = ("config-editor.js", "provision-client.js", "config-check.js")
-FORBIDDEN = [
-    (r"\bfetch\s*\(", "fetch"), (r"XMLHttpRequest", "XMLHttpRequest"), (r"sendBeacon", "sendBeacon"),
-    (r"\bWebSocket\b", "WebSocket"), (r"\bEventSource\b", "EventSource"), (r"\bimportScripts\b", "importScripts"),
-    (r"new\s+Image\b", "new Image"), (r"localStorage", "localStorage"), (r"sessionStorage", "sessionStorage"),
-    (r"indexedDB", "indexedDB"), (r"document\.cookie", "cookie"), (r"\bconsole\b", "console"),
-    (r"\blocation\b", "location"), (r"pushState|replaceState", "history state"), (r"\bcaches\b", "Cache API"),
-    (r"navigator\.clipboard", "clipboard"), (r"\beval\s*\(|new\s+Function\b", "eval"), (r"postMessage", "postMessage"),
-    (r"document\.write", "document.write"), (r"\.src\s*=|\.href\s*=", "dynamic src/href"),
-]
 for js in EDITOR_JS:
     f = out / "install" / js
     if not f.is_file():
         fail(f"EDITOR file missing in dist: {js}")
         continue
-    code = re.sub(r"/\*.*?\*/|(?<![:\"'\\])//[^\n]*", "", f.read_text(), flags=re.S)
-    for pat, name in FORBIDDEN:
-        if re.search(pat, code):
-            fail(f"EDITOR SECURITY {js}: forbidden use of {name}")
+    for name in forbidden_in(strip_js_comments(f.read_text())):
+        fail(f"EDITOR SECURITY {js}: forbidden use of {name}")
 inst = (out / "install" / "index.html").read_text()
 for need in ("This page does not store, send or log what you type here.", "Write-only: the device never sends secrets back"):
     if need not in inst:
@@ -157,8 +147,13 @@ else:
         fail("EDITOR secrets form has action/method")
 if re.search(r"<(script|link)[^>]+(src|href)=\"https?://", inst) and "esp-web-tools" not in inst:
     fail("EDITOR external script on the install page")
+# The guard's own test.
+r = subprocess.run([sys.executable, str(here / "test" / "test_jsguard.py")], capture_output=True, text=True)
+if r.returncode != 0:
+    fail("GUARD TEST failed\n" + r.stderr[-800:])
+else:
+    print("guard test ok")
 # The JS unit tests (no device needed). Skipped, with a note, when node is missing.
-import shutil, subprocess
 if shutil.which("node"):
     for t in sorted((here / "test").glob("*.test.js")):
         r = subprocess.run(["node", str(t)], capture_output=True, text=True)
