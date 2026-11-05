@@ -399,10 +399,12 @@ def device_buttons():
     o+=txt('t-front',fx+BW//2,40,'Front',24,'#000','middle','font-weight="bold"')+txt('t-front2',fx+BW//2,64,'(540 x 960 touch screen)',18,'#444','middle')
     o+=txt('t-back',bx+BW//2,40,'Back',24,'#000','middle','font-weight="bold"')
     o+=txt('t-back2',bx+BW//2,64,'(turned sideways)',18,'#444','middle')
-    # front body, screen
-    o+='<rect id="fr-body" x="%d" y="%d" width="%d" height="%d" rx="10" fill="#fff" stroke="#000" stroke-width="3"/>\n'%(fx,fy,BW,BH)
-    sw,sh=int(58.32*S),int(103.68*S)
-    sx=fx+(BW-sw)//2; sy=fy+int(7.5*S)
+    # front: the real frame from tools/showcase/device_frame.py (clean variant, task 121), mm geometry at 3.5 px/mm
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('device_frame',R+'../tools/showcase/device_frame.py'); DF=importlib.util.module_from_spec(spec); spec.loader.exec_module(DF)
+    o+='<g id="fr-body" transform="translate(%d,%d) scale(%s)">\n%s\n</g>\n'%(fx,fy,S,DF.body('clean',0.85))
+    sw,sh=int(DF.SCR_W*S),int(DF.SCR_H*S)
+    sx=fx+int(DF.BZ_L*S); sy=fy+int(DF.BZ_T*S)
     o+='<rect id="fr-screen" x="%d" y="%d" width="%d" height="%d" fill="#fff" stroke="#000" stroke-width="2"/>\n'%(sx,sy,sw,sh)
     o+='<rect id="fr-tabbar" x="%d" y="%d" width="%d" height="22" fill="none" stroke="#000" stroke-width="2"/>\n'%(sx,sy,sw)
     o+='<rect x="%d" y="%d" width="44" height="12" rx="3" fill="#000"/><rect x="%d" y="%d" width="44" height="12" rx="3" fill="none" stroke="#000" stroke-width="2"/><rect x="%d" y="%d" width="44" height="12" rx="3" fill="none" stroke="#000" stroke-width="2"/>\n'%(sx+12,sy+5,sx+62,sy+5,sx+112,sy+5)
@@ -410,22 +412,11 @@ def device_buttons():
         for c in range(2):
             fill='#000' if (r+c)%3==0 else '#fff'
             o+='<rect x="%d" y="%d" width="86" height="40" rx="5" fill="%s" stroke="#000" stroke-width="2"/>\n'%(sx+12+c*98,sy+36+r*52,fill)
-    # rocker on the right edge: centre 58 mm from the bottom, 12.5 mm long
-    rh=int(12.5*S); rc=bot-int(58*S); rt=rc-rh//2
-    o+='<rect id="rk-body" x="%d" y="%d" width="9" height="%d" rx="3" fill="#000"/>\n'%(fx+BW-3,rt,rh)
-    for k in (1,2):
-        o+='<path d="M%d %d H%d" stroke="#fff" stroke-width="1"/>\n'%(fx+BW-2,rt+k*rh//3,fx+BW+5)
-    # microSD on the right edge: 11 mm wide, 24.7 mm from the bottom
+    # callout anchors on the right edge: rocker centre 60 mm from the bottom, 12.5 mm long; microSD 24.7 to 35.8 mm
+    rh=int(12.5*S); rc=bot-int(60*S); rt=rc-rh//2
     sdh=int(11.1*S); sdc=bot-int(24.7*S)-sdh//2
-    o+='<rect id="sd-slot" x="%d" y="%d" width="6" height="%d" fill="#555"/>\n'%(fx+BW-3,sdc-sdh//2,sdh)
-    # bottom edge: USB-C (10.9 mm from the left), Grove A (right end 4.5 mm from the right edge, 12 mm)
-    o+='<rect id="usb-port" x="%d" y="%d" width="34" height="8" rx="4" fill="#000"/>\n'%(fx+int(10.9*S)-17,bot-4)
     ax=fx+BW-int(4.5*S)-int(12*S)
-    o+='<rect id="pa-port" x="%d" y="%d" width="%d" height="8" fill="#555"/>\n'%(ax,bot-4,int(12*S))
-    # left edge: Grove B and C (12 mm each, 2 mm apart, lowest 11.4 mm above the bottom)
-    for k,nm in enumerate(('pb-port','pc-port')):
-        y1=bot-int((11.4+k*14)*S)-int(12*S)
-        o+='<rect id="%s" x="%d" y="%d" width="8" height="%d" fill="#555"/>\n'%(nm,fx-4,y1,int(12*S))
+    ux0=fx+int(10.9*S)
     # callouts right of the front
     cx=450; ex=fx+BW+6
     o+=txt('rk-title',cx,84,'Rocker (right edge)',18,'#444')
@@ -450,7 +441,7 @@ def device_buttons():
     o+=txt('gv-t3',20,bot-66,'(left edge)',18,'#444')
     o+=line('gv-l',135,bot-85,fx-4,bot-85)
     # bottom callouts
-    ux=fx+int(10.9*S)
+    ux=ux0
     o+=line('usb-l',ux,bot+4,ux,bot+34)+txt('usb-t1',ux,bot+56,'USB-C',18,'#000','middle')+txt('usb-t2',ux,bot+78,'charge + data',18,'#444','middle')
     px=ax+int(6*S)
     o+=line('pa-l',px,bot+4,px,bot+34)+txt('pa-t1',px,bot+56,'Grove port A',18,'#000','middle')+txt('pa-t2',px,bot+78,'(unused)',18,'#444','middle')

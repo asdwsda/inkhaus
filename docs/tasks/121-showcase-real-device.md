@@ -1,6 +1,6 @@
 # 121: Showcase pictures with the real device's shape
 
-Status: todo
+Status: done
 Depends on: 111 (guide visuals)
 UI spec: docs/ui/showcase-device.md (accepted 2026-11-05)
 Needs device: no
@@ -23,3 +23,7 @@ Out of scope: photos taken of the user's device.
 ## Notes
 - User 2026-11-05: clean frame for the guide and the tour GIF, photo frame for the landing page hero. Port the generator
   (scratchpad gen_device.py) into tools/showcase/ and wire it into the composites/tour generators.
+- Done 2026-11-05: generator ported to tools/showcase/device_frame.py (frame() used by the composites and tour
+  generators; body() also by docs/guide/img/gen_sources.py for device-buttons). Tour GIF: clean frame, 900 px wide
+  (580 KB). Landing page: new static hero docs/ui/png/showcase-hero.png (photo frame, tools/showcase/build_showcase_hero.sh)
+  above the GIF. Guide: only device-buttons shows the whole device (screen-orientation shows screens only).
