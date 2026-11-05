@@ -12,5 +12,7 @@ void drawSecureWidget(M5Canvas &c, const ui::Rect &r, const uistate::WidgetData 
 // The keypad popup (over the tab screen) and the confirm dialog (above everything); nothing while closed.
 void drawAlarmPopup(M5Canvas &c, const uistate::AppState &app);
 void drawConfirmDialog(M5Canvas &c, const uistate::AppState &app);
+// The dialog itself (also used by the notifications "Dismiss all?" confirm).
+void drawConfirmPanel(M5Canvas &c, settings::Orientation o, const std::string &title);
 
 }  // namespace render

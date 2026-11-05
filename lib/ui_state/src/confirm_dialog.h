@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <string>
 
-#include "notif_popup.h"
 #include "secure_view.h"
 #include "settings.h"
 #include "ui_layout.h"
@@ -15,8 +14,12 @@ namespace uistate {
 
 constexpr uint32_t kConfirmTimeoutMs = 15000;
 
-using ConfirmLayout = NotifConfirmLayout;
-inline ConfirmLayout confirmLayout(settings::Orientation o) { return notifConfirmLayout(o); }
+struct ConfirmLayout {
+  ui::Rect panel, shadow, dirty;
+  ui::Rect yes, no, skip;
+  int titleCx = 0, titleCy = 0, subCy = 0;
+};
+ConfirmLayout confirmLayout(settings::Orientation o);
 
 enum class ConfirmAnswer { None, Yes, No, Skip };  // None: the dialog stays open
 

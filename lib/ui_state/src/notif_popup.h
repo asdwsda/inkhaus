@@ -6,14 +6,13 @@
 #include <string>
 #include <vector>
 
+#include "confirm_dialog.h"
 #include "notif_widget.h"
 #include "settings.h"
 #include "ui_layout.h"
 #include "ui_rocker.h"
 
 namespace uistate {
-
-constexpr uint32_t kNotifConfirmTimeoutMs = 15000;  // the confirm dialog skips by itself
 
 struct NotifPopupLayout {
   bool landscape = true;
@@ -32,13 +31,6 @@ struct NotifPopupLayout {
   ui::Rect dismiss(int i) const { return {rows[i].x + dismissDx.x, rows[i].y + dismissDx.y, dismissDx.w, dismissDx.h}; }
 };
 NotifPopupLayout notifPopupLayout(settings::Orientation o);
-
-struct NotifConfirmLayout {
-  ui::Rect panel, shadow, dirty;
-  ui::Rect yes, no, skip;
-  int titleCx = 0, titleCy = 0, subCy = 0;
-};
-NotifConfirmLayout notifConfirmLayout(settings::Orientation o);
 
 // "Notifications (4)" and "1-3 of 4" (empty list: "").
 std::string notifPopupTitle(int count);
@@ -92,11 +84,12 @@ class NotifPopup {
   NotifResult dismissOne(const NotifStore &store, int index);
   NotifResult openConfirm(const NotifStore &store, uint32_t now);
   NotifResult confirmed(const NotifStore &store);
+  NotifResult answered(ConfirmAnswer a, const NotifStore &store);
 
   Mode mode_ = Mode::Closed;
   int page_ = 0;
   int focus_ = -1;
-  uint32_t confirmAt_ = 0;
+  ConfirmDialog dialog_;  // the shared dialog (answers, timeout); mode_ stays authoritative
   std::vector<Mark> marks_;
 };
 
