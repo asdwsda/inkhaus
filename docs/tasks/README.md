@@ -118,7 +118,7 @@
 | 117 | [Stress test before the 1.4.0 release](117-stress-test.md) | done | 116 |
 | 118 | [Tap opens history on read-only widgets](118-tap-opens-history.md) | done | 046 |
 | 119 | [Edit config from the web installer page](119-browser-config-editor.md) | PC part done | 102, 020 |
-| 120 | [Show when the device is ready to send commands](120-ready-indicator.md) | todo | 116 |
+| 120 | [Show when the device is ready to send commands](120-ready-indicator.md) | PC part done | 116 |
 | 121 | [Showcase pictures with the real device's shape](121-showcase-real-device.md) | done | 111 |
 | 122 | [Detect garage doors from device_class](122-garage-autodetect.md) | done | 108 |
 | 123 | [Alarm keypad: refresh only the code box](123-keypad-fast-refresh.md) | PC part done | 108 |

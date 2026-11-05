@@ -21,3 +21,4 @@ Out of scope: BLE (postponed), changing how the connection itself works.
 
 ## Notes
 - Decision (architect, 2026-11-05): status-bar indicator partials count toward ghost debt by area only, not as one of the 12 feedback refreshes. Reason: otherwise each interactive wake uses 3 of 12.
+- PC part done (firmware-dev, 2026-11-05): lib/app_logic ready_state (tracker, 400 ms coalescing, countsByAreaOnly), statusLabel NotReady/Ready/queued, render Link::NotReady/Ready + hourglass, glue in src/app_frame.cpp, present::setIndicatorRegions (indicator partials skip partial/burst count, area counts). Tests: test/test_ready_state. Left: device check (look, timing, wake rect, Ready = Wi-Fi-up approximation).
