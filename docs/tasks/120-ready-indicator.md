@@ -2,7 +2,7 @@
 
 Status: todo
 Depends on: 116 (net lanes)
-UI spec: docs/ui/experiments/ready-indicator.md (ui-designer, to be written)
+UI spec: docs/ui/experiments/ready-indicator.md (+ png/ready-indicator.png)
 Needs device: yes (look + timing; PC part first)
 
 ## Scope
@@ -18,3 +18,6 @@ Out of scope: BLE (postponed), changing how the connection itself works.
 - [ ] Native tests: state transitions (wake, Wi-Fi up, HA reachable, lost) and the refresh budget.
 - [ ] `pio test -e native`, `pio run` (all envs) pass.
 - [ ] Device check: wake by rocker, tap at once; the indicator matches when the command actually goes out (log times).
+
+## Notes
+- Decision (architect, 2026-11-05): status-bar indicator partials count toward ghost debt by area only, not as one of the 12 feedback refreshes. Reason: otherwise each interactive wake uses 3 of 12.
