@@ -147,12 +147,10 @@ void drawAlarmPopup(M5Canvas &c, const uistate::AppState &app) {
   }
 }
 
-void drawConfirmDialog(M5Canvas &c, const uistate::AppState &app) {
-  if (!app.confirmOpen()) return;
-  const uistate::ConfirmLayout l = uistate::confirmLayout(app.orientation());
+void drawConfirmPanel(M5Canvas &c, settings::Orientation o, const std::string &title) {
+  const uistate::ConfirmLayout l = uistate::confirmLayout(o);
   panel(c, l.panel, l.shadow);
-  drawTextCy(c, Font::F24, fitText(c, Font::F24, app.confirm().title(), l.panel.w - 40), l.titleCx, l.titleCy,
-             Align::Center, INK);
+  drawTextCy(c, Font::F24, fitText(c, Font::F24, title, l.panel.w - 40), l.titleCx, l.titleCy, Align::Center, INK);
   drawTextCy(c, Font::F18, "Skips by itself after 15 s", l.titleCx, l.subCy, Align::Center, INK);
   struct B { const Rect &r; const char *label, *key; };
   const B bs[3] = {{l.yes, "Yes", "UP"}, {l.no, "No", "DOWN"}, {l.skip, "Skip", "PUSH"}};
@@ -161,6 +159,11 @@ void drawConfirmDialog(M5Canvas &c, const uistate::AppState &app) {
     drawTextCy(c, Font::F24, b.label, b.r.x + b.r.w / 2, b.r.y + 19, Align::Center, INK);
     drawTextCy(c, Font::F18, b.key, b.r.x + b.r.w / 2, b.r.y + 48, Align::Center, INK);
   }
+}
+
+void drawConfirmDialog(M5Canvas &c, const uistate::AppState &app) {
+  if (!app.confirmOpen()) return;
+  drawConfirmPanel(c, app.orientation(), app.confirm().title());
 }
 
 }  // namespace render

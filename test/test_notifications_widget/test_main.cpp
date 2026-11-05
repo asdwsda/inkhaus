@@ -210,7 +210,7 @@ void test_layout_landscape_numbers() {
   TEST_ASSERT_EQUAL(812, l.rows[0].x + l.rowTimeRightDx);
   TEST_ASSERT_EQUAL(650, l.rowTitleMaxW);
   TEST_ASSERT_EQUAL(730, l.rowMsgMaxW);
-  const NotifConfirmLayout c = notifConfirmLayout(Orientation::Landscape);
+  const ConfirmLayout c = confirmLayout(Orientation::Landscape);
   TEST_ASSERT_TRUE(c.panel == (ui::Rect{200, 188, 560, 220}));
   TEST_ASSERT_TRUE(c.yes == (ui::Rect{228, 316, 160, 64}));
   TEST_ASSERT_TRUE(c.no == (ui::Rect{400, 316, 160, 64}));
@@ -236,7 +236,7 @@ void test_layout_portrait_numbers() {
   // everything inside the panel
   TEST_ASSERT_TRUE(ui::rectInside(l.clearAll, l.panel));
   TEST_ASSERT_TRUE(ui::rectInside(l.dismiss(5), l.panel));
-  const NotifConfirmLayout c = notifConfirmLayout(Orientation::Portrait);
+  const ConfirmLayout c = confirmLayout(Orientation::Portrait);
   TEST_ASSERT_TRUE(c.panel == (ui::Rect{30, 356, 480, 224}));
   TEST_ASSERT_TRUE(c.yes == (ui::Rect{30 + 24, 356 + 128, 136, 64}));
   TEST_ASSERT_TRUE(c.no == (ui::Rect{30 + 172, 356 + 128, 136, 64}));
@@ -347,7 +347,7 @@ void test_popup_close_outside_and_button() {
 void test_popup_clear_all_confirm_flow() {
   const Orientation o = Orientation::Landscape;
   const NotifPopupLayout l = notifPopupLayout(o);
-  const NotifConfirmLayout c = notifConfirmLayout(o);
+  const ConfirmLayout c = confirmLayout(o);
   NotifStore s = storeOf(4);
   NotifPopup p;
   p.open(s, 0, false);
@@ -393,7 +393,7 @@ void test_popup_clear_all_confirm_flow() {
 
 void test_popup_confirm_by_touch_yes_and_sync_clamps() {
   const Orientation o = Orientation::Landscape;
-  const NotifConfirmLayout c = notifConfirmLayout(o);
+  const ConfirmLayout c = confirmLayout(o);
   const NotifPopupLayout l = notifPopupLayout(o);
   NotifStore s = storeOf(5);
   NotifPopup p;

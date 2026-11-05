@@ -44,8 +44,8 @@ NotifPopupLayout notifPopupLayout(Orientation o) {
   return l;
 }
 
-NotifConfirmLayout notifConfirmLayout(Orientation o) {
-  NotifConfirmLayout l;
+ConfirmLayout confirmLayout(Orientation o) {
+  ConfirmLayout l;
   if (o == Orientation::Landscape) {
     l.panel = {200, 188, 560, 220};
     l.yes = {228, 316, 160, 64};
@@ -92,6 +92,7 @@ void NotifPopup::open(const NotifStore &store, uint32_t, bool viaRocker) {
 bool NotifPopup::close() {
   const bool was = isOpen();
   mode_ = Mode::Closed;
+  dialog_.cancel();
   focus_ = -1;
   page_ = 0;
   return was;
@@ -141,7 +142,10 @@ void NotifPopup::sync(const NotifStore &store, Orientation o) {
                marks_.end());
   page_ = std::min(page_, pageCount(n, rpp) - 1);
   if (n == 0) {
-    if (mode_ == Mode::Confirm) mode_ = Mode::List;
+    if (mode_ == Mode::Confirm) {
+      mode_ = Mode::List;
+      dialog_.cancel();
+    }
     focus_ = -1;
   } else if (focus_ > n) {
     focus_ = n;
@@ -165,7 +169,7 @@ NotifResult NotifPopup::openConfirm(const NotifStore &store, uint32_t now) {
   NotifResult r;
   if (store.count() == 0 || anyPending()) return r;
   mode_ = Mode::Confirm;
-  confirmAt_ = now;
+  dialog_.open(notifConfirmTitle(store.count()), 0, 0, now);
   r.changed = true;
   return r;
 }
@@ -190,15 +194,7 @@ NotifResult NotifPopup::activate(int index, const NotifStore &store, uint32_t no
 NotifResult NotifPopup::touch(ui::Point p, Orientation o, const NotifStore &store, uint32_t now) {
   NotifResult r;
   if (mode_ == Mode::Closed) return r;
-  if (mode_ == Mode::Confirm) {
-    const NotifConfirmLayout c = notifConfirmLayout(o);
-    if (c.yes.contains(p)) return confirmed(store);
-    if (c.no.contains(p) || c.skip.contains(p) || !c.panel.contains(p)) {  // a tap outside = skip
-      mode_ = Mode::List;
-      r.changed = true;
-    }
-    return r;
-  }
+  if (mode_ == Mode::Confirm) return answered(dialog_.touch(p, o), store);
   const NotifPopupLayout l = notifPopupLayout(o);
   if (!l.panel.contains(p) || l.close.contains(p)) {
     close();
@@ -226,12 +222,7 @@ NotifResult NotifPopup::touch(ui::Point p, Orientation o, const NotifStore &stor
 NotifResult NotifPopup::rocker(ui::PhysicalKey key, Orientation o, const NotifStore &store, uint32_t now) {
   NotifResult r;
   if (mode_ == Mode::Closed) return r;
-  if (mode_ == Mode::Confirm) {  // STYLE 10b: UP = yes, DOWN = no, PUSH = skip (long push too)
-    if (key == ui::PhysicalKey::Up) return confirmed(store);
-    mode_ = Mode::List;
-    r.changed = true;
-    return r;
-  }
+  if (mode_ == Mode::Confirm) return answered(dialog_.rocker(key), store);  // STYLE 10b
   if (key == ui::PhysicalKey::LongPush) {
     close();
     r.changed = r.closed = true;
@@ -255,10 +246,18 @@ NotifResult NotifPopup::rocker(ui::PhysicalKey key, Orientation o, const NotifSt
 }
 
 bool NotifPopup::tick(uint32_t now) {
-  if (mode_ != Mode::Confirm) return false;
-  if (int32_t(now - confirmAt_) < int32_t(kNotifConfirmTimeoutMs)) return false;
+  if (mode_ != Mode::Confirm || !dialog_.tick(now)) return false;
   mode_ = Mode::List;
   return true;
+}
+
+NotifResult NotifPopup::answered(ConfirmAnswer a, const NotifStore &store) {
+  NotifResult r;
+  if (a == ConfirmAnswer::None) return r;
+  if (a == ConfirmAnswer::Yes) return confirmed(store);
+  mode_ = Mode::List;  // No / Skip
+  r.changed = true;
+  return r;
 }
 
 }  // namespace uistate

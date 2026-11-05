@@ -6,6 +6,7 @@
 
 #include "iso8601.h"
 #include "notif_popup.h"
+#include "secure_widget.h"
 
 namespace render {
 
@@ -70,24 +71,6 @@ void drawRow(M5Canvas &c, const uistate::NotifPopupLayout &l, int slot, const No
   if (focused) focusRing(c, d);
 }
 
-void drawConfirm(M5Canvas &c, const uistate::AppState &app) {
-  const uistate::NotifConfirmLayout l = uistate::notifConfirmLayout(app.orientation());
-  panel(c, l.panel, l.shadow);
-  drawTextCy(c, Font::F24, fitText(c, Font::F24, uistate::notifConfirmTitle(app.notifStore().count()), l.panel.w - 40),
-             l.titleCx, l.titleCy, Align::Center, INK);
-  drawTextCy(c, Font::F18, "Skips by itself after 15 s", l.titleCx, l.subCy, Align::Center, INK);
-  struct B {
-    const Rect &r;
-    const char *label, *key;
-  };
-  const B bs[3] = {{l.yes, "Yes", "UP"}, {l.no, "No", "DOWN"}, {l.skip, "Skip", "PUSH"}};
-  for (const B &b : bs) {
-    button(c, b.r, false);
-    drawTextCy(c, Font::F24, b.label, b.r.x + b.r.w / 2, b.r.y + 19, Align::Center, INK);
-    drawTextCy(c, Font::F18, b.key, b.r.x + b.r.w / 2, b.r.y + 48, Align::Center, INK);
-  }
-}
-
 }  // namespace
 
 void drawNotifWidget(M5Canvas &c, const Rect &r, const uistate::NotifView &v) {
@@ -149,7 +132,7 @@ void drawNotifPopup(M5Canvas &c, const uistate::AppState &app) {
     drawTextCy(c, Font::F18, "UP / DOWN select, PUSH dismiss, hold to close", l.footerHintRight, l.footerCy,
                Align::Right, DIM);
 
-  if (pop.mode() == uistate::NotifPopup::Mode::Confirm) drawConfirm(c, app);
+  if (pop.mode() == uistate::NotifPopup::Mode::Confirm) drawConfirmPanel(c, app.orientation(), uistate::notifConfirmTitle(n));
 }
 
 }  // namespace render
