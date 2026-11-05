@@ -1088,6 +1088,9 @@ static void test_debuglog_filter_format_rotation() {
   TEST_ASSERT_FALSE(isDebugLogLine("APP: ha_token=abc"));
   TEST_ASSERT_FALSE(isDebugLogLine("APP: url=https://ha.local:8123"));
   TEST_ASSERT_FALSE(isDebugLogLine("NET: password=x"));
+  TEST_ASSERT_FALSE(isDebugLogLine("BOOT: config_error path=/secrets.yaml home_assistant.internal_url line=2 msg=bad"));
+  TEST_ASSERT_FALSE(isDebugLogLine("NET: bssid=aa:bb:cc host=ha.local ip=10.0.0.5 mac=aa"));
+  TEST_ASSERT_TRUE(isDebugLogLine("APP: url_plan first=internal exclusive=0 learn=1"));
   TEST_ASSERT_EQUAL_STRING("12 APP: a?b\n", formatDebugLogLine(12, "APP: a\tb").c_str());
   TEST_ASSERT_EQUAL(kDebugLogMaxLine + 3 + 1, formatDebugLogLine(12, std::string(500, 'x')).size());
   TEST_ASSERT_FALSE(debugLogNeedsRotation(kDebugLogMaxBytes - 10, 10));

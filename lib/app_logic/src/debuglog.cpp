@@ -24,7 +24,9 @@ bool isDebugLogLine(const std::string &line) {
   if (startsWith(line, "BOOT:") && line.find("_ms=") != std::string::npos) return false;  // timing noise
   const std::string l = lower(line);
   static const char *const kSecret[] = {"token", "password", "passwd", "psk", "secret", "bearer",
-                                        "authorization", "ssid", "pass=", "key=", "http:", "https:", "://"};
+                                        "authorization", "ssid", "pass=", "key=", "http:", "https:", "://",
+                                        // task 119 follow-up: config/secrets error paths and network identifiers
+                                        "home_assistant", "internal_url", "external_url", "wifi", "host=", "ip=", "mac=", "bssid"};
   for (const char *k : kSecret)
     if (l.find(k) != std::string::npos) return false;
   return true;
