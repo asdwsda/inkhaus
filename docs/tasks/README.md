@@ -119,7 +119,7 @@
 | 118 | [Tap opens history on read-only widgets](118-tap-opens-history.md) | done | 046 |
 | 119 | [Edit config from the web installer page](119-browser-config-editor.md) | todo | 102, 020 |
 | 120 | [Show when the device is ready to send commands](120-ready-indicator.md) | todo | 116 |
-| 121 | [Showcase pictures with the real device's shape](121-showcase-real-device.md) | todo | 111 |
+| 121 | [Showcase pictures with the real device's shape](121-showcase-real-device.md) | done | 111 |
 | 122 | [Detect garage doors from device_class](122-garage-autodetect.md) | done | 108 |
 | 123 | [Alarm keypad: refresh only the code box](123-keypad-fast-refresh.md) | todo | 108 |
 | 124 | [Refactors after 1.4.0](124-refactor-survey.md) | todo | none |

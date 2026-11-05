@@ -5,30 +5,33 @@
 <text id="t-front2" x="307" y="64" font-size="18" fill="#444" text-anchor="middle" >(540 x 960 touch screen)</text>
 <text id="t-back" x="862" y="40" font-size="24" fill="#000" text-anchor="middle" font-weight="bold">Back</text>
 <text id="t-back2" x="862" y="64" font-size="18" fill="#444" text-anchor="middle" >(turned sideways)</text>
-<rect id="fr-body" x="190" y="80" width="234" height="415" rx="10" fill="#fff" stroke="#000" stroke-width="3"/>
-<rect id="fr-screen" x="205" y="106" width="204" height="362" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect id="fr-tabbar" x="205" y="106" width="204" height="22" fill="none" stroke="#000" stroke-width="2"/>
-<rect x="217" y="111" width="44" height="12" rx="3" fill="#000"/><rect x="267" y="111" width="44" height="12" rx="3" fill="none" stroke="#000" stroke-width="2"/><rect x="317" y="111" width="44" height="12" rx="3" fill="none" stroke="#000" stroke-width="2"/>
-<rect x="217" y="142" width="86" height="40" rx="5" fill="#000" stroke="#000" stroke-width="2"/>
-<rect x="315" y="142" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect x="217" y="194" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect x="315" y="194" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect x="217" y="246" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect x="315" y="246" width="86" height="40" rx="5" fill="#000" stroke="#000" stroke-width="2"/>
-<rect x="217" y="298" width="86" height="40" rx="5" fill="#000" stroke="#000" stroke-width="2"/>
-<rect x="315" y="298" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect x="217" y="350" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect x="315" y="350" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect x="217" y="402" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
-<rect x="315" y="402" width="86" height="40" rx="5" fill="#000" stroke="#000" stroke-width="2"/>
-<rect id="rk-body" x="421" y="271" width="9" height="43" rx="3" fill="#000"/>
-<path d="M422 285 H429" stroke="#fff" stroke-width="1"/>
-<path d="M422 299 H429" stroke="#fff" stroke-width="1"/>
-<rect id="sd-slot" x="421" y="371" width="6" height="38" fill="#555"/>
-<rect id="usb-port" x="211" y="491" width="34" height="8" rx="4" fill="#000"/>
-<rect id="pa-port" x="367" y="491" width="42" height="8" fill="#555"/>
-<rect id="pb-port" x="186" y="414" width="8" height="42" fill="#555"/>
-<rect id="pc-port" x="186" y="365" width="8" height="42" fill="#555"/>
+<g id="fr-body" transform="translate(190,80) scale(3.5)">
+<rect id="dev-case" x="0" y="0" width="67.0" height="118.6" rx="3" fill="#fff" stroke="#000" stroke-width="0.85"/>
+<rect id="dev-glass" x="3.44" y="3.4" width="60.12" height="105.48" rx="1" fill="#fff" stroke="#888" stroke-width="0.25"/>
+<rect x="6.20" y="117.40" width="9.10" height="1.20" rx="0.6" fill="#000"/>
+<rect x="50.50" y="117.20" width="12.00" height="1.40" rx="0.3" fill="#000"/>
+<rect x="0.00" y="95.20" width="1.40" height="12.00" rx="0.3" fill="#000"/>
+<rect x="0.00" y="81.20" width="1.40" height="12.00" rx="0.3" fill="#000"/>
+<rect x="66.0" y="82.80" width="1.0" height="11.10" rx="0.2" fill="#555" stroke="#000" stroke-width="0.2"/>
+<rect id="dev-rocker" x="65.4" y="52.349999999999994" width="2.6" height="12.5" rx="0.9" fill="#000" stroke="#000" stroke-width="0.85"/>
+<rect x="65.4" y="56.39999999999999" width="2.6" height="0.2" fill="#fff"/>
+<rect x="65.4" y="60.599999999999994" width="2.6" height="0.2" fill="#fff"/>
+</g>
+<rect id="fr-screen" x="205" y="95" width="204" height="362" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect id="fr-tabbar" x="205" y="95" width="204" height="22" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="217" y="100" width="44" height="12" rx="3" fill="#000"/><rect x="267" y="100" width="44" height="12" rx="3" fill="none" stroke="#000" stroke-width="2"/><rect x="317" y="100" width="44" height="12" rx="3" fill="none" stroke="#000" stroke-width="2"/>
+<rect x="217" y="131" width="86" height="40" rx="5" fill="#000" stroke="#000" stroke-width="2"/>
+<rect x="315" y="131" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="217" y="183" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="315" y="183" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="217" y="235" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="315" y="235" width="86" height="40" rx="5" fill="#000" stroke="#000" stroke-width="2"/>
+<rect x="217" y="287" width="86" height="40" rx="5" fill="#000" stroke="#000" stroke-width="2"/>
+<rect x="315" y="287" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="217" y="339" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="315" y="339" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="217" y="391" width="86" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="2"/>
+<rect x="315" y="391" width="86" height="40" rx="5" fill="#000" stroke="#000" stroke-width="2"/>
 <text id="rk-title" x="450" y="84" font-size="18" fill="#444" text-anchor="start" >Rocker (right edge)</text>
 <text id="rk-up" x="450" y="114" font-size="24" fill="#000" text-anchor="start" font-weight="bold">UP</text>
 <text id="rk-up1" x="450" y="138" font-size="18" fill="#000" text-anchor="start" >Previous tab or widget.</text>
@@ -42,12 +45,12 @@
 <text id="rk-down" x="450" y="350" font-size="24" fill="#000" text-anchor="start" font-weight="bold">DOWN</text>
 <text id="rk-down1" x="450" y="374" font-size="18" fill="#000" text-anchor="start" >Next tab or widget.</text>
 <text id="rk-down2" x="450" y="396" font-size="18" fill="#000" text-anchor="start" >No in a yes/no question.</text>
-<circle id="rk-d1" cx="430" cy="278" r="4" fill="#000"/>
-<path id="rk-l1" d="M430 278 L442 108" stroke="#000" stroke-width="2" fill="none"/>
-<circle id="rk-d2" cx="430" cy="292" r="4" fill="#000"/>
-<path id="rk-l2" d="M430 292 L442 194" stroke="#000" stroke-width="2" fill="none"/>
-<circle id="rk-d3" cx="430" cy="306" r="4" fill="#000"/>
-<path id="rk-l3" d="M430 306 L442 344" stroke="#000" stroke-width="2" fill="none"/>
+<circle id="rk-d1" cx="430" cy="271" r="4" fill="#000"/>
+<path id="rk-l1" d="M430 271 L442 108" stroke="#000" stroke-width="2" fill="none"/>
+<circle id="rk-d2" cx="430" cy="285" r="4" fill="#000"/>
+<path id="rk-l2" d="M430 285 L442 194" stroke="#000" stroke-width="2" fill="none"/>
+<circle id="rk-d3" cx="430" cy="299" r="4" fill="#000"/>
+<path id="rk-l3" d="M430 299 L442 344" stroke="#000" stroke-width="2" fill="none"/>
 <text id="sd-t1" x="450" y="459" font-size="18" fill="#000" text-anchor="start" >microSD slot</text>
 <text id="sd-t2" x="450" y="481" font-size="18" fill="#444" text-anchor="start" >(right edge, FAT32)</text>
 <circle id="sd-d" cx="430" cy="390" r="4" fill="#000"/>

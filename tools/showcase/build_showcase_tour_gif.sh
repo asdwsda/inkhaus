@@ -12,5 +12,5 @@ while IFS=$'\t' read -r name ms; do
         --export-filename="${png}" >/dev/null 2>&1
     args+=(-delay "$(( ms / 10 ))" "${png}")
 done <"${ui}/showcase-tour-frames.txt"
-convert "${args[@]}" -resize 1000x -colors 24 -dither None -loop 0 -layers Optimize "${ui}/showcase-tour.gif"
+convert "${args[@]}" -resize 900x -colors 24 -dither None -loop 0 -layers Optimize "${ui}/showcase-tour.gif"
 ls -l "${ui}/showcase-tour.gif"
