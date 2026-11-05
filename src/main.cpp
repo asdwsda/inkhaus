@@ -341,6 +341,10 @@ static void showFrame(uint32_t now) {
     present::setGreyRegions(greys);
   }
   present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.mediaOpen() || g_app.alarmOpen() || g_app.confirmOpen());
+  {  // task 123: a keypad key press refreshes only the code box
+    ui::Rect kr;
+    if (!full && g_app.takeKeypadHint(kr)) present::limitNextShow({kr.x, kr.y, kr.w, kr.h});
+  }
   timedShow(full ? present::Mode::Full : present::Mode::Partial, now);
 }
 

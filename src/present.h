@@ -68,6 +68,9 @@ void setMergeRegions(const std::vector<screen_track::Rect> &regions);
 // Task 107: rects (display coordinates) holding 16-grey album art. A changed rect that touches one is refreshed with
 // one epd_quality (GC16) pass pushing the real greys; the rest of the frame keeps the fast path. Call before show().
 void setGreyRegions(const std::vector<screen_track::Rect> &regions);
+// Task 123: the next show() (Partial only) refreshes just the changed rects that touch `r` (display coordinates), e.g.
+// the keypad code box after a key press; other changes stay unpushed and are caught by a later show(). Call before show().
+void limitNextShow(const screen_track::Rect &r);
 void setLogTab(int tab);  // tab index shown in the "APP: render" log line; also how show() detects a tab change
 // Task 099: tab-change cleanup variant 0..3 (lib/screen_track/src/tab_clean.h). 0 = GC16 full (default, unchanged);
 // the debug build's `tabclean N` serial command changes it. Applies only to a Full frame whose tab differs from

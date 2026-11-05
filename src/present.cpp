@@ -305,6 +305,9 @@ bool g_modalOpening = false;  // the next show() is the opening one
 bool g_modalClosing = false;  // the next show() is the closing one
 screen_track::ModalSettle g_settle(1000);  // popup fastest updates: one quality refresh ~1 s after the last
 
+bool g_haveLimit = false;  // task 123: limitNextShow()
+Rect g_limit;
+
 std::vector<screen_track::Rect> g_greyRegions;  // task 107: album art rects of the shown frame
 
 bool touchesGrey(const Rect &r) {
@@ -597,6 +600,11 @@ static std::vector<screen_track::Rect> g_mergeRegions;
 void setMergeRegions(const std::vector<screen_track::Rect> &regions) { g_mergeRegions = regions; }
 void setGreyRegions(const std::vector<screen_track::Rect> &regions) { g_greyRegions = regions; }
 
+void limitNextShow(const screen_track::Rect &r) {
+  g_limit = r;
+  g_haveLimit = true;
+}
+
 void setModal(bool open) {
   if (open == g_modal) return;
   g_modal = open;
@@ -675,6 +683,8 @@ void burstClean() {
 bool show(Mode mode, uint32_t now) {
   auto &d = M5.Display;
   g_lastShowMs = now;
+  const bool limited = g_haveLimit && mode == Mode::Partial && !g_modalClosing && !g_modalOpening && !g_forceFull;
+  g_haveLimit = false;
   const bool exempt = g_modalOpening;
   const bool closing = g_modalClosing;
   struct Clear { ~Clear() { g_modalOpening = false; g_modalClosing = false; g_lastShownTab = g_renderTab; } } clearExempt;
@@ -701,6 +711,13 @@ bool show(Mode mode, uint32_t now) {
   }
   screen_track::DiffOptions opts;
   auto rects = screen_track::diffFrames(buf(g_prev), buf(g_cur), g_w, g_h, g_w, opts);
+  if (limited) {  // task 123 (UNVERIFIED on device): only what touches the keypad code box
+    const Rect l = g_limit;
+    rects.erase(std::remove_if(rects.begin(), rects.end(), [&l](const Rect &r) {
+      return !(r.x < l.x + l.w && l.x < r.x + r.w && r.y < l.y + l.h && l.y < r.y + r.h);
+    }), rects.end());
+    Serial.printf("APP: keypad_limited rects=%u\n", (unsigned)rects.size());
+  }
   if (rects.empty()) return false;
   const size_t before = rects.size();
   screen_track::mergeIntoRegions(rects, g_mergeRegions);

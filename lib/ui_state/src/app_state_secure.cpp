@@ -68,7 +68,16 @@ bool AppState::closeAlarm() {
   return was;
 }
 
+bool AppState::takeKeypadHint(ui::Rect &r) {
+  const bool had = keyHint_;
+  keyHint_ = false;
+  r = keyHintRect_;
+  return had && alarm_.isOpen();
+}
+
 bool AppState::alarmResult(const AlarmResult &r, uint32_t now) {
+  keyHint_ = r.keyOnly && r.changed;
+  keyHintRect_ = r.dirty;
   if (r.closed) {
     aAwaiting_ = aSawPending_ = false;
     return true;
