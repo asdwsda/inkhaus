@@ -49,6 +49,7 @@
 #include "version.h"
 #include "wakelog.h"
 #include "wall_time.h"
+#include "ready_state.h"  // task 120
 #include <esp_heap_caps.h>
 
 // Seconds a network change waits for a user action still in flight before the session restarts.

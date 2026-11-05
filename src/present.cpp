@@ -13,6 +13,7 @@
 #include "keypad_limit.h"
 #include "tab_clean.h"
 #include "burst_clean.h"
+#include "ready_state.h"  // task 120: countsByAreaOnly
 
 using screen_track::Rect;
 
@@ -311,6 +312,14 @@ Rect g_limit;
 
 std::vector<screen_track::Rect> g_greyRegions;  // task 107: album art rects of the shown frame
 
+std::vector<screen_track::Rect> g_indicatorRegions;  // task 120: status bar indicator regions of the shown frame
+
+bool indicatorOnly(const Rect &r) {
+  for (const Rect &g : g_indicatorRegions)
+    if (app_logic::countsByAreaOnly({r.x, r.y, r.w, r.h}, {g.x, g.y, g.w, g.h})) return true;
+  return false;
+}
+
 bool touchesGrey(const Rect &r) {
   for (const Rect &g : g_greyRegions)
     if (r.x < g.x + g.w && g.x < r.x + r.w && r.y < g.y + g.h && g.y < r.y + r.h) return true;
@@ -338,8 +347,10 @@ void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
     if (g_modal) {
       g_settle.noteFastest(r, millis());  // popup debt: cleared by the settle refresh, not by a full one
     } else {
-      ++g_partialCount;
-      g_burst.onPartial();
+      if (!indicatorOnly(r)) {  // task 120 (UNVERIFIED on device): the indicator counts by area only
+        ++g_partialCount;
+        g_burst.onPartial();
+      }
       g_partialArea += long(r.w) * long(r.h);
       g_havePending = true;
     }
@@ -600,6 +611,7 @@ void setLogTab(int tab) { g_renderTab = tab; }
 static std::vector<screen_track::Rect> g_mergeRegions;
 void setMergeRegions(const std::vector<screen_track::Rect> &regions) { g_mergeRegions = regions; }
 void setGreyRegions(const std::vector<screen_track::Rect> &regions) { g_greyRegions = regions; }
+void setIndicatorRegions(const std::vector<screen_track::Rect> &regions) { g_indicatorRegions = regions; }
 
 void limitNextShow(const screen_track::Rect &r) {
   g_limit = r;

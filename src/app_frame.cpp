@@ -5,6 +5,10 @@
 // count as the last good update until a fetch result replaces them.
 bool g_keepStatus = false;  // task 058: the first frame after a deep-sleep wake shows the last known status
 
+// Task 120 (UNVERIFIED on device): wake-time ready indicator. Ready = Wi-Fi up and the session not Offline/AuthError
+// (there is no separate HA-reachable signal; the net lane sends queued commands as soon as Wi-Fi is up).
+static app_logic::ReadyTracker g_ready;
+
 void updateStatus() {
   g_status.batteryPct = batteryPercent();
   using P = app_logic::Phase;
@@ -34,8 +38,23 @@ void updateStatus() {
   } else if (!g_demoMode) {
     return;
   }
+  bool queued = false;
+  if (g_real && !g_demoMode) {
+    app_logic::ReadyInputs in;
+    in.interactive = !g_scheduled;
+    in.wifiUp = g_drv && g_drv->wifiUp();
+    in.offline = phase == P::Offline || phase == P::AuthError;
+    in.fetchDone = g_drv && g_drv->sessionDone();
+    in.queuedTaps = g_drv ? int(g_drv->machine().queued()) : 0;
+    const app_logic::ReadyView v = g_ready.step(millis(), in);
+    if (v.shown == app_logic::ReadyShown::NotReady) phase = P::NotReady;
+    else if (v.shown == app_logic::ReadyShown::Ready) phase = P::Ready;
+    queued = v.queued;
+  }
   using L = render::Link;
   switch (phase) {
+    case P::NotReady: g_status.link = L::NotReady; break;
+    case P::Ready: g_status.link = L::Ready; break;
     case P::ConnectingWifi: g_status.link = L::ConnectingWifi; break;
     case P::Fetching: g_status.link = L::Fetching; break;
     case P::Online: g_status.link = L::Online; break;
@@ -45,10 +64,11 @@ void updateStatus() {
   }
   const int64_t nowEpoch = session_glue::wallClock();
   const app_logic::Label l = app_logic::statusLabel(phase, lastOk, nowEpoch, utcOffsetAt(nowEpoch),
-                                                    settings::effectiveRefreshMin(g_settings), failed, landscape());
+                                                    settings::effectiveRefreshMin(g_settings), failed, landscape(), queued);
   g_status.label1 = l.line1;
   g_status.label2 = l.line2;
   g_status.outdated = l.stale;
+  g_status.queued = queued;
 }
 
 // Keep awake indicator (STYLE.md 5.6): shown while the device will not idle-sleep; never together with the
@@ -58,6 +78,12 @@ static void updateAwakeStatus() {
   if (g_status.sleepKind || g_scheduled || !g_real) return;
   if (power::stay_awake(g_settings, power::usbPresent()))
     g_status.awakeKind = settings::effectiveKeepAwake(g_settings) == settings::KeepAwake::Always ? 2 : 1;
+}
+
+// Task 120: the status bar indicator regions (spec: portrait one rect, landscape status + pill slot).
+static std::vector<screen_track::Rect> indicatorRegions() {
+  if (landscape()) return {{16, 4, 144, 56}, {706, 8, 108, 48}};
+  return {{0, 0, 412, 54}};
 }
 
 void composeFrame() {
@@ -121,6 +147,7 @@ void showFrame(uint32_t now) {
       greys.push_back({pl.rect.x + wl.edge.x, pl.rect.y + wl.edge.y, wl.edge.w, wl.edge.h});
     }
     present::setGreyRegions(greys);
+    present::setIndicatorRegions(indicatorRegions());
   }
   present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.mediaOpen() || g_app.alarmOpen() || g_app.confirmOpen());
   {  // task 123: a keypad key press refreshes only the code box

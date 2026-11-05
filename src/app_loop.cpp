@@ -76,7 +76,7 @@ void frame(uint32_t now, const input::Event &e, bool popupOpen, bool changed) {
     const render::StatusInfo before = g_status;
     updateStatus();
     if (before.link != g_status.link || before.label1 != g_status.label1 || before.label2 != g_status.label2 ||
-        before.outdated != g_status.outdated)
+        before.outdated != g_status.outdated || before.queued != g_status.queued)
       changed = true;
   }
 
