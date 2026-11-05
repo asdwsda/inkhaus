@@ -1,0 +1,20 @@
+# 120: Show when the device is ready to send commands
+
+Status: todo
+Depends on: 116 (net lanes)
+UI spec: docs/ui/experiments/ready-indicator.md (ui-designer, to be written)
+Needs device: yes (look + timing; PC part first)
+
+## Scope
+User 2026-11-05: after a wake, show clearly whether a tap will be sent now or has to wait for Wi-Fi/HA. A small status-bar
+state (e.g. connecting -> ready -> offline) and/or a tap feedback that says "queued, connecting". Must cost at most
+one small partial refresh per state change, no extra full refresh, nothing on scheduled (non-interactive) wakes.
+Out of scope: BLE (postponed), changing how the connection itself works.
+
+## Files to touch
+- lib/ui_state (state model), src/render (status bar), test/
+
+## Acceptance criteria
+- [ ] Native tests: state transitions (wake, Wi-Fi up, HA reachable, lost) and the refresh budget.
+- [ ] `pio test -e native`, `pio run` (all envs) pass.
+- [ ] Device check: wake by rocker, tap at once; the indicator matches when the command actually goes out (log times).
