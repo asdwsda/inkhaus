@@ -186,4 +186,19 @@ else:
         fail(f"CONFIG KEY in secrets.example.yaml but not in the reference: {k}")
     for k in sorted(sec_ref - sec_ex - LEGACY_SECRETS_KEYS):
         fail(f"CONFIG KEY in the reference (secrets.yaml) but not in secrets.example.yaml: {k}")
+    # Cross-check the editor's key table (site/config-check.js KEYS) with the parser and the reference.
+    if shutil.which("node"):
+        r = subprocess.run(["node", "-e", "console.log(JSON.stringify(require(process.argv[1]).KEYS))", str(here / "config-check.js")],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            fail("could not load KEYS from config-check.js: " + r.stderr[-300:])
+        else:
+            import json
+            js_keys = {k for v in json.loads(r.stdout).values() for k in v}
+            for k in sorted(js_keys - code):
+                fail(f"EDITOR KEY in config-check.js KEYS but not read by lib/config: {k}")
+            for k in sorted(cfg_ref - js_keys):
+                fail(f"EDITOR KEY in the reference but missing from config-check.js KEYS: {k}")
+    else:
+        print("note: node not found, KEYS cross-check skipped")
 sys.exit(1 if bad else 0)
