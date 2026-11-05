@@ -31,8 +31,13 @@ for f in ("style.css", "logo-inkhaus.svg"):
     shutil.copy(site / f, out / f)
 shutil.copytree(site / "fonts", out / "fonts")
 # Task 102: /install/ page. The workflow adds esp-web-tools/, firmware/ and releases.json next to it.
+# "Start from the example" (task 119): config.example.yaml is inlined into the page (the editor code may not fetch).
+example = (root / "config.example.yaml").read_text().replace("</script", "<\\/script")
+inst_html = (site / "install.html").read_text()
+assert "<!--EXAMPLE-->" in inst_html
 (out / "install").mkdir()
-for f in ("install.html", "install.js", "provision-client.js", "config-check.js", "config-editor.js"):
-    shutil.copy(site / f, out / "install" / ("index.html" if f == "install.html" else f))
+(out / "install" / "index.html").write_text(inst_html.replace("<!--EXAMPLE-->", example))
+for f in ("install.js", "provision-client.js", "config-check.js", "config-editor.js"):
+    shutil.copy(site / f, out / "install" / f)
 npages = guide.build(root, out, site)
 print(f"built {out} ({len(imgs)} images, {npages} guide pages)")

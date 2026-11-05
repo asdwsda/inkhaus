@@ -41,7 +41,7 @@
     timeout: ["Cable unplugged during the transfer", "Plug it in and try again. The old file on the device is intact."],
     refused: ["The device refused the file", "Checksum or size (over 64 KB) was wrong. Try again."],
     crc: ["The device refused the file", "Checksum or size (over 64 KB) was wrong. Try again."],
-    "no-file": ["No config.yaml on the device", "The SD card has no config.yaml yet. Create one first (see the user guide), then read it here."]
+    "no-file": ["No config.yaml on the device", "The SD card has no config.yaml yet. Click \u201cStart from the example\u201d, adjust it, then write it to the device."]
   };
   function fail(ids, e) {
     var m = ERRS[e && e.code] || ERRS.port;
@@ -87,6 +87,7 @@
   function refresh() {
     var has = lastRead !== null, errs = msgs.filter(function (m) { return m.severity === "error"; }).length;
     $("rd").disabled = busy || locked;
+    $("ex").disabled = busy;
     $("wr").disabled = !has || errs > 0 || busy || locked;
     $("dis").disabled = !has || busy || $("txt").value === lastRead;
     $("txt").disabled = !has || busy;
@@ -194,6 +195,15 @@
   $("txt").addEventListener("scroll", function () { $("gut").scrollTop = $("txt").scrollTop; });
   $("rd").addEventListener("click", doRead);
   $("wr").addEventListener("click", doWrite);
+  // Start from the built-in example (inlined at build time): for a device with no config.yaml yet.
+  $("ex").addEventListener("click", function () {
+    if (busy) return;
+    if (lastRead !== null && $("txt").value !== lastRead && !window.confirm("Replace your edits with the example?")) return;
+    lastRead = "";
+    $("txt").value = $("exampletxt").textContent.replace(/^\n/, "");
+    strip(CFG, "ok", "Example loaded", "This is the built-in example, not the file on the device. Edit it, then write it to the device.");
+    runCheck();
+  });
   $("dis").addEventListener("click", function () { $("txt").value = lastRead; runCheck(); });
 
   // ---- secrets (write-only) -------------------------------------------------------------------------------------

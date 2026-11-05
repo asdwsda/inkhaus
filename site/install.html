@@ -62,13 +62,14 @@
 
 <div class="card" id="cfgcard">
 <h3>1. Connect and read</h3>
-<div class="row"><button id="rd" class="btn primary" type="button">Read config from device</button><span class="muted">Reads config.yaml only. Secrets are never read.</span></div>
+<div class="row"><button id="rd" class="btn primary" type="button">Read config from device</button><button id="ex" class="btn" type="button">Start from the example</button><span class="muted">Reads config.yaml only. Secrets are never read. No config.yaml on the device yet? Start from the example instead.</span></div>
 <div id="strip" class="strip" role="status" aria-live="polite"><span id="sg" class="glyph" aria-hidden="true"></span><div><strong id="sh">Not connected</strong><span id="sd">Click the button, then pick the M5Paper in the browser window.</span></div></div>
 <div id="bar" class="bar" hidden><span id="barfill"></span></div>
 <p id="barcap" class="cap" hidden></p>
 
 <h3>2. Edit config.yaml</h3>
 <div class="editor off" id="ed"><pre id="gut" aria-hidden="true"></pre><textarea id="txt" spellcheck="false" wrap="off" autocomplete="off" autocapitalize="off" aria-label="config.yaml" disabled></textarea><p id="edhint" class="edhint">Read the device first.</p></div>
+<script type="text/plain" id="exampletxt"><!--EXAMPLE--></script>
 <div id="chk" class="chkbox" aria-live="polite"><strong id="chkh"></strong><ul id="chkl"></ul></div>
 
 <h3>3. Write to device</h3>
