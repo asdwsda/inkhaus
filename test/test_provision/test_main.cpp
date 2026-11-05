@@ -1,6 +1,7 @@
 #include <unity.h>
 
 #include <cstring>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -243,6 +244,33 @@ void test_builder_secrets_roundtrip() {
   }
 }
 
+static std::string unhex(const std::string &h) {
+  std::string o;
+  for (size_t i = 0; i + 1 < h.size(); i += 2) o += char(std::stoi(h.substr(i, 2), nullptr, 16));
+  return o;
+}
+
+// Live round trip: site/test/gen-secrets-fixture.js writes the builder's output for more hostile passwords;
+// each record is "<ssid hex> <password hex> <yaml hex>".
+void test_builder_secrets_roundtrip_fixture() {
+  std::ifstream f("test/test_provision/secrets_roundtrip.txt");
+  TEST_ASSERT_TRUE_MESSAGE(f.is_open(), "fixture missing: run node site/test/gen-secrets-fixture.js");
+  std::string line;
+  int n = 0;
+  while (std::getline(f, line)) {
+    if (line.empty()) continue;
+    size_t a = line.find(' '), b = line.find(' ', a + 1);
+    TEST_ASSERT_TRUE(a != std::string::npos && b != std::string::npos);
+    const std::string ssid = unhex(line.substr(0, a)), pw = unhex(line.substr(a + 1, b - a - 1)), y = unhex(line.substr(b + 1));
+    auto r = config::parseSecrets(y);
+    TEST_ASSERT_TRUE_MESSAGE(r.ok(), ("record " + std::to_string(n)).c_str());
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(ssid.c_str(), r.connection.wifi.ssid.c_str(), ("ssid " + std::to_string(n)).c_str());
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(pw.c_str(), r.connection.wifi.password.c_str(), ("password " + std::to_string(n)).c_str());
+    ++n;
+  }
+  TEST_ASSERT_TRUE(n >= 20);
+}
+
 void test_getfile_config_only() {
   std::string n;
   TEST_ASSERT_TRUE(parseGetfile("getfile config.yaml", n) == GetStatus::Ok);
@@ -294,6 +322,7 @@ int main() {
   RUN_TEST(test_summary_garbage);
   RUN_TEST(test_secrets_summary);
   RUN_TEST(test_builder_secrets_roundtrip);
+  RUN_TEST(test_builder_secrets_roundtrip_fixture);
   RUN_TEST(test_getfile_config_only);
   RUN_TEST(test_getfile_refuses_secrets);
   RUN_TEST(test_get_begin);

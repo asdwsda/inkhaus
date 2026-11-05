@@ -164,6 +164,14 @@ if shutil.which("node"):
 else:
     print("note: node not found, JS tests skipped")
 
+# The native round-trip fixture must match what the builder writes now.
+if shutil.which("node"):
+    fx = here.parent / "test/test_provision/secrets_roundtrip.txt"
+    before = fx.read_text() if fx.is_file() else None
+    subprocess.run(["node", str(here / "test/gen-secrets-fixture.js")], check=True)
+    if fx.read_text() != before:
+        fail("secrets round-trip fixture was stale (regenerated); commit test/test_provision/secrets_roundtrip.txt")
+
 # Config-key lint (task 110).
 ref_md = next((here.parent / "docs/guide").glob("*config-reference.md"), None)
 if ref_md is None:
