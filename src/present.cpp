@@ -10,6 +10,7 @@
 #include "frame_diff.h"
 #include "modal_settle.h"
 #include "screen_track.h"
+#include "keypad_limit.h"
 #include "tab_clean.h"
 #include "burst_clean.h"
 
@@ -711,12 +712,10 @@ bool show(Mode mode, uint32_t now) {
   }
   screen_track::DiffOptions opts;
   auto rects = screen_track::diffFrames(buf(g_prev), buf(g_cur), g_w, g_h, g_w, opts);
-  if (limited) {  // task 123 (UNVERIFIED on device): only what touches the keypad code box
-    const Rect l = g_limit;
-    rects.erase(std::remove_if(rects.begin(), rects.end(), [&l](const Rect &r) {
-      return !(r.x < l.x + l.w && l.x < r.x + r.w && r.y < l.y + l.h && l.y < r.y + r.h);
-    }), rects.end());
-    Serial.printf("APP: keypad_limited rects=%u\n", (unsigned)rects.size());
+  if (limited) {  // task 123 (UNVERIFIED on device): limit only when it drops no other change
+    const bool apply = screen_track::keypadLimitApplies(rects, g_limit);
+    if (apply) rects.erase(std::remove_if(rects.begin(), rects.end(), [](const Rect &r) { return screen_track::rectEmpty(r); }), rects.end());
+    Serial.printf("APP: keypad_limited=%d rects=%u\n", apply ? 1 : 0, (unsigned)rects.size());
   }
   if (rects.empty()) return false;
   const size_t before = rects.size();

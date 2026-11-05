@@ -3,6 +3,7 @@
 #include <cstdio>
 
 #include "crash_guard.h"
+#include "keypad_limit.h"
 #include "screen_track.h"
 
 using namespace screen_track;
@@ -333,6 +334,18 @@ void test_crash_guard_thresholds_sane() {
     TEST_ASSERT_TRUE(kGiveUpAfter > kFallbackAfter);
 }
 
+void test_keypad_limit_key_press_only() {
+    const Rect lim{100, 100, 200, 80};
+    TEST_ASSERT_TRUE(keypadLimitApplies({Rect{120, 110, 50, 40}, Rect{}}, lim));
+    TEST_ASSERT_TRUE(keypadLimitApplies({}, lim));
+}
+
+void test_keypad_limit_other_change_unlimited() {
+    const Rect lim{100, 100, 200, 80};
+    TEST_ASSERT_FALSE(keypadLimitApplies({Rect{120, 110, 50, 40}, Rect{0, 0, 60, 30}}, lim));
+    TEST_ASSERT_FALSE(keypadLimitApplies({Rect{90, 110, 50, 40}}, lim));  // sticks out of the box
+}
+
 int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_fnv_known_values);
@@ -368,5 +381,7 @@ int main(int, char**) {
     RUN_TEST(test_crash_guard_zeroed_rtc_counts_first_crash_as_one);
     RUN_TEST(test_crash_guard_clean_boot_between_crashes_restarts_sequence);
     RUN_TEST(test_crash_guard_thresholds_sane);
+    RUN_TEST(test_keypad_limit_key_press_only);
+    RUN_TEST(test_keypad_limit_other_change_unlimited);
     return UNITY_END();
 }
