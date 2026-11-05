@@ -77,6 +77,34 @@ const char *parseStatusReason(ParseStatus s) {
   }
 }
 
+bool getNameAllowed(const std::string &name) { return name == "config.yaml"; }
+
+GetStatus parseGetfile(const std::string &line, std::string &nameOut) {
+  static const std::string kCmd = "getfile";
+  if (line.compare(0, kCmd.size(), kCmd) != 0 || (line.size() > kCmd.size() && line[kCmd.size()] != ' '))
+    return GetStatus::NotGetfile;
+  if (line.size() <= kCmd.size() + 1) return GetStatus::BadCommand;
+  const std::string name = line.substr(kCmd.size() + 1);
+  if (name.find(' ') != std::string::npos) return GetStatus::BadCommand;
+  if (!getNameAllowed(name)) return GetStatus::BadName;
+  nameOut = name;
+  return GetStatus::Ok;
+}
+
+const char *getStatusReason(GetStatus s) {
+  switch (s) {
+    case GetStatus::BadCommand: return "bad-command";
+    case GetStatus::BadName: return "bad-name";
+    default: return "";
+  }
+}
+
+std::string getBegin(uint32_t size, uint32_t crc) {
+  char buf[40];
+  snprintf(buf, sizeof buf, "GET-BEGIN %u %08x", (unsigned)size, (unsigned)crc);
+  return buf;
+}
+
 std::string hex32(uint32_t v) {
   char buf[9];
   snprintf(buf, sizeof buf, "%08x", (unsigned)v);

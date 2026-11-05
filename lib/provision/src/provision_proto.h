@@ -35,6 +35,17 @@ ParseStatus parsePutfile(const std::string &line, Request &out);
 // Reason token for PUT-ERR ("bad-command", "bad-name", "bad-size", "bad-crc"); "" for Ok/NotPutfile.
 const char *parseStatusReason(ParseStatus s);
 
+// Read command (task 119): "getfile config.yaml". Only config.yaml can be read; secrets.yaml and every other
+// name is refused (BadName), so secrets can never leave the device through this protocol.
+// Device answer: "GET-BEGIN <size> <crc32 hex8>", <size> raw bytes, "GET-END"; or "GET-ERR <reason>".
+bool getNameAllowed(const std::string &name);
+enum class GetStatus { Ok, NotGetfile, BadCommand, BadName };
+GetStatus parseGetfile(const std::string &line, std::string &nameOut);
+// "bad-command" / "bad-name"; "" for Ok/NotGetfile.
+const char *getStatusReason(GetStatus s);
+// "GET-BEGIN <size> <crc32 hex8>"
+std::string getBegin(uint32_t size, uint32_t crc);
+
 // "%08x" lowercase.
 std::string hex32(uint32_t v);
 

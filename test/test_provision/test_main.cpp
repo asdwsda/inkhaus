@@ -221,6 +221,39 @@ void test_secrets_summary() {
   TEST_ASSERT_TRUE(e.find("SECRETpw") == std::string::npos);
 }
 
+void test_getfile_config_only() {
+  std::string n;
+  TEST_ASSERT_TRUE(parseGetfile("getfile config.yaml", n) == GetStatus::Ok);
+  TEST_ASSERT_EQUAL_STRING("config.yaml", n.c_str());
+  TEST_ASSERT_TRUE(parseGetfile("putfile config.yaml 5 00000000", n) == GetStatus::NotGetfile);
+  TEST_ASSERT_TRUE(parseGetfile("getfiles", n) == GetStatus::NotGetfile);
+  TEST_ASSERT_TRUE(parseGetfile("getfile", n) == GetStatus::BadCommand);
+  TEST_ASSERT_TRUE(parseGetfile("getfile ", n) == GetStatus::BadCommand);
+  TEST_ASSERT_TRUE(parseGetfile("getfile config.yaml extra", n) == GetStatus::BadCommand);
+}
+
+// Secrets must be unreadable: every name except config.yaml is refused, whatever the spelling.
+void test_getfile_refuses_secrets() {
+  const char *names[] = {"secrets.yaml", "/secrets.yaml", "Secrets.yaml", "SECRETS.YAML", "secrets.yaml.tmp",
+                         "config.yaml.tmp", "../secrets.yaml", "./config.yaml", "/config.yaml", "config.yaml/",
+                         "test-x.yaml", "secrets", "config.yaml\\0", "CONFIG.YAML", "config.yml", ""};
+  for (const char *nm : names) {
+    std::string n = "untouched";
+    const GetStatus s = parseGetfile(std::string("getfile ") + nm, n);
+    TEST_ASSERT_TRUE_MESSAGE(s != GetStatus::Ok, nm);
+    TEST_ASSERT_EQUAL_STRING("untouched", n.c_str());
+    TEST_ASSERT_FALSE_MESSAGE(getNameAllowed(nm), nm);
+  }
+  std::string n;
+  TEST_ASSERT_EQUAL_STRING("bad-name", getStatusReason(parseGetfile("getfile secrets.yaml", n)));
+  TEST_ASSERT_EQUAL_STRING("bad-command", getStatusReason(parseGetfile("getfile", n)));
+  TEST_ASSERT_TRUE(getNameAllowed("config.yaml"));
+}
+
+void test_get_begin() {
+  TEST_ASSERT_EQUAL_STRING("GET-BEGIN 1204 0000ff0a", getBegin(1204, 0xff0a).c_str());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_crc32_known);
@@ -238,5 +271,8 @@ int main() {
   RUN_TEST(test_summary_error);
   RUN_TEST(test_summary_garbage);
   RUN_TEST(test_secrets_summary);
+  RUN_TEST(test_getfile_config_only);
+  RUN_TEST(test_getfile_refuses_secrets);
+  RUN_TEST(test_get_begin);
   return UNITY_END();
 }
