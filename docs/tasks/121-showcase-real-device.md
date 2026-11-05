@@ -19,3 +19,7 @@ Out of scope: photos taken of the user's device.
 - [ ] Frame dimensions match the official drawing (numbers listed in the spec with the source).
 - [ ] Mockups rendered and checked (tools/render_mockups.sh, tools/check_mockups.py); user approves before replacing.
 - [ ] `python3 site/build.py && python3 site/check.py` pass (weight limits; GIF shrunk if needed).
+
+## Notes
+- User 2026-11-05: clean frame for the guide and the tour GIF, photo frame for the landing page hero. Port the generator
+  (scratchpad gen_device.py) into tools/showcase/ and wire it into the composites/tour generators.

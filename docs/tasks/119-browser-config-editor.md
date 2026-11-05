@@ -27,3 +27,9 @@ protocol (lib/provision/src/provision_proto.*, tools/provision.py is the referen
 - [ ] Secrets: write-only, no storage, notice shown; code review by tester confirms no leak path.
 - [ ] `python3 site/build.py && python3 site/check.py` pass; page weight within the limit.
 - [ ] Device check: read, edit, write config.yaml from Chrome; device reloads the new layout.
+
+## Notes
+- User 2026-11-05: spec approved (docs/ui/experiments/config-editor.md, moving to docs/ui/). Secrets form adds an optional
+  outside HA address (`external_url`, https) and an optional second Wi-Fi network (name/ssid/password, `ha_url` choice).
+  Static IP and more networks: hand-written file. Keep the password 8-63 check and the "token looks short" warning.
+- The protocol has only `putfile`: reading config.yaml back needs a new firmware read command (config.yaml only; never secrets).
