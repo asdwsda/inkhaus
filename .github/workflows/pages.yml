@@ -5,7 +5,7 @@ name: pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", "docs/guide/**", "lib/config/src/config.cpp", "config.example.yaml", "secrets.example.yaml", "docs/ui/png/**", ".github/workflows/pages.yml", "tools/make_webflash_manifest.py", "tools/vendor_esp_web_tools.sh"]
+    paths: ["site/**", "docs/guide/**", "lib/config/src/config_parse.cpp", "lib/config/src/config_validate.cpp", "config.example.yaml", "secrets.example.yaml", "docs/ui/png/**", ".github/workflows/pages.yml", "tools/make_webflash_manifest.py", "tools/vendor_esp_web_tools.sh"]
   release:
     types: [published]
   # A release published by release.yml (GITHUB_TOKEN) does not fire `release`; run after it finishes.

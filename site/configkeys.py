@@ -1,4 +1,4 @@
-"""Config key lists (task 110): extracted from lib/config/src/config.cpp, config.example.yaml and the guide
+"""Config key lists (task 110): extracted from lib/config/src/config_parse.cpp + config_validate.cpp, config.example.yaml and the guide
 reference page, never hand-kept. Used by check.py."""
 import re
 from pathlib import Path
@@ -8,7 +8,7 @@ root = Path(__file__).resolve().parent.parent
 
 def code_keys():
     """Keys the parser reads: str(o, "k"...), ["k"], strcmp(k, "k"), {"k", &field} tables, known[] lists."""
-    src = (root / "lib/config/src/config.cpp").read_text()
+    src = "\n".join(f.read_text() for f in (root / "lib/config/src" / n for n in ("config_parse.cpp", "config_validate.cpp")))
     keys = set(re.findall(r'\b(?:str|num|boolean|getStr)\(\w+,\s*"([a-z_]+)"', src))
     keys |= set(re.findall(r'\["([a-z_]+)"\]', src))
     keys |= set(re.findall(r'strcmp\(\w+,\s*"([a-z_]+)"\)', src))
