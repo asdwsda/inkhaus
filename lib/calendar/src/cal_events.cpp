@@ -105,6 +105,7 @@ const Data *Store::get(const std::string &entity) const {
 }
 
 void Store::markAsked(const std::string &entity, int64_t now) { asked_[entity] = now; }
+void Store::unmarkAsked(const std::string &entity) { asked_.erase(entity); }
 
 bool Store::due(const std::string &entity, int64_t now, bool scheduledWake) const {
   auto a = asked_.find(entity);

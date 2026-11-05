@@ -7,11 +7,12 @@
 #include "art_fetch.h"
 #include "art_image.h"
 #include "wakelog.h"
+#include "widget_glue.h"
 
 namespace art_glue {
 
 namespace {
-bool g_pending = false, g_changed = false;
+widget_glue::FetchState g_fs;
 std::deque<art::ArtRequest> g_queue;  // taken from the store (marked in flight), not yet posted
 art::ArtRequest g_asking;
 
@@ -45,28 +46,24 @@ bool decode(const std::string &body, art::Gray8 &out) {
 }
 }  // namespace
 
-bool pending() { return g_pending; }
+bool pending() { return g_fs.pending; }
 
-bool takeChanged() {
-  const bool c = g_changed;
-  g_changed = false;
-  return c;
-}
+bool takeChanged() { return g_fs.takeChanged(); }
 
 void newSession(uistate::AppState &app) {
-  g_pending = false;
+  g_fs.newSession();
   g_queue.clear();
-  if (app.art().retryFailed()) g_changed = true;
+  if (app.art().retryFailed()) g_fs.changed = true;
 }
 
 void pump(app_logic::SessionDriver *drv, uistate::AppState &app, bool graphsBusy) {
-  if (!drv || g_pending || graphsBusy) return;
+  if (!drv || g_fs.pending || graphsBusy) return;
   if (drv->status() != session::Status::Online || !drv->wifiUp() || !drv->sessionDone()) return;
   for (art::ArtRequest &r : app.takeArtRequests()) g_queue.push_back(std::move(r));
   if (g_queue.empty()) return;
   g_asking = g_queue.front();
   g_queue.pop_front();
-  g_pending = true;
+  g_fs.pending = true;
   app_logic::NetCommand c;
   c.type = app_logic::NetCommand::Type::Art;
   c.artEntity = g_asking.entity;
@@ -75,9 +72,8 @@ void pump(app_logic::SessionDriver *drv, uistate::AppState &app, bool graphsBusy
 }
 
 void onDone(app_logic::NetEvent &&ev, uistate::AppState &app) {
-  g_pending = false;
-  if (ev.error == HaError::Cancelled) {  // yielded to a user command: ask again later
-    if (app.art().fail(g_asking.entity, g_asking.picture)) g_changed = true;  // like Failed: no backoff-free loop, retried at the next session
+  if (g_fs.finish(ev.error == HaError::Cancelled)) {  // yielded to a user command: ask again later
+    if (app.art().fail(g_asking.entity, g_asking.picture)) g_fs.changed = true;  // like Failed: no backoff-free loop, retried at the next session
     wakelog::logf("APP: art dropped (yield), retry at next session\n");
     return;
   }
@@ -88,7 +84,7 @@ void onDone(app_logic::NetEvent &&ev, uistate::AppState &app) {
   const size_t bytes = ev.artBody.size();
   ev.artBody = std::string();  // free the file before the store allocates
   const bool changed = ok ? app.art().deliver(ev.artEntity, ev.artPicture, g) : app.art().fail(ev.artEntity, ev.artPicture);
-  if (changed) g_changed = true;
+  if (changed) g_fs.changed = true;
   wakelog::logf("APP: art err=%d ok=%d bytes=%u net_ms=%u decode_ms=%u\n", (int)ev.error, ok ? 1 : 0, (unsigned)bytes,
                 (unsigned)ev.ms, (unsigned)(millis() - t0));
 }
