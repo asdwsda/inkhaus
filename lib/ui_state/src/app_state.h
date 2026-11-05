@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -177,6 +178,7 @@ class AppState {
   const GraphWidgets &graphs() const { return graphs_; }
   GraphWidgets &graphs() { return graphs_; }
   void rebuildGraphs();
+  bool resolveGarage();  // task 122; called by tick(), true if a widget changed type
 
   // The content (not only chrome) changed in a way that needs a full-quality refresh (tab or
   // sub-page change). Cleared by takeFull().
@@ -230,6 +232,7 @@ class AppState {
   bool demo_ = false;
   settings::Orientation orientation_ = settings::Orientation::Portrait;
   config::Config cfg_;
+  std::set<std::string> garageIds_;  // task 122: cover entities seen with device_class garage / gate (survives init())
   std::vector<config::ConfigError> errors_;
   StateStore store_;
   const forecast::Store *forecasts_ = nullptr;  // task 104, not owned

@@ -268,7 +268,7 @@ A padlock or a garage with its state. **A tap asks first, then acts.** The quest
 | Garage, open | `Open`, filled | asks `Close Garage?` |
 | Garage, opening or closing | `Opening`, `Closing` | stops the door, without a question |
 
-- A garage door is a `cover` entity. Add `type: garage`: without it a cover is shown as a shutter with up, stop and down buttons.
+- A garage door is a `cover` entity. A cover that Home Assistant marks as a garage door or gate (`device_class: garage` or `gate`) is shown as a garage door by itself, once its first state has loaded (until then it looks like a shutter). An explicit `type:` always wins: `type: cover` keeps the shutter, `type: garage` forces the garage door.
 - `confirm: true` or `confirm: false` replaces the default (a lock asks only before unlocking, a garage door asks both ways).
 - A lock that needs a code is not supported: it shows an alert badge and a tap does nothing.
 - Filled means "needs attention": an unlocked lock, an open garage, a triggered alarm. Everything else is an outline.

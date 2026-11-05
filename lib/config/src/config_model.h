@@ -124,11 +124,15 @@ struct Widget {
   std::string usage, solar;  // task 109: energy widget entities (either may be empty; `entity` = usage, else solar)
   bool art = true;        // task 107: media player shows the cover art (`art: false` = text only, old layout)
   std::optional<bool> confirm;  // task 108: lock / garage: overrides the default confirm dialog (lock: unlock only, garage: both)
+  bool autoCover = false;  // task 122: a single cover entity whose type came from its domain (no `type:`); device_class garage / gate may turn it into a garage widget
   bool forecast = false;  // task 104: weather widget with the 3-day forecast (wide, single entity)
   HistoryConfig history;  // defaults when the key is absent
   // Entities this widget acts on: {entity} or the group members.
   std::vector<std::string> entities;
 };
+
+// Task 122: cover device classes shown as a garage door widget.
+inline bool isGarageClass(const std::string &deviceClass) { return deviceClass == "garage" || deviceClass == "gate"; }
 
 inline bool isGraphWidget(const Widget &w) { return w.display == WidgetDisplay::Graph; }
 

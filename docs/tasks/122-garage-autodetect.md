@@ -1,6 +1,6 @@
 # 122: Detect garage doors from device_class
 
-Status: todo
+Status: done
 Depends on: 108
 UI spec: none
 Needs device: no

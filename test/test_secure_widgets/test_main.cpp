@@ -999,8 +999,60 @@ void test_demo_garage_brute_force_points() {
   }
 }
 
+// ---- task 122: garage from device_class ----
+namespace {
+const char *kAutoYaml = R"(version: 1
+tabs:
+  - title: A
+    widgets:
+      - entity: cover.g1
+      - entity: cover.g2
+      - entity: cover.g3
+        type: cover
+      - entity: cover.g4
+      - entity: cover.g5
+        type: garage
+)";
+EntityState cls(const char *id, const char *c) {
+  EntityState s = st(id, "closed");
+  s.device_class = c;
+  return s;
+}
+}  // namespace
+
+void test_garage_class_resolves_after_state() {
+  AppState app;
+  app.init(parsed(kAutoYaml), Orientation::Landscape, false);
+  const auto &w = app.config().tabs[0].widgets;
+  TEST_ASSERT_EQUAL(int(config::WidgetType::Cover), int(w[0].type));  // no state yet: stays a cover
+  app.store().update({cls("cover.g1", "gate"), cls("cover.g2", "garage"), cls("cover.g3", "garage"), cls("cover.g4", "shutter")});
+  TEST_ASSERT_TRUE(app.tick(1000));
+  TEST_ASSERT_TRUE(app.takeFull());
+  TEST_ASSERT_EQUAL(int(config::WidgetType::Garage), int(w[0].type));
+  TEST_ASSERT_EQUAL(int(config::WidgetType::Garage), int(w[1].type));
+  TEST_ASSERT_EQUAL(int(config::WidgetType::Cover), int(w[2].type));  // explicit type wins
+  TEST_ASSERT_EQUAL(int(config::WidgetType::Cover), int(w[3].type));  // unknown class
+  TEST_ASSERT_EQUAL(int(config::WidgetType::Garage), int(w[4].type));
+  TEST_ASSERT_FALSE(app.tick(2000));  // settled: nothing more to redraw
+  // The result is remembered over a re-init (before any state is known again).
+  app.init(app.config(), Orientation::Landscape, false);
+  TEST_ASSERT_EQUAL(int(config::WidgetType::Garage), int(app.config().tabs[0].widgets[0].type));
+}
+
+void test_auto_cover_flag_survives_cache() {
+  const config::Config c = parsed(kAutoYaml);
+  config::Config back;
+  TEST_ASSERT_TRUE(config::deserializeConfig(config::serializeConfig(c), back));
+  const auto &w = back.tabs[0].widgets;
+  TEST_ASSERT_TRUE(w[0].autoCover);
+  TEST_ASSERT_FALSE(w[2].autoCover);  // explicit `type: cover`
+  TEST_ASSERT_FALSE(w[4].autoCover);
+}
+
 int main(int, char **) {
   UNITY_BEGIN();
+  RUN_TEST(test_garage_class_resolves_after_state);
+  RUN_TEST(test_auto_cover_flag_survives_cache);
   RUN_TEST(test_config_types_and_confirm);
   RUN_TEST(test_config_errors);
   RUN_TEST(test_config_cache_roundtrip);
