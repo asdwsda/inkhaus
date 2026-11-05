@@ -37,6 +37,7 @@ AlarmLayout alarmLayout(Orientation o) {
     l.msgX = px + 16; l.msgCy = py + 242;
     l.hintX = px + 16; l.hint1Cy = py + 668; l.hint2Cy = py + 694;
   }
+  l.msgBox = {l.msgX, l.msgCy - 14, l.codeBox.w, 28};
   l.shadow = {l.panel.x + 6, l.panel.y + 6, l.panel.w, l.panel.h};
   l.dirty = {l.panel.x - 2, l.panel.y - 2, l.panel.w + 10, l.panel.h + 10};
   l.keysArea = {l.keys[0].x, l.keys[0].y, l.keys[2].x + l.keys[2].w - l.keys[0].x, l.keys[9].y + 64 - l.keys[0].y};
@@ -131,6 +132,21 @@ bool AlarmPopup::keyPress(int key, const AlarmPanelInfo &info) {
   return true;
 }
 
+AlarmResult AlarmPopup::keyResult(int key, const AlarmPanelInfo &info, Orientation o) {
+  AlarmResult r;
+  const AlarmMsg before = message(info);
+  r.changed = keyPress(key, info);
+  if (!r.changed) return r;
+  const AlarmLayout l = alarmLayout(o);
+  r.keyOnly = true;
+  r.dirty = l.codeBox;
+  if (message(info) != before) {  // union of the code box and the message line
+    r.dirty.h = l.msgBox.y + l.msgBox.h - l.codeBox.y;
+    r.dirty.w = std::max(l.codeBox.w, l.msgBox.w);
+  }
+  return r;
+}
+
 AlarmResult AlarmPopup::press(int mode, const AlarmPanelInfo &info) {
   AlarmResult r;
   if (!modeActive(mode, info) || awaiting_ >= 0) return r;
@@ -167,7 +183,7 @@ AlarmResult AlarmPopup::touch(ui::Point p, Orientation o, const AlarmPanelInfo &
       close();
       r.changed = r.closed = true;
       return r;
-    case AlarmHitKind::Key: r.changed = keyPress(h.index, info); return r;
+    case AlarmHitKind::Key: return keyResult(h.index, info, o);
     case AlarmHitKind::Mode: return press(h.index, info);
     default: return r;
   }
@@ -195,8 +211,7 @@ AlarmResult AlarmPopup::rocker(ui::PhysicalKey key, Orientation o, const AlarmPa
       return r;
     }
     if (focus_ >= kStopKeys) return press(focus_ - kStopKeys, info);
-    r.changed = keyPress(focus_, info);
-    return r;
+    return keyResult(focus_, info, o);
   }
   const bool prev = ui::mapRocker(key, o, false) == ui::LogicalKey::Prev;
   if (!ring_) {

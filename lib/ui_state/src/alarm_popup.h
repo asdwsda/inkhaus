@@ -21,7 +21,7 @@ constexpr uint32_t kAlarmIdleCloseMs = 30000;
 struct AlarmLayout {
   bool landscape = true;
   ui::Rect panel, shadow, dirty;
-  ui::Rect close, codeBox;
+  ui::Rect close, codeBox, msgBox;  // msgBox: the message line (task 123: refreshed with the code box when its text changes)
   ui::Rect keys[12];   // 1 2 3 / 4 5 6 / 7 8 9 / backspace 0 C
   ui::Rect modes[4];   // Disarm, Home, Away, Night
   ui::Rect keysArea;   // union of the keys (the code box and keys redraw rect for a key press: codeBox only)
@@ -56,6 +56,10 @@ struct AlarmResult {
   AlarmCmd cmd = AlarmCmd::Disarm;
   std::string code;   // never log
   int mode = 0;       // index of the pressed mode button
+  // Task 123: a key press only changed the code dots (and maybe the message line). `dirty` is then the one rect to
+  // refresh: the code box, or the code box + message line when the message text changed. Empty otherwise.
+  bool keyOnly = false;
+  ui::Rect dirty;
 };
 
 class AlarmPopup {
@@ -90,6 +94,7 @@ class AlarmPopup {
  private:
   AlarmResult press(int mode, const AlarmPanelInfo &info);
   bool keyPress(int key, const AlarmPanelInfo &info);
+  AlarmResult keyResult(int key, const AlarmPanelInfo &info, settings::Orientation o);
   void clearCode() { code_.clear(); }
 
   bool open_ = false, ring_ = false;

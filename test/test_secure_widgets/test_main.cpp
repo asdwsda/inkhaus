@@ -733,6 +733,30 @@ void test_unavailable_and_jammed_do_nothing() {
   TEST_ASSERT_TRUE(r.calls.empty());
 }
 
+void test_keypad_key_marks_only_code_box() {
+  Rig r;
+  const AlarmLayout l = alarmLayout(Orientation::Landscape);
+  r.app.touch(r.centre(0), 100);
+  ui::Rect h;
+  TEST_ASSERT_FALSE(r.app.takeKeypadHint(h));  // opening is not a key press
+  r.app.touch(at(l.keys[0]), 110);  // first digit: message changes too -> code box + message line
+  TEST_ASSERT_TRUE(r.app.takeKeypadHint(h));
+  TEST_ASSERT_EQUAL(l.codeBox.x, h.x);
+  TEST_ASSERT_EQUAL(l.codeBox.y, h.y);
+  TEST_ASSERT_TRUE(h.y + h.h >= l.msgBox.y + l.msgBox.h);
+  TEST_ASSERT_FALSE(r.app.takeKeypadHint(h));  // taken once
+  r.app.touch(at(l.keys[1]), 120);  // second digit: exactly the code box
+  TEST_ASSERT_TRUE(r.app.takeKeypadHint(h));
+  TEST_ASSERT_TRUE(h == l.codeBox);
+  r.app.touch(at(l.keys[9]), 130);  // backspace
+  TEST_ASSERT_TRUE(r.app.takeKeypadHint(h));
+  TEST_ASSERT_TRUE(h == l.codeBox);
+  r.app.touch(at(l.modes[1]), 140);  // a mode button is not a key press
+  TEST_ASSERT_FALSE(r.app.takeKeypadHint(h));
+  // the code box never reaches the keys
+  TEST_ASSERT_TRUE(l.codeBox.x + l.codeBox.w <= l.keys[0].x);
+}
+
 void test_alarm_keypad_through_appstate_real_mode() {
   Rig r;
   const AlarmLayout l = alarmLayout(Orientation::Landscape);
@@ -1032,6 +1056,7 @@ int main(int, char **) {
   RUN_TEST(test_confirm_yes_refused_when_action_changed);
   RUN_TEST(test_unavailable_and_jammed_do_nothing);
   RUN_TEST(test_alarm_keypad_through_appstate_real_mode);
+  RUN_TEST(test_keypad_key_marks_only_code_box);
   RUN_TEST(test_alarm_confirmed_by_state_change);
   RUN_TEST(test_alarm_service_error_and_safety_timeout);
   RUN_TEST(test_alarm_closes_clear_code_and_unavailable_closes);

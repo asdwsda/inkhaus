@@ -168,6 +168,9 @@ class AppState {
   AlarmPanelInfo alarmInfo() const;  // the open keypad's panel
   std::string alarmTitle() const { return widgetTitle(alarm_.widget()); }
   bool closeAlarm();  // clears the code; true if it was open
+  // Task 123: after a key press that only changed the code box, the rect to refresh (once; false if the last keypad
+  // event was anything else). present::show then looks at that rect only.
+  bool takeKeypadHint(ui::Rect &r);
   bool confirmOpen() const { return confirm_.isOpen(); }
   const ConfirmDialog &confirm() const { return confirm_; }
   bool closeConfirm() { const bool was = confirm_.isOpen(); confirm_.cancel(); return was; }
@@ -288,6 +291,8 @@ class AppState {
   bool alarmTick(uint32_t now);
   void alarmMarks(bool &changed);
   AlarmPopup alarm_;
+  bool keyHint_ = false;  // task 123
+  ui::Rect keyHintRect_;
   ConfirmDialog confirm_;
   AlarmSink asink_;
   bool aAwaiting_ = false, aSawPending_ = false, aCodeSent_ = false;

@@ -1,6 +1,6 @@
 # 123: Alarm keypad: refresh only the code box per key press
 
-Status: todo
+Status: PC part done (device check open)
 Depends on: 108
 UI spec: docs/ui/widgets-new.md (alarm keypad section)
 Needs device: yes (look + timing; PC part first)
