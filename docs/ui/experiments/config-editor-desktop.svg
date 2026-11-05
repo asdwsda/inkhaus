@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1468" viewBox="0 0 1200 1468">
+<rect width="1200" height="1468" fill="#fff"/>
+<g id="w-1"><rect id="w-1-frame" x="120" y="0" width="960" height="96" fill="none" stroke="none" stroke-width="1"/>
+<g id="w-1-logo1" transform="translate(144,24) scale(0.48)"><path d="M74 90 H88 V46 L50 12 L12 46 V90 H26" fill="none" stroke="#000" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 28.27 L56.36 34.64 A9 9 0 1 1 43.64 34.64 Z" fill="#000"/><rect x="38" y="55" width="24" height="35" rx="12" fill="#000"/><circle cx="50" cy="67" r="7" fill="#fff"/></g>
+<text xml:space="preserve" id="w-1-t1" x="204" y="59" font-family="DejaVu Sans, Verdana, sans-serif" font-size="28" fill="#000" text-anchor="start" font-weight="bold">Inkhaus</text>
+<text xml:space="preserve" id="w-1-t2" x="700" y="56" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Features</text>
+<text xml:space="preserve" id="w-1-t3" x="820" y="56" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Install</text>
+<text xml:space="preserve" id="w-1-t4" x="910" y="56" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">Set up</text>
+<text xml:space="preserve" id="w-1-t5" x="994" y="56" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" text-decoration="underline">GitHub</text>
+</g>
+<g id="w-2"><rect id="w-2-frame" x="120" y="96" width="960" height="178" fill="none" stroke="none" stroke-width="1"/>
+<text xml:space="preserve" id="w-2-t6" x="144" y="166" font-family="DejaVu Sans, Verdana, sans-serif" font-size="40" fill="#000" text-anchor="start" font-weight="bold">Edit device config</text>
+<text xml:space="preserve" id="w-2-t7" x="144" y="222" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Read config.yaml from the M5Paper, change it here and write it back over USB.</text>
+<text xml:space="preserve" id="w-2-t8" x="144" y="249" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start">Everything stays in this browser. Nothing is uploaded.</text>
+</g>
+<g id="w-3"><rect id="w-3-frame" x="144" y="290" width="912" height="922" fill="#fff" stroke="#888" stroke-width="1"/>
+<text xml:space="preserve" id="w-3-t9" x="168" y="340" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">1. Connect and read</text>
+<rect x="169.5" y="357.5" width="317" height="53" rx="4" fill="#000" stroke="#000" stroke-width="3"/>
+<text xml:space="preserve" id="w-3-t10" x="328.0" y="390" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">Read config from device</text>
+<text xml:space="preserve" id="w-3-t11" x="512" y="390" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Reads config.yaml only. Secrets are never read.</text>
+<rect x="168.5" y="428.5" width="863" height="55" rx="4" fill="#fff" stroke="#000" stroke-width="1"/>
+<circle cx="196" cy="456" r="12" fill="#000"/><path d="M190 456 l4 5 l8 -10" fill="none" stroke="#fff" stroke-width="3"/>
+<text xml:space="preserve" id="w-3-t12" x="224" y="453" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Read config.yaml, 1,204 bytes</text>
+<text xml:space="preserve" id="w-3-t13" x="224" y="474" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">From the M5Paper (Inkhaus 1.5.0) at 14:32. Your edits stay on this page until you write.</text>
+<text xml:space="preserve" id="w-3-t14" x="168" y="534" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">2. Edit config.yaml</text>
+<rect x="169.5" y="553.5" width="861" height="301" rx="4" fill="#fff" stroke="#000" stroke-width="3"/>
+<rect x="171.5" y="555.5" width="55" height="297" rx="0" fill="#f2f2f2" stroke="#f2f2f2" stroke-width="1"/>
+<text xml:space="preserve" id="w-3-t15" x="218" y="581" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">1</text>
+<text xml:space="preserve" id="w-3-t16" x="244" y="581" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">version: 1</text>
+<text xml:space="preserve" id="w-3-t17" x="218" y="605" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">2</text>
+<text xml:space="preserve" id="w-3-t18" x="244" y="605" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">timezone: "CET-1CEST,M3.5.0,M10.5.0/3"</text>
+<text xml:space="preserve" id="w-3-t19" x="218" y="629" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">3</text>
+<text xml:space="preserve" id="w-3-t20" x="244" y="629" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">groups:</text>
+<text xml:space="preserve" id="w-3-t21" x="218" y="653" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">4</text>
+<text xml:space="preserve" id="w-3-t22" x="244" y="653" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">  downstairs_shutters: [cover.living_room_shutter,</text>
+<text xml:space="preserve" id="w-3-t23" x="218" y="677" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">5</text>
+<text xml:space="preserve" id="w-3-t24" x="244" y="677" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">    cover.kitchen_shutter]</text>
+<text xml:space="preserve" id="w-3-t25" x="218" y="701" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">6</text>
+<text xml:space="preserve" id="w-3-t26" x="244" y="701" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">tabs:</text>
+<text xml:space="preserve" id="w-3-t27" x="218" y="725" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">7</text>
+<text xml:space="preserve" id="w-3-t28" x="244" y="725" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">  - title: Living room</text>
+<text xml:space="preserve" id="w-3-t29" x="218" y="749" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">8</text>
+<text xml:space="preserve" id="w-3-t30" x="244" y="749" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">    widgets:</text>
+<text xml:space="preserve" id="w-3-t31" x="218" y="773" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">9</text>
+<text xml:space="preserve" id="w-3-t32" x="244" y="773" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">      - entity: cover.living_room_shutter</text>
+<rect x="227.5" y="780.5" width="798" height="23" rx="0" fill="#f2f2f2" stroke="#f2f2f2" stroke-width="1"/>
+<rect x="227.5" y="780.5" width="5" height="23" rx="0" fill="#000" stroke="#000" stroke-width="1"/>
+<rect x="171.5" y="780.5" width="55" height="23" rx="0" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-3-t33" x="218" y="797" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#fff" text-anchor="end" font-weight="bold">10</text>
+<text xml:space="preserve" id="w-3-t34" x="244" y="797" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">      - entity light.living_room_ceiling</text>
+<text xml:space="preserve" id="w-3-t35" x="218" y="821" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#888" text-anchor="end">11</text>
+<text xml:space="preserve" id="w-3-t36" x="244" y="821" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">      - entity: climate.living_room</text>
+<rect x="175.0" y="830.0" width="48" height="20" rx="0" fill="#fff" stroke="#000" stroke-width="2"/>
+<text xml:space="preserve" id="w-3-t37" x="218" y="845" font-family="DejaVu Sans Mono, monospace" font-size="14" fill="#000" text-anchor="end" font-weight="bold">12</text>
+<rect x="227.5" y="849.5" width="798" height="1" rx="0" fill="#888" stroke="#888" stroke-width="1"/>
+<text xml:space="preserve" id="w-3-t38" x="244" y="845" font-family="DejaVu Sans Mono, monospace" font-size="15" fill="#000" text-anchor="start">        colour: red</text>
+<text xml:space="preserve" id="w-3-t39" x="168" y="892" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Check: 1 error, 1 warning</text>
+<rect x="168.5" y="912.5" width="27" height="27" rx="2" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-3-t40" x="182" y="933" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">!</text>
+<text xml:space="preserve" id="w-3-t41" x="212" y="933" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Line 10</text>
+<text xml:space="preserve" id="w-3-t42" x="302" y="933" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="start">Missing ':' after 'entity'. Write it as 'entity: light.living_room_ceiling'.</text>
+<rect x="169.5" y="961.5" width="25" height="25" rx="2" fill="#fff" stroke="#000" stroke-width="3"/>
+<text xml:space="preserve" id="w-3-t43" x="182" y="981" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="middle" font-weight="bold">?</text>
+<text xml:space="preserve" id="w-3-t44" x="212" y="981" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Line 12</text>
+<text xml:space="preserve" id="w-3-t45" x="302" y="981" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="start">Unknown key 'colour'. The device ignores it.</text>
+<text xml:space="preserve" id="w-3-t46" x="168" y="1038" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">3. Write to device</text>
+<rect x="169.5" y="1057.5" width="317" height="53" rx="4" fill="#fff" stroke="#888" stroke-width="3" stroke-dasharray="6 4"/>
+<text xml:space="preserve" id="w-3-t47" x="328.0" y="1090" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#888" text-anchor="middle" font-weight="bold">Write to device</text>
+<rect x="513.5" y="1057.5" width="237" height="53" rx="4" fill="#fff" stroke="#000" stroke-width="3"/>
+<text xml:space="preserve" id="w-3-t48" x="632.0" y="1090" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle" font-weight="bold">Discard edits</text>
+<text xml:space="preserve" id="w-3-t49" x="168" y="1136" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Disabled while the check shows an error. The M5Paper restarts and loads the new layout (about 10 s).</text>
+<text xml:space="preserve" id="w-3-t50" x="168" y="1160" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Limit 64 KB. The old file is replaced.</text>
+</g>
+<g id="w-4"><rect id="w-4-frame" x="144" y="1244" width="912" height="184" fill="#fff" stroke="#888" stroke-width="1"/>
+<text xml:space="preserve" id="w-4-t51" x="168" y="1294" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Optional: Wi-Fi and Home Assistant token</text>
+<text xml:space="preserve" id="w-4-t52" x="168" y="1328" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Only needed on a new device or when they change. Nothing you type is stored or sent.</text>
+<rect x="169.5" y="1341.5" width="317" height="53" rx="4" fill="#fff" stroke="#000" stroke-width="3"/>
+<text xml:space="preserve" id="w-4-t53" x="328.0" y="1374" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle" font-weight="bold">Set up secrets...</text>
+</g>
+</svg>

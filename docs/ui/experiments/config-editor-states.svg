@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1602" viewBox="0 0 1200 1602">
+<rect width="1200" height="1602" fill="#fff"/>
+<g id="w-1"><rect id="w-1-frame" x="144" y="24" width="912" height="170" fill="#fff" stroke="#888" stroke-width="1"/>
+<rect x="168.5" y="44.5" width="31" height="31" rx="2" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-1-t1" x="184" y="67" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">A</text>
+<text xml:space="preserve" id="w-1-t2" x="216" y="67" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Not connected (page just opened)</text>
+<rect x="169.5" y="93.5" width="317" height="53" rx="4" fill="#000" stroke="#000" stroke-width="3"/>
+<text xml:space="preserve" id="w-1-t3" x="328.0" y="126" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">Read config from device</text>
+<rect x="513.5" y="93.5" width="317" height="53" rx="4" fill="#fff" stroke="#888" stroke-width="3" stroke-dasharray="6 4"/>
+<text xml:space="preserve" id="w-1-t4" x="672.0" y="126" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#888" text-anchor="middle" font-weight="bold">Write to device</text>
+<text xml:space="preserve" id="w-1-t5" x="168" y="172" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Editor and check are empty and disabled (dashed). Secrets step is collapsed.</text>
+<g id="w-2"><rect id="w-2-frame" x="144" y="218" width="912" height="190" fill="#fff" stroke="#888" stroke-width="1"/>
+<rect x="168.5" y="238.5" width="31" height="31" rx="2" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-2-t6" x="184" y="261" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">B</text>
+<text xml:space="preserve" id="w-2-t7" x="216" y="261" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Connecting (browser port dialog open)</text>
+<rect x="169.5" y="287.5" width="317" height="53" rx="4" fill="#fff" stroke="#888" stroke-width="3" stroke-dasharray="6 4"/>
+<text xml:space="preserve" id="w-2-t8" x="328.0" y="320" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#888" text-anchor="middle" font-weight="bold">Connecting...</text>
+<rect x="512.5" y="286.5" width="519" height="55" rx="4" fill="#fff" stroke="#000" stroke-width="1"/>
+<circle cx="540" cy="314" r="12" fill="#fff" stroke="#000" stroke-width="3"/><path d="M540 302 A12 12 0 0 1 540 326 Z" fill="#000"/>
+<text xml:space="preserve" id="w-2-t9" x="568" y="311" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Waiting for the USB port</text>
+<text xml:space="preserve" id="w-2-t10" x="568" y="332" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Pick the M5Paper in the browser window.</text>
+<text xml:space="preserve" id="w-2-t11" x="168" y="366" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Closing the browser window cancels: back to A, no message.</text>
+<g id="w-3"><rect id="w-3-frame" x="144" y="432" width="912" height="230" fill="#fff" stroke="#888" stroke-width="1"/>
+<rect x="168.5" y="452.5" width="31" height="31" rx="2" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-3-t12" x="184" y="475" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">C</text>
+<text xml:space="preserve" id="w-3-t13" x="216" y="475" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Reading</text>
+<rect x="169.5" y="501.5" width="317" height="53" rx="4" fill="#fff" stroke="#888" stroke-width="3" stroke-dasharray="6 4"/>
+<text xml:space="preserve" id="w-3-t14" x="328.0" y="534" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#888" text-anchor="middle" font-weight="bold">Reading...</text>
+<rect x="512.5" y="500.5" width="519" height="55" rx="4" fill="#fff" stroke="#000" stroke-width="1"/>
+<circle cx="540" cy="528" r="12" fill="#fff" stroke="#000" stroke-width="3"/><path d="M540 516 A12 12 0 0 1 540 540 Z" fill="#000"/>
+<text xml:space="preserve" id="w-3-t15" x="568" y="525" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Reading config.yaml</text>
+<text xml:space="preserve" id="w-3-t16" x="568" y="546" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Do not unplug the cable.</text>
+<rect x="169.5" y="581.5" width="861" height="21" rx="2" fill="#fff" stroke="#000" stroke-width="3"/>
+<rect x="171.5" y="583.5" width="342" height="17" rx="0" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-3-t17" x="168" y="628" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">512 of 1,204 bytes</text>
+<g id="w-4"><rect id="w-4-frame" x="144" y="686" width="912" height="364" fill="#fff" stroke="#888" stroke-width="1"/>
+<rect x="168.5" y="706.5" width="31" height="31" rx="2" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-4-t18" x="184" y="729" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">D</text>
+<text xml:space="preserve" id="w-4-t19" x="216" y="729" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Error (device unchanged; edits on the page are kept)</text>
+<rect x="169.5" y="755.5" width="317" height="53" rx="4" fill="#000" stroke="#000" stroke-width="3"/>
+<text xml:space="preserve" id="w-4-t20" x="328.0" y="788" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">Try again</text>
+<rect x="513.5" y="755.5" width="517" height="53" rx="4" fill="#f2f2f2" stroke="#000" stroke-width="3"/>
+<rect x="512.5" y="754.5" width="5" height="55" rx="0" fill="#000" stroke="#000" stroke-width="1"/>
+<polygon points="540,769 553,793 527,793" fill="#000"/><rect x="538.5" y="777" width="3" height="9" fill="#fff"/><rect x="538.5" y="788" width="3" height="3" fill="#fff"/>
+<text xml:space="preserve" id="w-4-t21" x="568" y="779" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Could not read the device</text>
+<text xml:space="preserve" id="w-4-t22" x="568" y="800" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Details below. Nothing was changed.</text>
+<text xml:space="preserve" id="w-4-t23" x="168" y="838" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="start" font-weight="bold">No port chosen or port busy</text>
+<text xml:space="preserve" id="w-4-t24" x="168" y="858" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Close serial monitors and the installer app, then try again.</text>
+<text xml:space="preserve" id="w-4-t25" x="168" y="886" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="start" font-weight="bold">The M5Paper did not answer</text>
+<text xml:space="preserve" id="w-4-t26" x="168" y="906" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Press the rocker once to wake it. It needs Inkhaus 1.5 or newer.</text>
+<text xml:space="preserve" id="w-4-t27" x="168" y="934" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="start" font-weight="bold">Cable unplugged during the transfer</text>
+<text xml:space="preserve" id="w-4-t28" x="168" y="954" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Plug it in and try again. The old file on the device is intact.</text>
+<text xml:space="preserve" id="w-4-t29" x="168" y="982" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#000" text-anchor="start" font-weight="bold">The device refused the file</text>
+<text xml:space="preserve" id="w-4-t30" x="168" y="1002" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Checksum or size (over 64 KB) was wrong. Try again.</text>
+<g id="w-5"><rect id="w-5-frame" x="144" y="1074" width="912" height="230" fill="#fff" stroke="#888" stroke-width="1"/>
+<rect x="168.5" y="1094.5" width="31" height="31" rx="2" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-5-t31" x="184" y="1117" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">E</text>
+<text xml:space="preserve" id="w-5-t32" x="216" y="1117" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Writing</text>
+<rect x="169.5" y="1143.5" width="317" height="53" rx="4" fill="#fff" stroke="#888" stroke-width="3" stroke-dasharray="6 4"/>
+<text xml:space="preserve" id="w-5-t33" x="328.0" y="1176" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#888" text-anchor="middle" font-weight="bold">Writing...</text>
+<rect x="512.5" y="1142.5" width="519" height="55" rx="4" fill="#fff" stroke="#000" stroke-width="1"/>
+<circle cx="540" cy="1170" r="12" fill="#fff" stroke="#000" stroke-width="3"/><path d="M540 1158 A12 12 0 0 1 540 1182 Z" fill="#000"/>
+<text xml:space="preserve" id="w-5-t34" x="568" y="1167" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">Writing config.yaml</text>
+<text xml:space="preserve" id="w-5-t35" x="568" y="1188" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Do not unplug the cable.</text>
+<rect x="169.5" y="1223.5" width="861" height="21" rx="2" fill="#fff" stroke="#000" stroke-width="3"/>
+<rect x="171.5" y="1225.5" width="857" height="17" rx="0" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-5-t36" x="168" y="1270" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">1,204 of 1,204 bytes, checking on the device</text>
+<g id="w-6"><rect id="w-6-frame" x="144" y="1328" width="912" height="250" fill="#fff" stroke="#888" stroke-width="1"/>
+<rect x="168.5" y="1348.5" width="31" height="31" rx="2" fill="#000" stroke="#000" stroke-width="1"/>
+<text xml:space="preserve" id="w-6-t37" x="184" y="1371" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">F</text>
+<text xml:space="preserve" id="w-6-t38" x="216" y="1371" font-family="DejaVu Sans, Verdana, sans-serif" font-size="20" fill="#000" text-anchor="start" font-weight="bold">Written</text>
+<rect x="169.5" y="1397.5" width="317" height="53" rx="4" fill="#fff" stroke="#000" stroke-width="3"/>
+<text xml:space="preserve" id="w-6-t39" x="328.0" y="1430" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="middle" font-weight="bold">Read again</text>
+<rect x="512.5" y="1396.5" width="519" height="55" rx="4" fill="#fff" stroke="#000" stroke-width="1"/>
+<circle cx="540" cy="1424" r="12" fill="#000"/><path d="M534 1424 l4 5 l8 -10" fill="none" stroke="#fff" stroke-width="3"/>
+<text xml:space="preserve" id="w-6-t40" x="568" y="1421" font-family="DejaVu Sans, Verdana, sans-serif" font-size="18" fill="#000" text-anchor="start" font-weight="bold">config.yaml written and checked</text>
+<text xml:space="preserve" id="w-6-t41" x="568" y="1442" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">The M5Paper restarts now (about 10 s).</text>
+<text xml:space="preserve" id="w-6-t42" x="168" y="1476" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">Edits are kept in the editor. For secrets: 'secrets.yaml written. The fields were cleared.'</text>
+<text xml:space="preserve" id="w-6-t43" x="168" y="1500" font-family="DejaVu Sans, Verdana, sans-serif" font-size="16" fill="#444" text-anchor="start">The device is not reachable while it restarts; Read again works after it is back.</text>
+</svg>
