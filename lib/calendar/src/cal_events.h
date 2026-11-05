@@ -55,6 +55,7 @@ class Store {
   void setNow(int64_t localMin) { nowMin_ = localMin; }
   int64_t nowMin() const { return nowMin_; }
   void markAsked(const std::string &entity, int64_t now);
+  void unmarkAsked(const std::string &entity);  // the request was dropped (task 116 yield): ask again later
   bool due(const std::string &entity, int64_t now, bool scheduledWake) const;
 
  private:

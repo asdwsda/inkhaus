@@ -1,55 +1,51 @@
 #include "calendar_glue.h"
 
 #include "wakelog.h"
+#include "widget_glue.h"
 
 namespace calendar_glue {
 
 namespace {
 calendar::Store g_store;
-bool g_pending = false, g_changed = false;
+widget_glue::FetchState g_fs;
 }  // namespace
 
 calendar::Store &store() { return g_store; }
 
 void newSession() {
   g_store.newSession();
-  g_pending = false;  // the old session's answer is dropped
+  g_fs.newSession();
 }
 
-bool pending() { return g_pending; }
+bool pending() { return g_fs.pending; }
 
-bool takeChanged() {
-  const bool c = g_changed;
-  g_changed = false;
-  return c;
-}
+bool takeChanged() { return g_fs.takeChanged(); }
 
 void pump(app_logic::SessionDriver *drv, const config::Config &cfg, int shownTab, bool scheduledWake, bool graphsBusy,
           int64_t nowEpoch, int32_t utcOffsetS) {
   g_store.setNow(calendar::localMinutes(nowEpoch, utcOffsetS));
-  if (!drv || g_pending || graphsBusy) return;
+  if (!drv || g_fs.pending || graphsBusy) return;
   const std::vector<std::string> ents = calendar::entitiesOnTab(cfg, shownTab);
   if (ents.empty()) return;
   if (drv->status() != session::Status::Online || !drv->wifiUp() || !drv->sessionDone()) return;
-  for (const std::string &e : ents) {
-    if (!g_store.due(e, nowEpoch, scheduledWake)) continue;
-    g_store.markAsked(e, nowEpoch);  // failed or not: no second try within the wake
-    g_pending = true;
+  widget_glue::postFirstDue(g_fs, g_store, ents, nowEpoch, scheduledWake, [&](const std::string &e) {
     app_logic::NetCommand c;
     c.type = app_logic::NetCommand::Type::Calendar;
     c.calendarEntity = e;
     drv->postCalendar(c);
-    break;  // one per loop; the next entity follows after the answer
-  }
+  });
 }
 
 void onDone(app_logic::NetEvent &&ev, int64_t nowEpoch) {
-  g_pending = false;
+  if (widget_glue::finishStore(g_fs, g_store, ev.error == HaError::Cancelled)) {  // yielded: keep the old data
+    wakelog::logf("APP: calendar dropped (yield), retry later\n");
+    return;
+  }
   const bool ok = ev.error == HaError::None;
   size_t n = ev.calendarEvents.size();
   if (ok) {
     g_store.set(ev.calendarEntity, std::move(ev.calendarEvents), nowEpoch);
-    g_changed = true;
+    g_fs.changed = true;
   } else {
     n = 0;
   }
@@ -90,7 +86,7 @@ void fillDemo(const config::Config &cfg, int64_t nowEpoch, int32_t utcOffsetS) {
       }
       g_store.set(w.entity, std::move(ev), 0);
     }
-  g_changed = true;
+  g_fs.changed = true;
 }
 
 }  // namespace calendar_glue
