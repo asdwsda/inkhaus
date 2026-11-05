@@ -48,5 +48,5 @@
 </g>
 <rect id="dev-screen-edge" x="631.237" y="180.541" width="788.02" height="443.62" fill="none" stroke="#777" stroke-width="0.82"/>
 <rect id="dev-sheen" x="631.647" y="180.951" width="787.2" height="442.8" fill="url(#g-sheen)"/>
-<text x="1049" y="850" font-size="26" fill="#555" text-anchor="middle" dominant-baseline="alphabetic">Long press: 24 h history</text>
+<text x="1049" y="850" font-size="26" fill="#555" text-anchor="middle" dominant-baseline="alphabetic">Tap a sensor: 24 h history</text>
 </svg>

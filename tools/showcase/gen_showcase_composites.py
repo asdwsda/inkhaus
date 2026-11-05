@@ -37,6 +37,6 @@ def comp(variant, p_png, l_png, cp, cl, comment):
     out += cap(LX + round(DF.size("landscape", LS)[0]) // 2, 850, cl)
     return out + "</svg>\n"
 
-open(UI+"showcase-device.svg", "w").write(comp("photo", "png/showcase-tab-portrait.png", "png/showcase-popup-landscape.png", "Graph widgets on the tab", "Long press: 24 h history", "Showcase composite (task 073): real M5Paper frame (photo variant, landing page hero)."))
+open(UI+"showcase-device.svg", "w").write(comp("photo", "png/showcase-tab-portrait.png", "png/showcase-popup-landscape.png", "Graph widgets on the tab", "Tap a sensor: 24 h history", "Showcase composite (task 073): real M5Paper frame (photo variant, landing page hero)."))
 open(UI+"showcase-device-tabs.svg", "w").write(comp("clean", "png/showcase-tab-portrait.png", "png/showcase-tab-landscape.png", "Portrait", "Landscape", "Showcase composite, GIF frame 1."))
 open(UI+"showcase-device-popups.svg", "w").write(comp("clean", "png/showcase-popup-portrait.png", "png/showcase-popup-landscape.png", "Portrait", "Landscape", "Showcase composite, GIF frame 2."))
