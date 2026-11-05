@@ -66,7 +66,7 @@ Each widget has exactly one of `entity` or `group` (except `type: notifications`
 | `group` | a name from `groups` | none | A widget for all members of the group. Needs `name`. |
 | `name` | text | the Home Assistant name | The label. Required for groups. Default `Alerts` for notifications. |
 | `size` | `WxH` | depends on the type | See [Widgets, Sizes](04-widgets.md#sizes). Sizes a type does not allow are corrected. |
-| `type` | `sensor`, `cover`, `light`, `switch`, `automation`, `climate`, `binary_sensor`, `weather`, `vacuum`, `media_player`, `calendar`, `alarm_control_panel`, `lock`, `garage`, `notifications`, `energy` | from the entity | Pick the widget type yourself, for example `type: sensor` for `person.alice`. `notifications` needs no entity. `garage` is a `cover` entity shown as a garage door. |
+| `type` | `sensor`, `cover`, `light`, `switch`, `automation`, `climate`, `binary_sensor`, `weather`, `vacuum`, `media_player`, `calendar`, `alarm_control_panel`, `lock`, `garage`, `notifications`, `energy` | from the entity | Pick the widget type yourself, for example `type: sensor` for `person.alice`. `notifications` needs no entity. `garage` is a `cover` entity shown as a garage door; a cover with `device_class` garage or gate becomes one without `type`. |
 
 ### Sensor options
 

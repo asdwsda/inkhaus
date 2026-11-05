@@ -39,10 +39,34 @@ void AppState::init(const config::Config &cfg, settings::Orientation o, bool dem
   alarm_.close();  // task 108
   confirm_.cancel();
   aAwaiting_ = aSawPending_ = false;
+  resolveGarage();  // task 122: ids cached from an earlier init
   relayout();
   refreshFocusFlow();
   rebuildGraphs();
   artSync();
+}
+
+// Task 122: a cover without `type:` whose device_class is garage / gate becomes a garage widget. The state is only
+// known after the first fetch; the entity ids are remembered (garageIds_), so a re-init keeps the result.
+bool AppState::resolveGarage() {
+  if (modalOpen()) return false;
+  bool any = false;
+  for (config::Tab &tb : cfg_.tabs)
+    for (config::Widget &w : tb.widgets) {
+      if (!w.autoCover || w.type != WidgetType::Cover || !w.group.empty()) continue;
+      if (!garageIds_.count(w.entity)) {
+        const EntityState *s = store_.get(w.entity);
+        if (!s || !config::isGarageClass(s->device_class)) continue;
+        garageIds_.insert(w.entity);
+      }
+      w.type = WidgetType::Garage;
+      any = true;
+    }
+  if (!any) return false;
+  relayout();
+  refreshFocusFlow();
+  full_ = true;
+  return true;
 }
 
 void AppState::rebuildGraphs() {
@@ -303,6 +327,7 @@ bool AppState::tick(uint32_t now) {
   changed |= mediaTick(now);
   changed |= alarmTick(now);  // task 108
   changed |= artSync();  // task 107
+  changed |= resolveGarage();  // task 122
   if (popup_.isOpen()) {
     const EntityState *s = store_.get(popup_.entityId());
     bool closed = false;

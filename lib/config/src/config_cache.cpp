@@ -154,7 +154,7 @@ std::string serializeConfig(const Config &cfg) {
       w.u8(h.max.has_value());
       w.f32(h.max ? *h.max : 0.f);
       w.u8(uint32_t(wd.display) | (wd.forecast ? 0x80u : 0u) |
-               (wd.art ? 0u : 0x40u) |
+               (wd.art ? 0u : 0x40u) | (wd.autoCover ? 0x08u : 0u) |
                (wd.confirm ? (0x20u | (*wd.confirm ? 0x10u : 0u)) : 0u));  // bit 7: forecast (104); bit 6: art off (107); bits 5/4: confirm set / value (108)
       w.str(wd.usage);  // task 109
       w.str(wd.solar);
@@ -267,7 +267,8 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       const bool fc = (disp & 0x80u) != 0;
       const bool noArt = (disp & 0x40u) != 0;
       const bool hasConfirm = (disp & 0x20u) != 0, confirmVal = (disp & 0x10u) != 0;
-      disp &= 0x0Fu;
+      const bool autoCover = (disp & 0x08u) != 0;  // task 122
+      disp &= 0x07u;
       if (!r.ok || disp > uint32_t(WidgetDisplay::Graph) || hHours < uint32_t(kMinHistoryHours) || hHours > uint32_t(kMaxHistoryHours) ||
           hType > uint32_t(HistoryType::Step) || hHasStat > 1 ||
           hStat > uint32_t(HistoryStatistic::Change) || hPeriod > uint32_t(HistoryPeriod::Day) ||
@@ -285,6 +286,7 @@ bool deserializeConfig(const uint8_t *data, size_t len, Config &out) {
       if (!r.ok || type > uint32_t(WidgetType::Garage) || hasSize > 1) return false;
       wd.type = WidgetType(type);
       wd.display = WidgetDisplay(disp);
+      wd.autoCover = autoCover && wd.type == WidgetType::Cover;
       wd.forecast = fc && wd.type == WidgetType::Weather;
       wd.art = !(noArt && wd.type == WidgetType::MediaPlayer);  // task 107
       if (hasConfirm && (wd.type == WidgetType::Lock || wd.type == WidgetType::Garage)) wd.confirm = confirmVal;  // task 108

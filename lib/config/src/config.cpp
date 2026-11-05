@@ -823,6 +823,7 @@ class Validator {
           "unsupported entity domain, set 'type' explicitly");
       return;
     }
+    w.autoCover = !hasType && hasEntity && w.type == WidgetType::Cover;  // task 122
     if (hasDisplay) {
       if (w.type != WidgetType::Sensor && w.type != WidgetType::BinarySensor)
         err(path + ".display", "graph is only available for sensor and binary_sensor widgets");
