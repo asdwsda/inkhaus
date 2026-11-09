@@ -1,6 +1,6 @@
 # 101: Sleep screen
 
-Status: in-progress (PC part done 2026-11-03, device check pending)
+Status: shipped v1.4.0, device check pending
 Depends on: 092, 100
 UI spec: docs/ui/sleep-screen.md (mockups docs/ui/sleep-screen-*.svg, accepted 2026-11-03)
 Needs device: yes (look check)

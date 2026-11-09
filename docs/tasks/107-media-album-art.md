@@ -1,6 +1,6 @@
 # 107: Media album art
 
-Status: PC done, device path written (UNVERIFIED, no device yet)
+Status: shipped v1.4.0, demo ok; real media entity pending
 Depends on: 106
 UI spec: docs/ui/widgets-new-media-art.md (+ mockups docs/ui/png/widgets-new-media-art-*.png)
 Needs device: yes (look + a real entity; PC part first)

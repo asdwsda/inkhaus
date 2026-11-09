@@ -1,6 +1,6 @@
 # 024: Sleep, wake and scheduled refresh on the device
 
-Status: in-progress
+Status: done (shipped v1.0.0; battery checks open in docs/device-checks.md)
 Depends on: 005, 016, 023
 UI spec: docs/ui/STYLE.md (sleep indicator), layout.md (`sleepIndicatorRect`)
 Needs device: yes (final checks with USB unplugged, on battery)

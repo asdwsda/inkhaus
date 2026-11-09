@@ -1,6 +1,6 @@
 # 116: User commands jump the net queue
 
-Status: PC part done (device check open, docs/device-checks.md 116)
+Status: shipped v1.4.0, device check pending
 Depends on: 115
 UI spec: none
 Needs device: yes (timing check on battery; PC part first)

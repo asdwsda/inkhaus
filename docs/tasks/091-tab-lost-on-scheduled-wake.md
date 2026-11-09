@@ -1,6 +1,6 @@
 # 091: Scheduled wake switches back to the first tab
 
-Status: in-progress (PC done, device check open)
+Status: shipped v1.4.0, device check pending
 Depends on: 086, 083
 UI spec: none
 Needs device: yes (fix is PC-first; device check later)

@@ -25,17 +25,17 @@
 | 021 | [Wi-Fi connection module (fast reconnect)](021-wifi-net-module.md) | done | 003 |
 | 022 | [Draw the Settings screen](022-settings-screen-render.md) | done | 007, 017 |
 | 023 | [Wire Wi-Fi, Home Assistant and Settings into the app](023-wire-session.md) | done | 017–022, 008 |
-| 024 | [Sleep, wake and scheduled refresh](024-sleep-and-wake.md) | in-progress | 005, 016, 023 |
+| 024 | [Sleep, wake and scheduled refresh](024-sleep-and-wake.md) | done (shipped v1.0.0; battery checks open in docs/device-checks.md) | 005, 016, 023 |
 | 025 | [Config cache in internal flash](025-config-cache.md) | done | 003, 020 |
 | 026 | [Follow-ups from device session 1](026-device-session-1-followups.md) | done | 023 |
-| 027 | [TLS session resumption (researched, deferred)](027-tls-resumption.md) | todo | 008 |
+| 027 | [TLS session resumption (researched, deferred)](027-tls-resumption.md) | deferred | 008 |
 | 028 | [State wording and icons](028-state-wording.md) | done | 026 |
 | 029 | [Wake log on the SD card](029-wake-log-sd.md) | done | 024 |
 | 030 | [Configurable sensor attributes (config + data)](030-sensor-attributes.md) | done | 003, 004, 017 |
 | 032 | [Separate secrets.yaml from config.yaml](032-separate-secrets.md) | done | 003, 020, 025 |
 | 033 | [Built-in demo showcase](033-demo-showcase.md) | done | 017, 028, 030 |
 | 034 | ["Demo mode" setting](034-demo-mode-setting.md) | done | 002, 007, 022, 033 |
-| 035 | [Button mode: deep sleep with power hold](035-safe-button-sleep.md) | in-progress | 024 |
+| 035 | [Button mode: deep sleep with power hold](035-safe-button-sleep.md) | done (shipped v1.0.0; standby current check open in docs/device-checks.md) | 024 |
 | 036 | [Fast taps: optimistic UI, keep-alive](036-fast-actions.md) | done | 019, 023 |
 | 037 | [Persist last known states](037-state-cache.md) | done | 023, 025 |
 | 038 | [Status bar states, sleep indicator redesign](038-status-bar-and-sleep-indicator.md) | done | 024 |
@@ -77,44 +77,44 @@
 | 075 | [Feature tour GIF as the only README image](075-feature-tour-gif.md) | done | 073 |
 | 076 | [Smaller demo (4 tabs)](076-smaller-demo.md) | done | 033, 068, 071 |
 | 077 | [Long press on another sensor breaks the graph widget](077-graph-popup-crosstalk.md) | done | 071, 074 |
-| 078 | [Windows installer opens no console window](078-flasher-no-console.md) | in-progress | 069 |
-| 079 | [Learn the battery limits from the wake stats](079-battery-limit-learning.md) | testing | 029, 035 |
-| 080 | [Cap the Wi-Fi connect time per session](080-wifi-connect-cap.md) | testing | 047, 056 |
+| 078 | [Windows installer opens no console window](078-flasher-no-console.md) | shipped v1.2.1, Windows check pending | 069 |
+| 079 | [Learn the battery limits from the wake stats](079-battery-limit-learning.md) | shipped v1.3.0, device check pending | 029, 035 |
+| 080 | [Cap the Wi-Fi connect time per session](080-wifi-connect-cap.md) | shipped v1.3.0, device check pending | 047, 056 |
 | 081 | [Stay awake on USB (setting) and manual sleep](081-usb-stay-awake-and-sleep-now.md) | done | 035 |
-| 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | testing (night run after release) | 029, 071 |
+| 082 | [History graph cost in the wake log](082-history-cost-in-wakelog.md) | shipped v1.3.0, night run pending | 029, 071 |
 | 083 | [Screen greys out while sleeping](083-panel-grey-drift.md) | done | 035, 082 |
 | 084 | [Make full power-off sleep work on battery](084-power-off-sleep.md) | done | 035 |
 | 085 | [Power settings: sleep mode, updates, keep awake, estimate, indicators](085-power-settings.md) | done | 084, 081, 079 |
 | 086 | [Keep the current tab across sleep](086-keep-tab-across-sleep.md) | done | 071, 084 |
 | 087 | [Firmware self-update](087-self-update.md) | done | 061, 084, 085 |
 | 089 | [OTA install crashes in the TLS handshake](089-ota-tls-stack.md) | done | 087 |
-| 090 | [Total time cap for an OTA job](090-ota-job-deadline.md) | PC done | 089 |
-| 091 | [Scheduled wake switches back to the first tab](091-tab-lost-on-scheduled-wake.md) | in-progress | 086, 083 |
-| 092 | [Grey drift: find the cause](092-grey-drift-root-cause.md) | in-progress | 083, 091 |
-| 093 | [Task watchdog restart on a scheduled wake](093-wake-task-wdt.md) | PC done | 083, 091 |
-| 094 | [Portrait 3-column grid](094-portrait-3-columns.md) | in-progress | 043 |
-| 095 | [Clear grey drift during long awake sessions](095-awake-drift-cleanup.md) | PC done | 092 |
+| 090 | [Total time cap for an OTA job](090-ota-job-deadline.md) | shipped v1.4.0, device check pending | 089 |
+| 091 | [Scheduled wake switches back to the first tab](091-tab-lost-on-scheduled-wake.md) | shipped v1.4.0, device check pending | 086, 083 |
+| 092 | [Grey drift: find the cause](092-grey-drift-root-cause.md) | shipped v1.4.0, device check pending | 083, 091 |
+| 093 | [Task watchdog restart on a scheduled wake](093-wake-task-wdt.md) | shipped v1.4.0, device check pending | 083, 091 |
+| 094 | [Portrait 3-column grid](094-portrait-3-columns.md) | shipped v1.4.0, device check pending | 043 |
+| 095 | [Clear grey drift during long awake sessions](095-awake-drift-cleanup.md) | shipped v1.4.0, device check pending | 092 |
 | 096 | [Keep supported_color_modes in the state cache](096-cache-color-modes.md) | done | 045 |
-| 097 | [Set the clock from HA's HTTP Date header](097-clock-from-ha-date.md) | PC done | 008, 024 |
+| 097 | [Set the clock from HA's HTTP Date header](097-clock-from-ha-date.md) | shipped v1.4.0, device check pending | 008, 024 |
 | 098 | [Native tests for UNVERIFIED device-check logic](098-native-tests-unverified.md) | done | 087, 090, 092 |
-| 099 | [INIT clear on tab change (experiment)](099-init-clear-on-tab-change.md) | PC done | 092, 095 |
-| 100 | [Report the M5Paper's own sensors to HA](100-report-device-sensors.md) | PC done | 024, 079 |
-| 101 | [Sleep screen](101-sleep-screen.md) | PC done | 092, 100 |
+| 099 | [INIT clear on tab change (experiment)](099-init-clear-on-tab-change.md) | shipped v1.4.0, device check pending | 092, 095 |
+| 100 | [Report the M5Paper's own sensors to HA](100-report-device-sensors.md) | shipped v1.4.0, device check pending | 024, 079 |
+| 101 | [Sleep screen](101-sleep-screen.md) | shipped v1.4.0, device check pending | 092, 100 |
 | 102 | [Web flasher on the project site](102-web-flasher.md) | done | 061-065 |
-| 103 | [Notifications widget](103-notifications-widget.md) | PC done | 101 |
-| 104 | [Weather widget with forecast](104-weather-widget.md) | PC done | 045 |
-| 105 | [Calendar widget](105-calendar-widget.md) | PC done | 045 |
-| 106 | [Media player widget (without album art)](106-media-widget.md) | PC done | 045 |
-| 107 | [Media album art](107-media-album-art.md) | PC part done | 106 |
-| 108 | [Alarm panel, lock and garage widgets + confirm dialog](108-alarm-lock-widgets.md) | PC part done | 045 |
-| 109 | [Energy widget](109-energy-widget.md) | PC done | 082 |
+| 103 | [Notifications widget](103-notifications-widget.md) | shipped v1.4.0, device check pending | 101 |
+| 104 | [Weather widget with forecast](104-weather-widget.md) | shipped v1.4.0, device check pending | 045 |
+| 105 | [Calendar widget](105-calendar-widget.md) | shipped v1.4.0, device check pending | 045 |
+| 106 | [Media player widget (without album art)](106-media-widget.md) | shipped v1.4.0, device check pending | 045 |
+| 107 | [Media album art](107-media-album-art.md) | shipped v1.4.0, demo ok; real media entity pending | 106 |
+| 108 | [Alarm panel, lock and garage widgets + confirm dialog](108-alarm-lock-widgets.md) | shipped v1.4.0, demo ok; real entities pending | 045 |
+| 109 | [Energy widget](109-energy-widget.md) | shipped v1.4.0, device check pending | 082 |
 | 110 | [User guide on the website (structure and build)](110-user-guide-site.md) | done | 065, 102 |
-| 111 | [Guide visuals: widget fragments, annotated screens, diagrams](111-guide-visuals.md) | todo | 110 (page layout), accepted mockups |
-| 112 | [Guide content](112-guide-content.md) | todo | 110, 111; widgets 103-109 for their sections |
-| 113 | [Build info in Settings](113-build-info-in-settings.md) | todo | 087 |
+| 111 | [Guide visuals: widget fragments, annotated screens, diagrams](111-guide-visuals.md) | done (shipped v1.4.0) | 110 (page layout), accepted mockups |
+| 112 | [Guide content](112-guide-content.md) | done (shipped v1.4.0) | 110, 111; widgets 103-109 for their sections |
+| 113 | [Build info in Settings](113-build-info-in-settings.md) | done (user saw it on the device, 2026-11-04) | 087 |
 | 114 | [Clean the screen after a burst of taps (factory-app style)](114-tap-burst-cleanup.md) | done | 092, 095, 099 |
-| 115 | [Slow taps after waking on battery](115-slow-taps-after-wake.md) | todo | 080, 093 |
-| 116 | [User commands jump the net queue](116-user-commands-first.md) | PC part done | 115 |
+| 115 | [Slow taps after waking on battery](115-slow-taps-after-wake.md) | superseded by 116, 120 | 080, 093 |
+| 116 | [User commands jump the net queue](116-user-commands-first.md) | shipped v1.4.0, device check pending | 115 |
 | 117 | [Stress test before the 1.4.0 release](117-stress-test.md) | done | 116 |
 | 118 | [Tap opens history on read-only widgets](118-tap-opens-history.md) | done | 046 |
 | 119 | [Edit config from the web installer page](119-browser-config-editor.md) | PC part done | 102, 020 |

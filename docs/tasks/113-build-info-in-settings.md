@@ -1,6 +1,6 @@
 # 113: Build info in Settings
 
-Status: pc-part-done (device look pending)
+Status: done (user saw it on the device, 2026-11-04)
 Depends on: 087
 UI spec: docs/ui/settings.md (Tools page; ui-designer adds the row)
 Needs device: yes (look)

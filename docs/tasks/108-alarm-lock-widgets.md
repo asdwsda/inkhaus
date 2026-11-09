@@ -1,6 +1,6 @@
 # 108: Alarm panel, lock and garage widgets + confirm dialog
 
-Status: in-progress (PC part done, device check pending)
+Status: shipped v1.4.0, demo ok; real entities pending
 Depends on: 045
 UI spec: docs/ui/widgets-new.md §0, §5, §6, §7 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)

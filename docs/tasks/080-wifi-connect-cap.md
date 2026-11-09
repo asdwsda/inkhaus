@@ -1,6 +1,6 @@
 # 080: Cap the Wi-Fi connect time per session
 
-Status: testing
+Status: shipped v1.3.0, device check pending
 Depends on: 047, 056
 UI spec: none (uses the existing offline/error indicator)
 Needs device: yes (short check)

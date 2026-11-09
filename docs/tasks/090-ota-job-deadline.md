@@ -1,6 +1,6 @@
 # 090: Total time cap for an OTA job
 
-Status: PC part done (device check pending)
+Status: shipped v1.4.0, device check pending
 Depends on: 089
 UI spec: docs/ui/settings.md §8.6 (existing Failed look; no new UI)
 Needs device: no (PC; device check optional, UNVERIFIED allowed)

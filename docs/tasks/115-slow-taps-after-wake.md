@@ -1,6 +1,6 @@
 # 115: Slow taps after waking on battery
 
-Status: todo
+Status: superseded by 116, 120
 Depends on: 080, 093
 UI spec: none
 Needs device: yes

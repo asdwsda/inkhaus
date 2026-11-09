@@ -1,6 +1,6 @@
 # 111: Guide visuals: widget fragments, annotated screens, diagrams
 
-Status: todo
+Status: done (shipped v1.4.0)
 Depends on: 110 (page layout), accepted mockups
 UI spec: docs/ui/guide-visuals.md (ui-designer, to write)
 Needs device: no

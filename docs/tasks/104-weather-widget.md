@@ -1,6 +1,6 @@
 # 104: Weather widget with forecast
 
-Status: PC part done (device check pending)
+Status: shipped v1.4.0, device check pending
 Depends on: 045
 UI spec: docs/ui/widgets-new.md §0, §2 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)

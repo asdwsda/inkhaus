@@ -1,6 +1,6 @@
 # 078: Windows installer opens no console window
 
-Status: in-progress
+Status: shipped v1.2.1, Windows check pending
 Depends on: 069
 UI spec: none
 Needs device: no (Windows check by the user)

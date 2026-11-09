@@ -1,6 +1,6 @@
 # 027: TLS session resumption (research)
 
-Status: todo (research done; implementation not recommended yet)
+Status: deferred
 Depends on: none
 UI spec: none
 Needs device: yes (to measure real handshake time before deciding)

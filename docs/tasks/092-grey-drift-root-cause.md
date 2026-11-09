@@ -1,6 +1,6 @@
 # 092: Grey drift: find the cause, replace the 3 h full refresh if possible
 
-Status: in-progress
+Status: shipped v1.4.0, device check pending
 Depends on: 083, 091
 UI spec: none
 Needs device: yes (unattended runs + user photos)

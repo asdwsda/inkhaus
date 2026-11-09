@@ -1,6 +1,6 @@
 # 100: Report the M5Paper's own sensors to HA
 
-Status: in-progress
+Status: shipped v1.4.0, device check pending
 Depends on: 024, 079
 UI spec: docs/ui/settings.md (new "Report to HA" row, added by ui-designer for task 100/101)
 Needs device: yes (SHT30 read + HA states check; PC part first)

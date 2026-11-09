@@ -1,6 +1,6 @@
 # 106: Media player widget (without album art)
 
-Status: PC done (device check pending)
+Status: shipped v1.4.0, device check pending
 Depends on: 045
 UI spec: docs/ui/widgets-new.md §0, §4 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)

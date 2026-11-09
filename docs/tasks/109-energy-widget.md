@@ -1,6 +1,6 @@
 # 109: Energy widget
 
-Status: PC done, device check pending
+Status: shipped v1.4.0, device check pending
 Depends on: 082
 UI spec: docs/ui/widgets-new.md §0, §8 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)

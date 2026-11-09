@@ -1,6 +1,6 @@
 # 094: Portrait 3-column grid (`portrait_columns: 3`)
 
-Status: in-progress
+Status: shipped v1.4.0, device check pending
 Depends on: 043 (landscape_columns: 4)
 UI spec: docs/ui/layout.md 2b (3 col), accepted mockup docs/ui/experiment-portrait-3col-cover3.svg; variants docs/ui/experiments/experiment-portrait-3col*.svg, docs/ui/experiments/experiment-portrait-4col*.svg (4 col)
 Needs device: yes (visual check)

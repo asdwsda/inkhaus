@@ -1,6 +1,6 @@
 # 097: Set the clock from HA's HTTP Date header
 
-Status: in-progress
+Status: shipped v1.4.0, device check pending
 Depends on: 008, 024
 UI spec: none
 Needs device: yes (short check later; PC part first)

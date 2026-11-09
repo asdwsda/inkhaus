@@ -1,6 +1,6 @@
 # 035: Button mode sleeps in deep sleep (power hold kept), power-off behind a flag
 
-Status: in-progress
+Status: done (shipped v1.0.0; standby current check open in docs/device-checks.md)
 Depends on: 024
 UI spec: none
 Needs device: yes (on battery, later)

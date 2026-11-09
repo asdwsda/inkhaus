@@ -1,6 +1,6 @@
 # 082: History graph cost in the wake log
 
-Status: todo
+Status: shipped v1.3.0, night run pending
 Depends on: 029 (wake log), 071 (history graph)
 UI spec: none
 Needs device: yes (A/B over two nights)

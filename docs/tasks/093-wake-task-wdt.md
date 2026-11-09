@@ -1,6 +1,6 @@
 # 093: Task watchdog restart on a scheduled wake
 
-Status: PC done (device check pending: recovery path untested)
+Status: shipped v1.4.0, device check pending
 Depends on: 083, 091
 UI spec: none
 Needs device: yes

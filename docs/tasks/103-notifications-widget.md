@@ -1,6 +1,6 @@
 # 103: Notifications widget
 
-Status: in-progress (PC part done, device check pending)
+Status: shipped v1.4.0, device check pending
 Depends on: 101
 UI spec: docs/ui/widgets-new.md §0, §1 (+ mockups docs/ui/png/widgets-new-*.png)
 Needs device: yes (look + a real entity; PC part first)

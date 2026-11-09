@@ -1,6 +1,6 @@
 # 099: INIT clear on tab change (experiment, then default)
 
-Status: in-progress
+Status: shipped v1.4.0, device check pending
 Depends on: 092, 095
 UI spec: none
 Needs device: yes (photos + timing; PC part first)

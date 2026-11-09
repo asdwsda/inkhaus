@@ -1,6 +1,6 @@
 # 112: Guide content
 
-Status: done (first full version; calendar, alarm/lock, energy, album art sections wait for 105/107/108/109)
+Status: done (shipped v1.4.0)
 Depends on: 110, 111; widgets 103-109 for their sections
 UI spec: docs/ui/widgets.md, widgets-new.md, settings.md, sleep-screen.md
 Needs device: no
