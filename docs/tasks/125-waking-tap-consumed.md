@@ -1,6 +1,6 @@
 # 125: The tap that wakes the device is consumed
 
-Status: todo
+Status: done (PC part; device check pending)
 Depends on: 120
 UI spec: docs/ui/ready-indicator.md (Interactions: "the waking tap is consumed")
 Needs device: yes (touch wake check; PC part first)
@@ -25,3 +25,7 @@ Out of scope: changing the rocker wake, the indicator states, or taps after the 
 - [ ] docs/device-checks.md line; UNVERIFIED tag on code not checked on the device.
 
 ## Notes
+Found: already implemented. `app_logic::WakeInputGuard` (lib/app_logic/src/sleep_logic.cpp), armed in main.cpp with the
+wake reason (`Touch` from ext0), drops `Event::Touch` in `loopphase::pollInput` (src/app_input.cpp) until the touch has been up
+150 ms (3 s cap). Down and release are both swallowed; a later touch passes. Rocker path unchanged. Only a test was missing:
+`test_guard_touch_wake_tap_consumed_then_normal`. No src change. UNVERIFIED on the device (docs/device-checks.md).

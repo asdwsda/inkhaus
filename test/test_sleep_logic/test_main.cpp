@@ -250,6 +250,20 @@ void test_guard_touch_wake_and_timeout() {
   TEST_ASSERT_FALSE(g.blocksTouch());
 }
 
+// Task 125: the waking tap (down and release) is swallowed; the next touch after the settle time is not.
+void test_guard_touch_wake_tap_consumed_then_normal() {
+  WakeInputGuard g;
+  g.arm(WakeReason::Touch, 0);
+  g.observe(50, false, true);    // finger still down after boot
+  TEST_ASSERT_TRUE(g.blocksTouch());
+  g.observe(300, false, false);  // released (the release/click event lands here)
+  TEST_ASSERT_TRUE(g.blocksTouch());
+  g.observe(300 + WakeInputGuard::kSettleMs, false, false);
+  TEST_ASSERT_FALSE(g.blocksTouch());  // a new touch now reaches the UI
+  g.observe(900, false, true);         // new finger down: stays unblocked
+  TEST_ASSERT_FALSE(g.blocksTouch());
+}
+
 void test_guard_other_wakes_block_nothing() {
   WakeInputGuard g;
   for (WakeReason r : {WakeReason::ColdBoot, WakeReason::RtcAlarm, WakeReason::Unknown}) {
@@ -566,6 +580,7 @@ int main() {
   RUN_TEST(test_guard_button_wake);
   RUN_TEST(test_guard_bounce_restarts_settle);
   RUN_TEST(test_guard_touch_wake_and_timeout);
+  RUN_TEST(test_guard_touch_wake_tap_consumed_then_normal);
   RUN_TEST(test_guard_other_wakes_block_nothing);
   RUN_TEST(test_wake_other_pin_is_unknown_even_with_flag);
   RUN_TEST(test_wake_every_reset_pin_combination_is_defined);
