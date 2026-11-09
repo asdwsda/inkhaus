@@ -123,6 +123,7 @@
 | 122 | [Detect garage doors from device_class](122-garage-autodetect.md) | done | 108 |
 | 123 | [Alarm keypad: refresh only the code box](123-keypad-fast-refresh.md) | PC part done | 108 |
 | 124 | [Refactors after 1.4.0](124-refactor-survey.md) | PC part done (a-e merged; device smoke test pending) | none |
+| 125 | [The tap that wakes the device is consumed](125-waking-tap-consumed.md) | todo | 120 |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).

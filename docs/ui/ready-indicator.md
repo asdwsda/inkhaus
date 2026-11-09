@@ -1,6 +1,6 @@
 # Ready indicator (task 120, experiment)
 
-Status: proposal, not accepted. Mockup: `docs/ui/experiments/ready-indicator.svg` (PNG in `experiments/png/`).
+Status: accepted (user, 2026-11-09). Mockup: `docs/ui/ready-indicator.svg` (PNG in `png/`).
 Follows STYLE.md 5.1-5.3 and 10; no new region, no new colour, one new icon use (`hourglass`, S, already in the icon set).
 
 ## Purpose

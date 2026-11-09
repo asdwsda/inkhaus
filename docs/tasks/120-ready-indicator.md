@@ -2,7 +2,7 @@
 
 Status: todo
 Depends on: 116 (net lanes)
-UI spec: docs/ui/experiments/ready-indicator.md (+ png/ready-indicator.png)
+UI spec: docs/ui/ready-indicator.md (+ png/ready-indicator.png)
 Needs device: yes (look + timing; PC part first)
 
 ## Scope

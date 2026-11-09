@@ -565,10 +565,13 @@ The firmware owns the mechanics; the UI requires the following (ARCHITECTURE.md
 - Settings screen enter/exit (including the orientation change applied on exit).
 - A scheduled (RTC) refresh that changed at least one widget, and a fetch that
   changes more than 6 widgets at once.
-- **Ghost debt:** after 12 feedback refreshes since the last full refresh, or when
-  the summed partial area exceeds 150 % of the screen, one runs at the next quiet
-  moment (no input for 2 s); at the latest just before sleeping, **before** the
-  sleep indicator is drawn. OPEN: tune 12 / 150 % on the device.
+- **Ghost debt:** after 30 fastest refreshes since the last full refresh, or when
+  the summed fastest area exceeds 300 % of the screen, one runs at the next quiet
+  moment (no input for 2 s); before sleep the bar is half of that, and the full
+  refresh runs **before** the sleep indicator is drawn. Quality refreshes add no
+  debt; status-bar indicator partials count by area only (task 120). Values from
+  src/present.cpp (kGhostPartials, kGhostAreaPct); fastest over pure black/white
+  was judged clean on the device, so the earlier 12 / 150 % were too strict.
 - Never refresh when nothing changed. Never redraw on wake before first input or
   data (the screen already shows the last frame), **except** the one partial draw
   that clears the sleep indicator.
