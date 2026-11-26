@@ -52,6 +52,7 @@ jobs:
 
       - name: Python tool and site tests
         run: |
+          pip install pyserial
           for t in tools/tests/test_*.py site/test/test_*.py; do
             echo "== ${t}"
             python3 "${t}"
