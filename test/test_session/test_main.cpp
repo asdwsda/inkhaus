@@ -945,6 +945,75 @@ void test_t019_service_done_wrong_state_first_fetch_error() {
 // Randomised, well-behaved host: answers only the request that is really outstanding, at
 // random delays, mixed with taps/input/ticks. Invariants: at most one request outstanding,
 // nothing after Sleep, Sleep is last and unique, tickets strictly increase.
+
+// Task 126b review: ordering and fail paths with a call and a fetch outstanding together.
+static void to_confirm_fetch(Driver& d, int& t1) {
+  d.start();
+  d.send(Event::wifi(true));
+  d.send(Event::fetch_done(HaError::None, {}, {es("light.a", "off")}));
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  t1 = find(c, C::CallService)->ticket;
+  d.send(Event::service_done(t1, HaError::None, {}, {}));  // no entity in response
+  c = d.advance(400);
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));  // FetchConfirm(light.a) outstanding
+}
+
+void test_126b_stale_confirm_fetch_after_new_tap_keeps_pending() {
+  Driver d;
+  int t1 = 0;
+  to_confirm_fetch(d, t1);
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOff, "off"));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));  // goes out while the confirm fetch runs
+  int t2 = find(c, C::CallService)->ticket;
+  // the older confirm fetch ("on" = old expectation) completes after the new call was emitted
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "on")}));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Confirmed, "light.a"));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Failed, "light.a"));
+  c = d.send(Event::service_done(t2, HaError::None, {"light.a"}, {es("light.a", "off")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
+}
+
+void test_126b_stale_fetch_all_after_call_response_no_wrong_confirm() {
+  Driver d;
+  d.start();
+  d.send(Event::wifi(true));  // FetchAll outstanding
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  int t = find(c, C::CallService)->ticket;
+  c = d.send(Event::service_done(t, HaError::None, {}, {}));  // confirm_ now holds light.a
+  // older FetchAll (pre-call state "off") completes afterwards
+  c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "off")}));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Confirmed, "light.a"));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Failed, "light.a"));
+  c = d.advance(400);  // confirm fetch still follows
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
+}
+
+void test_126b_fetch_error_while_call_outstanding() {
+  Driver d;
+  d.start();
+  d.send(Event::wifi(true));
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  int t = find(c, C::CallService)->ticket;
+  c = d.send(Event::fetch_done(HaError::Network, {}, {}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.a"));
+  c = d.send(Event::service_done(t, HaError::None, {}, {}));  // late response is ignored
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Confirmed, "light.a"));
+}
+
+void test_126b_call_error_while_confirm_fetch_outstanding() {
+  Driver d;
+  int t1 = 0;
+  to_confirm_fetch(d, t1);
+  auto c = d.send(Event::user_action({"light.b"}, Action::LightTurnOn, "on"));
+  int t2 = find(c, C::CallService)->ticket;
+  c = d.send(Event::service_done(t2, HaError::Network, {}, {}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.b"));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.a"));  // its confirm is dropped too
+  c = d.send(Event::fetch_done(HaError::None, {}, {es("light.a", "on")}));  // late: ignored
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Confirmed, "light.a"));
+}
+
 void test_fuzz_invariants() {
   uint32_t seed = 12345;
   auto rnd = [&](uint32_t n) { seed = seed * 1664525u + 1013904223u; return (seed >> 8) % n; };
@@ -1020,6 +1089,10 @@ int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_happy_path_interactive);
   RUN_TEST(test_126b_taps_do_not_wait_for_fetches);
+  RUN_TEST(test_126b_stale_confirm_fetch_after_new_tap_keeps_pending);
+  RUN_TEST(test_126b_stale_fetch_all_after_call_response_no_wrong_confirm);
+  RUN_TEST(test_126b_fetch_error_while_call_outstanding);
+  RUN_TEST(test_126b_call_error_while_confirm_fetch_outstanding);
   RUN_TEST(test_response_with_entity_confirms_without_fetch);
   RUN_TEST(test_response_without_entity_falls_back_to_fetch);
   RUN_TEST(test_queued_tap_call_before_initial_fetch);
