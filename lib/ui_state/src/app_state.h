@@ -60,7 +60,7 @@ struct WidgetData {
   bool group = false;
   const config::Widget *cfg = nullptr;  // the widget's config (sensor options: decimals, attribute, unit)
   std::vector<const EntityState *> members;
-  bool pending = false;     // the hourglass state; no longer set (taps are optimistic, task 036); task 108: set on an alarm widget while its keypad command is unconfirmed
+  bool pending = false;     // the pending mark (dashed ring; task 126: set for every unconfirmed tap; task 108: also on an alarm widget while its keypad command is unconfirmed)
   bool optimistic = false;  // members show the requested result of a tap that is still unconfirmed
   int pendingSub = 0;
   bool failed = false;  // the last action on this widget failed: real state plus alert badge

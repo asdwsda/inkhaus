@@ -99,14 +99,14 @@ void frame(uint32_t now, const input::Event &e, bool popupOpen, bool changed) {
     bc.popup = g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.alarmOpen() || g_app.confirmOpen();
     bc.settings = settings_flow::active();
     bc.ota = ota::busy();
-    bc.tap_pending = g_defer.armed();
+    bc.tap_pending = g_defer.armed() || g_app.pendingAny();  // task 126 D3
     bc.scheduled = g_scheduled;
     if (g_real && present::burstCleanDue(now - g_lastInputMs, bc)) present::burstClean();
   }
   if (!g_scheduled && g_real && !ota::busy() &&
       app_logic::idleFullDue(present::partialDebt(), now - g_lastInputMs,
                              settings_flow::active() || g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.alarmOpen() || g_app.confirmOpen(),
-                             g_defer.armed()))  // task 095: grey drift in a long awake session
+                             g_defer.armed() || g_app.pendingAny()))  // task 095, 126 D3: grey drift in a long awake session
     present::idleFull();
   present::idle(millis());
   delay(10);

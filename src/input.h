@@ -19,6 +19,13 @@ void begin();
 // BtnA = up, BtnC = down, BtnB click = push, BtnB held 600 ms..2.5 s and released = long push,
 // BtnB held 2.5 s = SleepNow (task 081; fires at 2.5 s, no long push follows).
 Event poll();
+// Task 126 D1: M5.update() + queue the new events, without popping. Called from the refresh wait loop so that a
+// touch that starts and ends inside a blocking EPD wait is not lost. UNVERIFIED on device.
+void sample();
+// Number of buffered events not yet returned by poll().
+int pending();
+// Drops all buffered events (end of setup: the waking press must not fire later).
+void clear();
 // Injects an event (serial test commands) as if it came from the hardware.
 void inject(const Event &e);
 

@@ -148,6 +148,13 @@ void showFrame(uint32_t now) {
     }
     present::setGreyRegions(greys);
     present::setIndicatorRegions(indicatorRegions());
+    std::vector<screen_track::Rect> taps;  // task 126 D2: widgets with an unconfirmed tap
+    for (const uistate::Pending &p : g_app.pendingList()) {
+      if (p.tab != g_app.shownTab()) continue;
+      for (const ui::Placement &pl : g_app.layout().widgets)
+        if (pl.index == p.widget) taps.push_back({pl.rect.x, pl.rect.y, pl.rect.w, pl.rect.h});
+    }
+    present::setTapRegions(taps);
   }
   present::setModal(g_app.brightnessOpen() || g_app.historyPopup().visible() || g_app.notifOpen() || g_app.mediaOpen() || g_app.alarmOpen() || g_app.confirmOpen());
   {  // task 123: a keypad key press refreshes only the code box

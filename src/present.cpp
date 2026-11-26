@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "boot.h"
+#include "input.h"
 #include "frame_diff.h"
 #include "modal_settle.h"
 #include "screen_track.h"
@@ -141,6 +142,14 @@ uint8_t *buf(M5Canvas &c) { return static_cast<uint8_t *>(c.getBuffer()); }
 
 void waitAndCheck(const char *what) {
   auto &d = M5.Display;
+  // Task 126 D1 (UNVERIFIED on device): sample input while BUSY, so a tap during a refresh is buffered, not lost.
+  // Bounded; waitDisplay below still does the final wait and its own timeout handling.
+  const uint32_t t0 = millis();
+  while (d.displayBusy() && millis() - t0 < 2500) {
+    input::sample();
+    boot::feed();
+    delay(3);
+  }
   d.waitDisplay();
   g_readOpen = true;  // the register read in waitDisplay never sends MEM_BST_END
   boot::feed();
@@ -326,14 +335,25 @@ bool touchesGrey(const Rect &r) {
   return false;
 }
 
+std::vector<screen_track::Rect> g_tapRegions;  // task 126 D2: widgets showing a fresh tap (pending mark)
+
+bool isTapRect(const Rect &r) {
+  for (const Rect &g : g_tapRegions)
+    if (r.x < g.x + g.w && g.x < r.x + r.w && r.y < g.y + g.h && g.y < r.y + r.h) return true;
+  return false;
+}
+
 void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   auto &d = M5.Display;
   storeDebt(true);  // before the refresh: a crash in between must not lose it
   // Task 107 (UNVERIFIED): a rect touching the album art is one GC16 refresh with the real greys, nothing else
   // redraws the art (a rect is only refreshed when its pixels changed, i.e. when the picture URL changed).
   const bool art = touchesGrey(r);
-  const bool grey = unknownPanel || g_modalOpening || art || panelHasGrey(r);
-  const char *reason = unknownPanel ? "boot_unknown_panel" : g_modalOpening ? "modal" : art ? "art" : (grey ? "panel_has_grey" : "panel_bw");
+  // Task 126 D2 (UNVERIFIED on device): a tapped widget is always epd_fastest, also over greys (ugly is fine; the
+  // confirm redraw follows with the normal rules). Not under a popup or art, not on an unknown panel.
+  const bool tapFast = !unknownPanel && !g_modalOpening && !g_modal && !art && isTapRect(r);
+  const bool grey = !tapFast && (unknownPanel || g_modalOpening || art || panelHasGrey(r));
+  const char *reason = tapFast ? "tap_fast" : unknownPanel ? "boot_unknown_panel" : g_modalOpening ? "modal" : art ? "art" : (grey ? "panel_has_grey" : "panel_bw");
   Serial.printf("PRESENT: rect=%d,%d,%d,%d mode=%s reason=%s\n", r.x, r.y, r.w, r.h, grey ? "quality" : "fastest",
                 reason);
   if (grey) {
@@ -365,6 +385,8 @@ void closeRead() {
 }
 
 }  // namespace
+
+void setTapRegions(const std::vector<screen_track::Rect> &regions) { g_tapRegions = regions; }
 
 bool begin() {
   auto &d = M5.Display;
@@ -745,6 +767,8 @@ bool show(Mode mode, uint32_t now) {
     return true;
   }
   touchRecord();
+  // Task 126 D2: the tapped widgets first, before status rects and other changes (stable otherwise).
+  std::stable_partition(rects.begin(), rects.end(), [](const Rect &r) { return isTapRect(r); });
   for (const Rect &r : rects) refreshRect(r, "partial", false);
   return true;
 }

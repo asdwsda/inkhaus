@@ -210,6 +210,7 @@ void setup() {
   // Leave the controller idle: close any read burst before a restart or sleep.
   boot::log("settle_bst_end", boot::endBurstRead() ? 1L : 0L);
   boot::setupDone();
+  input::clear();  // events sampled during wake feedback (the waking press) must not fire later
   g_wakeGuard.arm(g_wake, millis());  // last: the 3 s cap counts from when input starts
 
 #ifdef TLS_CHECK
@@ -268,6 +269,13 @@ void loop() {
   loopphase::sessionInput(now, e, popupOpen);
   loopphase::localIdleSleep(now, e, popupOpen);
   loopphase::dispatchInput(now, e, changed);
+  for (int n = 0; n < 16 && input::pending() > 0; ++n) {  // task 126 D1: events buffered during refresh waits, all handled before the next frame
+    input::Event e2;
+    if (!loopphase::pollInput(now, e2)) return;
+    loopphase::sessionInput(now, e2, popupOpen);
+    loopphase::localIdleSleep(now, e2, popupOpen);
+    loopphase::dispatchInput(now, e2, changed);
+  }
   loopphase::netEvents(now, changed);
   loopphase::pumps(changed);
   loopphase::frame(now, e, popupOpen, changed);

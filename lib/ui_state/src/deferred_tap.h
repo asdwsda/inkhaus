@@ -15,7 +15,15 @@ class DeferredTap {
     enum Kind { None, Tap, LongPress } kind = None;
     ui::Point point;
   };
-  void press(ui::Point p, uint32_t now) { armed_ = true; point_ = p; at_ = now; }
+  // A press while a point is armed fires the armed point first (task 126 D4: never overwrite); the caller acts on
+  // the returned Tap (if any) before the new point's own release / timeout.
+  Result press(ui::Point p, uint32_t now) {
+    const Result prev = fire(Result::Tap);
+    armed_ = true;
+    point_ = p;
+    at_ = now;
+    return prev;
+  }
   Result release() { return fire(Result::Tap); }
   Result longPress() { return fire(Result::LongPress); }
   Result tick(uint32_t now) { return armed_ && now - at_ > kDeferredTapMs ? fire(Result::Tap) : Result(); }

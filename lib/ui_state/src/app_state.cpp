@@ -199,9 +199,10 @@ WidgetData AppState::widgetData(int idx) const {
   for (const Pending &p : pending_) {
     if (p.tab != shownTab_ || p.widget != idx) continue;
     // Optimistic (task 036): the requested result shows at once for every widget type, with no
-    // hourglass / dashed ring (`pending` stays false). The entry ends with the driver's mark: the
+    // hourglass (task 126 reinstated the dashed ring: `pending` is set). The entry ends with the driver's mark: the
     // store then holds the confirmed state, or a Failed mark reverts to the last real one.
     d.optimistic = true;
+    d.pending = true;  // task 126 D2: dashed pending mark until the driver confirms or fails (entry erased then)
     d.pendingSub = p.sub;
     for (size_t i = 0; i < d.members.size(); ++i) {
       for (const EntityState &s : p.states) {

@@ -58,6 +58,13 @@ void sessionInput(uint32_t now, const input::Event &e, bool popupOpen) {
 }
 
 void dispatchInput(uint32_t now, const input::Event &e, bool &changed) {
+  if (e.kind == input::Event::Touch && !settings_flow::active()) {  // task 126 D4: any new touch fires the armed tap first
+    const auto prev = g_defer.release();
+    if (prev.kind == uistate::DeferredTap::Result::Tap) {
+      g_tapNow = now;
+      changed |= g_app.touch(prev.point, now);
+    }
+  }
   if (settings_flow::active()) {
     if (e.kind == input::Event::Touch) handleSettingsResult(settings_flow::onTouch(e.point, now), now);
     else if (e.kind == input::Event::Key)
@@ -81,7 +88,11 @@ void dispatchInput(uint32_t now, const input::Event &e, bool &changed) {
     changed |= g_app.touch(e.point, now);  // modal: outside closes, controls act
   } else if (e.kind == input::Event::Touch && g_app.screen() == uistate::Screen::Tabs &&
              g_app.dimmableLightAt(e.point)) {
-    g_defer.press(e.point, now);
+    const auto prev = g_defer.press(e.point, now);  // task 126 D4: an armed earlier tap fires first
+    if (prev.kind == uistate::DeferredTap::Result::Tap) {
+      g_tapNow = now;
+      changed |= g_app.touch(prev.point, now);
+    }
   } else if (e.kind == input::Event::Touch) {
     const ui::Hit hit = g_app.screen() == uistate::Screen::Tabs ? ui::hitTest(g_app.layout(), e.point) : ui::Hit();
     if (hit.kind == ui::HitKind::Settings) {

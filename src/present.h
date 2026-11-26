@@ -70,6 +70,9 @@ void setMergeRegions(const std::vector<screen_track::Rect> &regions);
 void setGreyRegions(const std::vector<screen_track::Rect> &regions);
 // Task 120 (architect 2026-11-05): fastest refreshes whose rect lies inside one of these regions (the status bar
 // indicator) add to the ghost-debt area only: not to the partial count, not to the burst count. Call before show().
+// Task 126 D2: rects (display coordinates) of widgets that show a fresh tap (pending mark). A changed rect touching
+// one is refreshed first and always with epd_fastest (black/white), even over greys. Call before show().
+void setTapRegions(const std::vector<screen_track::Rect> &regions);
 void setIndicatorRegions(const std::vector<screen_track::Rect> &regions);
 // Task 123: the next show() (Partial only) refreshes just the changed rects that touch `r` (display coordinates), e.g.
 // the keypad code box after a key press; other changes stay unpushed and are caught by a later show(). Call before show().

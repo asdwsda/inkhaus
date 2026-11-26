@@ -476,7 +476,7 @@ void test_app_toggle_pending_then_confirmed() {
   TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, 1000));
   WidgetData d = a.widgetData(idx);
   TEST_ASSERT_TRUE(d.optimistic);
-  TEST_ASSERT_FALSE(d.pending);  // no hourglass any more
+  TEST_ASSERT_TRUE(d.pending);  // task 126: dashed pending mark until confirmed
   TEST_ASSERT_EQUAL_STRING("off", d.members[0]->state.c_str());  // requested state shown at once
   TEST_ASSERT_EQUAL_STRING("on", a.store().get(id)->state.c_str());
   TEST_ASSERT_FALSE(a.tick(1000 + kPendingMs - 1));
@@ -879,7 +879,7 @@ void test_optimistic_cover_direction_and_vacuum() {
   TEST_ASSERT_TRUE(a.touch({up.x + 5, up.y + 5}, 0));
   WidgetData d = a.widgetData(idx);
   TEST_ASSERT_TRUE(d.optimistic);
-  TEST_ASSERT_FALSE(d.pending);
+  TEST_ASSERT_TRUE(d.pending);
   TEST_ASSERT_EQUAL_STRING("opening", d.members[0]->state.c_str());
   TEST_ASSERT_TRUE(coverView(d.members, false).upFilled);  // moving direction shown at once
   TEST_ASSERT_EQUAL_STRING("closed", a.store().get(id)->state.c_str());
@@ -1287,6 +1287,57 @@ void test_app_close_before_sleep_flushes() {
   TEST_ASSERT_FALSE(a.closeBrightness(60));
 }
 
+// Task 126: N taps on N different widgets within 1 s, no confirmation in between: N pending marks, N commands.
+void test_many_taps_many_pending_then_confirm() {
+  AppState a;
+  a.init(exampleConfig(), P, false);
+  a.setMarksDriven(true);
+  std::vector<Sunk> got;
+  a.setActionSink([&](int t, int w, int s, const std::vector<EntityState> &st) { got.push_back({t, w, s, st}); });
+  std::vector<int> idx;
+  for (const auto &pl : a.layout().widgets)
+    if (pl.type == WidgetType::Light || pl.type == WidgetType::Switch) idx.push_back(pl.index);
+  TEST_ASSERT_TRUE(idx.size() >= 2);
+  std::map<std::string, Mark> marks;
+  uint32_t t = 0;
+  for (int i : idx) {
+    const std::string id = a.config().tabs[0].widgets[size_t(i)].entity;
+    a.store().update({EntityState{id, "on", true}});
+    const ui::Rect r = widgetRect(a, i);
+    TEST_ASSERT_TRUE(a.touch({r.x + 10, r.y + 10}, t));
+    t += 100;
+  }
+  TEST_ASSERT_TRUE(t <= 1000 || idx.size() > 10);
+  TEST_ASSERT_EQUAL(int(idx.size()), (int)got.size());
+  TEST_ASSERT_EQUAL(int(idx.size()), (int)a.pendingList().size());
+  for (int i : idx) {
+    TEST_ASSERT_TRUE(a.widgetData(i).pending);
+    TEST_ASSERT_TRUE(a.widgetData(i).optimistic);
+  }
+  // the driver confirms: every mark goes away, the final look has no pending mark
+  for (int i : idx) marks[a.config().tabs[0].widgets[size_t(i)].entity] = Mark::Pending;
+  a.setMarks(marks);
+  TEST_ASSERT_TRUE(a.setMarks({}));
+  for (int i : idx) {
+    TEST_ASSERT_FALSE(a.widgetData(i).pending);
+    TEST_ASSERT_FALSE(a.widgetData(i).optimistic);
+  }
+}
+
+// Task 126 D4: a new press while a point is armed fires the armed point first.
+void test_deferred_tap_press_fires_armed() {
+  DeferredTap d;
+  using R = DeferredTap::Result;
+  TEST_ASSERT_EQUAL(R::None, d.press({1, 2}, 0).kind);
+  const R prev = d.press({30, 40}, 50);
+  TEST_ASSERT_EQUAL(R::Tap, prev.kind);
+  TEST_ASSERT_EQUAL(1, prev.point.x);
+  TEST_ASSERT_TRUE(d.armed());
+  const R cur = d.release();
+  TEST_ASSERT_EQUAL(R::Tap, cur.kind);
+  TEST_ASSERT_EQUAL(30, cur.point.x);
+}
+
 void test_deferred_tap_machine() {
   DeferredTap d;
   using R = DeferredTap::Result;
@@ -1407,6 +1458,8 @@ int main() {
   RUN_TEST(test_app_brightness_unavailable_closes_without_sending);
   RUN_TEST(test_app_close_before_sleep_flushes);
   RUN_TEST(test_deferred_tap_machine);
+  RUN_TEST(test_deferred_tap_press_fires_armed);
+  RUN_TEST(test_many_taps_many_pending_then_confirm);
   RUN_TEST(test_restore_tab);
   return UNITY_END();
 }
