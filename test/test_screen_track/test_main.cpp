@@ -254,7 +254,6 @@ void test_loop_crash_loop_gives_up_until_healthy() {
 
 void test_loop_policy_constants_sane() {
     TEST_ASSERT_TRUE(kLoopWatchdogS >= 30 && kLoopWatchdogS <= 60);
-    TEST_ASSERT_TRUE(kFatalSleepAfterMs <= 30000u);
     TEST_ASSERT_TRUE(kHealthyUptimeMs > kLoopWatchdogS * 1000u);
 }
 

@@ -41,6 +41,7 @@ void goToSleep(power::SleepPlan plan, power::Session session, bool localIdle) {
   uint32_t now = millis();
   const bool low = session == power::Session::LowBattery;
   session_glue::ntpAbort();
+  boot::clearCrashCount();  // task 131: a deliberate sleep is not a crash
   ota::beforeSleep();  // task 087: a deliberate sleep after the first frame is not a crash
   if (!low) {
     historyShutdown();

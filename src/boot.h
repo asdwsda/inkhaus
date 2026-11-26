@@ -78,6 +78,9 @@ void setupDone();
 // session has been up kHealthyUptimeMs.
 void loopTick();
 
+// A deliberate sleep is the end of a healthy session: clears the crash counter now.
+void clearCrashCount();
+
 // Plain "BOOT: key=value" lines.
 void log(const char* key, const char* value);
 void log(const char* key, long value);

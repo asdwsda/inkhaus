@@ -330,6 +330,7 @@ bool runJob(Job &j, void (*progress)(Phase, int)) {
   }
   int lastPhase = -1, lastPct = -1;
   while (!j.done) {
+    boot::feed();  // the watchdog stays fed even without a progress callback
     cancelled();  // flags the job; it aborts at its next step. We still wait for `done` before freeing anything
     const int ph = j.phase, pc = j.pct;
     if (progress && ph >= 0 && (ph != lastPhase || pc != lastPct)) {

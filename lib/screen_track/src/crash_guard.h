@@ -30,7 +30,6 @@ struct CrashDecision {
 // so a deterministic panic/hang in loop() reaches the fallback and the give-up path too.
 constexpr uint32_t kHealthyUptimeMs = 5u * 60u * 1000u;  // awake this long without a crash: clear the count
 constexpr uint32_t kLoopWatchdogS = 45;                  // loop() task watchdog after setup (fed once per pass)
-constexpr uint32_t kFatalSleepAfterMs = 10u * 1000u;     // a fatal error screen ends in sleep within this time
 
 // True once the session has been up long enough for the crash count to be cleared.
 bool sessionHealthy(uint32_t uptime_ms);

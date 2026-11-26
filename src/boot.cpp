@@ -418,6 +418,10 @@ void loopTick() {
     }
 }
 
+void clearCrashCount() {
+    g_crashState = screen_track::crashGuard(g_crashState, false).next;
+}
+
 void begin() {
   // Very first: release the pad holds left by sleep::enter() (GPIO2 main power) before any pin write.
   gpio_deep_sleep_hold_dis();
