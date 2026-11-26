@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.5.0-rc1 - 2026-11-26
+
+Pre-release for testing; not offered as an over-the-air update. Most changes are not yet checked on the device.
+
+### Changes
+- Taps respond at once: every tap draws the new state with a dashed outline right away (fast black/white
+  refresh), several widgets can be tapped in a row without waiting, and HA's answer redraws them cleanly.
+- After a wake, widgets are greyed with a clock badge until fresh states arrive, then redrawn in one refresh;
+  the status bar shows `updating, taps ok`. Taps work meanwhile.
+- Status bar shows whether taps are sent now or queued while connecting.
+- The touch that wakes the device no longer acts on what is under the finger.
+- Garage doors are detected from `device_class: garage` on covers.
+- Alarm keypad: a key press refreshes only the code box.
+- Web installer: read and edit config.yaml (and write secrets.yaml) from the browser.
+
+### Fixes
+- Taps made during a screen refresh are no longer lost.
+- A service call is never sent twice after a dropped connection (covers, media, alarm).
+- A flaky SD card mount keeps the saved dashboard instead of switching to the demo.
+- Debug log: shared buffer locked (possible crash with Debug log on).
+- A hang after start-up restarts the device (watchdog); an out-of-memory error sleeps instead of staying awake.
+- At most one full refresh per scheduled wake, also after an update or crash.
+
 ## 1.4.0 - 2026-11-04
 
 ### New widgets
