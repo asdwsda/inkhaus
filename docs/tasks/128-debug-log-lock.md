@@ -1,6 +1,6 @@
 # 128: Debug log: lock the shared buffer
 
-Status: todo
+Status: done
 Depends on: none
 UI spec: none
 Needs device: no
@@ -19,3 +19,4 @@ Evidence: docs/reviews/2026-11-26-project-review.md (finding H1).
 - [ ] Device-only behaviour tagged UNVERIFIED with a docs/device-checks.md line.
 
 ## Notes
+All g_pending/g_rec/g_deferredBoot accesses are in src/wakelog.cpp (other files only call wakelog::); guarded by g_mu in setEnabled, note, flushDebug (swap out, write outside lock), begin, writeDeferred, sessionStarted, wifiUp, fetchDone, historyFetched, refreshed, append (line built under lock, SD write outside).

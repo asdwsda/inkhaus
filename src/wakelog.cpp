@@ -6,6 +6,7 @@
 #include <esp_sleep.h>
 #include <esp_system.h>
 
+#include <mutex>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,6 +30,9 @@ constexpr bool kForced = true;
 constexpr bool kForced = false;
 #endif
 bool g_enabled = kForced;
+// One lock for g_pending, g_deferredBoot and g_rec/g_session*/g_refresh* (net task, OTA job and UI loop all write).
+// Never held across SD or serial I/O.
+std::mutex g_mu;
 std::string g_pending;
 std::string g_deferredBoot;  // boot line waiting for writeDeferred()
 
@@ -83,7 +87,12 @@ const char *causeName(esp_sleep_wakeup_cause_t c) {
 
 // Inside a mounted card: appends the pending debug lines to /debug.log, rotating at 1 MB.
 void flushDebug() {
-  if (g_pending.empty()) return;
+  std::string pending;
+  {
+    std::lock_guard<std::mutex> lk(g_mu);
+    pending.swap(g_pending);
+  }
+  if (pending.empty()) return;
   size_t size = 0;
   if (SD.exists(kDebugPath)) {
     File f = SD.open(kDebugPath, FILE_READ);
@@ -92,16 +101,15 @@ void flushDebug() {
       f.close();
     }
   }
-  if (app_logic::debugLogNeedsRotation(size, g_pending.size())) {
+  if (app_logic::debugLogNeedsRotation(size, pending.size())) {
     SD.remove(kDebugOld);
     SD.rename(kDebugPath, kDebugOld);
   }
   File f = SD.open(kDebugPath, SD.exists(kDebugPath) ? FILE_APPEND : FILE_WRITE);
   if (f) {
-    f.print(g_pending.c_str());
+    f.print(pending.c_str());
     f.close();
   }
-  g_pending.clear();
 }
 
 void appendLine(const std::string &line) {
@@ -135,7 +143,10 @@ void appendLine(const std::string &line) {
 
 void setEnabled(bool on) {
   g_enabled = on || kForced;
-  if (!g_enabled) g_pending.clear();
+  if (!g_enabled) {
+    std::lock_guard<std::mutex> lk(g_mu);
+    g_pending.clear();
+  }
 }
 
 bool enabled() { return g_enabled; }
@@ -145,6 +156,7 @@ void note(const char *line) {
   const std::string l(line);
   if (!app_logic::isDebugLogLine(l)) return;
   const std::string f = app_logic::formatDebugLogLine(millis(), l);
+  std::lock_guard<std::mutex> lk(g_mu);
   if (g_pending.size() + f.size() <= kPendingMax) g_pending += f;
 }
 
@@ -169,6 +181,7 @@ void setSleptPath(const char *path) {
 
 void begin(const char *wakeName, power::Session session, bool deferWrite) {
   if (!g_enabled) return;
+  std::unique_lock<std::mutex> lk(g_mu);
   g_rec = app_logic::WakeRecord();
   g_rec.wake = wakeName;
   g_rec.session = sessionName(session);
@@ -193,19 +206,25 @@ void begin(const char *wakeName, power::Session session, bool deferWrite) {
   b.session = "boot";
   b.battery_mv = int32_t(M5.Power.getBatteryVoltage());
   b.awake_ms = int32_t(millis());
-  if (deferWrite) g_deferredBoot = app_logic::wakeLogLine(b);
-  else appendLine(app_logic::wakeLogLine(b));
+  const std::string bootLine = app_logic::wakeLogLine(b);
+  if (deferWrite) g_deferredBoot = bootLine;
+  lk.unlock();
+  if (!deferWrite) appendLine(bootLine);
 }
 
 void writeDeferred() {
-  if (g_deferredBoot.empty()) return;
-  const std::string line = g_deferredBoot;
-  g_deferredBoot.clear();
+  std::string line;
+  {
+    std::lock_guard<std::mutex> lk(g_mu);
+    line.swap(g_deferredBoot);
+  }
+  if (line.empty()) return;
   appendLine(line);
 }
 
 void sessionStarted(uint32_t nowMs) {
   if (!g_enabled) return;
+  std::lock_guard<std::mutex> lk(g_mu);
   if (g_sessionSeen) return;
   g_sessionSeen = true;
   g_sessionStartMs = nowMs;
@@ -213,6 +232,7 @@ void sessionStarted(uint32_t nowMs) {
 
 void wifiUp(uint32_t nowMs) {
   if (!g_enabled) return;
+  std::lock_guard<std::mutex> lk(g_mu);
   if (!g_sessionSeen || g_wifiSeen) return;
   g_wifiSeen = true;
   g_wifiMs = nowMs;
@@ -221,6 +241,7 @@ void wifiUp(uint32_t nowMs) {
 
 void fetchDone(uint32_t nowMs, bool ok) {
   if (!g_enabled) return;
+  std::lock_guard<std::mutex> lk(g_mu);
   if (g_fetchSeen) return;
   g_fetchSeen = true;
   g_rec.fetch_result = ok ? "ok" : "fail";
@@ -229,6 +250,7 @@ void fetchDone(uint32_t nowMs, bool ok) {
 
 void historyFetched(uint32_t fetchMs, uint32_t parseMs, uint32_t bytes) {
   if (!g_enabled) return;
+  std::lock_guard<std::mutex> lk(g_mu);
   ++g_rec.hist_n;
   g_rec.hist_ms += int32_t(fetchMs + parseMs);
   g_rec.hist_bytes += int32_t(bytes);
@@ -236,20 +258,24 @@ void historyFetched(uint32_t fetchMs, uint32_t parseMs, uint32_t bytes) {
 
 void refreshed(uint32_t durationMs) {
   if (!g_enabled) return;
+  std::lock_guard<std::mutex> lk(g_mu);
   ++g_refreshes;
   g_refreshMs += durationMs;
 }
 
 void append(power::Session session, int64_t epoch, int32_t batteryMv) {
   if (!g_enabled) return;
+  std::string line;
+  {
+  std::lock_guard<std::mutex> lk(g_mu);
   g_rec.session = sessionName(session);
   g_rec.epoch = epoch;
   g_rec.battery_mv = batteryMv;
   g_rec.refreshes = g_refreshes;
   g_rec.refresh_ms = g_refreshes ? int32_t(g_refreshMs) : -1;
   g_rec.awake_ms = int32_t(millis());  // before the SD access: its cost is not part of the wake
-  const std::string line = app_logic::wakeLogLine(g_rec);
-
+  line = app_logic::wakeLogLine(g_rec);
+  }
   appendLine(line);
 }
 
