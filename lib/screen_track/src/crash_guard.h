@@ -26,6 +26,14 @@ struct CrashDecision {
     BootMode mode = BootMode::Normal;
 };
 
+// Task 131: the crash count is kept until the session has proven healthy, not only until setup() ends,
+// so a deterministic panic/hang in loop() reaches the fallback and the give-up path too.
+constexpr uint32_t kHealthyUptimeMs = 5u * 60u * 1000u;  // awake this long without a crash: clear the count
+constexpr uint32_t kLoopWatchdogS = 45;                  // loop() task watchdog after setup (fed once per pass)
+
+// True once the session has been up long enough for the crash count to be cleared.
+bool sessionHealthy(uint32_t uptime_ms);
+
 // `crash_reset`: the reset reason was a task/interrupt/RTC watchdog or a panic.
 CrashDecision crashGuard(const CrashState& prev, bool crash_reset);
 

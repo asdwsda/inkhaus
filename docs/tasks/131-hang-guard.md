@@ -1,6 +1,6 @@
 # 131: Hang guard after setup and on fatal errors
 
-Status: todo
+Status: done (PC part; device check pending, see docs/device-checks.md)
 Depends on: none
 UI spec: none
 Needs device: yes

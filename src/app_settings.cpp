@@ -169,6 +169,7 @@ static void fwResumed() {
 }
 
 static void fwProgress(ota::Phase ph, int pct) {
+  boot::feed();  // task 131: the install wait runs on the loop task, under its watchdog
   static uint32_t lastDrawMs = 0;
   static int lastPct = -100;
   static ota::Phase lastPh = ota::Phase::Restarting;

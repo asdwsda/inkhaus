@@ -169,7 +169,8 @@ void setup() {
     present::showError("Out of memory");
     boot::log("version", "017");
     boot::log("settle_bst_end", boot::endBurstRead() ? 1L : 0L);
-    boot::setupDone();  // stay up for serial; no frame paths, no crash loop
+    boot::setupDone();
+    fatalSleep();  // task 131: Wi-Fi and the net task are running; power down and sleep (button wake)
     return;
   }
   composeFrame();
@@ -251,6 +252,7 @@ static void loopDiagnostics() {
 }
 
 void loop() {
+  boot::loopTick();  // task 131: watchdog feed + healthy-uptime crash-count clear
   loopDiagnostics();
   if (!present::framesOk()) {
     shot::poll(shot::Hooks{});  // no frames: the dump and mem commands do nothing

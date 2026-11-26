@@ -41,6 +41,7 @@ void goToSleep(power::SleepPlan plan, power::Session session, bool localIdle) {
   uint32_t now = millis();
   const bool low = session == power::Session::LowBattery;
   session_glue::ntpAbort();
+  boot::clearCrashCount();  // task 131: a deliberate sleep is not a crash
   ota::beforeSleep();  // task 087: a deliberate sleep after the first frame is not a crash
   if (!low) {
     historyShutdown();
@@ -130,6 +131,16 @@ void lowBatterySleep() {
   const int64_t epoch = session_glue::wallClock();
   present::showNotice("Battery low", "Please charge the device");
   goToSleep(power::plan_sleep(g_settings, power::Session::LowBattery, epoch, 0), power::Session::LowBattery);
+}
+
+// Task 131 (UNVERIFIED on device): fatal error screen already shown; never idle awake with Wi-Fi on.
+void fatalSleep() {
+  boot::log("fatal_sleep", 1);
+  const int64_t epoch = session_glue::wallClock();
+  goToSleep(power::plan_sleep(g_settings, power::Session::LowBattery, epoch, 0), power::Session::LowBattery);
+  // goToSleep returns only if sleeping failed: Wi-Fi is off; restart rather than idle awake.
+  boot::endBurstRead();
+  ESP.restart();
 }
 
 namespace loopphase {

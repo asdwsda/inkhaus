@@ -138,3 +138,4 @@ void goToSleep(power::SleepPlan plan, power::Session session, bool localIdle = f
 void manualSleep();
 bool batteryTooLowForWifi();
 void lowBatterySleep();
+void fatalSleep();  // task 131: after a fatal error screen: Wi-Fi off, sleep (rocker wakes)

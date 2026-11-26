@@ -2,6 +2,8 @@
 
 namespace screen_track {
 
+bool sessionHealthy(uint32_t uptime_ms) { return uptime_ms >= kHealthyUptimeMs; }
+
 CrashDecision crashGuard(const CrashState& prev, bool crash_reset) {
     CrashDecision d;
     d.next.magic = kCrashMagic;
