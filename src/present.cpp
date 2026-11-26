@@ -14,6 +14,7 @@
 #include "keypad_limit.h"
 #include "tab_clean.h"
 #include "burst_clean.h"
+#include "wake_full.h"
 #include "ready_state.h"  // task 120: countsByAreaOnly
 
 using screen_track::Rect;
@@ -60,6 +61,7 @@ long g_partialArea = 0;
 bool g_debt = false;            // partial refreshes since the last GC16 full (kept in NVS across sleep)
 bool g_debtLoaded = false;
 bool g_deferred = false;        // scheduled wake: nothing is refreshed until finishScheduled()
+bool g_deferWhite = false;      // task 132: the deferred full starts with a white fill (invalid record)
 bool g_deferChanged = false;    // the deferred frames differ from what the panel shows
 bool g_firstFrameFull = false;  // interactive wake with debt and Updates Off: GC16 full instead of the diff
 
@@ -578,6 +580,15 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
     // another full draw), then GC16 white and GC16 content.
     const bool inv = invalidateRecord();
     boot::log("record_invalidated", inv ? 1L : 0L);
+    const auto plan = screen_track::invalidRecordPlan(g_deferred);
+    if (!plan.fullNow) {  // task 132: scheduled wake: finishScheduled does the one white+content full
+      copyAllToPrev();
+      g_deferChanged = plan.deferChanged;
+      g_deferWhite = plan.whiteFirst;
+      g_lastShowMs = millis();
+      boot::log("draw", "deferred_changed");
+      return;  // record stays invalid until finishScheduled saves it
+    }
     fullRefresh(true, "full_content");
     if (inv) saveRecordOfCurrent();
     else boot::log("record_saved", "skipped_invalidate_failed");  // never leave a stale record behind
@@ -868,7 +879,9 @@ bool finishScheduled(bool full) {
   g_deferred = false;
   if (!full) return false;
   boot::log("scheduled_full", g_deferChanged ? 1L : 0L);
-  fullRefresh(false, "full_scheduled");
+  const bool white = g_deferWhite;
+  g_deferWhite = false;
+  fullRefresh(white, "full_scheduled");
   saveRecordOfCurrent();
   return true;
 }

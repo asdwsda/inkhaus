@@ -112,3 +112,4 @@ tagged `UNVERIFIED` in code comments and task notes.
 - [ ] 129 UNVERIFIED (device; PC part done): SD mount retried 3x (60 ms apart); card pulled or unmountable on a wake keeps the cached config (log `CONFIG: source=cache_stale`), demo only when no cache ever existed. Check: normal boot, then boot with the card out.
 
 - Task 128 (UNVERIFIED on device): wakelog.cpp debug-log buffer now under one mutex; with Debug log on, run a few minutes with net task/OTA active and check for no PANIC/TASK_WDT and intact /debug.log.
+- [ ] 132 UNVERIFIED (device; PC part done): first scheduled wake after a flash/crash (no valid screen record) does ONE white+content GC16 full at sleep entry (log `record=none_or_other_geometry`, `draw=deferred_changed`, `scheduled_full=1`, a single `full_white`+`full_scheduled` pair, no `full_content` at wake). Check the panel shows the correct frame after that sleep.

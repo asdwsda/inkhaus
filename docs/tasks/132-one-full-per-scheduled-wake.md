@@ -1,6 +1,6 @@
 # 132: At most one GC16 full per scheduled wake
 
-Status: todo
+Status: done (PC part; device check pending)
 Depends on: none
 UI spec: none
 Needs device: yes
