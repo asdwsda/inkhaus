@@ -1,0 +1,65 @@
+# Task 133: run all tests and build every firmware env on each push and pull request.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Native tests
+        run: pio test -e native
+
+      # default_envs = m5paper, so a bare `pio run` builds one env; list the device envs.
+      - name: Build all firmware envs
+        run: pio run -e m5paper -e probe -e epdtest -e m5paper-debug -e m5paper-batterytest -e m5paper-epdoff -e m5paper-poweroff -e drifttest
+
+  tools-and-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Python tool and site tests
+        run: |
+          for t in tools/tests/test_*.py site/test/test_*.py; do
+            echo "== ${t}"
+            python3 "${t}"
+          done
+
+      - name: Site JS tests
+        run: |
+          for t in site/test/*.test.js; do
+            echo "== ${t}"
+            node "${t}"
+          done
