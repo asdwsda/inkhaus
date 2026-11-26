@@ -470,6 +470,10 @@ void settleEarlyClear() {
 void showError(const char *msg) {
   auto &d = M5.Display;
   boot::log("error_screen", msg);
+  invalidateRecord();  // task 131: the panel no longer shows what the record describes
+  g_recordValid = false;
+  g_havePending = false;
+  g_forceFull = true;
   d.startWrite();
   d.setEpdMode(epd_mode_t::epd_quality);
   d.fillScreen(TFT_WHITE);

@@ -112,3 +112,4 @@ tagged `UNVERIFIED` in code comments and task notes.
 - [ ] 129 UNVERIFIED (device; PC part done): SD mount retried 3x (60 ms apart); card pulled or unmountable on a wake keeps the cached config (log `CONFIG: source=cache_stale`), demo only when no cache ever existed. Check: normal boot, then boot with the card out.
 
 - Task 128 (UNVERIFIED on device): wakelog.cpp debug-log buffer now under one mutex; with Debug log on, run a few minutes with net task/OTA active and check for no PANIC/TASK_WDT and intact /debug.log.
+- [ ] 131 UNVERIFIED (device; PC part done): loop() on a 45 s task watchdog (fed per pass, in fwProgress); crash count kept until 5 min uptime (log crash_count_cleared); OOM path (frame alloc failure, e.g. forced) shows the error, then fatal_sleep=1 and sleeps within seconds, rocker wakes; error screen invalidates the record (next wake redraws fully). Check a loop() hang test build resets after ~45 s.

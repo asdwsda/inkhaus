@@ -235,6 +235,29 @@ static CrashState st(uint32_t magic, uint32_t count) {
     return s;
 }
 
+void test_session_healthy_threshold() {
+    TEST_ASSERT_FALSE(sessionHealthy(0));
+    TEST_ASSERT_FALSE(sessionHealthy(kHealthyUptimeMs - 1));
+    TEST_ASSERT_TRUE(sessionHealthy(kHealthyUptimeMs));
+}
+
+void test_loop_crash_loop_gives_up_until_healthy() {
+    // Crashes in loop() before the session is healthy keep counting across boots: give up at 4.
+    CrashState s;
+    BootMode m = BootMode::Normal;
+    for (int i = 0; i < 4; ++i) { auto d = crashGuard(s, true); s = d.next; m = d.mode; }
+    TEST_ASSERT_TRUE(m == BootMode::GiveUp);
+    // A session that stayed up long enough clears the count (loopTick), so a later crash starts over.
+    s = crashGuard(st(kCrashMagic, 3), false).next;
+    TEST_ASSERT_TRUE(crashGuard(s, true).mode == BootMode::Normal);
+}
+
+void test_loop_policy_constants_sane() {
+    TEST_ASSERT_TRUE(kLoopWatchdogS >= 30 && kLoopWatchdogS <= 60);
+    TEST_ASSERT_TRUE(kFatalSleepAfterMs <= 30000u);
+    TEST_ASSERT_TRUE(kHealthyUptimeMs > kLoopWatchdogS * 1000u);
+}
+
 void test_crash_guard_normal_reset_clears() {
     auto d = crashGuard(st(kCrashMagic, 3), false);
     TEST_ASSERT_EQUAL_UINT32(0, d.next.count);
@@ -381,6 +404,9 @@ int main(int, char**) {
     RUN_TEST(test_crash_guard_zeroed_rtc_counts_first_crash_as_one);
     RUN_TEST(test_crash_guard_clean_boot_between_crashes_restarts_sequence);
     RUN_TEST(test_crash_guard_thresholds_sane);
+    RUN_TEST(test_session_healthy_threshold);
+    RUN_TEST(test_loop_crash_loop_gives_up_until_healthy);
+    RUN_TEST(test_loop_policy_constants_sane);
     RUN_TEST(test_keypad_limit_key_press_only);
     RUN_TEST(test_keypad_limit_other_change_unlimited);
     return UNITY_END();

@@ -400,10 +400,22 @@ void mark(const char* stage) {
 }
 
 void setupDone() {
-    // Setup finished: the next reset is not a crash loop, and later code must not be killed by
-    // a watchdog that only guards the start-up path.
-    esp_task_wdt_delete(NULL);
-    g_crashState = screen_track::crashGuard(g_crashState, false).next;
+    // Task 131 (UNVERIFIED on device): loop() stays on the task watchdog with a generous timeout, and
+    // the crash count survives until the session proved healthy (loopTick), so crash loops in loop()
+    // reach the fallback / give-up path.
+    esp_task_wdt_init(screen_track::kLoopWatchdogS, true);
+    esp_task_wdt_add(NULL);  // no-op error if already added
+    esp_task_wdt_reset();
+}
+
+void loopTick() {
+    esp_task_wdt_reset();
+    static bool cleared = false;
+    if (!cleared && screen_track::sessionHealthy(elapsedMs())) {
+        cleared = true;
+        g_crashState = screen_track::crashGuard(g_crashState, false).next;
+        log("crash_count_cleared", 1);
+    }
 }
 
 void begin() {

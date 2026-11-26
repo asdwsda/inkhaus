@@ -70,8 +70,13 @@ bool fallbackActive();
 // Arms the task watchdog for the calling task (boot::begin() does it). Feed it from long stages.
 void feed();
 
-// Call at the end of setup(): disarms the setup watchdog and clears the crash counter.
+// Call at the end of setup(): switches the watchdog to the loop timeout (45 s, kept armed, task 131).
+// The crash counter is NOT cleared here; loopTick() clears it after a healthy uptime.
 void setupDone();
+
+// Once per loop() pass (also when frames failed): feeds the watchdog; clears the crash counter once the
+// session has been up kHealthyUptimeMs.
+void loopTick();
 
 // Plain "BOOT: key=value" lines.
 void log(const char* key, const char* value);
