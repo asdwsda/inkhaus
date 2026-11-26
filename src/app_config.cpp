@@ -7,6 +7,7 @@
 
 #include "boot.h"
 #include "config_sd.h"
+#include "config_source.h"
 
 extern const char kDemoYamlStart[] asm("_binary_demo_yaml_start");
 extern const char kDemoYamlEnd[] asm("_binary_demo_yaml_end");
@@ -128,7 +129,8 @@ bool fsReady() {
   return ok;
 }
 
-bool readCache(const config::Fingerprint &want, config::Config &out) {
+// `want` null: accept any intact cache (card unreadable, keep what we had).
+bool readCache(const config::Fingerprint *want, config::Config &out) {
   if (!fsReady()) return false;
   File f = LittleFS.open(kCachePath, "r");
   if (!f) return false;
@@ -141,7 +143,7 @@ bool readCache(const config::Fingerprint &want, config::Config &out) {
   const size_t got = f.read(reinterpret_cast<uint8_t *>(&data[0]), n);
   f.close();
   config::Fingerprint fp;
-  return got == n && config::unpackCache(data, fp, out) && fp == want;
+  return got == n && config::unpackCache(data, fp, out) && (!want || fp == *want);
 }
 
 void writeCache(const config::Fingerprint &fp, const config::Config &cfg) {
@@ -192,17 +194,31 @@ Loaded load(app_logic::ConfigSource source) {
   const uint32_t t0 = millis();
   config::Fingerprint fp;
   const config_sd::Status st = config_sd::stat(fp);
-  if (st == config_sd::Status::Ok) {
-    Loaded l;
-    if (readCache(fp, l.cfg)) {
+  config::SdStat ss = config::SdStat::Problem;
+  if (st == config_sd::Status::Ok) ss = config::SdStat::Ok;
+  else if (st == config_sd::Status::NoCard) ss = config::SdStat::NoCard;
+  else if (st == config_sd::Status::NoFile) ss = config::SdStat::NoFile;
+  Loaded l;
+  const bool match = ss == config::SdStat::Ok && readCache(&fp, l.cfg);
+  const bool unreadable = ss == config::SdStat::NoCard || ss == config::SdStat::NoFile;
+  const bool present = match || (unreadable && readCache(nullptr, l.cfg));
+  switch (config::decideSource(ss, present, match)) {
+    case config::SourceAction::UseCache:
       l.source = "cache";
       if (l.cfg.hasConnection && fp.secretsSize == 0)
         Serial.print("CONFIG: warning=connection_in_config\n");
       Serial.printf("CONFIG: source=cache ms=%lu\n", (unsigned long)(millis() - t0));
       return l;
-    }
-  } else {
-    invalidateCache();  // no card / no file: a stale cache must not outlive its source
+    case config::SourceAction::KeepCache:
+      // Card unreadable: keep the cached config (real values), never the demo.
+      l.source = "cache_stale";
+      Serial.printf("CONFIG: source=cache_stale sd=%s ms=%lu\n", config_sd::statusText(st),
+                    (unsigned long)(millis() - t0));
+      return l;
+    case config::SourceAction::Demo:
+      Serial.printf("CONFIG: source=demo ms=%lu\n", (unsigned long)(millis() - t0));
+      return loadEmbeddedDemo("demo");
+    case config::SourceAction::ReadSd: break;
   }
   config_sd::LoadResult r = config_sd::load();
   boot::log("config_sd", config_sd::statusText(r.status));

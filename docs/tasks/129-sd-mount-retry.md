@@ -1,6 +1,6 @@
 # 129: Flaky SD mount must not load the demo
 
-Status: todo
+Status: PC part done (device check pending)
 Depends on: none
 UI spec: none
 Needs device: yes
