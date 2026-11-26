@@ -1,6 +1,6 @@
 # 127: Wake: show "updating" until fresh, then one refresh
 
-Status: todo
+Status: todo (spec accepted, variant B; starts after 126a is committed)
 Depends on: 120, 126 (pending look)
 UI spec: docs/ui/wake-updating.md (to write)
 Needs device: yes (look + timing; PC part first)
@@ -28,3 +28,6 @@ Out of scope: scheduled (non-interactive) wakes, sleep screen, connection speed 
   (check_mockups: 0 problems). Variant A (corner brackets + clock badge, fastest) recommended; B (greyed, quality). User picks.
 - Decisions (architect, 2026-11-26): the wake stale-look partial counts toward ghost debt by area (as 120's indicator
   partials); removing the stale look does not count as a changed widget for the >6 GC16 rule.
+- User 2026-11-26: variant B (greyed). Taps during updating go through as normal (shown at once, sent when connected).
+  Architect: a tapped widget during updating still gets the fastest partial (126 D2), over the greys (ghosting accepted);
+  the greyed wake look is one quality partial of the union rect.
