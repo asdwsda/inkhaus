@@ -30,7 +30,8 @@ void drawStatusBar(M5Canvas &c, const uistate::AppState &app, const StatusInfo &
     }
   } else if (st.link != Link::None) {
     const Icon icon = st.queued                         ? Icon::Hourglass  // task 120 (UNVERIFIED look on the panel)
-                      : st.link == Link::Online || st.link == Link::Ready ? Icon::Wifi
+                      : st.link == Link::Online ? Icon::Wifi
+                      : st.link == Link::Ready          ? Icon::Refresh  // task 127: `updating, taps ok`
                       : st.link == Link::NotReady       ? Icon::WifiJoin
                       : st.link == Link::ConnectingWifi ? Icon::WifiJoin
                       : st.link == Link::Fetching       ? Icon::CloudDown
@@ -270,7 +271,8 @@ void renderScreen(M5Canvas &c, const uistate::AppState &app, const StatusInfo &s
   for (const ui::Placement &pl : app.layout().widgets) {
     const bool inner = pl.index == ringIdx && app.focus().ringVisible && app.focus().mode == ui::FocusMode::Inner;
     if (pl.graph) drawGraphWidget(c, pl, app);
-    else drawWidget(c, pl, app.widgetData(pl.index), app.widgetTitle(pl.index), inner ? app.focus().inner : 0);
+    else drawWidget(c, pl, app.widgetData(pl.index), app.widgetTitle(pl.index), inner ? app.focus().inner : 0,
+               status.stale && std::find(status.staleSkip.begin(), status.staleSkip.end(), pl.index) == status.staleSkip.end());
   }
   drawPager(c, app);
   drawTabBar(c, app);

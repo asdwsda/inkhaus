@@ -50,6 +50,7 @@
 #include "wakelog.h"
 #include "wall_time.h"
 #include "ready_state.h"  // task 120
+#include "wake_updating.h"  // task 127
 #include <esp_heap_caps.h>
 
 // Seconds a network change waits for a user action still in flight before the session restarts.
@@ -96,6 +97,7 @@ void composeFrame();
 void drawSettingsFrame(present::Mode mode, uint32_t now);
 void logFetchApplied();
 void showFrame(uint32_t now);
+void prepareBootFrame();  // task 127: stale-look hints for present::bootFrame
 extern std::shared_ptr<volatile bool> g_histCancel;
 extern bool g_histWaitNet;
 extern bool g_histChanged;

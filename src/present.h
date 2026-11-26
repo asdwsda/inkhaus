@@ -74,6 +74,11 @@ void setGreyRegions(const std::vector<screen_track::Rect> &regions);
 // one is refreshed first and always with epd_fastest (black/white), even over greys. Call before show().
 void setTapRegions(const std::vector<screen_track::Rect> &regions);
 void setIndicatorRegions(const std::vector<screen_track::Rect> &regions);
+// Task 127 (UNVERIFIED on device): the next bootFrame() / Partial show() refreshes the union of its changed rects as ONE
+// refresh (the greyed wake look, and its removal when the fresh states arrive); the big-change full rule is skipped for
+// it (the caller decides about a full). Call before bootFrame() / show(); consumed by it.
+// reason: the PRESENT log reason of that refresh ("wake_stale" for the greyed look, "stale_end" for its removal).
+void unionNextShow(const char *reason = "wake_stale");
 // Task 123: the next show() (Partial only) refreshes just the changed rects that touch `r` (display coordinates), e.g.
 // the keypad code box after a key press; other changes stay unpushed and are caught by a later show(). Call before show().
 void limitNextShow(const screen_track::Rect &r);

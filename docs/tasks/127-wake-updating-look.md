@@ -1,6 +1,6 @@
 # 127: Wake: show "updating" until fresh, then one refresh
 
-Status: PC part done (firmware-dev 2026-11-26); device look UNVERIFIED, see docs/device-checks.md
+Status: PC part done (device check pending)
 Depends on: 120, 126 (pending look)
 UI spec: docs/ui/wake-updating.md (to write)
 Needs device: yes (look + timing; PC part first)
@@ -32,3 +32,4 @@ Out of scope: scheduled (non-interactive) wakes, sleep screen, connection speed 
   Architect: a tapped widget during updating still gets the fastest partial (126 D2), over the greys (ghosting accepted);
   the greyed wake look is one quality partial of the union rect.
 - Implemented (firmware-dev): lib/app_logic/src/wake_updating.{h,cpp} (state machine, budget, grey map, end-full rule), status label `updating, taps ok` + refresh icon replace the silent `ready` (wall_time.cpp, screen.cpp), grey pass + clock badge in src/render/widgets.cpp (`StatusInfo::stale`), union refresh `present::unionNextShow()` (bootFrame and show()), wiring in app_frame.cpp/main.cpp/app_loop.cpp, tests test/test_wake_updating. Greys reuse the album-art grey push path (touchesGrey), so they are real greys in a quality refresh.
+- Architect 2026-11-26: the quality grey partial adds no ghost debt (variant B), replacing the by-area note.

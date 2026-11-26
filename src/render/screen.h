@@ -2,6 +2,7 @@
 // Composes a whole frame into the canvas: status bar, tab bar, widgets, pager, focus ring, or the
 // config error screen.
 #include <string>
+#include <vector>
 
 #include "app_state.h"
 #include "draw.h"
@@ -18,6 +19,8 @@ struct StatusInfo {
   // Refresh label (one line in portrait, two in landscape); outdated = clock icon after it (STYLE.md 5.3).
   std::string label1, label2;
   bool outdated = false;
+  bool stale = false;   // task 127: wake "not fresh yet" look on the state widgets (greyed, clock badge)
+  std::vector<int> staleSkip;  // task 127: widget indices (shown tab) tapped during updating: not greyed
   bool queued = false;  // task 120: a tap waits (NotReady / Offline): hourglass icon instead of the link icon
   // Sleep pill (STYLE.md 5.6), drawn last, only in the frame that is on the panel while the device sleeps.
   // sleepKind: 0 none, 1 OFF (power off), 2 DEEP, 3 TAP (= app_logic::Indicator); sleepNextMin: local minute of

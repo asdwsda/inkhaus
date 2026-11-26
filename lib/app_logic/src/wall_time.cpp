@@ -104,7 +104,8 @@ Label statusLabel(Phase phase, int64_t lastOk, int64_t now, int32_t off, int ref
       else two("not ready", "connecting", "not ready, connecting");
       return l;  // no clock icon while connecting
     case Phase::Ready:
-      l.line1 = "ready";  // landscape: one line
+      // Task 127: ready and the first fetch still running = "updating" (the greyed wake look is on screen).
+      two("updating", "taps ok", "updating, taps ok");
       return l;
     case Phase::Demo: two("demo", "mode", "demo mode"); return l;
     case Phase::Online: return refreshLabel(lastOk, now, off, refreshMin, failed, landscape);

@@ -194,6 +194,7 @@ void setup() {
   present::setWakePolicy(app_logic::deferRefreshes(g_scheduled),
                          app_logic::firstFrameFull(g_scheduled, present::partialDebt(), s.refresh_interval_min > 0));
   present::setLogTab(g_app.shownTab());  // task 099: g_lastShownTab must be valid for the first tab change
+  prepareBootFrame();  // task 127
   present::bootFrame(boot::fallbackActive() || splashed, earlyClear ? &early : nullptr);  // after the splash: ghost-free full redraw
   // g_keepStatus stays set: updateStatus() clears it once the session leaves Connecting.
   boot::mark("first_draw");

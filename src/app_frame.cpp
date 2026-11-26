@@ -1,5 +1,6 @@
 // Status bar phase and frame composition / presentation. Split from main.cpp (task 124e).
 #include "app_internal.h"
+#include "render/widgets.h"  // task 127: staleEligible
 
 // Status bar phase (STYLE.md 5.3): never blank. Values restored from the cache (g_restoredEpoch, task 037)
 // count as the last good update until a fetch result replaces them.
@@ -8,6 +9,10 @@ bool g_keepStatus = false;  // task 058: the first frame after a deep-sleep wake
 // Task 120 (UNVERIFIED on device): wake-time ready indicator. Ready = Wi-Fi up and the session not Offline/AuthError
 // (there is no separate HA-reachable signal; the net lane sends queued commands as soon as Wi-Fi is up).
 static app_logic::ReadyTracker g_ready;
+// Task 127 (UNVERIFIED on device): the greyed "not fresh yet" look from the wake until the first fetch result or the
+// session giving up. g_staleShown = what the last composed frame showed (detects the end for the one end refresh).
+static app_logic::WakeUpdating g_wakeUpd;
+static bool g_staleShown = false;
 
 void updateStatus() {
   g_status.batteryPct = batteryPercent();
@@ -39,6 +44,7 @@ void updateStatus() {
     return;
   }
   bool queued = false;
+  g_status.stale = false;
   if (g_real && !g_demoMode) {
     app_logic::ReadyInputs in;
     in.interactive = !g_scheduled;
@@ -46,6 +52,17 @@ void updateStatus() {
     in.offline = phase == P::Offline || phase == P::AuthError;
     in.fetchDone = g_drv && g_drv->sessionDone();
     in.queuedTaps = g_drv ? int(g_drv->machine().queued()) : 0;
+    const bool wasStale = g_wakeUpd.stale();
+    if (g_wakeUpd.stale())
+      for (const uistate::Pending &p : g_app.pendingList()) g_wakeUpd.exclude(p.tab, p.widget);
+    g_status.stale = g_wakeUpd.step(in, g_drv && g_drv->lastFetchFailed());
+    g_status.staleSkip.clear();
+    for (const ui::Placement &pl : g_app.layout().widgets)
+      if (g_wakeUpd.excluded(g_app.shownTab(), pl.index)) g_status.staleSkip.push_back(pl.index);
+    if (wasStale != g_status.stale)
+      wakelog::logf("APP: wake_stale=%d end=%s look_refreshes=%d\n", g_status.stale ? 1 : 0,
+                    g_wakeUpd.ended() == app_logic::StaleEnd::Fresh ? "fresh" : g_wakeUpd.ended() == app_logic::StaleEnd::Timeout ? "timeout" : "-",
+                    g_wakeUpd.lookRefreshes());
     const app_logic::ReadyView v = g_ready.step(millis(), in);
     if (v.shown == app_logic::ReadyShown::NotReady) phase = P::NotReady;
     else if (v.shown == app_logic::ReadyShown::Ready) phase = P::Ready;
@@ -123,6 +140,25 @@ void logFetchApplied() {
                 (unsigned)g_app.store().size(), (unsigned)g_drv->lastChanged(), missing);
 }
 
+// Task 127: rects of the widgets drawn greyed in the shown frame. They hold real greys: a refresh touching one pushes
+// them (the present::setGreyRegions path of album art) instead of the thresholded black/white.
+static void addStaleRegions(std::vector<screen_track::Rect> &out) {
+  if (!g_status.stale) return;
+  for (const ui::Placement &pl : g_app.layout().widgets)
+    if (!pl.graph && !g_wakeUpd.excluded(g_app.shownTab(), pl.index) && render::staleEligible(g_app.widgetData(pl.index))) out.push_back({pl.rect.x, pl.rect.y, pl.rect.w, pl.rect.h});
+}
+
+// Task 127: before present::bootFrame (the wake frame): the greyed widgets push real greys, and the diff is refreshed as
+// ONE union rect instead of one quality refresh per changed tile group.
+void prepareBootFrame() {
+  g_staleShown = g_status.stale;
+  if (!g_status.stale) return;
+  std::vector<screen_track::Rect> greys;
+  addStaleRegions(greys);
+  present::setGreyRegions(greys);
+  present::unionNextShow();
+}
+
 void showFrame(uint32_t now) {
   if (settings_flow::active()) {
     present::setGreyRegions({});  // the settings screen has no album art
@@ -130,7 +166,14 @@ void showFrame(uint32_t now) {
     return;
   }
   composeFrame();
-  const bool full = g_app.takeFull();
+  bool full = g_app.takeFull();
+  const bool staleEnded = g_staleShown && !g_status.stale;
+  g_staleShown = g_status.stale;
+  if (staleEnded && !full) {
+    // The end of the greyed look: everything is redrawn in ONE refresh; more than 6 changed values make it a GC16 full.
+    if (g_wakeUpd.ended() == app_logic::StaleEnd::Fresh && app_logic::staleEndIsFull(g_drv ? int(g_drv->lastChanged()) : 0)) full = true;
+    else present::unionNextShow("stale_end");
+  }
   present::setLogTab(g_app.shownTab());
   sleepwake::saveTab(g_app.shownTab());  // task 091: a restart before the next sleep keeps the tab (writes only when it changed)
   {
@@ -146,6 +189,7 @@ void showFrame(uint32_t now) {
       const uistate::MediaWidgetLayout wl = uistate::mediaWidgetLayout(pl.rect.w, true);
       greys.push_back({pl.rect.x + wl.edge.x, pl.rect.y + wl.edge.y, wl.edge.w, wl.edge.h});
     }
+    addStaleRegions(greys);
     present::setGreyRegions(greys);
     present::setIndicatorRegions(indicatorRegions());
     std::vector<screen_track::Rect> taps;  // task 126 D2: widgets with an unconfirmed tap

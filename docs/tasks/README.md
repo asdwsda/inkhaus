@@ -125,7 +125,7 @@
 | 124 | [Refactors after 1.4.0](124-refactor-survey.md) | PC part done (a-e merged; device smoke test pending) | none |
 | 125 | [The tap that wakes the device is consumed](125-waking-tap-consumed.md) | PC part done (guard already existed; test added) | 120 |
 | 126 | [Instant tap feedback, rapid taps on several widgets](126-instant-taps.md) | PC part done (126a+b), device check pending | 116, 120 |
-| 127 | [Wake: show "updating" until fresh, then one refresh](127-wake-updating-look.md) | in progress (variant B, review) | 120, 126 |
+| 127 | [Wake: show "updating" until fresh, then one refresh](127-wake-updating-look.md) | PC part done, device check pending | 120, 126 |
 | 128 | [Debug log: lock the shared buffer](128-debug-log-lock.md) | in progress | none |
 | 129 | [Flaky SD mount must not load the demo](129-sd-mount-retry.md) | in progress | none |
 | 130 | [Service calls are never sent twice](130-no-double-send.md) | in progress | none |

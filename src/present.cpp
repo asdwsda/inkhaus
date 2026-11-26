@@ -335,6 +335,22 @@ bool touchesGrey(const Rect &r) {
   return false;
 }
 
+bool g_unionNext = false;  // task 127: unionNextShow()
+const char *g_unionReason = "wake_stale";
+const char *g_rectReason = nullptr;  // log reason of the union refresh while it is drawn
+struct RectReasonScope { ~RectReasonScope() { g_rectReason = nullptr; } };
+
+Rect unionOf(const std::vector<Rect> &rs) {
+  int x0 = rs[0].x, y0 = rs[0].y, x1 = rs[0].x + rs[0].w, y1 = rs[0].y + rs[0].h;
+  for (const Rect &r : rs) {
+    x0 = std::min(x0, r.x);
+    y0 = std::min(y0, r.y);
+    x1 = std::max(x1, r.x + r.w);
+    y1 = std::max(y1, r.y + r.h);
+  }
+  return {x0, y0, x1 - x0, y1 - y0};
+}
+
 std::vector<screen_track::Rect> g_tapRegions;  // task 126 D2: widgets showing a fresh tap (pending mark)
 
 bool isTapRect(const Rect &r) {
@@ -353,7 +369,7 @@ void refreshRect(const Rect &r, const char *tag, bool unknownPanel) {
   // confirm redraw follows with the normal rules). Not under a popup or art, not on an unknown panel.
   const bool tapFast = !unknownPanel && !g_modalOpening && !g_modal && !art && isTapRect(r);
   const bool grey = !tapFast && (unknownPanel || g_modalOpening || art || panelHasGrey(r));
-  const char *reason = tapFast ? "tap_fast" : unknownPanel ? "boot_unknown_panel" : g_modalOpening ? "modal" : art ? "art" : (grey ? "panel_has_grey" : "panel_bw");
+  const char *reason = tapFast ? "tap_fast" : unknownPanel ? "boot_unknown_panel" : g_modalOpening ? "modal" : g_rectReason ? g_rectReason : art ? "art" : (grey ? "panel_has_grey" : "panel_bw");
   Serial.printf("PRESENT: rect=%d,%d,%d,%d mode=%s reason=%s\n", r.x, r.y, r.w, r.h, grey ? "quality" : "fastest",
                 reason);
   if (grey) {
@@ -385,6 +401,11 @@ void closeRead() {
 }
 
 }  // namespace
+
+void unionNextShow(const char *reason) {
+  g_unionNext = true;
+  g_unionReason = reason;
+}
 
 void setTapRegions(const std::vector<screen_track::Rect> &regions) { g_tapRegions = regions; }
 
@@ -524,6 +545,10 @@ void setSleepScreenOnPanel(bool on) {
 void bootFrame(bool forceFull, const EarlyClear *early) {
   auto &d = M5.Display;
   g_lastShownTab = g_renderTab;
+  const bool unionBoot = g_unionNext;  // task 127: consumed here whichever way the first frame is drawn
+  g_unionNext = false;
+  RectReasonScope reasonScope;
+  g_rectReason = unionBoot ? g_unionReason : nullptr;
   settleEarlyClear();  // before anything is written to the controller
   // Task 101: the panel shows the sleep screen of the previous sleep (a scheduled wake keeps it until its own
   // sleep screen). Whichever way this first frame is drawn, the panel stops showing it.
@@ -614,6 +639,10 @@ void bootFrame(bool forceFull, const EarlyClear *early) {
   // after a wake) is far smaller than the status text; its refresh is done first. Not merged into one
   // union: the union of two distant rects is much larger and not clearly faster.
   std::vector<Rect> order(rects.begin(), rects.end());
+  if (unionBoot && order.size() > 1) {  // task 127: the wake look as ONE refresh
+    order = {unionOf(order)};
+    boot::log("boot_union", 1L);
+  }
   std::stable_sort(order.begin(), order.end(), [](const Rect &a, const Rect &b) { return a.w * a.h < b.w * b.h; });
   bool firstRect = true;
   for (const Rect &r : order) {
@@ -722,6 +751,10 @@ bool show(Mode mode, uint32_t now) {
   g_haveLimit = false;
   const bool exempt = g_modalOpening;
   const bool closing = g_modalClosing;
+  const bool unionShow = g_unionNext;  // task 127
+  g_unionNext = false;
+  RectReasonScope reasonScope;
+  g_rectReason = unionShow ? g_unionReason : nullptr;
   struct Clear { ~Clear() { g_modalOpening = false; g_modalClosing = false; g_lastShownTab = g_renderTab; } } clearExempt;
   if (g_deferred) {  // task 092: remember the change, draw nothing
     if (mode == Mode::Full || g_forceFull || closing) {
@@ -759,7 +792,11 @@ bool show(Mode mode, uint32_t now) {
   long area = 0;
   for (const Rect &r : rects) area += long(r.w) * long(r.h);
   const long screen = long(g_w) * long(g_h);
-  if (!exempt && area * 100 > screen * kBigChangePct) {
+  if (unionShow && rects.size() > 1) {
+    rects = {unionOf(rects)};
+    Serial.printf("APP: stale_union rect=%d,%d,%d,%d\n", rects[0].x, rects[0].y, rects[0].w, rects[0].h);
+  }
+  if (!exempt && !unionShow && area * 100 > screen * kBigChangePct) {
     boot::log("big_change_pct", area * 100 / screen);
     Serial.printf("APP: render tab=%d rects=%u mode=full\n", g_renderTab, (unsigned)rects.size());
     fullRefresh(false, "full_big_change");

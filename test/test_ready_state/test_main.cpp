@@ -113,7 +113,10 @@ void test_labels() {
   TEST_ASSERT_EQUAL_STRING("queued", l.line1.c_str());
   TEST_ASSERT_EQUAL_STRING("connecting", l.line2.c_str());
   l = statusLabel(Phase::Ready, ok, now, 0, 60, false, true);
-  TEST_ASSERT_EQUAL_STRING("ready", l.line1.c_str());
+  TEST_ASSERT_EQUAL_STRING("updating", l.line1.c_str());  // task 127: ready while the first fetch runs
+  TEST_ASSERT_EQUAL_STRING("taps ok", l.line2.c_str());
+  l = statusLabel(Phase::Ready, ok, now, 0, 60, false, false);
+  TEST_ASSERT_EQUAL_STRING("updating, taps ok", l.line1.c_str());
   TEST_ASSERT_TRUE(l.line2.empty());
   l = statusLabel(Phase::Offline, ok, now, 0, 60, true, false, true);
   TEST_ASSERT_EQUAL_STRING("offline, queued", l.line1.c_str());

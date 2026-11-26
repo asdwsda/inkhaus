@@ -9,6 +9,7 @@
 #include "media_widget.h"
 #include "energy_widget.h"  // task 109
 #include "text_fit.h"
+#include "wake_updating.h"  // task 127
 #include "weather_forecast_draw.h"
 #include "widget_view.h"
 
@@ -465,10 +466,58 @@ void drawVacuum(Ctx &x, const uistate::WidgetData &d, const std::string &title) 
                x.innerSub == i + 1);
 }
 
-}  // namespace
+// ---- task 127: wake "not fresh yet" look, variant B (greyed; UNVERIFIED on device) ------------------------------
+// The widget is drawn normally first; then every pixel is mapped black -> OFF grey (white stays), which greys the 2 px
+// frame, names, values, icons, button outlines and turns an INK fill into OFF grey with PAPER content, exactly the
+// spec's rules for B. A clock badge (OFF grey, PAPER on a filled widget) goes into the widget's badge slot.
+void drawStaleBadge(Ctx &x, const ui::Placement &pl, const uistate::WidgetData &d, bool filled) {
+  const int W = x.W();
+  const bool wide = x.r.w >= kCompactW;
+  int bx = W - 36, by = 57;
+  switch (d.type) {
+    case WidgetType::Light:
+    case WidgetType::Switch:
+    case WidgetType::Automation:
+    case WidgetType::BinarySensor:
+      if (W < kTinyW) { bx = W - 28; by = 6; }
+      break;
+    case WidgetType::Cover:
+    case WidgetType::Vacuum:
+      if (W < kCompactW) { bx = 71; by = 2; } else { bx = W - 264; by = 57; }
+      break;
+    case WidgetType::Climate:
+      if (W < kCompactW) { bx = 64; by = 2; } else { bx = W - 312; by = 24; }
+      break;
+    case WidgetType::Sensor:
+      if (pl.cellW >= 2) { bx = wide ? W - 224 : W - 36; by = wide ? 40 : 8; }  // 2x1 (value on the right)
+      break;
+    case WidgetType::Weather:
+      if (pl.cellW >= 2) { bx = W - 36; by = 8; }
+      break;
+    default: break;
+  }
+  drawBadge(x, bx, by, Icon::Clock, filled ? PAPER : OFFGREY);
+}
 
-void drawWidget(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData &data, const std::string &title,
-                int innerSub) {
+void applyStaleLook(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData &d) {
+  uint8_t *base = static_cast<uint8_t *>(c.getBuffer());
+  if (!base) return;
+  const int cw = int(c.width()), ch = int(c.height());
+  const int x0 = std::max(0, pl.rect.x), y0 = std::max(0, pl.rect.y);
+  const int x1 = std::min(cw, pl.rect.x + pl.rect.w), y1 = std::min(ch, pl.rect.y + pl.rect.h);
+  if (x1 <= x0 || y1 <= y0) return;
+  const int sx = std::min(cw - 1, pl.rect.x + pl.rect.w / 2), sy = std::min(ch - 1, pl.rect.y + 4);
+  const bool filled = base[size_t(sy) * size_t(cw) + size_t(sx)] < 128;  // INK fill (on state) reaches the top edge
+  for (int y = y0; y < y1; ++y) {
+    uint8_t *row = base + size_t(y) * size_t(cw);
+    for (int xx = x0; xx < x1; ++xx) row[xx] = app_logic::staleGrey(row[xx]);
+  }
+  Ctx x{c, pl.rect, 0};
+  if (!(d.type == WidgetType::Weather && isForecastWidget(d.cfg, pl.rect.w))) drawStaleBadge(x, pl, d, filled);
+}
+
+void drawWidgetNormal(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData &data, const std::string &title,
+                      int innerSub) {
   Ctx x{c, pl.rect, innerSub};
   switch (data.type) {
     case WidgetType::Cover: drawCover(x, data, title); break;
@@ -491,6 +540,37 @@ void drawWidget(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData 
     case WidgetType::Lock:
     case WidgetType::Garage: drawSecureWidget(c, pl.rect, data, title); break;
   }
+}
+
+}  // namespace
+
+bool staleEligible(const uistate::WidgetData &d) {
+  switch (d.type) {
+    case WidgetType::Light:
+    case WidgetType::Switch:
+    case WidgetType::Automation:
+    case WidgetType::BinarySensor:
+    case WidgetType::Cover:
+    case WidgetType::Climate:
+    case WidgetType::Vacuum:
+    case WidgetType::Sensor:
+    case WidgetType::Weather: break;
+    default: return false;
+  }
+  if (d.pending || d.optimistic || d.failed) return false;  // a tapped widget keeps its own (full INK) look
+  bool known = false, avail = false;
+  for (const EntityState *m : d.members) {
+    if (!m) continue;
+    known = true;
+    if (m->available) avail = true;
+  }
+  return !known || avail;  // loading (no state yet) counts; unavailable keeps its dotted look
+}
+
+void drawWidget(M5Canvas &c, const ui::Placement &pl, const uistate::WidgetData &data, const std::string &title,
+                int innerSub, bool stale) {
+  drawWidgetNormal(c, pl, data, title, innerSub);
+  if (stale && staleEligible(data)) applyStaleLook(c, pl, data);
 }
 
 }  // namespace render
