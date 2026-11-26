@@ -1,6 +1,6 @@
 # 133: Run all tests on every push
 
-Status: todo
+Status: done
 Depends on: none
 UI spec: none
 Needs device: no

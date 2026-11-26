@@ -126,12 +126,12 @@
 | 125 | [The tap that wakes the device is consumed](125-waking-tap-consumed.md) | PC part done (guard already existed; test added) | 120 |
 | 126 | [Instant tap feedback, rapid taps on several widgets](126-instant-taps.md) | PC part done (126a+b), device check pending | 116, 120 |
 | 127 | [Wake: show "updating" until fresh, then one refresh](127-wake-updating-look.md) | PC part done, device check pending | 120, 126 |
-| 128 | [Debug log: lock the shared buffer](128-debug-log-lock.md) | in progress | none |
-| 129 | [Flaky SD mount must not load the demo](129-sd-mount-retry.md) | in progress | none |
-| 130 | [Service calls are never sent twice](130-no-double-send.md) | in progress | none |
+| 128 | [Debug log: lock the shared buffer](128-debug-log-lock.md) | done | none |
+| 129 | [Flaky SD mount must not load the demo](129-sd-mount-retry.md) | PC part done, device check pending | none |
+| 130 | [Service calls are never sent twice](130-no-double-send.md) | done (device check of stale-socket codes pending) | none |
 | 131 | [Hang guard after setup and on fatal errors](131-hang-guard.md) | todo (after 127) | 127 |
 | 132 | [At most one GC16 full per scheduled wake](132-one-full-per-scheduled-wake.md) | todo (after 127) | 127 |
-| 133 | [Run all tests on every push](133-ci-on-push.md) | in progress | none |
+| 133 | [Run all tests on every push](133-ci-on-push.md) | done | none |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
