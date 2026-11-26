@@ -1,5 +1,7 @@
 #include "config_sd.h"
 
+#include "config_source.h"
+
 #include <Arduino.h>
 #include <M5Unified.h>
 #include <SD.h>
@@ -36,8 +38,17 @@ bool mount() {
   // Keep the display controller deselected while the card is accessed.
   pinMode(kPinCs, OUTPUT);
   digitalWrite(kPinCs, HIGH);
-  SPI.begin(kPinSck, kPinMiso, kPinMosi, kPinCs);
-  return SD.begin(kPinCs, SPI, kSdHz);
+  // A flaky mount (shared SPI bus, cold card) must not look like "no card": retry 3x.
+  return config::retry(
+      3,
+      [] {
+        SPI.begin(kPinSck, kPinMiso, kPinMosi, kPinCs);
+        if (SD.begin(kPinCs, SPI, kSdHz)) return true;
+        SD.end();
+        digitalWrite(kPinCs, HIGH);
+        return false;
+      },
+      [] { delay(60); });
 }
 
 void unmount() {
