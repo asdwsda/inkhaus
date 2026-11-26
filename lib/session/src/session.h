@@ -109,7 +109,7 @@ class SessionMachine {
   size_t queued() const { return queue_.size(); }
 
  private:
-  enum class Flight { None, Wifi, FetchAll, FetchConfirm, Call };
+  enum class Flight { None, Wifi, FetchAll, FetchConfirm };  // call_ is tracked apart (126b)
   struct Item {  // one queued/in-flight action for one entity
     std::string id;
     Action action = Action::LightToggle;
@@ -140,6 +140,7 @@ class SessionMachine {
   bool refresh_ = false;     // a manual full fetch is wanted
   bool render_ = false;      // a render is due at the end of this handle()
   Flight flight_ = Flight::None;
+  bool call_ = false;  // a CallService is in flight (independent of flight_)
   Status status_ = Status::Connecting;
   settings::Settings settings_;
   int64_t start_ms_ = 0;
