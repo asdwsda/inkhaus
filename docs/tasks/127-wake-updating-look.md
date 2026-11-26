@@ -24,3 +24,7 @@ Out of scope: scheduled (non-interactive) wakes, sleep screen, connection speed 
 - [ ] Device look check by the user.
 
 ## Notes
+- Spec written (ui-designer, 2026-11-26): docs/ui/wake-updating.md, mockups docs/ui/experiments/png/wake-updating-*.png
+  (check_mockups: 0 problems). Variant A (corner brackets + clock badge, fastest) recommended; B (greyed, quality). User picks.
+- Decisions (architect, 2026-11-26): the wake stale-look partial counts toward ghost debt by area (as 120's indicator
+  partials); removing the stale look does not count as a changed widget for the >6 GC16 rule.
