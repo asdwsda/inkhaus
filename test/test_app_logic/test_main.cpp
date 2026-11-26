@@ -1,5 +1,6 @@
 #include "brightness_intent.h"
 #include <unity.h>
+#include <algorithm>
 
 #include <cstring>
 #include <map>

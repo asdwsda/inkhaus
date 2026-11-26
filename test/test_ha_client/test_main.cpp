@@ -1,5 +1,7 @@
 #include <ArduinoJson.h>
 #include <unity.h>
+#include <algorithm>
+#include <functional>
 
 #include <deque>
 

@@ -1,4 +1,5 @@
 #include <unity.h>
+#include <algorithm>
 
 #include <algorithm>
 #include <cstring>

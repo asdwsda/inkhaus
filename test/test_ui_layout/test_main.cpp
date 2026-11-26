@@ -5,6 +5,7 @@
 #include <random>
 #include <set>
 #include <unity.h>
+#include <algorithm>
 
 #include "ui_layout.h"
 #include "text_fit.h"
