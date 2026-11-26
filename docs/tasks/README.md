@@ -124,7 +124,7 @@
 | 123 | [Alarm keypad: refresh only the code box](123-keypad-fast-refresh.md) | PC part done | 108 |
 | 124 | [Refactors after 1.4.0](124-refactor-survey.md) | PC part done (a-e merged; device smoke test pending) | none |
 | 125 | [The tap that wakes the device is consumed](125-waking-tap-consumed.md) | PC part done (guard already existed; test added) | 120 |
-| 126 | [Instant tap feedback, rapid taps on several widgets](126-instant-taps.md) | todo (investigating) | 116, 120 |
+| 126 | [Instant tap feedback, rapid taps on several widgets](126-instant-taps.md) | PC part done (126a+b), device check pending | 116, 120 |
 | 127 | [Wake: show "updating" until fresh, then one refresh](127-wake-updating-look.md) | todo (spec) | 120, 126 |
 
 ## Open items (not yet tasks, 2026-10-30)
