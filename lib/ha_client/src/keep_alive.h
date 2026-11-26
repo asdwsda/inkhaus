@@ -3,7 +3,8 @@
 // requests of a wake. Pure logic (no Arduino); the device supplies a RawHttp that holds the socket.
 //  - a request to another scheme://host:port drops the open connection first;
 //  - a reused connection that fails before any response (server closed it while idle) is dropped
-//    and the request is repeated once on a fresh connection;
+//    and the request is repeated once on a fresh connection, but only if it is idempotent (GET, or
+//    flagged so) or provably was not sent (task 130: a service call must never run twice);
 //  - close() drops the connection (before sleep).
 #include "http_transport.h"
 
@@ -25,6 +26,8 @@ class KeepAliveTransport : public HttpTransport {
   explicit KeepAliveTransport(RawHttp& raw) : raw_(raw) {}
   HttpResponse request(const std::string& method, const std::string& url,
                        const HttpHeaders& headers, const std::string& body) override;
+  HttpResponse request_ex(const std::string& method, const std::string& url, const HttpHeaders& headers,
+                          const std::string& body, bool idempotent) override;
   void close() override;
 
  private:

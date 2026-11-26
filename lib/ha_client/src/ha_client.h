@@ -74,7 +74,9 @@ class HaClient {
                         std::vector<EntityState>* states = nullptr);
 
  private:
-  HaResult post(const std::string& path, const std::string& body, std::string& response);
+  // idempotent: a read or repeatable write; only those fall back to the other URL after the request may have
+  // been sent (task 130). Others fall back only when the transport says nothing was sent.
+  HaResult post(const std::string& path, const std::string& body, std::string& response, bool idempotent);
 
   HttpTransport& transport_;
   std::string internal_;

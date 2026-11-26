@@ -106,6 +106,7 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
       // Same outcome as HTTPClient's own connect failure (HTTPC_ERROR_CONNECTION_REFUSED), without
       // a second attempt inside sendRequest.
       out.error = HTTPClient::errorToString(HTTPC_ERROR_CONNECTION_REFUSED).c_str();
+      out.not_sent = true;  // task 130: nothing was written
       drop();
       out.ms = millis() - start;
       if (wakelog::enabled())
@@ -159,6 +160,9 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
     // Failed while sending or before any response byte on a reused socket: the server most
     // likely closed it while idle (HTTPC_ERROR_CONNECTION_REFUSED..CONNECTION_LOST = -1..-5).
     out.stale = out.reused && code <= -1 && code >= -5;
+    // Task 130: only a connect failure or a header write that failed (-1, -2) provably sent nothing;
+    // payload/read errors (-3..-5, -11) may have reached the server. UNVERIFIED on device.
+    out.not_sent = code == HTTPC_ERROR_CONNECTION_REFUSED || code == HTTPC_ERROR_SEND_HEADER_FAILED;
   }
   // end() keeps the socket open when keep-alive is on and the server did not say "close"
   // (HTTPClient.cpp:384 disconnect(): "tcp keep open for reuse").

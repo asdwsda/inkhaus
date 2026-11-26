@@ -15,6 +15,7 @@ struct HttpResponse {
   bool too_large = false;  // body exceeded the size cap: not a connectivity failure
   bool reused = false;     // sent over an already open connection (keep-alive)
   bool stale = false;      // status == 0 and reused: the old connection failed before any response
+  bool not_sent = false;   // task 130: provably nothing reached the server (connect/header-write failure): always safe to resend
   uint32_t ms = 0;         // duration of the request
   std::string date;        // value of the Date response header ("" = absent), task 097
 };
@@ -24,6 +25,12 @@ class HttpTransport {
   virtual ~HttpTransport() = default;
   virtual HttpResponse request(const std::string& method, const std::string& url,
                                const HttpHeaders& headers, const std::string& body) = 0;
+  // Task 130: like request(), plus whether the call may be repeated after it may have reached the server
+  // (reads, idempotent writes). Default ignores the flag.
+  virtual HttpResponse request_ex(const std::string& method, const std::string& url, const HttpHeaders& headers,
+                                  const std::string& body, bool /*idempotent*/) {
+    return request(method, url, headers, body);
+  }
   // Streaming request (task 051): the body goes to `sink` chunk by chunk, no 64 KB cap; limits
   // from `lim`. Default: buffered request() replayed to the sink (fakes, transports without
   // streaming); the cap of request() then still applies.

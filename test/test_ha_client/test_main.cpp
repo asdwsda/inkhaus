@@ -279,6 +279,7 @@ struct FakeTransport : HttpTransport {
 
 static HttpResponse ok(const char* body = "{}") { HttpResponse r; r.status = 200; r.body = body; return r; }
 static HttpResponse timeout() { HttpResponse r; r.error = "timeout"; return r; }
+static HttpResponse refused() { HttpResponse r; r.error = "connection refused"; r.not_sent = true; return r; }
 static HttpResponse status(int s) { HttpResponse r; r.status = s; return r; }
 
 static const char* kInt = "http://ha.local:8123";
@@ -336,7 +337,7 @@ void test_client_internal_ok_no_external() {
 
 void test_client_fallback_and_remember() {
   FakeTransport t;
-  t.queue = {timeout(), ok(), ok()};
+  t.queue = {refused(), ok(), ok()};
   HaClient c(t, kInt, kExt, "T");
   ServiceCall call;
   build_service_call(Action::LightToggle, {"light.a"}, call);
@@ -370,6 +371,26 @@ void test_client_401_no_fallback() {
   TEST_ASSERT_EQUAL(HaError::Auth, f.result.error);
   TEST_ASSERT_EQUAL(1, t.calls.size());
   TEST_ASSERT_EQUAL_STRING("", c.remembered_base().c_str());
+}
+
+// Task 130: a service call that may have reached HA is never sent to the other URL.
+void test_service_call_timeout_not_resent() {
+  FakeTransport t;
+  t.queue = {timeout(), ok()};
+  HaClient c(t, kInt, kExt, "T");
+  ServiceCall call;
+  build_service_call(Action::LightToggle, {"light.a"}, call);
+  HaResult r = c.call_service(call);
+  TEST_ASSERT_EQUAL(HaError::Network, r.error);
+  TEST_ASSERT_EQUAL(1, t.calls.size());
+}
+
+void test_read_post_timeout_still_falls_back() {
+  FakeTransport t;
+  t.queue = {timeout(), ok()};
+  HaClient c(t, kInt, kExt, "T");
+  TEST_ASSERT_TRUE(c.fetch_states({"light.a"}).result.ok());
+  TEST_ASSERT_EQUAL(2, t.calls.size());
 }
 
 void test_client_all_fail_network_error() {
@@ -533,7 +554,7 @@ void test_client_fallback_edge_cases() {
   }
   {  // remembered external later fails -> falls back to internal, remembers it
     FakeTransport t;
-    t.queue = {timeout(), ok()};
+    t.queue = {refused(), ok()};
     HaClient c(t, kInt, kExt, "T");
     c.set_remembered(kExt);
     ServiceCall call;
@@ -767,11 +788,67 @@ void test_keep_alive_stale_connection_retried_once() {
   KeepAliveTransport k(raw);
   k.request("POST", "http://h/api/a", {}, "");
   raw.fail_next_reused = 1;
-  HttpResponse r = k.request("POST", "http://h/api/b", {}, "");
+  HttpResponse r = k.request("GET", "http://h/api/b", {}, "");
   TEST_ASSERT_EQUAL(200, r.status);  // transparent reconnect
   TEST_ASSERT_FALSE(r.reused);
   TEST_ASSERT_EQUAL(2, raw.connects);
   TEST_ASSERT_EQUAL(3, (int)raw.urls.size());
+}
+
+// Task 130: lost after write is retried for GET / idempotent only; not_sent always.
+struct LostRaw : RawHttp {
+  int sends = 0;
+  bool not_sent = false;
+  bool open = false;
+  HttpResponse send(const std::string&, const std::string&, const HttpHeaders&, const std::string&) override {
+    ++sends;
+    HttpResponse r;
+    r.reused = open;
+    if (sends == 1) {
+      open = true;
+      r.status = 200;
+      return r;
+    }
+    if (sends == 2) {
+      r.stale = true;
+      r.not_sent = not_sent;
+      r.error = "connection lost";
+      return r;
+    }
+    r.status = 200;
+    return r;
+  }
+  void drop() override { open = false; }
+};
+
+static int status_after_lost(const char* method, bool not_sent, bool idem, int* sends) {
+  LostRaw raw;
+  raw.not_sent = not_sent;
+  KeepAliveTransport k(raw);
+  k.request("GET", "http://h/a", {}, "");
+  int st = k.request_ex(method, "http://h/b", {}, "", idem).status;
+  *sends = raw.sends;
+  return st;
+}
+
+void test_keep_alive_lost_after_write_not_retried_for_post() {
+  int n = 0;
+  TEST_ASSERT_EQUAL(0, status_after_lost("POST", false, false, &n));
+  TEST_ASSERT_EQUAL(2, n);
+}
+
+void test_keep_alive_not_sent_post_retried() {
+  int n = 0;
+  TEST_ASSERT_EQUAL(200, status_after_lost("POST", true, false, &n));
+  TEST_ASSERT_EQUAL(3, n);
+}
+
+void test_keep_alive_get_and_idempotent_retried() {
+  int n = 0;
+  TEST_ASSERT_EQUAL(200, status_after_lost("GET", false, true, &n));
+  TEST_ASSERT_EQUAL(3, n);
+  TEST_ASSERT_EQUAL(200, status_after_lost("POST", false, true, &n));
+  TEST_ASSERT_EQUAL(3, n);
 }
 
 // ---- streaming history (task 051) ----
@@ -1199,6 +1276,11 @@ int main() {
   RUN_TEST(test_client_call_service_returns_states);
   RUN_TEST(test_keep_alive_reuses_one_connection);
   RUN_TEST(test_keep_alive_stale_connection_retried_once);
+  RUN_TEST(test_keep_alive_lost_after_write_not_retried_for_post);
+  RUN_TEST(test_keep_alive_not_sent_post_retried);
+  RUN_TEST(test_keep_alive_get_and_idempotent_retried);
+  RUN_TEST(test_service_call_timeout_not_resent);
+  RUN_TEST(test_read_post_timeout_still_falls_back);
   RUN_TEST(test_light_color_modes_and_dimmable);
   RUN_TEST(test_light_brightness_call);
   RUN_TEST(test_history_path);
