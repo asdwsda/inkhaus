@@ -95,7 +95,7 @@ Command make(Command::Type t) {
 // ---- State machine --------------------------------------------------------------------
 
 bool SessionMachine::busy() const {
-  return flight_ != Flight::None || !queue_.empty() || !calling_.empty() || !confirm_.empty();
+  return flight_ != Flight::None || call_ || !queue_.empty() || !calling_.empty() || !confirm_.empty();
 }
 
 void SessionMachine::mark(const std::vector<std::string>& ids, Mark m,
@@ -111,6 +111,7 @@ void SessionMachine::mark(const std::vector<std::string>& ids, Mark m,
 void SessionMachine::fail_terminal(Status st, std::vector<Command>& out) {
   dead_ = true;
   flight_ = Flight::None;
+  call_ = false;
   status_ = st;
   Command s = make(Command::Type::ShowStatus);
   s.status = st;
@@ -275,8 +276,8 @@ void SessionMachine::on_fetch_done(const Event& e, int64_t now, std::vector<Comm
 }
 
 void SessionMachine::on_service_done(const Event& e, int64_t now, std::vector<Command>& out) {
-  if (flight_ != Flight::Call || e.ticket != ticket_) return;
-  flight_ = Flight::None;
+  if (!call_ || e.ticket != ticket_) return;
+  call_ = false;
   if (e.error == HaError::None) {
     if (!e.changed_ids.empty()) render_ = true;  // the response already changed the store
     std::vector<std::string> confirmed;
@@ -315,8 +316,10 @@ void SessionMachine::on_service_done(const Event& e, int64_t now, std::vector<Co
 }
 
 void SessionMachine::pump(int64_t now, std::vector<Command>& out) {
-  if (dead_ || !online_ || flight_ != Flight::None) return;
-  if (!queue_.empty()) {
+  if (dead_ || !online_ || flight_ == Flight::Wifi) return;
+  // Task 126b: a user call never waits behind a fetch (FetchAll/FetchConfirm); only behind
+  // another call (one call in flight). The net lane serialises the actual requests.
+  if (!queue_.empty() && !call_) {
     // The leading run of identical actions goes out as one call (a group).
     const Item head = queue_.front();
     Command c = make(Command::Type::CallService);
@@ -336,9 +339,10 @@ void SessionMachine::pump(int64_t now, std::vector<Command>& out) {
     }
     queue_.erase(queue_.begin(), queue_.begin() + n);
     out.push_back(c);
-    flight_ = Flight::Call;
+    call_ = true;
     return;
   }
+  if (flight_ != Flight::None || call_) return;  // fetches go one at a time, after calls
   if (!fetched_ || refresh_) {  // queued actions went out first; the full fetch follows
     refresh_ = false;
     Command f = make(Command::Type::FetchStates);

@@ -900,10 +900,33 @@ void test_t019_tap_during_initial_fetch() {
   auto c = d.send(Event::wifi(true));
   TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
   c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
-  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
+  // 126b: the call goes out at once, not after the fetch
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
   TEST_ASSERT_TRUE(has_mark(c, Mark::Pending, "light.a"));
   c = d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "on")}));
-  // initial fetch already shows "on", but the call is still sent (idempotent)
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
+}
+
+// Task 126b: taps during FetchAll / FetchConfirm go out without waiting; taps during a Call
+// go out right after its response.
+void test_126b_taps_do_not_wait_for_fetches() {
+  Driver d;
+  d.start();
+  d.send(Event::wifi(true));  // FetchAll in flight
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
+  int t1 = find(c, C::CallService)->ticket;
+  // second tap during the call: queued, goes out right after the response
+  c = d.send(Event::user_action({"light.b"}, Action::LightTurnOff, "off"));
+  TEST_ASSERT_EQUAL(0, count(c, C::CallService));
+  c = d.send(Event::service_done(t1, HaError::None, {}, {}));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));
+  int t2 = find(c, C::CallService)->ticket;
+  d.send(Event::service_done(t2, HaError::None, {}, {}));  // no entity: confirm fetches follow
+  d.send(Event::fetch_done(HaError::None, {}, {es("light.a", "off"), es("light.b", "off")}));
+  c = d.advance(400);  // confirm due (300 ms) -> FetchConfirm in flight
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));
+  c = d.send(Event::user_action({"light.c"}, Action::LightTurnOn, "on"));
   TEST_ASSERT_EQUAL(1, count(c, C::CallService));
 }
 
@@ -927,6 +950,7 @@ void test_fuzz_invariants() {
   auto rnd = [&](uint32_t n) { seed = seed * 1664525u + 1013904223u; return (seed >> 8) % n; };
   for (int run = 0; run < 500; run++) {
     Driver d;
+    bool call_out = false;  // 126b: a call may overlap a fetch
     int out_kind = 0, out_ticket = 0, last_ticket = 0;  // 1 wifi, 2 fetch, 3 call
     bool slept = false;
     auto check = [&](const std::vector<Command>& c) {
@@ -939,9 +963,14 @@ void test_fuzz_invariants() {
         }
         if (c[i].type == C::ConnectWifi || c[i].type == C::FetchStates ||
             c[i].type == C::CallService) {
-          TEST_ASSERT_EQUAL_MESSAGE(0, out_kind, "second request while one in flight");
-          out_kind = c[i].type == C::ConnectWifi ? 1 : c[i].type == C::FetchStates ? 2 : 3;
-          if (out_kind == 3) {
+          if (c[i].type == C::CallService) {
+            TEST_ASSERT_FALSE_MESSAGE(call_out, "second call while one in flight");
+            call_out = true;
+          } else {
+            TEST_ASSERT_EQUAL_MESSAGE(0, out_kind, "second fetch/wifi while one in flight");
+            out_kind = c[i].type == C::ConnectWifi ? 1 : 2;
+          }
+          if (c[i].type == C::CallService) {
             TEST_ASSERT_TRUE(c[i].ticket > last_ticket);
             last_ticket = out_ticket = c[i].ticket;
           }
@@ -953,15 +982,24 @@ void test_fuzz_invariants() {
     for (int step = 0; step < 120; step++) {
       std::vector<Command> c;
       uint32_t r = rnd(10);
-      if (r < 3 && out_kind) {
-        int k = out_kind;
-        out_kind = 0;
-        if (k == 1) c = d.send(Event::wifi(rnd(5) != 0));
-        else if (k == 2)
-          c = d.send(Event::fetch_done(rnd(8) == 0 ? HaError::Network : HaError::None,
-                                       {"light.0"}, {es("light.0", rnd(2) ? "on" : "off")}));
-        else c = d.send(Event::service_done(out_ticket, rnd(8) == 0 ? HaError::Auth : HaError::None));
+      if (r < 3 && (out_kind || call_out)) {
+        bool err = false;
+        if (call_out && (!out_kind || rnd(2))) {
+          call_out = false;
+          err = rnd(8) == 0;
+          c = d.send(Event::service_done(out_ticket, err ? HaError::Auth : HaError::None));
+        } else if (out_kind == 1) {
+          out_kind = 0;
+          err = rnd(5) == 0;
+          c = d.send(Event::wifi(!err));
+        } else {
+          out_kind = 0;
+          err = rnd(8) == 0;
+          c = d.send(Event::fetch_done(err ? HaError::Network : HaError::None, {"light.0"},
+                                       {es("light.0", rnd(2) ? "on" : "off")}));
+        }
         // a terminal error leaves no request outstanding; the machine must agree
+        if (err) out_kind = 0, call_out = false;
       } else if (r < 5) {
         c = d.send(Event::user_action({"light." + std::to_string(rnd(4))},
                                       rnd(2) ? Action::LightToggle : Action::CoverOpen,
@@ -981,6 +1019,7 @@ void test_fuzz_invariants() {
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_happy_path_interactive);
+  RUN_TEST(test_126b_taps_do_not_wait_for_fetches);
   RUN_TEST(test_response_with_entity_confirms_without_fetch);
   RUN_TEST(test_response_without_entity_falls_back_to_fetch);
   RUN_TEST(test_queued_tap_call_before_initial_fetch);
