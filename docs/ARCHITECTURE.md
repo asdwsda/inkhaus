@@ -1,7 +1,7 @@
 # Architecture
 
-Owned by the architect. Status: first draft (2026-10-27), hardware not yet
-available, so power figures below are estimates to be measured.
+Owned by the architect. Started 2026-10-27; sections below are kept current, and later changes are in the
+decisions log at the end (newer entries win where they differ from older text).
 
 ## Goals
 - Battery-powered Home Assistant remote on the **original M5Paper** (ESP32-D0WDQ6-V3,
@@ -28,7 +28,8 @@ available, so power figures below are estimates to be measured.
 - **YAML config parsed with libyaml** (plain C, builds for both device and
   `native`, used directly without an Arduino wrapper), converted into an
   ArduinoJson document, then into the typed config model. Reuses one JSON code path.
-- Two PlatformIO envs: `m5paper` (device) and `native` (host unit tests).
+- PlatformIO envs: `m5paper` (release), `native` (host unit tests), and device variants `m5paper-debug`,
+  `m5paper-batterytest`, `m5paper-epdoff`, `m5paper-poweroff`, plus probes (`probe`, `epdtest`, `drifttest`).
 
 ## Home Assistant connection
 - **REST API with a long-lived access token** (`Authorization: Bearer`).
@@ -44,8 +45,8 @@ available, so power figures below are estimates to be measured.
   `internal_url` (http, LAN) and an optional `external_url` (https, e.g. Nabu Casa).
   Try internal first; on failure use external and remember which worked
   (RTC memory) for the next wake.
-- **TLS:** mbedTLS with the ESP-IDF CA bundle; TLS session resumption to cut
-  handshake cost on later wakes. TLS is only used for external URLs.
+- **TLS:** mbedTLS with the ESP-IDF CA bundle; TLS is only used for external URLs. One kept-alive connection
+  per wake; TLS session resumption across wakes was deferred (task 027).
 - **History (dashboard, later):** `/api/history/period` with
   `minimal_response` and `significant_changes_only`, downsampled on device.
   Rendered on device first; if measured cost is too high, switch to server-side
@@ -58,16 +59,17 @@ Two separate stores, different owners:
 
 | Store | Where | Who edits | Contents |
 |-------|-------|-----------|----------|
-| `config.yaml` | SD card | user (PC now, remotely later) | connection (Wi-Fi, HA URLs, token), pages, widgets, entity groups |
-| settings | NVS (`Preferences`) | user, on the device's settings screen | wake mode, refresh interval, idle timeout, ... |
+| `config.yaml` | SD card | user (PC, browser config editor) | tabs, widgets, entity groups (no secrets) |
+| `secrets.yaml` | SD card | user (PC, provisioning over USB) | Wi-Fi, HA URLs, token |
+| settings | NVS (`Preferences`) | user, on the device's settings screen | sleep mode, updates while asleep, keep awake, orientation, ... |
 
 - Config is parsed only when the file changes (size + mtime/hash). The parsed
   model is cached in flash (LittleFS) so a normal wake doesn't parse YAML.
-- **Credentials (Wi-Fi, HA token) live in the `connection:` section of
-  `config.yaml`.** `include/secrets.h` is a development fallback only (used when
-  the SD card has no connection section). Published builds read connection data
-  from SD. Known trade-off: the token is plaintext on the SD card; encryption or
-  on-device provisioning can come later.
+- **Credentials (Wi-Fi, HA URLs, token) live in `secrets.yaml` on the SD card** (decision 2026-10-28; an old
+  `connection:` section in config.yaml is treated as secret). `include/secrets.h` is a development fallback only.
+  Known trade-off: the token is plaintext on the SD card.
+- Every interactive and scheduled wake mounts the SD card to `stat` config.yaml (cost logged as `config_sd_ms`);
+  the YAML is only parsed when it changed. A failed mount must not replace the cached config (task 129).
 - A real `config.yaml` is gitignored and never read by agents (same rule as
   `secrets.h`). `config.example.yaml` in the repo root documents the schema and
   is used by tests.
@@ -89,6 +91,13 @@ Hardware wrappers are thin and live in `src/`.
 | `model` | lib | Entity state store: values, availability, last-updated, pending commands. |
 | `ui` | lib + src | Lib: layout engine (tabs, grid, sub-pages), hit-testing, rocker focus, dirty regions. Src: widget drawing through M5GFX. |
 | `input` | src + lib | Touch and rocker → abstract events (tap, long press, up/down/push). |
+| `session` | lib | Connection/fetch/call state machine (one call in flight, user calls never wait behind fetches). |
+| `app_logic` | lib | Pure app policies: net lanes, sleep/wake guards, ready state, wake updating look, wall time, ... |
+| `ui_state` | lib | Screen state: tabs, popups, pending/optimistic widgets, deferred taps. |
+| `screen_track` | lib | What is on the panel: frame diff, ghost debt, burst/tab clean plans. |
+| `history`, `forecast`, `calendar`, `media_art`, `device_report`, `sleep_screen` | lib | Per-feature fetch planning and parsing. |
+| `ota_logic`, `provision` | lib | Self-update checks and USB provisioning protocol. |
+| `settings_ui`, `widget_glue` | lib | Settings screen model; config widget → render data glue. |
 
 Dependency direction: `app` → everything; `ui` → `model`, `config`, `settings`;
 `ha_client` → `model`; nothing in `lib/` depends on `src/`.
@@ -122,7 +131,8 @@ Settings (and system screens like low battery / errors).
 ## Power and refresh strategy
 Average current budget for 1 month: 1150 mAh × ~0.8 usable / 720 h ≈ **1.3 mA**.
 
-**Wake mode (setting):**
+**Wake mode (setting; superseded 2026-11-02 by task 085: Sleep mode Power off / Deep sleep / Touch /
+Touch & rocker, Updates while asleep, Keep awake; see the decisions log). Original text:**
 - `button` (**default**): full power-off between sessions (release the M5Paper
   power-hold line). Wake by the rocker/power button or a BM8563 RTC alarm.
   Off current should be in the tens of µA.
@@ -191,7 +201,8 @@ Goal: non-technical users install a pre-built release without PlatformIO.
 - Stack: Rust + `espflash` crate (ESP32 flashing as a library) + `egui`/`eframe` GUI: one native binary per OS,
   no runtime, no Python. Reason: the only mature ESP flasher that is a library and links into a single static binary.
 - Lives in `tools/flasher/` (own Cargo project); the firmware build is untouched.
-- UI: one window: device status (auto-detected by USB VID:PID 1a86:55d4, CH9102), one big "Install" button,
+- UI: one window: device status (auto-detected by USB VID:PID: CH9102 1a86:55d4 and CP2104 10c4:ea60; both bridges
+  exist on M5Paper boards, the user's is a CP2104), one big "Install" button,
   progress bar, plain-language result. Port picker only if 0 or >1 devices are found.
 - Image: bootloader, partition table, boot_app0 and firmware flashed as separate segments, never a merged image from 0x0,
   so NVS (settings, Wi-Fi state, config cache) survives an update.
@@ -244,7 +255,7 @@ Goal: non-technical users install a pre-built release without PlatformIO.
 - 2026-10-27: All UI text and icons are positioned by their vertical center (M5GFX middle_* datums); specs give center lines, not top offsets. Reason: user-reported misalignment; one rule for spec, SVG (`dominant-baseline="central"`) and firmware.
 - 2026-10-27: Mockups are reviewed as PNGs rendered with DejaVu and must pass `tools/check_mockups.py`. Reason: SVG viewers substitute fonts (the user saw overflow that DejaVu renders didn't have); the designer can't render, so the check is automated.
 - 2026-10-27: Current UI (spec revision 4) is accepted as the baseline. Later design iterations may use the panel's full 16 grey levels (not only the 5 in STYLE.md). Reason: user direction; greyscale needs the slower GC16/quality EPD mode, so where greys are used must be weighed against refresh speed and ghosting.
-- 2026-10-27: SD card (user has a 32 GB card in the device) is the user-editable store for config and later assets (icons, extra fonts, images). The device imports changed files once into internal flash (LittleFS, partition size revisited when assets exist) and normal wakes never touch the SD card. Reason: SD access costs wake time and power and shares the SPI bus with the display. The card must be FAT32 (exFAT is not enabled in the framework).
+- 2026-10-27: SD card (user has a 32 GB card in the device) is the user-editable store for config and later assets (icons, extra fonts, images). The device imports changed files once into internal flash (LittleFS, partition size revisited when assets exist) and normal wakes never parse the YAML (they still mount the card to stat config.yaml; see Configuration). Reason: SD access costs wake time and power and shares the SPI bus with the display. The card must be FAT32 (exFAT is not enabled in the framework).
 - 2026-10-27: Boot config: `Serial.begin(115200)` before `M5.begin()`, `cfg.clear_display = false`. Reason: the probe showed Serial is off by default and the default boot clears the panel, which breaks "wake into the frozen screen".
 - 2026-10-27: Orientation mapping: portrait = rotation 0, landscape = rotation 1. Reason: measured; the earlier assumption that rotation 0 is landscape was wrong.
 - 2026-10-27: EPD modes: tap feedback and pending/confirmed changes use `epd_fastest` (~155 ms, black/white only); greys and text-heavy regions use `epd_text`/`epd_quality` (~0.9 s). Reason: measured timings; greys cost about 6x the time.

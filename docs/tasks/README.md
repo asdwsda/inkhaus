@@ -125,16 +125,15 @@
 | 124 | [Refactors after 1.4.0](124-refactor-survey.md) | PC part done (a-e merged; device smoke test pending) | none |
 | 125 | [The tap that wakes the device is consumed](125-waking-tap-consumed.md) | PC part done (guard already existed; test added) | 120 |
 | 126 | [Instant tap feedback, rapid taps on several widgets](126-instant-taps.md) | PC part done (126a+b), device check pending | 116, 120 |
-| 127 | [Wake: show "updating" until fresh, then one refresh](127-wake-updating-look.md) | todo (spec) | 120, 126 |
+| 127 | [Wake: show "updating" until fresh, then one refresh](127-wake-updating-look.md) | in progress (variant B, review) | 120, 126 |
+| 128 | [Debug log: lock the shared buffer](128-debug-log-lock.md) | in progress | none |
+| 129 | [Flaky SD mount must not load the demo](129-sd-mount-retry.md) | in progress | none |
+| 130 | [Service calls are never sent twice](130-no-double-send.md) | in progress | none |
+| 131 | [Hang guard after setup and on fatal errors](131-hang-guard.md) | todo (after 127) | 127 |
+| 132 | [At most one GC16 full per scheduled wake](132-one-full-per-scheduled-wake.md) | todo (after 127) | 127 |
+| 133 | [Run all tests on every push](133-ci-on-push.md) | in progress | none |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
 - User-approved (2026-10-29): Settings overview summary wording (OPEN-S5) and long Wi-Fi names shrink then "..." (OPEN-S6).
 - 056: a scan after a deep-sleep wake fails (aps=-2); rare now (scan only after a failed direct connect). Watch `event_ms=-1` in debug.log.
-
-## Resume point (2026-11-03, usage limit)
-- 104 merged (guide reference has `forecast`). Branches to merge next, both committed, PC part done:
-  `worktree-agent-a7543ff6d34094f59` (103 notifications, regenerated icon_data: re-run tools/gen_icons.py on conflicts)
-  and `worktree-agent-a10218e428c930f80` (106 media). Expect trivial conflicts in the widget enum, config_cache bound,
-  ui_layout, widgets.cpp, app_state, main.cpp; add their new config keys to docs/guide/09-config-reference.md.
-- Then: demo-data follow-ups for 103/104/106, tasks 105/107/108/109, guide visuals batch 2 (111), content (112).
