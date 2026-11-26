@@ -9,13 +9,19 @@ std::string url_origin(const std::string& url) {
 
 HttpResponse KeepAliveTransport::request(const std::string& method, const std::string& url,
                                          const HttpHeaders& headers, const std::string& body) {
+  return request_ex(method, url, headers, body, method == "GET");
+}
+
+HttpResponse KeepAliveTransport::request_ex(const std::string& method, const std::string& url,
+                                            const HttpHeaders& headers, const std::string& body,
+                                            bool idempotent) {
   const std::string origin = url_origin(url);
   if (!origin_.empty() && origin_ != origin) {
     raw_.drop();
     origin_.clear();
   }
   HttpResponse r = raw_.send(method, url, headers, body);
-  if (r.status == 0 && r.stale) {  // the idle connection was closed by the server: once more, fresh
+  if (r.status == 0 && r.stale && (idempotent || r.not_sent)) {  // the idle connection was closed by the server: once more, fresh
     raw_.drop();
     r = raw_.send(method, url, headers, body);
   }

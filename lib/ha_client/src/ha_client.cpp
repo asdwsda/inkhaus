@@ -24,7 +24,7 @@ void HaClient::set_remembered(const std::string& base_url) {
   if (b == internal_ || (!external_.empty() && b == external_)) remembered_ = b;
 }
 
-HaResult HaClient::post(const std::string& path, const std::string& body, std::string& response) {
+HaResult HaClient::post(const std::string& path, const std::string& body, std::string& response, bool idempotent) {
   std::vector<std::string> bases;
   for (const std::string& b : {remembered_, internal_, external_}) {
     if (b.empty() || std::find(bases.begin(), bases.end(), b) != bases.end()) continue;
@@ -36,7 +36,7 @@ HaResult HaClient::post(const std::string& path, const std::string& body, std::s
   r.error = HaError::Network;
   r.message = "no base URL configured";
   for (const std::string& base : bases) {
-    HttpResponse resp = transport_.request("POST", base + path, headers, body);
+    HttpResponse resp = transport_.request_ex("POST", base + path, headers, body, idempotent);
     if (resp.too_large) {  // not a connectivity problem: no fallback
       r.error = HaError::TooLarge;
       r.message = "response too large";
@@ -45,6 +45,7 @@ HaResult HaClient::post(const std::string& path, const std::string& body, std::s
     if (resp.status == 0) {  // connection error or timeout: try the next base
       r.error = HaError::Network;
       r.message = resp.error;
+      if (!idempotent && !resp.not_sent) return r;  // may have run on the server: never send it twice
       continue;
     }
     r.http_status = resp.status;
@@ -85,7 +86,7 @@ FetchResult HaClient::fetch_states(const std::vector<std::string>& ids) {
     }
     std::string resp;
     const uint32_t before = f.result.ms;
-    f.result = post("/api/template", body, resp);
+    f.result = post("/api/template", body, resp, true);
     f.result.ms += before;
     if (!f.result.ok()) {
       f.states.clear();
@@ -107,7 +108,7 @@ FetchResult HaClient::fetch_states(const std::vector<std::string>& ids) {
 HaResult HaClient::call_service(const ServiceCall& call, const std::vector<std::string>* wanted,
                                 std::vector<EntityState>* states) {
   std::string resp;
-  HaResult r = post("/api/services/" + call.domain + "/" + call.service, call.body, resp);
+  HaResult r = post("/api/services/" + call.domain + "/" + call.service, call.body, resp, false);
   if (r.error == HaError::TooLarge) {  // the call went out and answered 2xx-or-not unknown; body only too big
     r.error = HaError::None;           // to read: HA executes the call, the confirmation fetch checks it
     r.message.clear();
@@ -122,12 +123,12 @@ HaResult HaClient::call_service(const ServiceCall& call, const std::vector<std::
 
 HaResult HaClient::call_service_response(const std::string& domain, const std::string& service,
                                          const std::string& body, std::string& response) {
-  return post("/api/services/" + domain + "/" + service + "?return_response", body, response);
+  return post("/api/services/" + domain + "/" + service + "?return_response", body, response, true);
 }
 
 HaResult HaClient::post_state(const std::string& entity_id, const std::string& body) {
   std::string resp;
-  HaResult r = post("/api/states/" + entity_id, body, resp);
+  HaResult r = post("/api/states/" + entity_id, body, resp, true);
   if (r.error == HaError::TooLarge) {  // the post went out; only the answer was too big to keep
     r.error = HaError::None;
     r.message.clear();
