@@ -29,3 +29,23 @@ Out of scope: the wake look (task 127).
 - [ ] Device: 5 lights tapped within ~2 s all show pending at once and all switch (log `tap_to_call_ms`).
 
 ## Notes
+Investigation (tester, 2026-11-26; full evidence was in the session scratchpad, summary here):
+- Pending look is never drawn: `AppState::widgetData` sets only `d.optimistic`; `d.pending` is set only by the alarm
+  keypad (036 removed it). The call usually completes during the first (blocking) refresh, so the confirm frame is identical.
+- Blocking: `present::waitAndCheck` blocks the loop 150-900 ms per rect (quality after a full refresh because the panel
+  holds greys); a touch whose press+release falls inside the wait is lost (edge flags per `M5.update`); one input event
+  per loop pass; dimmable lights defer to release (a lost release lets the next press overwrite the armed point);
+  burst clean (GC16 1.5-2.5 s) is not gated on pending commands; session runs one Call at a time and FetchAll/FetchConfirm
+  in flight delay later taps.
+
+Decisions (architect, 2026-11-26):
+- D1 Input is never lost: touches are sampled into a small ring buffer also inside BUSY waits (poll in the wait loop);
+  the loop drains all buffered events per pass. Refreshes stay blocking otherwise (no async IT8951 use: too risky).
+- D2 Tap feedback is always `epd_fastest` of the tapped widget, also over greys (user accepts ugliness); the tapped rect is
+  refreshed first, before status rects. The pending mark (STYLE Pending: dashed 3 px ring/border, no hourglass needed)
+  is drawn while the driver mark is Pending; confirm/fail always redraws the widget (final look, normal mode rules).
+- D3 Burst clean and idle full wait until no command is pending and no tap for 2 s.
+- D4 Deferred tap: a new press while a point is armed fires the armed point first (never overwrite).
+- D5 Session: a user Call never waits behind FetchAll/FetchConfirm; queued taps go out as the next call right after the
+  current response (one connection, one in flight is kept). Confirm fetches don't hold the user slot.
+Split: 126a = D1-D4 (src/, lib/ui_state, render, present); 126b = D5 (lib/session only, worktree).
