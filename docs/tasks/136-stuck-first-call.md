@@ -1,6 +1,6 @@
 # 136: First service call hangs 8 s and fails all queued taps
 
-Status: todo
+Status: done (PC; device check open)
 Depends on: 126, 130
 UI spec: none
 Needs device: no (device check later)
@@ -28,3 +28,16 @@ Device log 2026-11-27 (rc1 debug), scratchpad copy in docs/tasks/assets/136-chec
 - [ ] `pio test -e native` and `pio run` pass.
 
 ## Notes
+
+Cause (UNVERIFIED, from docs/tasks/assets/136-checks.txt): in wakes 1/2 the first fetch ended at 229.37, then the
+background history-stats stream (type 3) started on the shared WiFiClient. `Raw::stream` uses `setReuse(false)`,
+so its `http_.end()` closes the keep-alive socket. A tap at 232.37 made the stats stream yield (`net_yield`), so
+the call found no open socket and connected anew (`reused=0`, tcp 15 ms, request written). HA did not answer for
+8 s; the requeued stats query then took 9.7 s (364 ms in wake 3), so HA was most likely busy (stats/template
+work, perhaps the aborted stream's query), not the socket. Wake 3 had no stream between fetch and call, so the
+socket was reused. The 8 s read timeout then ended the call as `Network`, which `SessionMachine` treated as
+terminal (Offline + all queued marked failed).
+Changes: session: a call `Network` error fails only that call (`call_net_fails_`), queued calls still go out, a
+refresh fetch follows, Offline only on a 2nd consecutive call failure or a failed fetch. Transport: service-call
+POSTs use a 4 s read timeout; new log `NETT: new_conn why=first|drop|stream call=<0/1> code=<n>` settles the
+socket cause. No-double-send rules (130) untouched. Possible later fix: give streams their own WiFiClient.

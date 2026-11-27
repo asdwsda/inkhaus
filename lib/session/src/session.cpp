@@ -225,6 +225,7 @@ void SessionMachine::on_fetch_done(const Event& e, int64_t now, std::vector<Comm
     fail_terminal(e.error == HaError::Auth ? Status::AuthError : Status::Offline, out);
     return;
   }
+  call_net_fails_ = 0;  // the link answered
   if (!e.changed_ids.empty()) render_ = true;
   if (f == Flight::FetchAll) {
     fetched_ = true;
@@ -279,6 +280,7 @@ void SessionMachine::on_service_done(const Event& e, int64_t now, std::vector<Co
   if (!call_ || e.ticket != ticket_) return;
   call_ = false;
   if (e.error == HaError::None) {
+    call_net_fails_ = 0;
     if (!e.changed_ids.empty()) render_ = true;  // the response already changed the store
     std::vector<std::string> confirmed;
     for (Item& it : calling_) {
@@ -305,9 +307,19 @@ void SessionMachine::on_service_done(const Event& e, int64_t now, std::vector<Co
     mark(confirmed, Mark::Confirmed, out);
     return;
   }
-  if (e.error == HaError::Auth || e.error == HaError::Network) {
-    fail_terminal(e.error == HaError::Auth ? Status::AuthError : Status::Offline, out);
+  if (e.error == HaError::Auth) {
+    fail_terminal(Status::AuthError, out);
     return;
+  }
+  if (e.error == HaError::Network) {
+    // Task 136: one call timing out (HA busy, socket stalled) fails only that call's widgets. The
+    // queued calls are still sent and a full fetch checks the link; Offline needs a second
+    // consecutive failure of a call, or the failing fetch.
+    if (++call_net_fails_ >= kCallNetFailsOffline) {
+      fail_terminal(Status::Offline, out);
+      return;
+    }
+    refresh_ = true;
   }
   std::vector<std::string> ids;
   for (const Item& it : calling_) ids.push_back(it.id);
