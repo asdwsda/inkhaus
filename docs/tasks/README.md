@@ -136,6 +136,7 @@
 | 135 | [Battery percent and low-battery shutdown from resting voltage](135-battery-low-limit.md) | todo (waits for logs) | none |
 | 136 | [First service call hangs 8 s and fails all queued taps](136-stuck-first-call.md) | PC part done, device check pending | 126, 130 |
 | 137 | [Prefer the clearly stronger access point](137-prefer-strong-ap.md) | done | 134 |
+| 138 | [Review leftovers L5, L7, L8](138-review-low-cleanup.md) | todo | none |
 
 ## Open items (not yet tasks, 2026-10-30)
 - 035: measure standby current before deciding on GT911 sleep (research in 035 Notes; no safe wake found).
