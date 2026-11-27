@@ -1009,9 +1009,66 @@ void test_126b_call_error_while_confirm_fetch_outstanding() {
   int t2 = find(c, C::CallService)->ticket;
   c = d.send(Event::service_done(t2, HaError::Network, {}, {}));
   TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.b"));
-  TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.a"));  // its confirm is dropped too
-  c = d.send(Event::fetch_done(HaError::None, {}, {es("light.a", "on")}));  // late: ignored
-  TEST_ASSERT_FALSE(has_mark(c, Mark::Confirmed, "light.a"));
+  // Task 136: one call network error is not terminal; the running confirm fetch still counts.
+  TEST_ASSERT_FALSE(has_mark(c, Mark::Failed, "light.a"));
+  c = d.send(Event::fetch_done(HaError::None, {}, {es("light.a", "on")}));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Confirmed, "light.a"));
+}
+
+// Task 136: call 1 times out; queued calls 2..4 are still sent, only call 1's widget fails, no Offline.
+void test_136_call_timeout_keeps_queued_calls() {
+  Driver d;
+  online(d);
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  int t1 = find(c, C::CallService)->ticket;
+  d.send(Event::user_action({"light.b"}, Action::SwitchTurnOn, "on"));
+  d.send(Event::user_action({"light.c"}, Action::LightTurnOff, "off"));
+  d.send(Event::user_action({"light.d"}, Action::SwitchTurnOff, "off"));
+  c = d.send(Event::service_done(t1, HaError::Network));
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.a"));
+  TEST_ASSERT_EQUAL(0, count(c, C::ShowStatus));
+  TEST_ASSERT_EQUAL((int)Status::Online, (int)d.m.status());
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));  // call 2 goes out at once
+  for (const char* id : {"light.b", "light.c", "light.d"}) TEST_ASSERT_FALSE(has_mark(c, Mark::Failed, id));
+  int t = find(c, C::CallService)->ticket;
+  c = d.send(Event::service_done(t, HaError::None, {}, {es("light.b", "on")}));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));  // call 3
+  t = find(c, C::CallService)->ticket;
+  c = d.send(Event::service_done(t, HaError::None, {}, {es("light.c", "off")}));
+  TEST_ASSERT_EQUAL(1, count(c, C::CallService));  // call 4
+  t = find(c, C::CallService)->ticket;
+  c = d.send(Event::service_done(t, HaError::None, {}, {es("light.d", "off")}));
+  TEST_ASSERT_EQUAL((int)Status::Online, (int)d.m.status());
+  TEST_ASSERT_EQUAL(1, count(c, C::FetchStates));  // link check after the last queued call
+}
+
+void test_136_two_call_network_errors_go_offline() {
+  Driver d;
+  online(d);
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  d.send(Event::user_action({"light.b"}, Action::SwitchTurnOn, "on"));
+  c = d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::Network));
+  c = d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::Network));
+  TEST_ASSERT_EQUAL((int)Status::Offline, (int)d.m.status());
+  TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.b"));
+}
+
+// Review fix: the retry after Offline starts with a clean call-failure count.
+void test_136_retry_after_offline_resets_call_fails() {
+  Driver d;
+  online(d);
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  d.send(Event::user_action({"light.b"}, Action::SwitchTurnOn, "on"));
+  c = d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::Network));
+  d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::Network));
+  TEST_ASSERT_EQUAL((int)Status::Offline, (int)d.m.status());
+  c = d.send(Event::refresh());
+  TEST_ASSERT_EQUAL(1, count(c, C::ConnectWifi));
+  c = d.send(Event::wifi(true));
+  d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "off")}));
+  c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  c = d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::Network));
+  TEST_ASSERT_TRUE((int)d.m.status() != (int)Status::Offline);
 }
 
 void test_fuzz_invariants() {
@@ -1136,6 +1193,9 @@ int main(int, char**) {
   RUN_TEST(test_hard_cap_with_continuous_input_is_not_hit);
   RUN_TEST(test_auth_error_on_fetch_no_retry_and_marks_queue_failed);
   RUN_TEST(test_action_during_confirm_supersedes_it);
+  RUN_TEST(test_136_call_timeout_keeps_queued_calls);
+  RUN_TEST(test_136_two_call_network_errors_go_offline);
+  RUN_TEST(test_136_retry_after_offline_resets_call_fails);
   RUN_TEST(test_fuzz_invariants);
   RUN_TEST(test_t019_opposite_tap_while_first_call_in_flight);
   RUN_TEST(test_t019_toggle_then_explicit_last_wins);

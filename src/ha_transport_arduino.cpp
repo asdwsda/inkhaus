@@ -17,6 +17,12 @@ uint32_t net_timing_tls_ms();  // src/net_timing.cpp
 void net_timing_tls_reset();
 
 namespace {
+// Task 136: why the last connection was closed, logged when the next request needs a new one.
+const char* g_closeWhy = "first";
+// Task 136: first-byte/read timeout for service calls (HA answers them in well under a second; the
+// default 8 s stalled the taps behind a call that got no answer). A call is never resent (task 130).
+constexpr uint32_t kCallReadTimeoutMs = 4000;
+
 // Stream adapter feeding HTTPClient::writeToStream into a BodySink. A refused
 // write returns 0 (short write); HTTPClient retries once, gets 0 again and
 // aborts with HTTPC_ERROR_STREAM_WRITE, which request() maps via the sink flags.
@@ -117,7 +123,16 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
   }
 
   http_.setConnectTimeout(connect_timeout_ms_);
-  http_.setTimeout(read_timeout_ms_);
+  const bool isCall = method == "POST" && url.find("/api/services/") != std::string::npos;
+  // Short read timeout only for plain calls of fast domains (task 136); scripts, covers, return_response keep the old one.
+  bool shortTimeout = false;
+  if (isCall && url.find("return_response") == std::string::npos) {
+    for (const char* dom : {"light", "switch", "fan", "input_boolean", "lock", "scene"}) {
+      const std::string pre = std::string("/api/services/") + dom + "/";
+      if (url.find(pre) != std::string::npos) shortTimeout = true;
+    }
+  }
+  http_.setTimeout(shortTimeout && kCallReadTimeoutMs < read_timeout_ms_ ? kCallReadTimeoutMs : read_timeout_ms_);
   http_.setReuse(true);
   if (!http_.begin(*client, url.c_str())) {
     out.reused = false;
@@ -173,10 +188,14 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
     wakelog::logf("NETT: dns=%u tcp=%u tls=%u ttfb=%u total=%u reused=%d\n", (unsigned)dns_ms,
                   (unsigned)(conn_ms > tls_ms ? conn_ms - tls_ms : 0), (unsigned)tls_ms, (unsigned)ttfb_ms,
                   (unsigned)out.ms, out.reused ? 1 : 0);
+  // Task 136: settles why a call got a new socket (stream = a history/art stream closed the shared one).
+  if (!out.reused) Serial.printf("NETT: new_conn why=%s call=%d code=%d\n", g_closeWhy, isCall ? 1 : 0, code);
+  g_closeWhy = "none";
   return out;
 }
 
 void ArduinoHttpTransport::Raw::drop() {
+  g_closeWhy = "drop";
   plain_.stop();
   secure_.stop();
 }
@@ -226,6 +245,7 @@ StreamResult ArduinoHttpTransport::Raw::stream(const std::string& method, const 
     out.error = HTTPClient::errorToString(code).c_str();
   }
   http_.end();
+  g_closeWhy = "stream";  // reuse(false): end() closed the shared socket
   http_.setReuse(true);
   out.ms = millis() - start;
   return out;

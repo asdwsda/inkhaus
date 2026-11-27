@@ -25,6 +25,7 @@ enum class Mark { Pending, Confirmed, Failed };
 
 constexpr int64_t kConfirmDelayMs = 300;  // confirmation fetch after a successful call whose response lacked the entity
 constexpr int64_t kRetryDelayMs = 1000;   // between confirmation retries
+constexpr int kCallNetFailsOffline = 2;   // task 136: consecutive call network failures before Offline
 constexpr int kConfirmRetries = 2;        // extra fetches after the first one
 
 struct Event {
@@ -135,6 +136,7 @@ class SessionMachine {
   bool started_ = false;
   bool sleeping_ = false;
   bool online_ = false;      // Wi-Fi connected
+  int call_net_fails_ = 0;   // consecutive service calls that failed with a network error
   bool dead_ = false;        // offline/auth error: no more requests
   bool fetched_ = false;     // initial full fetch done
   bool refresh_ = false;     // a manual full fetch is wanted
