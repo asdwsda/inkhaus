@@ -1,0 +1,94 @@
+[   1.00] BOOT: serial_rx_buffer=4096
+[   1.00] BOOT: hold_released=1
+[   1.00] BOOT: t_pre_begin_ms=0
+[   1.00] BOOT: t_boot_abs_ms=494
+[   1.00] BOOT: reset_reason_early=poweron
+[   1.00] BOOT: crash_count=0
+[   1.00] BOOT: wdt_timeout_s=15
+[   1.00] BOOT: wdt_init_rc=0
+[   1.00] BOOT: wdt_effective_ms=15000
+[   2.00] BOOT: controller_id=62915100
+[   2.00] BOOT: dbg_after_cfgbus 1500
+[   2.20] BOOT: dbg_before_panel_init reset=0 1761
+[   2.20] BOOT: dbg_after_panel_init 1769
+[   2.20] BOOT: dbg_before_touch 1769
+[   2.20] BOOT: touch_init=ok
+[   2.20] BOOT: dbg_before_m5begin 1833
+[   2.40] BOOT: start=noreset
+[   2.40] BOOT: controller=cold
+[   2.40] BOOT: controller_ready_wait_ms=856
+[   2.40] BOOT: display_start_ms=1328
+[   2.40] BOOT: m5_begin_rest_ms=18
+[   2.40] BOOT: m5_begin_total_ms=1346
+[   2.40] BOOT: t_post_begin_ms=1369
+[   2.40] BOOT: fw=1.5.0-rc1 debug | f5ad64f | 2026-11-27
+[   2.40] WAKE: reason=cold_boot reset=poweron pin=none rtc_flag=0 marker=0 indicator_on_panel=none usb_rx=1 slept=- t_ms=1869
+[   2.40] BOOT: battery_limit_mv=3844 learned=1
+[   2.40] HA: sht30 ok=1 temp_x10=266 hum_x10=422 ms=21
+[   2.40] WAKELOG: result=ok wrote=1 sd_ms=32
+[   2.40] BOOT: t_settings_ms=1464
+[   2.40] BOOT: psram_free_before=4188011
+[   2.60] BOOT: frame_alloc=1
+[   2.60] BOOT: psram_free=2632751
+[   2.80] BOOT: record=ignored_forced
+[   2.80] BOOT: record_invalidated=1
+[   3.61] PRESENT: refresh=full_white mode=1 rect=0,0,540,960 call_ms=6 wait_ms=755
+[   4.41] PRESENT: refresh=full_content mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[   4.41] BOOT: record_saved=1
+[   4.41] BOOT: draw=full
+[   4.41] BOOT: present_bst_end=1
+[   4.41] BOOT: splash=1
+[   4.61] CONFIG: source=cache ms=67
+[   4.61] BOOT: config_source=cache
+[   4.61] MEM: after_config int_free=244148 int_min=238704 int_largest=110580 psram_free=2627183
+[   4.61] MEM: before_app_init int_free=244148 int_min=238704 int_largest=110580 psram_free=2627183
+[   4.61] MEM: after_app_init int_free=241560 int_min=236324 int_largest=110580 psram_free=2624831
+[   4.61] BOOT: mode=real
+[   4.61] STATECACHE: restore source=flash entities=19 epoch=1795768552 ms=24
+[   4.61] MEM: after_restore int_free=225992 int_min=218896 int_largest=110580 psram_free=2624219
+[   4.61] APP: graph_cache n=1 ms=34
+[   4.61] MEM: after_graphs int_free=225812 int_min=218896 int_largest=110580 psram_free=2614747
+[   4.61] BOOT: t_config_ms=3694
+[   4.61] MEM: before_net_begin int_free=225812 int_min=218896 int_largest=110580 psram_free=2614747
+[   4.61] APP: net_task started=1
+[   4.61] APP: ntp not_needed
+[   4.61] BOOT: t_wifi_start_ms=3709
+[   4.61] MEM: session_start int_free=202060 int_min=201872 int_largest=110580 psram_free=2611787
+[   4.61] APP: start wake=0 mv=4212 clock=ok
+[   4.61] APP: cmd status=connecting
+[   4.61] APP: cmd connect_wifi
+[   4.81] NET: phase=scan profiles=2 start_ret=-1
+[   4.81] APP: wake_stale=1 end=- look_refreshes=1
+[   5.01] BOOT: t_render_ms=3977
+[   6.01] BOOT: record=ignored_forced
+[   6.01] BOOT: record_invalidated=1
+[   6.61] PRESENT: refresh=full_white mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[   7.41] PRESENT: refresh=full_content mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[   7.61] BOOT: record_saved=1
+[   7.61] BOOT: draw=full
+[   7.61] BOOT: present_bst_end=1
+[   7.61] BOOT: t_first_draw_ms=6609
+[   7.61] BOOT: version=017
+[   7.61] BOOT: orientation=0
+[   7.61] BOOT: reset_reason=poweron
+[   7.61] BOOT: battery_mv=4212
+[   7.61] BOOT: charging=2
+[   7.61] BOOT: settle_bst_end=1
+[   7.61] NET: scan_done aps=11 found=1 pick=1 ms=2819 event_ms=2361
+[   7.61] NET: phase=begin profile=1 ssid_len=3 ssid_pre=K1
+[   7.61] NET: cache=hit failures=0
+[   7.61] NET: phase=attempt_cached ch=6 lease=1
+[   7.81] NET: auth_failed retry=1
+[   7.81] NET: phase=attempt_scan
+[   7.81] NET: begin_failed attempt=scan
+[   7.81] NET: phase=failed connect_ms=192
+[   7.81] APP: wifi failed
+[   7.81] APP: cmd status=offline
+[   7.81] APP: wake_stale=0 end=timeout look_refreshes=2
+[   8.01] APP: render tab=0 rects=6 mode=partial
+[   8.01] APP: stale_union rect=16,16,508,620
+[   8.01] BOOT: record_invalidated=1
+[   8.01] PRESENT: rect=16,16,508,620 mode=quality reason=stale_end
+[   8.81] PRESENT: refresh=partial mode=1 rect=16,16,508,620 call_ms=6 wait_ms=452
+[   8.81] BOOT: present_bst_end=1
+[   9.81] BOOT: record_saved=1
