@@ -155,6 +155,7 @@ void SessionMachine::on_refresh(int64_t now, std::vector<Command>& out) {
     dead_ = false;
     online_ = false;
     fetched_ = false;
+    call_net_fails_ = 0;
     status_ = Status::Connecting;
     Command s = make(Command::Type::ShowStatus);
     s.status = Status::Connecting;

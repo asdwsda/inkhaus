@@ -124,7 +124,15 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
 
   http_.setConnectTimeout(connect_timeout_ms_);
   const bool isCall = method == "POST" && url.find("/api/services/") != std::string::npos;
-  http_.setTimeout(isCall && kCallReadTimeoutMs < read_timeout_ms_ ? kCallReadTimeoutMs : read_timeout_ms_);
+  // Short read timeout only for plain calls of fast domains (task 136); scripts, covers, return_response keep the old one.
+  bool shortTimeout = false;
+  if (isCall && url.find("return_response") == std::string::npos) {
+    for (const char* dom : {"light", "switch", "fan", "input_boolean", "lock", "scene"}) {
+      const std::string pre = std::string("/api/services/") + dom + "/";
+      if (url.find(pre) != std::string::npos) shortTimeout = true;
+    }
+  }
+  http_.setTimeout(shortTimeout && kCallReadTimeoutMs < read_timeout_ms_ ? kCallReadTimeoutMs : read_timeout_ms_);
   http_.setReuse(true);
   if (!http_.begin(*client, url.c_str())) {
     out.reused = false;
@@ -182,6 +190,7 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
                   (unsigned)out.ms, out.reused ? 1 : 0);
   // Task 136: settles why a call got a new socket (stream = a history/art stream closed the shared one).
   if (!out.reused) Serial.printf("NETT: new_conn why=%s call=%d code=%d\n", g_closeWhy, isCall ? 1 : 0, code);
+  g_closeWhy = "none";
   return out;
 }
 

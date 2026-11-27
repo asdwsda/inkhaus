@@ -41,3 +41,6 @@ Changes: session: a call `Network` error fails only that call (`call_net_fails_`
 refresh fetch follows, Offline only on a 2nd consecutive call failure or a failed fetch. Transport: service-call
 POSTs use a 4 s read timeout; new log `NETT: new_conn why=first|drop|stream call=<0/1> code=<n>` settles the
 socket cause. No-double-send rules (130) untouched. Possible later fix: give streams their own WiFiClient.
+Review fixes: retry after Offline resets `call_net_fails_` (native test added); the 4 s read timeout applies only to plain
+light/switch/fan/input_boolean/lock/scene calls (not return_response, not other domains); `g_closeWhy` reset after the
+new_conn log.

@@ -1053,6 +1053,24 @@ void test_136_two_call_network_errors_go_offline() {
   TEST_ASSERT_TRUE(has_mark(c, Mark::Failed, "light.b"));
 }
 
+// Review fix: the retry after Offline starts with a clean call-failure count.
+void test_136_retry_after_offline_resets_call_fails() {
+  Driver d;
+  online(d);
+  auto c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  d.send(Event::user_action({"light.b"}, Action::SwitchTurnOn, "on"));
+  c = d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::Network));
+  d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::Network));
+  TEST_ASSERT_EQUAL((int)Status::Offline, (int)d.m.status());
+  c = d.send(Event::refresh());
+  TEST_ASSERT_EQUAL(1, count(c, C::ConnectWifi));
+  c = d.send(Event::wifi(true));
+  d.send(Event::fetch_done(HaError::None, {"light.a"}, {es("light.a", "off")}));
+  c = d.send(Event::user_action({"light.a"}, Action::LightTurnOn, "on"));
+  c = d.send(Event::service_done(find(c, C::CallService)->ticket, HaError::Network));
+  TEST_ASSERT_TRUE((int)d.m.status() != (int)Status::Offline);
+}
+
 void test_fuzz_invariants() {
   uint32_t seed = 12345;
   auto rnd = [&](uint32_t n) { seed = seed * 1664525u + 1013904223u; return (seed >> 8) % n; };
@@ -1177,6 +1195,7 @@ int main(int, char**) {
   RUN_TEST(test_action_during_confirm_supersedes_it);
   RUN_TEST(test_136_call_timeout_keeps_queued_calls);
   RUN_TEST(test_136_two_call_network_errors_go_offline);
+  RUN_TEST(test_136_retry_after_offline_resets_call_fails);
   RUN_TEST(test_fuzz_invariants);
   RUN_TEST(test_t019_opposite_tap_while_first_call_in_flight);
   RUN_TEST(test_t019_toggle_then_explicit_last_wins);
