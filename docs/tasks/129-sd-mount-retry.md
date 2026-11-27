@@ -1,6 +1,6 @@
 # 129: Flaky SD mount must not load the demo
 
-Status: PC part done (device check pending)
+Status: done (SD-pull device check skipped by user 2026-11-27)
 Depends on: none
 UI spec: none
 Needs device: yes

@@ -127,7 +127,7 @@
 | 126 | [Instant tap feedback, rapid taps on several widgets](126-instant-taps.md) | done | 116, 120 |
 | 127 | [Wake: show "updating" until fresh, then one refresh](127-wake-updating-look.md) | done | 120, 126 |
 | 128 | [Debug log: lock the shared buffer](128-debug-log-lock.md) | done | none |
-| 129 | [Flaky SD mount must not load the demo](129-sd-mount-retry.md) | PC part done, device check pending | none |
+| 129 | [Flaky SD mount must not load the demo](129-sd-mount-retry.md) | done | none |
 | 130 | [Service calls are never sent twice](130-no-double-send.md) | done (device check of stale-socket codes pending) | none |
 | 131 | [Hang guard after setup and on fatal errors](131-hang-guard.md) | PC part done, device check pending | 127 |
 | 132 | [At most one GC16 full per scheduled wake](132-one-full-per-scheduled-wake.md) | PC part done, device check pending | 127 |
