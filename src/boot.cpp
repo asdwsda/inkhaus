@@ -181,7 +181,6 @@ bool attachNoResetDisplay() {
     if (!ok) return false;
 
     configureBus(g_parts->bus, 40000000, 20000000);
-    wakelog::logf("BOOT: dbg_after_cfgbus %u\n",(unsigned)millis());
     g_parts->panel.bus(&g_parts->bus);
     {
         auto cfg = g_parts->panel.config();
@@ -227,7 +226,6 @@ bool attachNoResetDisplay() {
         useReset = true;
         g_recoveredCold = true;
     }
-    wakelog::logf("BOOT: dbg_before_panel_init reset=%d %u\n",(int)useReset,(unsigned)millis());
     // Task 093: the library init runs ~8 commands with unfed 4 s BUSY waits each; a controller that drops
     // into a stuck BUSY after the pre-check (seen after a USB deep-sleep wake) would end in TASK_WDT.
     // Give it a long watchdog window, and if it was slow, redo it with the hardware reset (cold).
@@ -245,7 +243,6 @@ bool attachNoResetDisplay() {
     esp_task_wdt_init(kWatchdogS, true);
     esp_task_wdt_reset();
     if (!initOk) return false;
-    wakelog::logf("BOOT: dbg_after_panel_init %u\n",(unsigned)millis());
     d.startWrite();
     d.invertDisplay(g_parts->panel.getInvert());
     d.setColorDepth(g_parts->panel.getWriteDepth());
@@ -253,7 +250,6 @@ bool attachNoResetDisplay() {
     d.setPivot(d.width() >> 1, d.height() >> 1);
     d.endWrite();
     d.setBrightness(d.getBrightness());
-    wakelog::logf("BOOT: dbg_before_touch %u\n",(unsigned)millis());
     const bool touchOk = g_parts->panel.initTouch();
     boot::log("touch_init", touchOk ? "ok" : "fail");
     // From here M5GFX::init_impl returns early, so M5.begin() keeps this display.
@@ -526,7 +522,6 @@ void begin() {
     }
     const uint32_t d1 = micros();
     g_start = noReset ? Start::NoReset : Start::Stock;
-    wakelog::logf("BOOT: dbg_before_m5begin %u\n",(unsigned)millis());
     M5.begin(cfg);
     const uint32_t d2 = micros();
 

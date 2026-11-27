@@ -1,6 +1,6 @@
 # 138: Review leftovers L5, L7, L8 (DNS once, net task wakes on demand, dead debug code)
 
-Status: todo
+Status: done (device check pending)
 Depends on: none
 UI spec: none
 Needs device: no (device check later)

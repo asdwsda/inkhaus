@@ -35,7 +35,7 @@ bool mount() {
   // Never touch the shared SPI bus while an EPD transfer is running.
   M5.Display.waitDisplay();
 
-  // Keep the display controller deselected while the card is accessed.
+  // Drive the SD card's chip select (pin 4) high before the card is accessed.
   pinMode(kPinCs, OUTPUT);
   digitalWrite(kPinCs, HIGH);
   // A flaky mount (shared SPI bus, cold card) must not look like "no card": retry 3x.

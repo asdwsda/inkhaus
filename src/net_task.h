@@ -32,6 +32,7 @@ class NetTask : public app_logic::INetPort {
   struct Evt { uint32_t epoch = 0; app_logic::NetEvent ev; };
   static void entry(void *self);
   void loop();
+  void wake();  // task notification: the task blocks while the queue is empty
 
   app_logic::LaneQueue<Cmd> cmds_;  // task 116: user lane first
   volatile bool yield_ = false;     // a user command waits: background jobs abort at the next chunk
