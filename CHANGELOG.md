@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.0-rc2 - 2026-11-27
+
+Pre-release for testing; not offered as an over-the-air update. Instant taps and the wake look are checked
+on the device.
+
+### Fixes
+- A tap that HA answers slowly no longer fails the taps queued behind it, and one slow answer no longer
+  shows `offline`; light and switch taps give up after 4 s instead of 8 s.
+- Wi-Fi: a rejected connect (seen on the first boot after an update, and on a weak signal) is retried
+  instead of staying offline for the whole wake.
+- Wi-Fi: with two access points of the same name, a clearly stronger one is preferred over the remembered one.
+
 ## 1.5.0-rc1 - 2026-11-26
 
 Pre-release for testing; not offered as an over-the-air update. Most changes are not yet checked on the device.
