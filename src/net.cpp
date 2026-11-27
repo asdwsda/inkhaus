@@ -377,7 +377,11 @@ State poll() {
     Attempt next = Attempt::None;
     Phase ph = g_conn.step(now, linkStatus(), next);
     if (next != Attempt::None) {
-        wakelog::logf("NET: phase=cache_failed_fallback_scan" "\n");
+        if (g_conn.authRetried()) {  // only the auth retry can start an attempt after authRetried
+            wakelog::logf("NET: auth_failed retry=1" "\n");
+        } else {
+            wakelog::logf("NET: phase=cache_failed_fallback_scan" "\n");
+        }
         if (launch(next) == Phase::Failed) ph = Phase::Failed;
     }
     if (ph == Phase::Connected) {

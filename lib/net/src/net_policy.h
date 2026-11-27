@@ -101,6 +101,7 @@ public:
     Attempt current() const { return current_; }
     bool cachedFailed() const { return cachedFailed_; }  // cached attempt failed this connect
     bool authFailed() const { return authFailed_; }      // ended Failed because of the password
+    bool authRetried() const { return authRetried_; }    // first AuthFailed was answered with a retry
     uint32_t elapsedMs(uint32_t nowMs) const { return nowMs - t0_; }
 
 private:
@@ -108,6 +109,7 @@ private:
     Phase phase_ = Phase::Failed;
     bool cachedFailed_ = false;
     bool authFailed_ = false;
+    bool authRetried_ = false;
     uint32_t t0_ = 0, attemptT0_ = 0, limit_ = kTotalTimeoutMs;
 };
 

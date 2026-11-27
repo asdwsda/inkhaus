@@ -95,6 +95,7 @@ Attempt Connector::start(uint32_t nowMs, bool useCache, uint32_t limitMs) {
     t0_ = attemptT0_ = nowMs;
     cachedFailed_ = false;
     authFailed_ = false;
+    authRetried_ = false;
     phase_ = Phase::Connecting;
     current_ = useCache ? Attempt::Cached : Attempt::Scan;
     return current_;
@@ -104,6 +105,14 @@ Phase Connector::step(uint32_t nowMs, LinkStatus link, Attempt &startNew) {
     startNew = Attempt::None;
     if (phase_ != Phase::Connecting) return phase_;
     if (link == LinkStatus::Connected) return phase_ = Phase::Connected;
+    if (link == LinkStatus::AuthFailed && !authRetried_ && nowMs - t0_ < limit_) {
+        // First auth failure of this connect: on a weak link a handshake timeout looks the same as a
+        // wrong password. Retry once (cached -> scan, scan -> scan again) within the overall limit.
+        authRetried_ = true;
+        current_ = startNew = Attempt::Scan;
+        attemptT0_ = nowMs;
+        return phase_;
+    }
     if (link == LinkStatus::AuthFailed) {
         authFailed_ = true;
         current_ = Attempt::None;
