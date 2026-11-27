@@ -286,12 +286,42 @@ void test_auth_failed_not_cache_failure() {
     Connector c;
     c.start(0, true);
     Attempt n;
-    TEST_ASSERT_EQUAL(Phase::Failed, c.step(500, LinkStatus::AuthFailed, n));
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(500, LinkStatus::AuthFailed, n));
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+    TEST_ASSERT_TRUE(c.authRetried());
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(900, LinkStatus::AuthFailed, n));
     TEST_ASSERT_TRUE(c.authFailed());
     TEST_ASSERT_FALSE(c.cachedFailed());
     TEST_ASSERT_EQUAL(Attempt::None, n);
     c.start(1000, true);
     TEST_ASSERT_FALSE(c.authFailed());
+    TEST_ASSERT_FALSE(c.authRetried());
+}
+void test_auth_failed_once_then_connected() {
+    Connector c;
+    c.start(0, true);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(205, LinkStatus::AuthFailed, n));
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+    TEST_ASSERT_EQUAL(Phase::Connected, c.step(1500, LinkStatus::Connected, n));
+    TEST_ASSERT_FALSE(c.authFailed());
+}
+void test_auth_failed_retry_when_already_scanning() {
+    Connector c;
+    c.start(0, false);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Connecting, c.step(300, LinkStatus::AuthFailed, n));
+    TEST_ASSERT_EQUAL(Attempt::Scan, n);
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(400, LinkStatus::AuthFailed, n));
+    TEST_ASSERT_TRUE(c.authFailed());
+}
+void test_auth_failed_retry_respects_limit() {
+    Connector c;
+    c.start(0, true, 2000);
+    Attempt n;
+    TEST_ASSERT_EQUAL(Phase::Failed, c.step(2000, LinkStatus::AuthFailed, n));
+    TEST_ASSERT_EQUAL(Attempt::None, n);
+    TEST_ASSERT_FALSE(c.authRetried());
 }
 void test_start_failed_cached_goes_to_scan_then_failed() {
     Connector c;
@@ -459,6 +489,9 @@ int main() {
     RUN_TEST(test_drop_lease);
     RUN_TEST(test_auth_reasons);
     RUN_TEST(test_auth_failed_not_cache_failure);
+    RUN_TEST(test_auth_failed_once_then_connected);
+    RUN_TEST(test_auth_failed_retry_when_already_scanning);
+    RUN_TEST(test_auth_failed_retry_respects_limit);
     RUN_TEST(test_start_failed_cached_goes_to_scan_then_failed);
     RUN_TEST(test_budget_caps_total_and_limits_attempts);
     RUN_TEST(test_budget_wraps);
