@@ -1,0 +1,118 @@
+[   1.00] BOOT: serial_rx_buffer=4096
+[   1.00] BOOT: hold_released=1
+[   1.00] BOOT: t_pre_begin_ms=0
+[   1.00] BOOT: t_boot_abs_ms=494
+[   1.00] BOOT: reset_reason_early=poweron
+[   1.00] BOOT: crash_count=0
+[   1.00] BOOT: wdt_timeout_s=15
+[   1.00] BOOT: wdt_init_rc=0
+[   1.00] BOOT: wdt_effective_ms=15000
+[   2.00] BOOT: controller_id=62915100
+[   2.00] BOOT: dbg_after_cfgbus 1501
+[   2.20] BOOT: dbg_before_panel_init reset=0 1762
+[   2.20] BOOT: dbg_after_panel_init 1770
+[   2.20] BOOT: dbg_before_touch 1770
+[   2.40] BOOT: touch_init=ok
+[   2.40] BOOT: dbg_before_m5begin 1834
+[   2.40] BOOT: start=noreset
+[   2.40] BOOT: controller=cold
+[   2.40] BOOT: controller_ready_wait_ms=856
+[   2.40] BOOT: display_start_ms=1328
+[   2.40] BOOT: m5_begin_rest_ms=16
+[   2.40] BOOT: m5_begin_total_ms=1344
+[   2.40] BOOT: t_post_begin_ms=1367
+[   2.40] BOOT: fw=1.5.0-rc1 debug | cbd018c+ | 2026-11-27
+[   2.40] WAKE: reason=cold_boot reset=poweron pin=none rtc_flag=0 marker=0 indicator_on_panel=none usb_rx=1 slept=- t_ms=1868
+[   2.40] BOOT: battery_limit_mv=3844 learned=1
+[   2.40] HA: sht30 ok=1 temp_x10=260 hum_x10=424 ms=22
+[   2.40] WAKELOG: result=ok wrote=1 sd_ms=33
+[   2.40] BOOT: t_settings_ms=1464
+[   2.40] BOOT: psram_free_before=4188011
+[   2.60] BOOT: frame_alloc=1
+[   2.60] BOOT: psram_free=2632751
+[   2.80] BOOT: record=ignored_forced
+[   2.80] BOOT: record_invalidated=1
+[   3.60] PRESENT: refresh=full_white mode=1 rect=0,0,540,960 call_ms=6 wait_ms=755
+[   4.41] PRESENT: refresh=full_content mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[   4.61] BOOT: record_saved=1
+[   4.61] BOOT: draw=full
+[   4.61] BOOT: present_bst_end=1
+[   4.61] BOOT: splash=1
+[   4.61] CONFIG: source=cache ms=63
+[   4.61] BOOT: config_source=cache
+[   4.61] MEM: after_config int_free=244140 int_min=238552 int_largest=110580 psram_free=2627183
+[   4.61] MEM: before_app_init int_free=244140 int_min=238552 int_largest=110580 psram_free=2627183
+[   4.61] MEM: after_app_init int_free=241560 int_min=236328 int_largest=110580 psram_free=2624831
+[   4.61] BOOT: mode=real
+[   4.81] STATECACHE: restore source=flash entities=19 epoch=1795768552 ms=23
+[   4.81] MEM: after_restore int_free=225984 int_min=218884 int_largest=110580 psram_free=2624219
+[   4.81] APP: graph_cache n=1 ms=34
+[   4.81] MEM: after_graphs int_free=225816 int_min=218884 int_largest=110580 psram_free=2614747
+[   4.81] BOOT: t_config_ms=3785
+[   4.81] MEM: before_net_begin int_free=225816 int_min=218884 int_largest=110580 psram_free=2614747
+[   4.81] APP: net_task started=1
+[   4.81] APP: ntp not_needed
+[   4.81] BOOT: t_wifi_start_ms=3800
+[   4.81] MEM: session_start int_free=202064 int_min=201824 int_largest=110580 psram_free=2611787
+[   4.81] APP: start wake=0 mv=4214 clock=ok
+[   4.81] APP: cmd status=connecting
+[   4.81] APP: cmd connect_wifi
+[   4.81] NET: phase=scan profiles=2 start_ret=-1
+[   4.81] APP: wake_stale=1 end=- look_refreshes=1
+[   5.01] BOOT: t_render_ms=4069
+[   6.01] BOOT: record=ignored_forced
+[   6.21] BOOT: record_invalidated=1
+[   6.61] PRESENT: refresh=full_white mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[   7.41] PRESENT: refresh=full_content mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[   7.61] BOOT: record_saved=1
+[   7.61] BOOT: draw=full
+[   7.61] BOOT: present_bst_end=1
+[   7.61] BOOT: t_first_draw_ms=6612
+[   7.61] BOOT: version=017
+[   7.61] BOOT: orientation=0
+[   7.61] BOOT: reset_reason=poweron
+[   7.61] BOOT: battery_mv=4202
+[   7.61] BOOT: charging=2
+[   7.61] BOOT: settle_bst_end=1
+[   7.61] NET: scan_done aps=9 found=1 pick=1 ms=2731 event_ms=2596
+[   7.61] NET: phase=begin profile=1 ssid_len=3 ssid_pre=K1
+[   7.61] NET: cache=hit failures=0
+[   7.61] NET: phase=attempt_cached ch=6 lease=1
+[   7.81] NET: auth_failed retry=1 reason=202
+[   7.81] NET: phase=attempt_scan
+[   8.01] NET: phase=connected connect_ms=450 rssi=-80 ch=6
+[   8.01] APP: wifi connected
+[   8.01] APP: cmd fetch ids=19
+[   8.01] BOOT: t_wifi_up_ms=7087
+[   8.01] APP: url_plan first=internal exclusive=0 learn=0
+[   8.01] APP: timing queue_wait_ms=15 lane=bg type=0
+[   8.21] NETT: dns=0 tcp=24 tls=0 ttfb=149 total=186 reused=0
+[   8.21] NETT: new_conn why=first call=0 code=200
+[   8.21] HTTP: ms=186 reused=0 link=local
+[   8.41] APP: fetch_done err=0 http=200 states=19 changed=15 link=local
+[   8.41] TIME: http_date delta_s=1 wrote=0
+[   8.41] APP: cmd status=online
+[   8.41] APP: timing queue_wait_ms=4 lane=bg type=4
+[   8.41] APP: fetch_applied store=19 changed=15 missing_members=0
+[   8.41] APP: net_stack_free=15080
+[   8.41] APP: wake_stale=0 end=fresh look_refreshes=2
+[   8.41] NETT: dns=0 tcp=0 tls=0 ttfb=80 total=84 reused=1
+[   8.41] APP: render tab=0 rects=1 mode=full
+[   8.41] BOOT: record_invalidated=1
+[   8.61] NETT: dns=0 tcp=0 tls=0 ttfb=99 total=105 reused=1
+[   8.61] HTTP: ms=189 reused=1 link=local
+[   8.61] APP: timing queue_wait_ms=191 lane=bg type=3
+[   9.21] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[   9.41] BOOT: record_saved=1
+[   9.41] BOOT: present_bst_end=1
+[   9.61] HA: report sent=2 skipped=0 ms=189 err=0
+[  10.21] HIST: src=stats fetch_ms=1597 parse_ms=39 bytes=14020 points=167 heap_min=148364 err=0
+[  10.21] APP: graph_fetch ms=1805 net_ms=1597 parse_ms=39 bytes=14020 points=167 err=0 changed=1 id=sensor.altherma_climatecontrol_outdoor_temperature
+[  10.21] APP: graph_batch n=1 ms=1881 all_tabs=0
+[  10.41] APP: graph_merge rects_before=6 rects_after=1
+[  10.41] APP: render tab=0 rects=1 mode=partial
+[  10.41] BOOT: record_invalidated=1
+[  10.41] PRESENT: rect=16,648,508,220 mode=quality reason=panel_has_grey
+[  11.02] PRESENT: refresh=partial mode=1 rect=16,648,508,220 call_ms=6 wait_ms=449
+[  11.02] BOOT: present_bst_end=1
+[  12.22] BOOT: record_saved=1

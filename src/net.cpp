@@ -53,6 +53,7 @@ net::State g_state = net::State::Idle;
 CacheRecord g_cache;
 bool g_cacheLoaded = false;
 CacheRecord g_persisted;  // what NVS holds (default = nothing valid), to write only on change
+volatile uint8_t g_lastReason = 0;
 volatile bool g_authLatch = false;  // wrong-password disconnect reason seen in this attempt
 bool g_eventsHooked = false;
 
@@ -156,19 +157,34 @@ void applyIpConfig(bool useLease) {
     WiFi.config(IPAddress(0u), IPAddress(0u), IPAddress(0u));  // back to DHCP
 }
 
-// Returns false if WiFi.begin refused to start (it returns WL_CONNECT_FAILED then).
-bool startAttempt(Attempt a) {
-    g_authLatch = false;
-    WiFi.disconnect(false, false);
-    wl_status_t st;
+// One WiFi.begin(); returns WL_CONNECT_FAILED if the driver refused to start.
+wl_status_t beginOnce(Attempt a) {
     if (a == Attempt::Cached) {
         applyIpConfig(true);
-        st = WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str(), g_cache.channel, g_cache.bssid);
+        return WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str(), g_cache.channel, g_cache.bssid);
+    }
+    applyIpConfig(false);
+    return WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str());
+}
+
+// Returns false if WiFi.begin refused to start (it returns WL_CONNECT_FAILED then).
+// Right after an auth failure the driver is still busy with its own disconnect/retry and refuses
+// esp_wifi_connect (task 134: begin_failed at once), so a refusal is retried after a short pause.
+bool startAttempt(Attempt a) {
+    g_authLatch = false;
+    constexpr int kTries = 4;
+    wl_status_t st = WL_CONNECT_FAILED;
+    for (int i = 0; i < kTries; ++i) {
+        WiFi.disconnect(false, false);
+        if (i > 0) delay(100);
+        st = beginOnce(a);
+        if (st != WL_CONNECT_FAILED) break;
+        wakelog::logf("NET: begin_refused try=%d\n", i + 1);
+    }
+    if (a == Attempt::Cached) {
         wakelog::logf("NET: phase=attempt_cached ch=%u lease=%d\n", g_cache.channel,
                       hasLease(g_cache) ? 1 : 0);
     } else {
-        applyIpConfig(false);
-        st = WiFi.begin(g_cfg.ssid.c_str(), g_cfg.password.c_str());
         wakelog::logf("NET: phase=attempt_scan" "\n");
     }
     if (st == WL_CONNECT_FAILED) {
@@ -268,7 +284,9 @@ void startScan() {
 void finishScan() {
     std::vector<std::string> seen;
     int n = WiFi.scanComplete();
-    for (int i = 0; i < n; ++i) seen.push_back(WiFi.SSID(i).c_str());
+    for (int i = 0; i < n; ++i) {
+        seen.push_back(WiFi.SSID(i).c_str());
+    }
     // On the 6 s timeout the scan is still running: scanDelete() would not stop it, and begin()
     // fails while a scan is active.
     if (n == WIFI_SCAN_RUNNING) esp_wifi_scan_stop();  // UNVERIFIED: stops the async scan so the following begin() succeeds
@@ -329,6 +347,7 @@ void begin(const config::WifiConfig &wifi) {
         g_eventsHooked = true;
         WiFi.onEvent(
             [](arduino_event_id_t, arduino_event_info_t info) {
+                g_lastReason = info.wifi_sta_disconnected.reason;
                 if (isAuthReason(info.wifi_sta_disconnected.reason)) g_authLatch = true;
             },
             ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -378,7 +397,7 @@ State poll() {
     Phase ph = g_conn.step(now, linkStatus(), next);
     if (next != Attempt::None) {
         if (g_conn.authRetried()) {  // only the auth retry can start an attempt after authRetried
-            wakelog::logf("NET: auth_failed retry=1" "\n");
+            wakelog::logf("NET: auth_failed retry=1 reason=%u\n", (unsigned)g_lastReason);
         } else {
             wakelog::logf("NET: phase=cache_failed_fallback_scan" "\n");
         }

@@ -1,6 +1,6 @@
 # 134: Wi-Fi auth failure on a weak signal retries
 
-Status: in-progress (device check failed)
+Status: done (device verified)
 Depends on: none
 UI spec: none
 Needs device: no (device check later)
@@ -31,3 +31,12 @@ Logs: assets/134-boot-after-flash-1.txt (no retry), assets/134-boot-after-flash.
 Next: find why auth fails on the first boot after flash (cached attempt during/after the startup scan?
 stale driver state, NVS Wi-Fi config?) and why `begin` fails right after an auth failure (needs a
 disconnect / delay first?). Device needed: reproduce by flashing, then resetting.
+
+## Device result 2 (2026-11-27)
+Cause (measured): first boot after a flash scans, then the BSSID-directed cached attempt is rejected with
+disconnect reason 202 (AUTH_FAIL, ~200 ms); plain reset boots connect. Not a wrong password or stale cache
+(cached BSSID matches the scan; two APs share the SSID, ch6 -78 dBm cached, ch11 -62). The 134 retry then
+fired, but `WiFi.begin` was refused right after the auth disconnect (driver busy): fixed by retrying begin up
+to 4 times with 100 ms pauses (`NET: begin_refused try=N`). Log now `auth_failed retry=1 reason=N`.
+Verified: 2 flash+boot cycles connected (retry path, connect_ms ~450): assets/134-flash-cycle-1.txt, -2.txt.
+The AP-side reason for the 202 on the directed attempt is not found (left open).
