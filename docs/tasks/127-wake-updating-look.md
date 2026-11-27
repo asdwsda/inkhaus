@@ -1,6 +1,6 @@
 # 127: Wake: show "updating" until fresh, then one refresh
 
-Status: PC part done (device check pending)
+Status: done (device verified 2026-11-27)
 Depends on: 120, 126 (pending look)
 UI spec: docs/ui/wake-updating.md (to write)
 Needs device: yes (look + timing; PC part first)

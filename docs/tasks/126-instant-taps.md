@@ -1,6 +1,6 @@
 # 126: Instant tap feedback, rapid taps on several widgets
 
-Status: PC part done (device check pending)
+Status: done (device verified 2026-11-27)
 Depends on: 116, 120
 UI spec: docs/ui/STYLE.md (Pending row); may change after the investigation
 Needs device: yes (feel + timing; PC part first)
