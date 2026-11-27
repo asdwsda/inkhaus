@@ -1,0 +1,1072 @@
+[   4.21] MEM: tick int_free=163328 int_min=147120 int_largest=110580 psram_free=2595591
+[  34.05] MEM: tick int_free=163328 int_min=147120 int_largest=110580 psram_free=2595591
+[  64.10] MEM: tick int_free=163328 int_min=147120 int_largest=110580 psram_free=2595591
+[  85.53] APP: render tab=0 rects=1 mode=full
+[  85.53] BOOT: record_invalidated=1
+[  86.33] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[  86.53] BOOT: record_saved=1
+[  86.53] APP: settings opened
+[  86.53] BOOT: present_bst_end=1
+[  88.13] APP: render tab=0 rects=1 mode=full
+[  88.13] BOOT: record_invalidated=1
+[  88.94] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[  89.14] BOOT: record_saved=1
+[  89.14] BOOT: present_bst_end=1
+[  91.34] APP: render tab=0 rects=3 mode=partial
+[  91.34] BOOT: record_invalidated=1
+[  91.34] PRESENT: rect=404,11,120,32 mode=fastest reason=panel_bw
+[  91.54] PRESENT: refresh=partial mode=4 rect=404,11,120,32 call_ms=6 wait_ms=131
+[  91.54] PRESENT: rect=448,197,60,30 mode=fastest reason=panel_bw
+[  91.74] PRESENT: refresh=partial mode=4 rect=448,197,60,30 call_ms=6 wait_ms=124
+[  91.74] PRESENT: rect=16,468,508,64 mode=fastest reason=panel_bw
+[  91.94] PRESENT: refresh=partial mode=4 rect=16,468,508,64 call_ms=6 wait_ms=137
+[  91.94] BOOT: present_bst_end=1
+[  93.34] BOOT: record_saved=1
+[  93.94] APP: render tab=0 rects=1 mode=full
+[  93.94] BOOT: record_invalidated=1
+[  94.74] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=460
+[  94.74] BOOT: record_saved=1
+[  94.74] BOOT: present_bst_end=1
+[  94.94] MEM: tick int_free=163408 int_min=147120 int_largest=110580 psram_free=2595591
+[  99.95] APP: settings saved
+[ 100.15] APP: render tab=0 rects=1 mode=full
+[ 100.15] BOOT: record_invalidated=1
+[ 100.95] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[ 101.15] BOOT: record_saved=1
+[ 101.15] BOOT: present_bst_end=1
+[ 101.95] APP: user_action ids=1
+[ 101.95] APP: cmd mark=0 ids=1
+[ 101.95] APP: cmd call ticket=1 service=light.turn_on ids=light.shellydimmer2_3c6105fe7a6c
+[ 101.95] APP: timing tap_to_call_ms=0
+[ 101.95] APP: timing queue_wait_ms=10 lane=user type=1
+[ 102.15] APP: render tab=0 rects=1 mode=partial
+[ 102.15] BOOT: record_invalidated=1
+[ 102.15] PRESENT: rect=364,186,160,100 mode=fastest reason=tap_fast
+[ 102.35] PRESENT: refresh=partial mode=4 rect=364,186,160,100 call_ms=6 wait_ms=131
+[ 102.35] BOOT: present_bst_end=1
+[ 102.35] APP: user_action ids=1
+[ 102.35] APP: cmd mark=0 ids=1
+[ 102.55] APP: render tab=0 rects=1 mode=partial
+[ 102.55] PRESENT: rect=188,186,160,100 mode=fastest reason=tap_fast
+[ 102.75] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=130
+[ 102.75] BOOT: present_bst_end=1
+[ 104.56] BOOT: record_saved=1
+[ 106.56] APP: user_action ids=1
+[ 106.56] APP: cmd mark=0 ids=1
+[ 106.76] APP: render tab=0 rects=1 mode=partial
+[ 106.76] BOOT: record_invalidated=1
+[ 106.76] PRESENT: rect=364,70,160,100 mode=fastest reason=tap_fast
+[ 106.96] PRESENT: refresh=partial mode=4 rect=364,70,160,100 call_ms=6 wait_ms=127
+[ 106.96] BOOT: present_bst_end=1
+[ 107.36] APP: user_action ids=1
+[ 107.36] APP: cmd mark=0 ids=1
+[ 107.56] APP: render tab=0 rects=1 mode=partial
+[ 107.56] PRESENT: rect=16,186,160,100 mode=fastest reason=tap_fast
+[ 107.76] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=136
+[ 107.76] BOOT: present_bst_end=1
+[ 109.36] BOOT: record_saved=1
+[ 109.96] NETT: dns=1 tcp=22 tls=0 ttfb=8024 total=8055 reused=0
+[ 109.96] APP: call_done ticket=1 err=2 http=0 states=0 changed=0
+[ 109.96] APP: timing call_to_response_ms=8086 http_ms=0
+[ 109.96] APP: cmd status=offline
+[ 109.96] APP: cmd mark=2 ids=4
+[ 109.96] APP: timing response_to_render_ms=0
+[ 110.16] APP: render tab=0 rects=6 mode=partial
+[ 110.36] BOOT: record_invalidated=1
+[ 110.36] PRESENT: rect=16,16,204,22 mode=quality reason=panel_has_grey
+[ 110.76] PRESENT: refresh=partial mode=1 rect=16,16,204,22 call_ms=6 wait_ms=452
+[ 110.76] PRESENT: rect=260,17,24,20 mode=fastest reason=panel_bw
+[ 110.97] PRESENT: refresh=partial mode=4 rect=260,17,24,20 call_ms=6 wait_ms=135
+[ 110.97] PRESENT: rect=364,70,160,100 mode=fastest reason=panel_bw
+[ 110.97] PRESENT: refresh=partial mode=4 rect=364,70,160,100 call_ms=6 wait_ms=128
+[ 110.97] PRESENT: rect=16,186,160,100 mode=fastest reason=panel_bw
+[ 111.17] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=134
+[ 111.17] PRESENT: rect=188,186,160,100 mode=fastest reason=panel_bw
+[ 111.37] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=131
+[ 111.37] PRESENT: rect=364,186,160,100 mode=fastest reason=panel_bw
+[ 111.57] PRESENT: refresh=partial mode=4 rect=364,186,160,100 call_ms=6 wait_ms=128
+[ 112.37] PRESENT: refresh=full_burst mode=1 rect=0,0,540,960 call_ms=6 wait_ms=461
+[ 112.37] PRESENT: refresh=full_burst partials=8 mode=gc16 init_ms=0 full_ms=875
+[ 112.37] BOOT: record_saved=1
+[ 112.37] BOOT: present_bst_end=1
+[ 113.57] APP: user_action ids=1
+[ 113.57] APP: cmd mark=2 ids=1
+[ 114.17] APP: user_action ids=1
+[ 114.17] APP: cmd mark=2 ids=1
+[ 114.77] APP: user_action ids=1
+[ 114.77] APP: cmd mark=2 ids=1
+[ 115.37] APP: user_action ids=1
+[ 115.37] APP: cmd mark=2 ids=1
+[ 116.97] APP: graph_cache n=1 ms=5
+[ 117.17] APP: render tab=1 rects=1 mode=full
+[ 117.17] BOOT: record_invalidated=1
+[ 117.97] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[ 117.97] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=864
+[ 118.17] BOOT: record_saved=1
+[ 118.17] BOOT: present_bst_end=1
+[ 118.98] APP: render tab=2 rects=1 mode=full
+[ 118.98] BOOT: record_invalidated=1
+[ 119.78] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[ 119.78] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=869
+[ 119.78] BOOT: record_saved=1
+[ 119.78] BOOT: present_bst_end=1
+[ 119.98] APP: render tab=1 rects=1 mode=full
+[ 119.98] BOOT: record_invalidated=1
+[ 120.78] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[ 120.98] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=866
+[ 120.98] BOOT: record_saved=1
+[ 120.98] BOOT: present_bst_end=1
+[ 122.38] APP: render tab=0 rects=1 mode=full
+[ 122.38] BOOT: record_invalidated=1
+[ 123.18] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[ 123.18] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=865
+[ 123.38] BOOT: record_saved=1
+[ 123.38] BOOT: present_bst_end=1
+[ 123.98] APP: user_action ids=1
+[ 123.98] APP: cmd mark=2 ids=1
+[ 124.38] APP: user_action ids=1
+[ 124.38] APP: cmd mark=2 ids=1
+[ 124.78] APP: user_action ids=1
+[ 124.78] APP: cmd mark=2 ids=1
+[ 124.98] MEM: tick int_free=162180 int_min=147120 int_largest=110580 psram_free=2586151
+[ 146.42] APP: render tab=1 rects=1 mode=full
+[ 146.42] BOOT: record_invalidated=1
+[ 147.22] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[ 147.42] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=867
+[ 147.42] BOOT: record_saved=1
+[ 147.42] BOOT: present_bst_end=1
+[ 148.22] APP: render tab=0 rects=1 mode=full
+[ 148.22] BOOT: record_invalidated=1
+[ 149.02] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=456
+[ 149.02] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=867
+[ 149.22] BOOT: record_saved=1
+[ 149.22] BOOT: present_bst_end=1
+[ 150.42] APP: user_action ids=1
+[ 150.42] APP: cmd mark=2 ids=1
+[ 153.83] APP: user_action ids=1
+[ 153.83] APP: cmd mark=2 ids=1
+[ 154.03] APP: render tab=0 rects=1 mode=partial
+[ 154.03] BOOT: record_invalidated=1
+[ 154.03] PRESENT: rect=260,359,24,20 mode=fastest reason=panel_bw
+[ 154.23] PRESENT: refresh=partial mode=4 rect=260,359,24,20 call_ms=6 wait_ms=133
+[ 154.23] BOOT: present_bst_end=1
+[ 154.43] APP: user_action ids=1
+[ 154.43] APP: cmd mark=2 ids=1
+[ 154.43] APP: render tab=0 rects=1 mode=partial
+[ 154.43] PRESENT: rect=260,475,24,20 mode=fastest reason=panel_bw
+[ 154.63] PRESENT: refresh=partial mode=4 rect=260,475,24,20 call_ms=6 wait_ms=129
+[ 154.63] BOOT: present_bst_end=1
+[ 154.83] APP: user_action ids=1
+[ 154.83] APP: cmd mark=2 ids=1
+[ 155.03] APP: render tab=0 rects=1 mode=partial
+[ 155.03] PRESENT: rect=260,591,24,20 mode=fastest reason=panel_bw
+[ 155.23] PRESENT: refresh=partial mode=4 rect=260,591,24,20 call_ms=6 wait_ms=129
+[ 155.23] BOOT: present_bst_end=1
+[ 155.23] MEM: tick int_free=161412 int_min=147120 int_largest=110580 psram_free=2586151
+[ 156.84] BOOT: record_saved=1
+[ 157.84] APP: render tab=1 rects=1 mode=full
+[ 157.84] BOOT: record_invalidated=1
+[ 158.64] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=461
+[ 158.64] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=876
+[ 158.84] BOOT: record_saved=1
+[ 158.84] BOOT: present_bst_end=1
+[ 159.25] APP: render tab=0 rects=1 mode=full
+[ 159.25] BOOT: record_invalidated=1
+[ 160.05] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[ 160.05] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=866
+[ 160.25] BOOT: record_saved=1
+[ 160.25] BOOT: present_bst_end=1
+[ 160.25] APP: user_action ids=1
+[ 160.25] APP: cmd mark=2 ids=1
+[ 160.65] APP: user_action ids=1
+[ 160.65] APP: cmd mark=2 ids=1
+[ 161.05] APP: user_action ids=1
+[ 161.05] APP: cmd mark=2 ids=1
+[ 175.08] APP: user_action ids=1
+[ 175.08] APP: cmd mark=2 ids=1
+[ 176.29] APP: user_action ids=1
+[ 176.29] APP: cmd mark=2 ids=1
+[ 179.69] APP: render tab=0 rects=1 mode=partial
+[ 179.69] BOOT: record_invalidated=1
+[ 179.69] PRESENT: rect=16,278,516,590 mode=quality reason=modal
+[ 180.29] PRESENT: refresh=partial mode=1 rect=16,278,516,590 call_ms=6 wait_ms=451
+[ 180.29] BOOT: present_bst_end=1
+[ 181.09] BOOT: full_after_failure=1
+[ 181.09] APP: render tab=0 rects=1 mode=full
+[ 181.89] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=453
+[ 182.09] BOOT: record_saved=1
+[ 182.09] BOOT: present_bst_end=1
+[ 182.09] APP: user_action ids=1
+[ 182.09] APP: cmd mark=2 ids=1
+[ 182.49] APP: user_action ids=1
+[ 182.49] APP: cmd mark=2 ids=1
+[ 185.10] MEM: tick int_free=161152 int_min=147120 int_largest=110580 psram_free=2586151
+[ 195.51] APP: render tab=0 rects=2 mode=partial
+[ 195.51] BOOT: record_invalidated=1
+[ 195.51] PRESENT: rect=16,894,116,52 mode=fastest reason=panel_bw
+[ 195.71] PRESENT: refresh=partial mode=4 rect=16,894,116,52 call_ms=6 wait_ms=140
+[ 195.71] PRESENT: rect=148,894,116,52 mode=fastest reason=panel_bw
+[ 195.91] PRESENT: refresh=partial mode=4 rect=148,894,116,52 call_ms=6 wait_ms=131
+[ 195.91] BOOT: present_bst_end=1
+[ 195.91] APP: render tab=1 rects=1 mode=full
+[ 196.71] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=460
+[ 196.91] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=875
+[ 196.91] BOOT: record_saved=1
+[ 196.91] BOOT: present_bst_end=1
+[ 197.11] APP: render tab=1 rects=2 mode=partial
+[ 197.11] BOOT: record_invalidated=1
+[ 197.11] PRESENT: rect=16,894,116,52 mode=fastest reason=panel_bw
+[ 197.32] PRESENT: refresh=partial mode=4 rect=16,894,116,52 call_ms=6 wait_ms=139
+[ 197.32] PRESENT: rect=148,894,116,52 mode=fastest reason=panel_bw
+[ 197.32] PRESENT: refresh=partial mode=4 rect=148,894,116,52 call_ms=6 wait_ms=131
+[ 197.32] BOOT: present_bst_end=1
+[ 197.52] APP: render tab=0 rects=1 mode=full
+[ 198.32] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=461
+[ 198.52] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=875
+[ 198.52] BOOT: record_saved=1
+[ 198.52] BOOT: present_bst_end=1
+[ 215.14] MEM: tick int_free=161128 int_min=147120 int_largest=110580 psram_free=2586151
+[ 218.95] BOOT: manual_sleep=1
+[ 218.95] BOOT: sleep_screen=3
+[ 218.95] APP: render tab=0 rects=1 mode=full
+[ 219.15] BOOT: record_invalidated=1
+[ 219.75] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[ 219.95] BOOT: record_saved=1
+[ 220.15] STATECACHE: save entities=19 bytes=3705 rtc=1 flash=written
+[ 220.15] NET: phase=power_down
+[ 220.15] SLEEP: mode=deepsleep alarm_at=1795777200 indicator=deep wake=rocker+rtc battery_mv=4382 awake_ms=1897469 low_battery=0
+[ 220.16] WAKELOG: result=ok wrote=1 sd_ms=37
+[ 220.16] SLEEP: rtc_alarm_set=1 at=27-11:00
+[ 220.36] SLEEP: path=deepsleep_hold epd=standby touch=awake
+[ 220.36] SLEEP: hold=rtc
+[ 223.96] ets Jul 29 2019 12:21:46
+[ 223.96] 
+[ 223.96] rst:0x5 (DEEPSLEEP_RESET),boot:0x16 (SPI_FAST_FLASH_BOOT)
+[ 223.96] configsip: 0, SPIWP:0xee
+[ 223.96] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[ 223.96] mode:DIO, clock div:2
+[ 223.96] load:0x3fff0030,len:1184
+[ 223.96] load:0x40078000,len:13232
+[ 223.96] load:0x40080400,len:3028
+[ 223.96] entry 0x400805e4
+[ 224.56] BOOT: serial_rx_buffer=4096
+[ 224.56] BOOT: hold_released=1
+[ 224.56] BOOT: t_pre_begin_ms=0
+[ 224.56] BOOT: t_boot_abs_ms=494
+[ 224.56] BOOT: reset_reason_early=deepsleep
+[ 224.56] BOOT: crash_count=0
+[ 224.56] BOOT: wdt_timeout_s=15
+[ 224.56] BOOT: wdt_init_rc=0
+[ 224.56] BOOT: wdt_effective_ms=15000
+[ 225.36] BOOT: standby_wake=sys_run
+[ 225.56] BOOT: controller_id=62915100
+[ 225.56] BOOT: dbg_after_cfgbus 1501
+[ 225.77] BOOT: dbg_before_panel_init reset=0 1762
+[ 225.77] BOOT: dbg_after_panel_init 1770
+[ 225.77] BOOT: dbg_before_touch 1770
+[ 225.77] BOOT: touch_init=ok
+[ 225.77] BOOT: dbg_before_m5begin 1832
+[ 225.77] BOOT: start=noreset
+[ 225.77] BOOT: controller=cold
+[ 225.77] BOOT: controller_ready_wait_ms=857
+[ 225.77] BOOT: display_start_ms=1326
+[ 225.77] BOOT: m5_begin_rest_ms=11
+[ 225.77] BOOT: m5_begin_total_ms=1338
+[ 225.77] BOOT: t_post_begin_ms=1361
+[ 225.77] BOOT: fw=1.5.0-rc1 debug | 965b826 | 2026-11-27
+[ 225.77] WAKE: reason=button reset=deepsleep pin=rocker rtc_flag=0 marker=1 indicator_on_panel=none usb_rx=1 slept=- t_ms=1865
+[ 225.97] BOOT: battery_limit_mv=3844 learned=1
+[ 225.97] HA: sht30 ok=1 temp_x10=283 hum_x10=522 ms=21
+[ 225.97] WAKELOG: result=ok wrote=1 sd_ms=37
+[ 225.97] BOOT: t_settings_ms=1454
+[ 225.97] CONFIG: source=cache ms=56
+[ 225.97] BOOT: config_source=cache
+[ 225.97] MEM: after_config int_free=244448 int_min=239052 int_largest=110580 psram_free=4182443
+[ 225.97] MEM: before_app_init int_free=244448 int_min=239052 int_largest=110580 psram_free=4182443
+[ 225.97] MEM: after_app_init int_free=241848 int_min=236328 int_largest=110580 psram_free=4180091
+[ 225.97] BOOT: mode=real
+[ 225.97] STATECACHE: restore source=rtc entities=19 epoch=1795766653 ms=11
+[ 225.97] MEM: after_restore int_free=225936 int_min=218868 int_largest=110580 psram_free=4180091
+[ 226.17] APP: graph_cache n=1 ms=34
+[ 226.17] MEM: after_graphs int_free=225692 int_min=218868 int_largest=110580 psram_free=4170619
+[ 226.17] BOOT: t_config_ms=1598
+[ 226.17] MEM: before_net_begin int_free=225692 int_min=218868 int_largest=110580 psram_free=4170619
+[ 226.17] APP: net_task started=1
+[ 226.17] APP: ntp not_needed
+[ 226.17] BOOT: t_wifi_start_ms=1613
+[ 226.17] MEM: session_start int_free=201936 int_min=201776 int_largest=110580 psram_free=4167659
+[ 226.17] APP: start wake=1 mv=4386 clock=ok
+[ 226.17] APP: cmd status=connecting
+[ 226.17] APP: cmd connect_wifi
+[ 226.17] NET: phase=begin profile=1 ssid_len=3 ssid_pre=K1
+[ 226.17] NET: cache=hit failures=0
+[ 226.17] NET: phase=attempt_cached ch=6 lease=1
+[ 226.17] BOOT: psram_free_before=4153295
+[ 226.37] BOOT: frame_alloc=1
+[ 226.37] BOOT: psram_free=2598035
+[ 226.37] APP: wake_stale=1 end=- look_refreshes=1
+[ 226.57] BOOT: t_render_ms=2113
+[ 226.57] BOOT: sleep_screen_full=1
+[ 227.77] PRESENT: refresh=full_after_sleep_screen mode=1 rect=0,0,540,960 call_ms=6 wait_ms=757
+[ 227.97] BOOT: record_saved=1
+[ 227.97] BOOT: draw=full
+[ 227.97] BOOT: present_bst_end=1
+[ 227.97] BOOT: t_first_draw_ms=3482
+[ 227.97] BOOT: version=017
+[ 227.97] BOOT: orientation=0
+[ 227.97] BOOT: reset_reason=deepsleep
+[ 227.97] BOOT: battery_mv=4354
+[ 227.97] BOOT: charging=2
+[ 227.97] BOOT: settle_bst_end=1
+[ 227.97] NET: phase=connected connect_ms=1835 rssi=-74 ch=6
+[ 227.97] APP: wifi connected
+[ 227.97] APP: cmd fetch ids=19
+[ 227.97] BOOT: t_wifi_up_ms=3504
+[ 227.97] APP: url_plan first=internal exclusive=0 learn=0
+[ 227.97] APP: timing queue_wait_ms=13 lane=bg type=0
+[ 228.57] APP: render tab=0 rects=2 mode=partial
+[ 228.57] BOOT: record_invalidated=1
+[ 228.57] PRESENT: rect=20,18,16,19 mode=quality reason=panel_has_grey
+[ 228.97] NETT: dns=0 tcp=23 tls=0 ttfb=827 total=864 reused=0
+[ 228.97] HTTP: ms=864 reused=0 link=local
+[ 229.17] PRESENT: refresh=partial mode=1 rect=20,18,16,19 call_ms=6 wait_ms=446
+[ 229.17] PRESENT: rect=48,20,216,18 mode=fastest reason=panel_bw
+[ 229.17] PRESENT: refresh=partial mode=4 rect=48,20,216,18 call_ms=6 wait_ms=138
+[ 229.17] BOOT: present_bst_end=1
+[ 229.37] APP: fetch_done err=0 http=200 states=19 changed=19 link=local
+[ 229.37] TIME: http_date delta_s=1 wrote=0
+[ 229.37] APP: cmd status=online
+[ 229.37] APP: fetch_applied store=19 changed=19 missing_members=0
+[ 229.37] APP: net_stack_free=15112
+[ 229.37] APP: timing queue_wait_ms=1 lane=bg type=3
+[ 229.37] APP: wake_stale=0 end=fresh look_refreshes=2
+[ 229.37] APP: render tab=0 rects=1 mode=full
+[ 230.17] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=461
+[ 230.37] BOOT: record_saved=1
+[ 230.37] BOOT: present_bst_end=1
+[ 232.17] APP: user_action ids=1
+[ 232.17] APP: cmd mark=0 ids=1
+[ 232.17] APP: cmd call ticket=1 service=light.turn_on ids=light.shellydimmer2_3c6105fe7a6c
+[ 232.17] APP: timing tap_to_call_ms=0
+[ 232.37] APP: net_yield type=3 policy=requeue requeues=0
+[ 232.37] APP: timing queue_wait_ms=77 lane=user type=1
+[ 232.37] APP: render tab=0 rects=1 mode=partial
+[ 232.58] BOOT: record_invalidated=1
+[ 232.58] PRESENT: rect=364,186,160,100 mode=fastest reason=tap_fast
+[ 232.58] PRESENT: refresh=partial mode=4 rect=364,186,160,100 call_ms=6 wait_ms=131
+[ 232.58] BOOT: present_bst_end=1
+[ 233.38] APP: graph_cache n=1 ms=5
+[ 233.58] APP: render tab=1 rects=1 mode=full
+[ 234.18] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=460
+[ 234.38] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=881
+[ 234.38] BOOT: record_saved=1
+[ 234.38] BOOT: present_bst_end=1
+[ 234.58] APP: render tab=0 rects=1 mode=full
+[ 234.58] BOOT: record_invalidated=1
+[ 235.38] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=454
+[ 235.58] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=872
+[ 235.58] BOOT: record_saved=1
+[ 235.58] BOOT: present_bst_end=1
+[ 235.78] APP: user_action ids=1
+[ 235.78] APP: cmd mark=0 ids=1
+[ 235.98] APP: render tab=0 rects=1 mode=partial
+[ 235.98] BOOT: record_invalidated=1
+[ 235.98] PRESENT: rect=364,70,160,100 mode=fastest reason=tap_fast
+[ 236.18] PRESENT: refresh=partial mode=4 rect=364,70,160,100 call_ms=6 wait_ms=134
+[ 236.18] BOOT: present_bst_end=1
+[ 236.18] APP: user_action ids=1
+[ 236.18] APP: cmd mark=0 ids=1
+[ 236.38] APP: render tab=0 rects=1 mode=partial
+[ 236.38] PRESENT: rect=188,186,160,100 mode=fastest reason=tap_fast
+[ 236.58] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=133
+[ 236.58] BOOT: present_bst_end=1
+[ 236.58] APP: user_action ids=1
+[ 236.58] APP: cmd mark=0 ids=1
+[ 236.78] APP: render tab=0 rects=1 mode=partial
+[ 236.78] PRESENT: rect=16,186,160,100 mode=fastest reason=tap_fast
+[ 236.98] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=135
+[ 236.98] BOOT: present_bst_end=1
+[ 237.78] APP: render tab=1 rects=1 mode=full
+[ 238.58] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=460
+[ 238.78] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=878
+[ 238.78] BOOT: record_saved=1
+[ 238.78] BOOT: present_bst_end=1
+[ 238.98] APP: render tab=0 rects=1 mode=full
+[ 238.98] BOOT: record_invalidated=1
+[ 239.79] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=453
+[ 239.99] PRESENT: refresh=tab_clean v=0 init_ms=0 full_ms=869
+[ 239.99] BOOT: record_saved=1
+[ 239.99] BOOT: present_bst_end=1
+[ 240.39] NETT: dns=0 tcp=15 tls=0 ttfb=8021 total=8039 reused=0
+[ 240.39] APP: call_done ticket=1 err=2 http=0 states=0 changed=0
+[ 240.39] APP: timing call_to_response_ms=8138 http_ms=0
+[ 240.39] APP: cmd status=offline
+[ 240.39] APP: cmd mark=2 ids=4
+[ 240.39] APP: timing response_to_render_ms=0
+[ 240.59] APP: render tab=0 rects=6 mode=partial
+[ 240.59] BOOT: record_invalidated=1
+[ 240.59] PRESENT: rect=16,16,204,22 mode=quality reason=panel_has_grey
+[ 241.19] PRESENT: refresh=partial mode=1 rect=16,16,204,22 call_ms=6 wait_ms=447
+[ 241.19] PRESENT: rect=260,17,24,20 mode=fastest reason=panel_bw
+[ 241.19] PRESENT: refresh=partial mode=4 rect=260,17,24,20 call_ms=6 wait_ms=135
+[ 241.19] PRESENT: rect=364,70,160,100 mode=quality reason=panel_has_grey
+[ 241.79] PRESENT: refresh=partial mode=1 rect=364,70,160,100 call_ms=6 wait_ms=445
+[ 241.79] PRESENT: rect=16,186,160,100 mode=quality reason=panel_has_grey
+[ 242.19] PRESENT: refresh=partial mode=1 rect=16,186,160,100 call_ms=6 wait_ms=447
+[ 242.19] PRESENT: rect=188,186,160,100 mode=quality reason=panel_has_grey
+[ 242.59] PRESENT: refresh=partial mode=1 rect=188,186,160,100 call_ms=6 wait_ms=443
+[ 242.59] PRESENT: rect=364,186,160,100 mode=quality reason=panel_has_grey
+[ 243.19] PRESENT: refresh=partial mode=1 rect=364,186,160,100 call_ms=6 wait_ms=440
+[ 243.19] BOOT: present_bst_end=1
+[ 243.19] BOOT: record_saved=1
+[ 243.39] APP: user_action ids=1
+[ 243.39] APP: cmd mark=2 ids=1
+[ 247.20] APP: user_action ids=1
+[ 247.20] APP: cmd mark=2 ids=1
+[ 247.40] APP: render tab=0 rects=1 mode=partial
+[ 247.40] BOOT: record_invalidated=1
+[ 247.40] PRESENT: rect=260,359,24,20 mode=fastest reason=panel_bw
+[ 247.60] PRESENT: refresh=partial mode=4 rect=260,359,24,20 call_ms=6 wait_ms=135
+[ 247.60] BOOT: present_bst_end=1
+[ 247.60] APP: user_action ids=1
+[ 247.60] APP: cmd mark=2 ids=1
+[ 247.80] APP: render tab=0 rects=1 mode=partial
+[ 247.80] PRESENT: rect=260,475,24,20 mode=fastest reason=panel_bw
+[ 247.80] PRESENT: refresh=partial mode=4 rect=260,475,24,20 call_ms=6 wait_ms=131
+[ 247.80] BOOT: present_bst_end=1
+[ 248.00] APP: user_action ids=1
+[ 248.00] APP: cmd mark=2 ids=1
+[ 248.20] APP: render tab=0 rects=1 mode=partial
+[ 248.20] PRESENT: rect=260,591,24,20 mode=fastest reason=panel_bw
+[ 248.20] PRESENT: refresh=partial mode=4 rect=260,591,24,20 call_ms=6 wait_ms=131
+[ 248.20] BOOT: present_bst_end=1
+[ 250.00] BOOT: record_saved=1
+[ 250.00] HIST: src=stats fetch_ms=9677 parse_ms=72 bytes=14020 points=167 heap_min=150048 err=0
+[ 250.00] APP: graph_fetch ms=20789 net_ms=9677 parse_ms=72 bytes=14020 points=167 err=0 changed=1 id=sensor.altherma_climatecontrol_outdoor_temperature
+[ 250.40] APP: graph_merge rects_before=6 rects_after=1
+[ 250.40] APP: render tab=0 rects=1 mode=partial
+[ 250.40] BOOT: record_invalidated=1
+[ 250.40] PRESENT: rect=16,648,508,220 mode=quality reason=panel_has_grey
+[ 251.00] PRESENT: refresh=partial mode=1 rect=16,648,508,220 call_ms=6 wait_ms=455
+[ 251.00] BOOT: present_bst_end=1
+[ 251.00] APP: render tab=0 rects=1 mode=full
+[ 251.80] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[ 252.01] BOOT: record_saved=1
+[ 252.01] APP: settings opened
+[ 252.01] BOOT: present_bst_end=1
+[ 253.21] APP: render tab=0 rects=1 mode=full
+[ 253.41] BOOT: record_invalidated=1
+[ 254.01] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=453
+[ 254.41] BOOT: record_saved=1
+[ 254.41] BOOT: present_bst_end=1
+[ 254.41] MEM: tick int_free=160964 int_min=150048 int_largest=110580 psram_free=2586279
+[ 256.81] BOOT: manual_sleep=1
+[ 257.01] BOOT: sleep_screen=3
+[ 257.01] APP: render tab=0 rects=1 mode=full
+[ 257.01] BOOT: record_invalidated=1
+[ 257.81] PRESENT: refresh=full mode=1 rect=0,0,540,960 call_ms=6 wait_ms=455
+[ 257.81] BOOT: record_saved=1
+[ 258.01] STATECACHE: save entities=19 bytes=3707 rtc=1 flash=written
+[ 258.01] NET: phase=power_down
+[ 258.01] SLEEP: mode=deepsleep alarm_at=1795777200 indicator=deep wake=rocker+rtc battery_mv=4354 awake_ms=34110 low_battery=0
+[ 258.21] WAKELOG: result=ok wrote=1 sd_ms=35
+[ 258.21] SLEEP: rtc_alarm_set=1 at=27-11:00
+[ 258.42] SLEEP: path=deepsleep_hold epd=standby touch=awake
+[ 258.42] SLEEP: hold=rtc
+[ 262.22] ets Jul 29 2019 12:21:46
+[ 262.22] 
+[ 262.22] rst:0x5 (DEEPSLEEP_RESET),boot:0x16 (SPI_FAST_FLASH_BOOT)
+[ 262.22] configsip: 0, SPIWP:0xee
+[ 262.22] clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+[ 262.22] mode:DIO, clock div:2
+[ 262.22] load:0x3fff0030,len:1184
+[ 262.22] load:0x40078000,len:13232
+[ 262.22] load:0x40080400,len:3028
+[ 262.22] entry 0x400805e4
+[ 262.82] BOOT: serial_rx_buffer=4096
+[ 262.82] BOOT: hold_released=1
+[ 262.82] BOOT: t_pre_begin_ms=0
+[ 262.82] BOOT: t_boot_abs_ms=493
+[ 262.82] BOOT: reset_reason_early=deepsleep
+[ 262.82] BOOT: crash_count=0
+[ 262.82] BOOT: wdt_timeout_s=15
+[ 262.82] BOOT: wdt_init_rc=0
+[ 262.82] BOOT: wdt_effective_ms=15000
+[ 263.62] BOOT: standby_wake=sys_run
+[ 263.82] BOOT: controller_id=62915100
+[ 263.82] BOOT: dbg_after_cfgbus 1500
+[ 264.02] BOOT: dbg_before_panel_init reset=0 1761
+[ 264.02] BOOT: dbg_after_panel_init 1769
+[ 264.02] BOOT: dbg_before_touch 1769
+[ 264.02] BOOT: touch_init=ok
+[ 264.02] BOOT: dbg_before_m5begin 1831
+[ 264.02] BOOT: start=noreset
+[ 264.02] BOOT: controller=cold
+[ 264.02] BOOT: controller_ready_wait_ms=856
+[ 264.02] BOOT: display_start_ms=1326
+[ 264.02] BOOT: m5_begin_rest_ms=3
+[ 264.02] BOOT: m5_begin_total_ms=1329
+[ 264.02] BOOT: t_post_begin_ms=1352
+[ 264.02] BOOT: fw=1.5.0-rc1 debug | 965b826 | 2026-11-27
+[ 264.02] WAKE: reason=button reset=deepsleep pin=rocker rtc_flag=0 marker=1 indicator_on_panel=none usb_rx=1 slept=- t_ms=1855
+[ 264.02] BOOT: battery_limit_mv=3844 learned=1
+[ 264.22] HA: sht30 ok=1 temp_x10=285 hum_x10=519 ms=21
+[ 264.22] WAKELOG: result=ok wrote=1 sd_ms=37
+[ 264.22] BOOT: t_settings_ms=1445
+[ 264.22] CONFIG: source=cache ms=63
+[ 264.22] BOOT: config_source=cache
+[ 264.22] MEM: after_config int_free=244448 int_min=239052 int_largest=110580 psram_free=4182443
+[ 264.22] MEM: before_app_init int_free=244448 int_min=239052 int_largest=110580 psram_free=4182443
+[ 264.22] MEM: after_app_init int_free=241848 int_min=236324 int_largest=110580 psram_free=4180091
+[ 264.22] BOOT: mode=real
+[ 264.22] STATECACHE: restore source=rtc entities=19 epoch=1795768552 ms=11
+[ 264.22] MEM: after_restore int_free=225936 int_min=218864 int_largest=110580 psram_free=4180091
+[ 264.42] APP: graph_cache n=1 ms=34
+[ 264.42] MEM: after_graphs int_free=225692 int_min=218848 int_largest=110580 psram_free=4170619
+[ 264.42] BOOT: t_config_ms=1596
+[ 264.42] MEM: before_net_begin int_free=225692 int_min=218848 int_largest=110580 psram_free=4170619
+[ 264.42] APP: net_task started=1
+[ 264.42] APP: ntp not_needed
+[ 264.42] BOOT: t_wifi_start_ms=1611
+[ 264.42] MEM: session_start int_free=201932 int_min=201756 int_largest=110580 psram_free=4167659
+[ 264.42] APP: start wake=1 mv=4392 clock=ok
+[ 264.42] APP: cmd status=connecting
+[ 264.42] APP: cmd connect_wifi
+[ 264.42] NET: phase=begin profile=1 ssid_len=3 ssid_pre=K1
+[ 264.42] NET: cache=hit failures=0
+[ 264.42] NET: phase=attempt_cached ch=6 lease=1
+[ 264.42] BOOT: psram_free_before=4153295
+[ 264.42] BOOT: frame_alloc=1
+[ 264.62] BOOT: psram_free=2598035
+[ 264.62] APP: wake_stale=1 end=- look_refreshes=1
+[ 264.83] BOOT: t_render_ms=2111
+[ 264.83] BOOT: sleep_screen_full=1
+[ 266.03] PRESENT: refresh=full_after_sleep_screen mode=1 rect=0,0,540,960 call_ms=6 wait_ms=757
+[ 266.23] BOOT: record_saved=1
+[ 266.23] BOOT: draw=full
+[ 266.23] BOOT: present_bst_end=1
+[ 266.23] BOOT: t_first_draw_ms=3478
+[ 266.23] BOOT: version=017
+[ 266.23] BOOT: orientation=0
+[ 266.23] BOOT: reset_reason=deepsleep
+[ 266.23] BOOT: battery_mv=4354
+[ 266.23] BOOT: charging=2
+[ 266.23] BOOT: settle_bst_end=1
+[ 266.23] NET: phase=connected connect_ms=1834 rssi=-87 ch=6
+[ 266.23] APP: wifi connected
+[ 266.23] APP: cmd fetch ids=19
+[ 266.23] BOOT: t_wifi_up_ms=3500
+[ 266.23] APP: url_plan first=internal exclusive=0 learn=0
+[ 266.23] APP: timing queue_wait_ms=17 lane=bg type=0
+[ 266.43] APP: user_action ids=1
+[ 266.43] APP: cmd mark=0 ids=1
+[ 266.43] APP: cmd call ticket=1 service=light.turn_on ids=light.shellydimmer2_3c6105fe7a6c
+[ 266.43] APP: timing tap_to_call_ms=0
+[ 266.43] NETT: dns=0 tcp=31 tls=0 ttfb=221 total=272 reused=0
+[ 266.63] HTTP: ms=272 reused=0 link=local
+[ 266.63] APP: timing queue_wait_ms=114 lane=user type=1
+[ 266.63] APP: render tab=0 rects=1 mode=partial
+[ 266.83] NETT: dns=0 tcp=0 tls=0 ttfb=167 total=171 reused=1
+[ 266.83] HTTP: ms=171 reused=1 link=local
+[ 266.83] BOOT: record_invalidated=1
+[ 266.83] PRESENT: rect=360,184,164,104 mode=fastest reason=tap_fast
+[ 266.83] PRESENT: refresh=partial mode=4 rect=360,184,164,104 call_ms=6 wait_ms=133
+[ 266.83] BOOT: present_bst_end=1
+[ 266.83] APP: fetch_done err=0 http=200 states=19 changed=4 link=local
+[ 266.83] TIME: http_date delta_s=2 wrote=1
+[ 267.03] APP: cmd status=online
+[ 267.03] APP: call_done ticket=1 err=0 http=200 states=0 changed=0
+[ 267.03] APP: timing call_to_response_ms=471 http_ms=171
+[ 267.03] APP: timing response_to_render_ms=0
+[ 267.03] APP: fetch_applied store=19 changed=4 missing_members=0
+[ 267.03] APP: net_stack_free=15084
+[ 267.03] APP: wake_stale=0 end=fresh look_refreshes=2
+[ 267.03] APP: timing queue_wait_ms=1 lane=bg type=3
+[ 267.23] APP: render tab=0 rects=6 mode=partial
+[ 267.23] APP: stale_union rect=16,18,508,618
+[ 267.23] PRESENT: rect=16,18,508,618 mode=fastest reason=tap_fast
+[ 267.43] HIST: src=stats fetch_ms=364 parse_ms=55 bytes=14020 points=167 heap_min=148588 err=0
+[ 267.63] PRESENT: refresh=partial mode=4 rect=16,18,508,618 call_ms=6 wait_ms=140
+[ 267.83] BOOT: present_bst_end=1
+[ 267.83] APP: cmd fetch ids=1
+[ 267.83] APP: graph_fetch ms=813 net_ms=364 parse_ms=55 bytes=14020 points=167 err=0 changed=1 id=sensor.altherma_climatecontrol_outdoor_temperature
+[ 267.83] APP: timing queue_wait_ms=10 lane=user type=0
+[ 267.83] NETT: dns=0 tcp=10 tls=0 ttfb=37 total=50 reused=0
+[ 267.83] HTTP: ms=50 reused=0 link=local
+[ 267.83] APP: graph_batch n=1 ms=903 all_tabs=0
+[ 267.83] APP: fetch_done err=0 http=200 states=1 changed=0 link=local
+[ 267.83] TIME: http_date delta_s=1 wrote=0
+[ 267.83] APP: cmd mark=1 ids=1
+[ 267.83] APP: fetch_applied store=19 changed=0 missing_members=0
+[ 268.03] APP: graph_merge rects_before=6 rects_after=2
+[ 268.03] APP: render tab=0 rects=2 mode=partial
+[ 268.03] PRESENT: rect=364,188,160,97 mode=fastest reason=panel_bw
+[ 268.23] PRESENT: refresh=partial mode=4 rect=364,188,160,97 call_ms=6 wait_ms=128
+[ 268.23] PRESENT: rect=16,648,508,220 mode=quality reason=panel_has_grey
+[ 268.83] PRESENT: refresh=partial mode=1 rect=16,648,508,220 call_ms=6 wait_ms=457
+[ 268.83] BOOT: present_bst_end=1
+[ 268.83] APP: user_action ids=1
+[ 268.83] APP: cmd mark=0 ids=1
+[ 268.83] APP: cmd call ticket=2 service=switch.turn_on ids=switch.livingroom_main_switch_0
+[ 268.83] APP: timing tap_to_call_ms=0
+[ 268.83] APP: timing queue_wait_ms=4 lane=user type=1
+[ 268.83] NETT: dns=0 tcp=0 tls=0 ttfb=109 total=116 reused=1
+[ 268.83] HTTP: ms=116 reused=1 link=local
+[ 269.03] APP: render tab=0 rects=1 mode=partial
+[ 269.03] PRESENT: rect=364,70,160,100 mode=fastest reason=tap_fast
+[ 269.23] PRESENT: refresh=partial mode=4 rect=364,70,160,100 call_ms=6 wait_ms=133
+[ 269.23] BOOT: present_bst_end=1
+[ 269.23] APP: call_done ticket=2 err=0 http=200 states=0 changed=0
+[ 269.23] APP: timing call_to_response_ms=388 http_ms=116
+[ 269.43] APP: cmd fetch ids=1
+[ 269.43] APP: timing queue_wait_ms=11 lane=user type=0
+[ 269.63] NETT: dns=0 tcp=0 tls=0 ttfb=87 total=90 reused=1
+[ 269.63] HTTP: ms=90 reused=1 link=local
+[ 269.63] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 269.63] TIME: http_date delta_s=1 wrote=0
+[ 269.63] APP: cmd mark=1 ids=1
+[ 269.63] APP: timing response_to_render_ms=414
+[ 269.63] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 269.83] APP: render tab=0 rects=1 mode=partial
+[ 269.83] PRESENT: rect=364,72,160,97 mode=fastest reason=panel_bw
+[ 270.03] PRESENT: refresh=partial mode=4 rect=364,72,160,97 call_ms=6 wait_ms=128
+[ 270.03] BOOT: present_bst_end=1
+[ 270.23] APP: user_action ids=1
+[ 270.23] APP: cmd mark=0 ids=1
+[ 270.23] APP: cmd call ticket=3 service=switch.turn_on ids=switch.shelly_kitchen_table_switch_0
+[ 270.23] APP: timing tap_to_call_ms=0
+[ 270.23] APP: timing queue_wait_ms=15 lane=user type=1
+[ 270.43] APP: render tab=0 rects=1 mode=partial
+[ 270.43] PRESENT: rect=188,186,160,100 mode=fastest reason=tap_fast
+[ 270.43] NETT: dns=0 tcp=0 tls=0 ttfb=181 total=188 reused=1
+[ 270.44] HTTP: ms=188 reused=1 link=local
+[ 270.64] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=133
+[ 270.64] BOOT: present_bst_end=1
+[ 270.64] APP: call_done ticket=3 err=0 http=200 states=0 changed=0
+[ 270.64] APP: timing call_to_response_ms=404 http_ms=188
+[ 270.84] APP: cmd fetch ids=1
+[ 271.04] APP: timing queue_wait_ms=15 lane=user type=0
+[ 271.04] NETT: dns=0 tcp=0 tls=0 ttfb=48 total=50 reused=1
+[ 271.04] HTTP: ms=50 reused=1 link=local
+[ 271.04] APP: user_action ids=1
+[ 271.04] APP: cmd mark=0 ids=1
+[ 271.04] APP: cmd call ticket=4 service=switch.turn_on ids=switch.shellywalldisplay_0008226c4b4b_switch_0
+[ 271.04] APP: timing tap_to_call_ms=0
+[ 271.04] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 271.04] TIME: http_date delta_s=0 wrote=0
+[ 271.04] APP: cmd mark=1 ids=1
+[ 271.04] APP: timing response_to_render_ms=377
+[ 271.04] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 271.04] APP: timing queue_wait_ms=13 lane=user type=1
+[ 271.24] APP: render tab=0 rects=2 mode=partial
+[ 271.24] PRESENT: rect=16,186,160,100 mode=fastest reason=tap_fast
+[ 271.24] NETT: dns=0 tcp=0 tls=0 ttfb=230 total=233 reused=1
+[ 271.24] HTTP: ms=233 reused=1 link=local
+[ 271.44] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=136
+[ 271.44] PRESENT: rect=192,188,156,97 mode=fastest reason=panel_bw
+[ 271.64] PRESENT: refresh=partial mode=4 rect=192,188,156,97 call_ms=6 wait_ms=131
+[ 271.64] BOOT: present_bst_end=1
+[ 271.64] APP: call_done ticket=4 err=0 http=200 states=0 changed=0
+[ 271.64] APP: timing call_to_response_ms=565 http_ms=233
+[ 271.84] APP: cmd fetch ids=1
+[ 271.84] APP: timing queue_wait_ms=6 lane=user type=0
+[ 271.84] NETT: dns=0 tcp=0 tls=0 ttfb=38 total=40 reused=1
+[ 271.84] HTTP: ms=40 reused=1 link=local
+[ 272.04] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 272.04] TIME: http_date delta_s=0 wrote=0
+[ 272.04] APP: cmd mark=1 ids=1
+[ 272.04] APP: timing response_to_render_ms=370
+[ 272.04] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 272.24] APP: render tab=0 rects=1 mode=partial
+[ 272.24] PRESENT: rect=20,188,156,97 mode=fastest reason=panel_bw
+[ 272.24] PRESENT: refresh=partial mode=4 rect=20,188,156,97 call_ms=6 wait_ms=135
+[ 272.24] BOOT: present_bst_end=1
+[ 272.64] APP: user_action ids=1
+[ 272.64] APP: cmd mark=0 ids=1
+[ 272.64] APP: cmd call ticket=5 service=switch.turn_off ids=switch.shelly_kitchen_table_switch_0
+[ 272.64] APP: timing tap_to_call_ms=0
+[ 272.64] APP: timing queue_wait_ms=13 lane=user type=1
+[ 272.84] NETT: dns=0 tcp=0 tls=0 ttfb=105 total=112 reused=1
+[ 272.84] HTTP: ms=112 reused=1 link=local
+[ 272.84] APP: render tab=0 rects=1 mode=partial
+[ 272.84] PRESENT: rect=188,186,160,100 mode=fastest reason=tap_fast
+[ 273.04] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=133
+[ 273.04] BOOT: present_bst_end=1
+[ 273.04] APP: call_done ticket=5 err=0 http=200 states=0 changed=0
+[ 273.04] APP: timing call_to_response_ms=398 http_ms=112
+[ 273.44] APP: cmd fetch ids=1
+[ 273.44] APP: timing queue_wait_ms=19 lane=user type=0
+[ 273.44] NETT: dns=0 tcp=0 tls=0 ttfb=67 total=70 reused=1
+[ 273.44] HTTP: ms=70 reused=1 link=local
+[ 273.44] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 273.44] TIME: http_date delta_s=1 wrote=0
+[ 273.44] APP: cmd mark=1 ids=1
+[ 273.44] APP: timing response_to_render_ms=400
+[ 273.44] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 273.64] APP: render tab=0 rects=1 mode=partial
+[ 273.64] PRESENT: rect=192,188,156,97 mode=fastest reason=panel_bw
+[ 273.84] PRESENT: refresh=partial mode=4 rect=192,188,156,97 call_ms=6 wait_ms=130
+[ 273.84] BOOT: present_bst_end=1
+[ 273.84] APP: user_action ids=1
+[ 273.84] APP: cmd mark=0 ids=1
+[ 273.84] APP: cmd call ticket=6 service=light.turn_off ids=light.shellydimmer2_3c6105fe7a6c
+[ 273.84] APP: timing tap_to_call_ms=0
+[ 273.84] APP: timing queue_wait_ms=18 lane=user type=1
+[ 274.04] NETT: dns=0 tcp=0 tls=0 ttfb=163 total=174 reused=1
+[ 274.04] HTTP: ms=174 reused=1 link=local
+[ 274.04] APP: render tab=0 rects=1 mode=partial
+[ 274.04] PRESENT: rect=364,186,160,100 mode=fastest reason=tap_fast
+[ 274.24] PRESENT: refresh=partial mode=4 rect=364,186,160,100 call_ms=6 wait_ms=127
+[ 274.24] BOOT: present_bst_end=1
+[ 274.24] APP: call_done ticket=6 err=0 http=200 states=1 changed=1
+[ 274.24] APP: timing call_to_response_ms=384 http_ms=174
+[ 274.24] APP: cmd mark=1 ids=1
+[ 274.24] APP: timing response_to_render_ms=0
+[ 274.44] APP: render tab=0 rects=1 mode=partial
+[ 274.44] PRESENT: rect=364,188,160,97 mode=fastest reason=panel_bw
+[ 274.64] PRESENT: refresh=partial mode=4 rect=364,188,160,97 call_ms=6 wait_ms=128
+[ 274.64] BOOT: present_bst_end=1
+[ 274.64] APP: user_action ids=1
+[ 274.64] APP: cmd mark=0 ids=1
+[ 274.64] APP: cmd call ticket=7 service=switch.turn_off ids=switch.shellywalldisplay_0008226c4b4b_switch_0
+[ 274.64] APP: timing tap_to_call_ms=0
+[ 274.64] APP: timing queue_wait_ms=3 lane=user type=1
+[ 274.64] NETT: dns=0 tcp=0 tls=0 ttfb=131 total=139 reused=1
+[ 274.64] HTTP: ms=139 reused=1 link=local
+[ 274.84] APP: render tab=0 rects=1 mode=partial
+[ 274.84] PRESENT: rect=16,186,160,100 mode=fastest reason=tap_fast
+[ 274.84] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=135
+[ 274.84] BOOT: present_bst_end=1
+[ 275.04] APP: call_done ticket=7 err=0 http=200 states=0 changed=0
+[ 275.04] APP: timing call_to_response_ms=388 http_ms=139
+[ 275.24] APP: cmd fetch ids=1
+[ 275.24] APP: timing queue_wait_ms=10 lane=user type=0
+[ 275.24] NETT: dns=0 tcp=0 tls=0 ttfb=17 total=20 reused=1
+[ 275.24] HTTP: ms=20 reused=1 link=local
+[ 275.24] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 275.24] TIME: http_date delta_s=0 wrote=0
+[ 275.24] APP: cmd mark=1 ids=1
+[ 275.24] APP: timing response_to_render_ms=341
+[ 275.24] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 275.44] APP: render tab=0 rects=1 mode=partial
+[ 275.44] PRESENT: rect=20,188,156,97 mode=fastest reason=panel_bw
+[ 275.64] PRESENT: refresh=partial mode=4 rect=20,188,156,97 call_ms=6 wait_ms=135
+[ 275.64] BOOT: present_bst_end=1
+[ 276.04] APP: user_action ids=1
+[ 276.04] APP: cmd mark=0 ids=1
+[ 276.04] APP: cmd call ticket=8 service=switch.turn_off ids=switch.livingroom_main_switch_0
+[ 276.04] APP: timing tap_to_call_ms=0
+[ 276.04] APP: timing queue_wait_ms=13 lane=user type=1
+[ 276.04] NETT: dns=0 tcp=0 tls=0 ttfb=105 total=112 reused=1
+[ 276.04] HTTP: ms=112 reused=1 link=local
+[ 276.24] APP: render tab=0 rects=1 mode=partial
+[ 276.24] PRESENT: rect=364,70,160,100 mode=fastest reason=tap_fast
+[ 276.24] PRESENT: refresh=partial mode=4 rect=364,70,160,100 call_ms=6 wait_ms=126
+[ 276.24] BOOT: present_bst_end=1
+[ 276.24] APP: call_done ticket=8 err=0 http=200 states=0 changed=0
+[ 276.24] APP: timing call_to_response_ms=398 http_ms=112
+[ 276.64] APP: cmd fetch ids=1
+[ 276.64] APP: timing queue_wait_ms=4 lane=user type=0
+[ 276.64] NETT: dns=0 tcp=0 tls=0 ttfb=69 total=72 reused=1
+[ 276.64] HTTP: ms=72 reused=1 link=local
+[ 276.64] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 276.64] TIME: http_date delta_s=1 wrote=0
+[ 276.64] APP: cmd mark=1 ids=1
+[ 276.64] APP: timing response_to_render_ms=393
+[ 276.64] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 276.85] APP: render tab=0 rects=1 mode=partial
+[ 276.85] PRESENT: rect=364,72,160,97 mode=fastest reason=panel_bw
+[ 277.05] PRESENT: refresh=partial mode=4 rect=364,72,160,97 call_ms=6 wait_ms=127
+[ 277.05] BOOT: present_bst_end=1
+[ 279.05] PRESENT: refresh=full_burst mode=1 rect=0,0,540,960 call_ms=6 wait_ms=461
+[ 279.25] PRESENT: refresh=full_burst partials=17 mode=gc16 init_ms=0 full_ms=875
+[ 279.25] BOOT: record_saved=1
+[ 279.25] BOOT: present_bst_end=1
+[ 279.25] APP: user_action ids=1
+[ 279.25] APP: cmd mark=0 ids=1
+[ 279.25] APP: cmd call ticket=9 service=switch.turn_on ids=switch.shellywalldisplay_0008226c4b4b_switch_0
+[ 279.25] APP: timing tap_to_call_ms=0
+[ 279.25] APP: user_action ids=1
+[ 279.25] APP: cmd mark=0 ids=1
+[ 279.25] APP: timing queue_wait_ms=14 lane=user type=1
+[ 279.45] NETT: dns=0 tcp=0 tls=0 ttfb=142 total=149 reused=1
+[ 279.45] HTTP: ms=149 reused=1 link=local
+[ 279.45] APP: render tab=0 rects=2 mode=partial
+[ 279.45] BOOT: record_invalidated=1
+[ 279.45] PRESENT: rect=16,186,160,100 mode=fastest reason=tap_fast
+[ 279.65] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=139
+[ 279.65] PRESENT: rect=188,186,160,100 mode=fastest reason=tap_fast
+[ 279.85] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=131
+[ 279.85] BOOT: present_bst_end=1
+[ 279.85] APP: call_done ticket=9 err=0 http=200 states=0 changed=0
+[ 279.85] APP: timing call_to_response_ms=608 http_ms=149
+[ 279.85] APP: cmd call ticket=10 service=switch.turn_on ids=switch.shelly_kitchen_table_switch_0
+[ 279.85] APP: timing tap_to_call_ms=608
+[ 279.85] APP: timing queue_wait_ms=8 lane=user type=1
+[ 280.05] NETT: dns=0 tcp=0 tls=0 ttfb=49 total=51 reused=1
+[ 280.05] HTTP: ms=51 reused=1 link=local
+[ 280.05] APP: call_done ticket=10 err=0 http=200 states=0 changed=0
+[ 280.05] APP: timing call_to_response_ms=79 http_ms=51
+[ 280.25] APP: cmd fetch ids=1
+[ 280.25] APP: timing queue_wait_ms=15 lane=user type=0
+[ 280.25] NETT: dns=0 tcp=0 tls=0 ttfb=87 total=90 reused=1
+[ 280.25] HTTP: ms=90 reused=1 link=local
+[ 280.25] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 280.25] TIME: http_date delta_s=0 wrote=0
+[ 280.25] APP: cmd mark=1 ids=1
+[ 280.25] APP: cmd fetch ids=1
+[ 280.25] APP: timing response_to_render_ms=337
+[ 280.25] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 280.25] APP: timing queue_wait_ms=11 lane=user type=0
+[ 280.45] NETT: dns=0 tcp=0 tls=0 ttfb=83 total=89 reused=1
+[ 280.45] HTTP: ms=89 reused=1 link=local
+[ 280.45] APP: render tab=0 rects=1 mode=partial
+[ 280.45] PRESENT: rect=20,188,156,97 mode=fastest reason=panel_bw
+[ 280.65] PRESENT: refresh=partial mode=4 rect=20,188,156,97 call_ms=6 wait_ms=135
+[ 280.65] BOOT: present_bst_end=1
+[ 280.65] APP: user_action ids=1
+[ 280.65] APP: cmd mark=0 ids=1
+[ 280.65] APP: cmd call ticket=11 service=switch.turn_off ids=switch.shellywalldisplay_0008226c4b4b_switch_0
+[ 280.65] APP: timing tap_to_call_ms=0
+[ 280.65] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 280.65] TIME: http_date delta_s=1 wrote=0
+[ 280.65] APP: cmd mark=1 ids=1
+[ 280.65] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 280.65] APP: timing queue_wait_ms=21 lane=user type=1
+[ 280.85] APP: render tab=0 rects=2 mode=partial
+[ 280.85] PRESENT: rect=16,186,160,100 mode=fastest reason=tap_fast
+[ 281.05] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=136
+[ 281.05] PRESENT: rect=192,188,156,97 mode=fastest reason=panel_bw
+[ 281.25] PRESENT: refresh=partial mode=4 rect=192,188,156,97 call_ms=6 wait_ms=132
+[ 281.25] BOOT: present_bst_end=1
+[ 281.85] NETT: dns=0 tcp=0 tls=0 ttfb=1088 total=1095 reused=1
+[ 281.85] HTTP: ms=1095 reused=1 link=local
+[ 281.85] APP: call_done ticket=11 err=0 http=200 states=0 changed=0
+[ 281.85] APP: timing call_to_response_ms=1139 http_ms=1095
+[ 282.05] APP: cmd fetch ids=1
+[ 282.06] APP: timing queue_wait_ms=12 lane=user type=0
+[ 282.26] NETT: dns=0 tcp=0 tls=0 ttfb=17 total=19 reused=1
+[ 282.26] HTTP: ms=19 reused=1 link=local
+[ 282.26] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 282.26] TIME: http_date delta_s=0 wrote=0
+[ 282.26] APP: cmd mark=1 ids=1
+[ 282.26] APP: timing response_to_render_ms=341
+[ 282.26] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 282.26] APP: render tab=0 rects=1 mode=partial
+[ 282.26] PRESENT: rect=20,188,156,97 mode=fastest reason=panel_bw
+[ 282.46] PRESENT: refresh=partial mode=4 rect=20,188,156,97 call_ms=6 wait_ms=135
+[ 282.46] BOOT: present_bst_end=1
+[ 283.46] PRESENT: refresh=full_burst mode=1 rect=0,0,540,960 call_ms=6 wait_ms=461
+[ 283.46] PRESENT: refresh=full_burst partials=6 mode=gc16 init_ms=0 full_ms=876
+[ 283.66] BOOT: record_saved=1
+[ 283.66] BOOT: present_bst_end=1
+[ 284.26] APP: user_action ids=1
+[ 284.26] APP: cmd mark=0 ids=1
+[ 284.26] APP: cmd call ticket=12 service=switch.turn_off ids=switch.shelly_kitchen_table_switch_0
+[ 284.26] APP: timing tap_to_call_ms=0
+[ 284.26] APP: timing queue_wait_ms=14 lane=user type=1
+[ 284.26] NETT: dns=0 tcp=0 tls=0 ttfb=110 total=117 reused=1
+[ 284.26] HTTP: ms=117 reused=1 link=local
+[ 284.46] APP: render tab=0 rects=1 mode=partial
+[ 284.46] BOOT: record_invalidated=1
+[ 284.46] PRESENT: rect=188,186,160,100 mode=fastest reason=tap_fast
+[ 284.66] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=135
+[ 284.66] BOOT: present_bst_end=1
+[ 284.66] APP: call_done ticket=12 err=0 http=200 states=0 changed=0
+[ 284.66] APP: timing call_to_response_ms=456 http_ms=117
+[ 284.86] APP: cmd fetch ids=1
+[ 284.86] APP: timing queue_wait_ms=13 lane=user type=0
+[ 285.06] NETT: dns=0 tcp=0 tls=0 ttfb=68 total=71 reused=1
+[ 285.06] HTTP: ms=71 reused=1 link=local
+[ 285.06] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 285.06] TIME: http_date delta_s=0 wrote=0
+[ 285.06] APP: cmd mark=1 ids=1
+[ 285.06] APP: timing response_to_render_ms=404
+[ 285.06] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 285.26] APP: render tab=0 rects=1 mode=partial
+[ 285.26] PRESENT: rect=192,188,156,97 mode=fastest reason=panel_bw
+[ 285.26] PRESENT: refresh=partial mode=4 rect=192,188,156,97 call_ms=6 wait_ms=132
+[ 285.26] BOOT: present_bst_end=1
+[ 287.06] BOOT: record_saved=1
+[ 287.26] APP: user_action ids=1
+[ 287.26] APP: cmd mark=0 ids=1
+[ 287.26] APP: cmd call ticket=13 service=light.turn_on ids=light.shellydimmer2_3c6105fe7a6c
+[ 287.26] APP: timing tap_to_call_ms=0
+[ 287.26] APP: timing queue_wait_ms=21 lane=user type=1
+[ 287.26] NETT: dns=0 tcp=0 tls=0 ttfb=112 total=121 reused=1
+[ 287.26] HTTP: ms=121 reused=1 link=local
+[ 287.46] APP: render tab=0 rects=1 mode=partial
+[ 287.46] BOOT: record_invalidated=1
+[ 287.46] PRESENT: rect=364,186,160,100 mode=fastest reason=tap_fast
+[ 287.66] PRESENT: refresh=partial mode=4 rect=364,186,160,100 call_ms=6 wait_ms=128
+[ 287.66] BOOT: present_bst_end=1
+[ 287.66] APP: user_action ids=1
+[ 287.66] APP: cmd mark=0 ids=1
+[ 287.66] APP: call_done ticket=13 err=0 http=200 states=1 changed=1
+[ 287.66] APP: timing call_to_response_ms=429 http_ms=121
+[ 287.66] APP: cmd mark=1 ids=1
+[ 287.66] APP: cmd call ticket=14 service=switch.turn_on ids=switch.shellywalldisplay_0008226c4b4b_switch_0
+[ 287.66] APP: timing tap_to_call_ms=0
+[ 287.66] APP: timing queue_wait_ms=2 lane=user type=1
+[ 287.66] APP: timing response_to_render_ms=0
+[ 287.86] NETT: dns=0 tcp=0 tls=0 ttfb=156 total=159 reused=1
+[ 287.86] HTTP: ms=159 reused=1 link=local
+[ 287.86] APP: render tab=0 rects=2 mode=partial
+[ 287.86] PRESENT: rect=16,186,160,100 mode=fastest reason=tap_fast
+[ 288.06] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=136
+[ 288.06] PRESENT: rect=364,188,160,97 mode=fastest reason=panel_bw
+[ 288.06] PRESENT: refresh=partial mode=4 rect=364,188,160,97 call_ms=6 wait_ms=128
+[ 288.06] BOOT: present_bst_end=1
+[ 288.06] APP: call_done ticket=14 err=0 http=200 states=0 changed=0
+[ 288.06] APP: timing call_to_response_ms=555 http_ms=159
+[ 288.46] APP: cmd fetch ids=1
+[ 288.46] APP: timing queue_wait_ms=13 lane=user type=0
+[ 288.46] NETT: dns=0 tcp=0 tls=0 ttfb=20 total=21 reused=1
+[ 288.46] HTTP: ms=21 reused=1 link=local
+[ 288.46] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 288.46] TIME: http_date delta_s=1 wrote=0
+[ 288.46] APP: cmd mark=1 ids=1
+[ 288.46] APP: timing response_to_render_ms=355
+[ 288.46] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 288.67] APP: render tab=0 rects=1 mode=partial
+[ 288.67] PRESENT: rect=20,188,156,97 mode=fastest reason=panel_bw
+[ 288.87] PRESENT: refresh=partial mode=4 rect=20,188,156,97 call_ms=6 wait_ms=135
+[ 288.87] BOOT: present_bst_end=1
+[ 289.47] APP: user_action ids=1
+[ 289.47] APP: cmd mark=0 ids=1
+[ 289.47] APP: cmd call ticket=15 service=switch.turn_off ids=switch.shellywalldisplay_0008226c4b4b_switch_0
+[ 289.47] APP: timing tap_to_call_ms=0
+[ 289.47] APP: timing queue_wait_ms=12 lane=user type=1
+[ 289.67] NETT: dns=0 tcp=0 tls=0 ttfb=147 total=154 reused=1
+[ 289.67] HTTP: ms=154 reused=1 link=local
+[ 289.67] APP: render tab=0 rects=1 mode=partial
+[ 289.67] PRESENT: rect=16,186,160,100 mode=fastest reason=tap_fast
+[ 289.87] PRESENT: refresh=partial mode=4 rect=16,186,160,100 call_ms=6 wait_ms=136
+[ 289.87] BOOT: present_bst_end=1
+[ 289.87] APP: call_done ticket=15 err=0 http=200 states=0 changed=0
+[ 289.87] APP: timing call_to_response_ms=397 http_ms=154
+[ 290.27] APP: cmd fetch ids=1
+[ 290.27] APP: timing queue_wait_ms=11 lane=user type=0
+[ 290.27] NETT: dns=0 tcp=0 tls=0 ttfb=46 total=49 reused=1
+[ 290.27] HTTP: ms=49 reused=1 link=local
+[ 290.27] APP: user_action ids=1
+[ 290.27] APP: cmd mark=0 ids=1
+[ 290.27] APP: cmd call ticket=16 service=light.turn_off ids=light.shellydimmer2_3c6105fe7a6c
+[ 290.27] APP: timing tap_to_call_ms=0
+[ 290.27] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 290.27] APP: timing queue_wait_ms=3 lane=user type=1
+[ 290.27] TIME: http_date delta_s=0 wrote=0
+[ 290.27] APP: cmd mark=1 ids=1
+[ 290.27] APP: timing response_to_render_ms=376
+[ 290.27] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 290.47] APP: render tab=0 rects=2 mode=partial
+[ 290.47] PRESENT: rect=364,186,160,100 mode=fastest reason=tap_fast
+[ 290.47] NETT: dns=0 tcp=0 tls=0 ttfb=204 total=209 reused=1
+[ 290.47] HTTP: ms=209 reused=1 link=local
+[ 290.67] PRESENT: refresh=partial mode=4 rect=364,186,160,100 call_ms=6 wait_ms=129
+[ 290.67] PRESENT: rect=20,188,156,97 mode=fastest reason=panel_bw
+[ 290.87] PRESENT: refresh=partial mode=4 rect=20,188,156,97 call_ms=6 wait_ms=134
+[ 290.87] BOOT: present_bst_end=1
+[ 290.87] APP: call_done ticket=16 err=0 http=200 states=1 changed=1
+[ 290.87] APP: timing call_to_response_ms=556 http_ms=209
+[ 290.87] APP: cmd mark=1 ids=1
+[ 290.87] APP: timing response_to_render_ms=0
+[ 291.07] APP: render tab=0 rects=1 mode=partial
+[ 291.07] PRESENT: rect=364,188,160,97 mode=fastest reason=panel_bw
+[ 291.27] PRESENT: refresh=partial mode=4 rect=364,188,160,97 call_ms=6 wait_ms=128
+[ 291.27] BOOT: present_bst_end=1
+[ 292.27] MEM: tick int_free=161660 int_min=148588 int_largest=110580 psram_free=2588251
+[ 292.47] APP: user_action ids=1
+[ 292.47] APP: cmd mark=0 ids=1
+[ 292.47] APP: cmd call ticket=17 service=light.turn_on ids=light.shellydimmer2_3c6105fe7a6c
+[ 292.47] APP: timing tap_to_call_ms=0
+[ 292.47] APP: timing queue_wait_ms=17 lane=user type=1
+[ 292.47] NETT: dns=0 tcp=0 tls=0 ttfb=132 total=140 reused=1
+[ 292.47] HTTP: ms=140 reused=1 link=local
+[ 292.67] APP: render tab=0 rects=1 mode=partial
+[ 292.67] PRESENT: rect=364,186,160,100 mode=fastest reason=tap_fast
+[ 292.67] PRESENT: refresh=partial mode=4 rect=364,186,160,100 call_ms=6 wait_ms=128
+[ 292.67] BOOT: present_bst_end=1
+[ 292.87] APP: user_action ids=1
+[ 292.87] APP: cmd mark=0 ids=1
+[ 292.87] APP: call_done ticket=17 err=0 http=200 states=1 changed=1
+[ 292.87] APP: timing call_to_response_ms=383 http_ms=140
+[ 292.87] APP: cmd mark=1 ids=1
+[ 292.87] APP: cmd call ticket=18 service=switch.turn_on ids=switch.shelly_kitchen_table_switch_0
+[ 292.87] APP: timing tap_to_call_ms=0
+[ 292.87] APP: timing response_to_render_ms=0
+[ 292.87] APP: timing queue_wait_ms=12 lane=user type=1
+[ 292.87] NETT: dns=0 tcp=0 tls=0 ttfb=67 total=76 reused=1
+[ 292.87] HTTP: ms=76 reused=1 link=local
+[ 293.07] APP: render tab=0 rects=2 mode=partial
+[ 293.07] PRESENT: rect=188,186,160,100 mode=fastest reason=tap_fast
+[ 293.07] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=132
+[ 293.07] PRESENT: rect=364,188,160,97 mode=fastest reason=panel_bw
+[ 293.27] PRESENT: refresh=partial mode=4 rect=364,188,160,97 call_ms=6 wait_ms=128
+[ 293.27] BOOT: present_bst_end=1
+[ 293.27] APP: call_done ticket=18 err=0 http=200 states=0 changed=0
+[ 293.27] APP: timing call_to_response_ms=549 http_ms=76
+[ 293.67] APP: cmd fetch ids=1
+[ 293.67] APP: timing queue_wait_ms=11 lane=user type=0
+[ 293.67] NETT: dns=0 tcp=0 tls=0 ttfb=77 total=80 reused=1
+[ 293.67] HTTP: ms=80 reused=1 link=local
+[ 293.67] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 293.67] TIME: http_date delta_s=1 wrote=0
+[ 293.67] APP: cmd mark=1 ids=1
+[ 293.67] APP: timing response_to_render_ms=401
+[ 293.67] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 293.87] APP: render tab=0 rects=1 mode=partial
+[ 293.87] PRESENT: rect=192,188,156,97 mode=fastest reason=panel_bw
+[ 294.07] PRESENT: refresh=partial mode=4 rect=192,188,156,97 call_ms=6 wait_ms=131
+[ 294.07] BOOT: present_bst_end=1
+[ 294.67] APP: user_action ids=1
+[ 294.67] APP: cmd mark=0 ids=1
+[ 294.67] APP: cmd call ticket=19 service=switch.turn_off ids=switch.shelly_kitchen_table_switch_0
+[ 294.67] APP: timing tap_to_call_ms=0
+[ 294.67] APP: timing queue_wait_ms=7 lane=user type=1
+[ 294.67] NETT: dns=0 tcp=0 tls=0 ttfb=114 total=121 reused=1
+[ 294.67] HTTP: ms=121 reused=1 link=local
+[ 294.87] APP: render tab=0 rects=1 mode=partial
+[ 294.87] PRESENT: rect=188,186,160,100 mode=fastest reason=tap_fast
+[ 295.08] PRESENT: refresh=partial mode=4 rect=188,186,160,100 call_ms=6 wait_ms=133
+[ 295.08] BOOT: present_bst_end=1
+[ 295.08] APP: call_done ticket=19 err=0 http=200 states=0 changed=0
+[ 295.08] APP: timing call_to_response_ms=403 http_ms=121
+[ 295.28] APP: user_action ids=1
+[ 295.28] APP: cmd mark=0 ids=1
+[ 295.28] APP: cmd call ticket=20 service=light.turn_off ids=light.shellydimmer2_3c6105fe7a6c
+[ 295.28] APP: timing tap_to_call_ms=0
+[ 295.28] APP: timing response_to_render_ms=284
+[ 295.28] APP: timing queue_wait_ms=3 lane=user type=1
+[ 295.48] NETT: dns=0 tcp=0 tls=0 ttfb=127 total=136 reused=1
+[ 295.48] HTTP: ms=136 reused=1 link=local
+[ 295.48] APP: render tab=0 rects=1 mode=partial
+[ 295.48] PRESENT: rect=364,186,160,100 mode=fastest reason=tap_fast
+[ 295.68] PRESENT: refresh=partial mode=4 rect=364,186,160,100 call_ms=6 wait_ms=126
+[ 295.68] BOOT: present_bst_end=1
+[ 295.68] APP: call_done ticket=20 err=0 http=200 states=1 changed=1
+[ 295.68] APP: timing call_to_response_ms=386 http_ms=136
+[ 295.68] APP: cmd mark=1 ids=1
+[ 295.68] APP: cmd fetch ids=1
+[ 295.68] APP: timing response_to_render_ms=0
+[ 295.68] APP: timing queue_wait_ms=2 lane=user type=0
+[ 295.88] NETT: dns=0 tcp=0 tls=0 ttfb=94 total=106 reused=1
+[ 295.88] HTTP: ms=106 reused=1 link=local
+[ 295.88] APP: render tab=0 rects=1 mode=partial
+[ 295.88] PRESENT: rect=364,188,160,97 mode=fastest reason=panel_bw
+[ 296.08] PRESENT: refresh=partial mode=4 rect=364,188,160,97 call_ms=6 wait_ms=129
+[ 296.08] BOOT: present_bst_end=1
+[ 296.08] APP: fetch_done err=0 http=200 states=1 changed=1 link=local
+[ 296.08] TIME: http_date delta_s=0 wrote=0
+[ 296.08] APP: cmd mark=1 ids=1
+[ 296.08] APP: fetch_applied store=19 changed=1 missing_members=0
+[ 296.28] APP: render tab=0 rects=2 mode=partial
+[ 296.28] PRESENT: rect=176,21,12,13 mode=fastest reason=panel_bw
+[ 296.48] PRESENT: refresh=partial mode=4 rect=176,21,12,13 call_ms=6 wait_ms=130
+[ 296.48] PRESENT: rect=192,188,156,97 mode=fastest reason=panel_bw
+[ 296.48] PRESENT: refresh=partial mode=4 rect=192,188,156,97 call_ms=6 wait_ms=131
+[ 296.48] BOOT: present_bst_end=1
+[ 298.08] PRESENT: refresh=full_burst mode=1 rect=0,0,540,960 call_ms=6 wait_ms=460
+[ 298.08] PRESENT: refresh=full_burst partials=18 mode=gc16 init_ms=0 full_ms=875
+[ 298.28] BOOT: record_saved=1
+[ 298.28] BOOT: present_bst_end=1
