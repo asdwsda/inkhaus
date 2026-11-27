@@ -13,6 +13,54 @@ static CacheRecord rec(bool st = false) {
     return makeRecord("home", kB, 6, st, 1, 2, 3, 4);
 }
 
+static ApCandidate ap(uint8_t last, uint8_t ch, int rssi) {
+    ApCandidate c;
+    for (int i = 0; i < 5; ++i) c.bssid[i] = kB[i];
+    c.bssid[5] = last;
+    c.channel = ch;
+    c.rssi = rssi;
+    return c;
+}
+void test_stronger_ap_wins() {
+    CacheRecord r = rec();  // kB = 10 20 30 40 50 60
+    ApCandidate c[2] = {ap(0x60, 6, -78), ap(0x61, 11, -62)};
+    TEST_ASSERT_EQUAL_INT(1, pickStrongerAp(r, c, 2));
+    CacheRecord w = withAp(r, c[1]);
+    TEST_ASSERT_EQUAL_UINT8(11, w.channel);
+    TEST_ASSERT_EQUAL_UINT8(0x61, w.bssid[5]);
+}
+void test_stronger_ap_threshold() {
+    CacheRecord r = rec();
+    ApCandidate c[2] = {ap(0x60, 6, -70), ap(0x61, 11, -63)};  // 7 dB: keep
+    TEST_ASSERT_EQUAL_INT(-1, pickStrongerAp(r, c, 2));
+    c[1].rssi = -62;  // exactly 8 dB: switch
+    TEST_ASSERT_EQUAL_INT(1, pickStrongerAp(r, c, 2));
+}
+void test_stronger_ap_cached_missing_or_best_of_many() {
+    CacheRecord r = rec();
+    ApCandidate c[2] = {ap(0x61, 11, -50), ap(0x62, 1, -60)};
+    TEST_ASSERT_EQUAL_INT(-1, pickStrongerAp(r, c, 2));  // cached BSSID not seen
+    ApCandidate d[3] = {ap(0x60, 6, -80), ap(0x62, 1, -65), ap(0x61, 11, -60)};
+    TEST_ASSERT_EQUAL_INT(2, pickStrongerAp(r, d, 3));
+}
+void test_weak_cached_connect_sets_rescan() {
+    const uint32_t now = 1800000000;
+    CacheRecord r = rec();
+    TEST_ASSERT_EQUAL_UINT8(0, afterCachedConnect(r, -74, now).rescan);
+    TEST_ASSERT_EQUAL_UINT8(1, afterCachedConnect(r, -76, now).rescan);
+    TEST_ASSERT_EQUAL_UINT8(0, afterCachedConnect(r, -80, 0).rescan);  // clock unset
+}
+void test_rescan_at_most_once_per_24h() {
+    const uint32_t now = 1800000000;
+    CacheRecord r = afterScan(rec(), now - 3600);
+    TEST_ASSERT_EQUAL_UINT8(0, r.rescan);
+    TEST_ASSERT_EQUAL_UINT8(0, afterCachedConnect(r, -80, now).rescan);
+    TEST_ASSERT_EQUAL_UINT8(1, afterCachedConnect(r, -80, now - 3600 + kRescanMinGapS + 1).rescan);
+    CacheRecord f = afterCachedConnect(rec(), -80, now);
+    TEST_ASSERT_EQUAL_UINT8(1, f.rescan);
+    TEST_ASSERT_EQUAL_UINT8(0, afterScan(f, now).rescan);  // a scan clears the flag
+}
+
 void setUp() {}
 void tearDown() {}
 
@@ -497,5 +545,10 @@ int main() {
     RUN_TEST(test_budget_wraps);
     RUN_TEST(test_connector_limit_cut_by_budget);
     RUN_TEST(test_stacked_stages_stay_within_budget);
+    RUN_TEST(test_stronger_ap_wins);
+    RUN_TEST(test_stronger_ap_threshold);
+    RUN_TEST(test_stronger_ap_cached_missing_or_best_of_many);
+    RUN_TEST(test_weak_cached_connect_sets_rescan);
+    RUN_TEST(test_rescan_at_most_once_per_24h);
     return UNITY_END();
 }

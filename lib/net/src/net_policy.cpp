@@ -34,7 +34,7 @@ bool sameRecord(const CacheRecord &a, const CacheRecord &b) {
     for (int i = 0; i < 6; ++i)
         if (a.bssid[i] != b.bssid[i]) return false;
     return a.magic == b.magic && a.ssid_hash == b.ssid_hash && a.channel == b.channel &&
-           a.failures == b.failures && a.static_ip == b.static_ip && a.ip == b.ip &&
+           a.failures == b.failures && a.rescan == b.rescan && a.static_ip == b.static_ip && a.ip == b.ip &&
            a.gateway == b.gateway && a.subnet == b.subnet && a.dns == b.dns;
 }
 
@@ -82,6 +82,51 @@ CacheRecord makeRecord(const std::string &ssid, const uint8_t bssid[6], uint8_t 
         r.dns = dns;
         r.lease_epoch = nowEpoch;
     }
+    return r;
+}
+
+static bool sameBssid(const uint8_t a[6], const uint8_t b[6]) {
+    for (int i = 0; i < 6; ++i)
+        if (a[i] != b[i]) return false;
+    return true;
+}
+
+int pickStrongerAp(const CacheRecord &cache, const ApCandidate *cands, int n) {
+    int cachedRssi = 0;
+    bool found = false;
+    for (int i = 0; i < n; ++i)
+        if (sameBssid(cands[i].bssid, cache.bssid)) {
+            cachedRssi = cands[i].rssi;
+            found = true;
+        }
+    if (!found) return -1;
+    int best = -1;
+    for (int i = 0; i < n; ++i) {
+        if (sameBssid(cands[i].bssid, cache.bssid) || !bssidNonZero(cands[i].bssid)) continue;
+        if (cands[i].channel < 1 || cands[i].channel > 14) continue;
+        if (cands[i].rssi - cachedRssi < kStrongerApDb) continue;
+        if (best < 0 || cands[i].rssi > cands[best].rssi) best = i;
+    }
+    return best;
+}
+
+CacheRecord withAp(CacheRecord r, const ApCandidate &ap) {
+    for (int i = 0; i < 6; ++i) r.bssid[i] = ap.bssid[i];
+    r.channel = ap.channel;
+    r.failures = 0;
+    return r;
+}
+
+CacheRecord afterCachedConnect(CacheRecord r, int rssi, uint32_t now) {
+    if (!now || rssi >= kWeakRssiDbm) return r;
+    if (r.scan_epoch && now >= r.scan_epoch && now - r.scan_epoch <= kRescanMinGapS) return r;
+    r.rescan = 1;
+    return r;
+}
+
+CacheRecord afterScan(CacheRecord r, uint32_t now) {
+    r.rescan = 0;
+    r.scan_epoch = now;
     return r;
 }
 

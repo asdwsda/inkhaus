@@ -22,9 +22,11 @@ struct CacheRecord {
     uint8_t static_ip = 0;    // 1 if config used a static IP when recorded
     uint32_t ip = 0, gateway = 0, subnet = 0, dns = 0;  // DHCP lease (only if !static_ip)
     uint32_t lease_epoch = 0; // wall-clock (Unix s) when the lease was last used; 0 = clock unset
+    uint8_t rescan = 0;       // task 137: last cached connect was weak; scan on the next wake
+    uint32_t scan_epoch = 0;  // wall-clock (Unix s) of the last wake that scanned; 0 = unknown
 };
 
-constexpr uint32_t kCacheMagic = 0x4E455432;  // "NET2" (layout with lease_epoch)
+constexpr uint32_t kCacheMagic = 0x4E455433;  // "NET3" (layout with rescan/scan_epoch)
 constexpr uint32_t kLeaseMaxAgeS = 24 * 3600;   // cached lease older than this is dropped
 constexpr uint32_t kMinPlausibleEpoch = 1700000000;  // below this the RTC counts as unset
 
@@ -45,6 +47,27 @@ CacheRecord applyLeaseAge(CacheRecord rec, uint32_t nowEpoch);
 bool isAuthReason(uint8_t reason);
 
 uint32_t ssidHash(const std::string &ssid);  // FNV-1a
+
+// Task 137: prefer a clearly stronger AP of the same SSID over the cached one.
+constexpr int kStrongerApDb = 8;        // candidate must beat the cached BSSID by at least this
+constexpr int kWeakRssiDbm = -75;       // cached connect below this marks a re-evaluation scan
+constexpr uint32_t kRescanMinGapS = 24 * 3600;
+struct ApCandidate {
+    uint8_t bssid[6] = {0};
+    uint8_t channel = 0;
+    int rssi = -127;
+};
+// Index of the candidate to connect to instead of the cached BSSID, or -1 to keep the cache.
+// Only a candidate >= kStrongerApDb stronger than the cached BSSID (seen in this scan) wins; the
+// strongest such one is chosen. A cached BSSID missing from the scan: -1 (keep the cache).
+int pickStrongerAp(const CacheRecord &cache, const ApCandidate *cands, int n);
+// Record switched to the candidate's BSSID/channel; failures cleared, rescan state kept.
+CacheRecord withAp(CacheRecord rec, const ApCandidate &ap);
+// After a connect on the cached fast path: sets rescan if rssi < kWeakRssiDbm and the last scan is
+// more than 24 h ago. Unknown clock (nowEpoch 0): unchanged (the limit cannot be kept).
+CacheRecord afterCachedConnect(CacheRecord rec, int rssi, uint32_t nowEpoch);
+// After a wake that scanned: flag cleared, scan time stamped.
+CacheRecord afterScan(CacheRecord rec, uint32_t nowEpoch);
 
 // Structurally valid record for this config (does not look at failures).
 bool cacheValid(const CacheRecord &rec, const std::string &ssid, bool staticIpConfigured);
