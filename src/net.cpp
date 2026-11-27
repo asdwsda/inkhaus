@@ -8,6 +8,7 @@
 #include <cstring>
 #include <ctime>
 
+#include <utility>
 #include <vector>
 
 #include "net_policy.h"
@@ -45,6 +46,7 @@ uint32_t g_linkHash = 0;
 int g_linkHaUrl = 0;
 bool g_directTry = false;  // this attempt skipped the scan (profileWithoutScan)
 bool g_scanned = false;    // a scan already ran in this begin()
+uint32_t g_scannedEpoch = 0;  // wall clock when this begin()'s scan finished (0 = none/unknown)
 int g_exclude = -1;        // profile that failed before the fallback scan
 
 config::WifiConfig g_cfg;
@@ -213,6 +215,14 @@ void remember() {
                                (uint32_t)WiFi.localIP(), (uint32_t)WiFi.gatewayIP(),
                                (uint32_t)WiFi.subnetMask(), (uint32_t)WiFi.dnsIP(), nowEpoch());
     r.lease_epoch = hasLease(r) ? nowEpoch() : 0;
+    r.scan_epoch = g_cache.scan_epoch;
+    r.rescan = g_cache.rescan;
+    if (g_scanned) {
+        r = afterScan(r, g_scannedEpoch ? g_scannedEpoch : nowEpoch());
+    } else if (g_usingCache && !g_conn.cachedFailed()) {
+        r = afterCachedConnect(r, WiFi.RSSI(), nowEpoch());  // weak: scan once on the next wake
+        if (r.rescan && !g_cache.rescan) wakelog::logf("NET: rescan_next rssi=%d\n", WiFi.RSSI());
+    }
     g_cache = r;
     g_rtc[g_active] = r;
     nvsSave(r);  // only writes when something differs (flash wear)
@@ -283,9 +293,16 @@ void startScan() {
 
 void finishScan() {
     std::vector<std::string> seen;
+    std::vector<std::pair<std::string, ApCandidate>> aps;  // task 137: every BSSID seen
     int n = WiFi.scanComplete();
     for (int i = 0; i < n; ++i) {
         seen.push_back(WiFi.SSID(i).c_str());
+        ApCandidate c;
+        const uint8_t *b = WiFi.BSSID(i);
+        if (b) memcpy(c.bssid, b, 6);
+        c.channel = (uint8_t)WiFi.channel(i);
+        c.rssi = WiFi.RSSI(i);
+        aps.emplace_back(WiFi.SSID(i).c_str(), c);
     }
     // On the 6 s timeout the scan is still running: scanDelete() would not stop it, and begin()
     // fails while a scan is active.
@@ -299,6 +316,19 @@ void finishScan() {
     wakelog::logf("NET: scan_done aps=%d found=%d pick=%d ms=%u event_ms=%d\n", n, found ? 1 : 0, pick,
                   (unsigned)(millis() - g_scanT0), g_scanDoneAt ? (int)(g_scanDoneAt - g_scanT0) : -1);
     activate(pick);
+    g_scannedEpoch = nowEpoch();
+    // UNVERIFIED (device): prefer a clearly stronger BSSID of the same SSID over the cached one.
+    if (cacheUsable(g_cache, g_cfg.ssid, lanIsStatic())) {
+        std::vector<ApCandidate> cands;
+        for (const auto &a : aps)
+            if (a.first == g_cfg.ssid) cands.push_back(a.second);
+        const int k = pickStrongerAp(g_cache, cands.data(), (int)cands.size());
+        if (k >= 0) {
+            wakelog::logf("NET: pick bssid_rssi=%d ch=%u (cached ch=%u)\n", cands[k].rssi,
+                          (unsigned)cands[k].channel, (unsigned)g_cache.channel);
+            g_cache = withAp(g_cache, cands[k]);
+        }
+    }
     connectActive();
 }
 
@@ -363,6 +393,10 @@ void begin(const config::WifiConfig &wifi) {
     if (last >= 0 && g_forced == 0) {
         CacheRecord c = loadSlot(last);
         lastUsable = cacheUsable(c, g_profiles[last].ssid, g_profiles[last].hasStaticIp);
+    }
+    if (lastUsable && loadSlot(last).rescan) {  // task 137: last cached connect was weak, scan this wake
+        wakelog::logf("NET: rescan=weak_cached\n");
+        lastUsable = false;
     }
     const int pick = netselect::profileWithoutScan((int)g_profiles.size(), g_forced, last, lastUsable);
     g_directTry = pick >= 0;
