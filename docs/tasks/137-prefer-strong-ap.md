@@ -1,6 +1,6 @@
 # 137: Prefer the clearly stronger access point over the cached one
 
-Status: todo
+Status: done (device verified 2026-11-27, assets/137-pick-ch11.txt)
 Depends on: 134
 UI spec: none
 Needs device: yes (verify), PC part first
