@@ -30,3 +30,7 @@ the voltage-to-% mapping is poor at the low end.
   ~5 days per charge. The sleep log says `path=deepsleep_hold epd=standby touch=awake` in this mode: the GT911
   stays powered though touch can't wake it. Check standby current with touch asleep (see 035) and the
   Wi-Fi time per wake (weak AP, task 137).
+- 2026-11-27: battery test started. Device unplugged on fw 1.5.0-rc2 code (debug build, reports 1.5.0-rc1 debug,
+  commit after 139), Debug log on, Sleep mode Deep sleep, updates 6 h, picks the ch11 AP (137). GT911 stays
+  awake in sleep (139: its sleep can't be undone without an EN reset). On return (~2026-11-30): plug in, pull
+  wakelog.csv + debug.log (tools/wakelog.py, wake the device first), check 131/132/138 lines, then do this task.
