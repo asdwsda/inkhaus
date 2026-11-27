@@ -1,6 +1,6 @@
 # 134: Wi-Fi auth failure on a weak signal retries
 
-Status: todo
+Status: PC part done (device check pending)
 Depends on: none
 UI spec: none
 Needs device: no (device check later)
