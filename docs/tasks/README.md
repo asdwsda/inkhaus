@@ -132,7 +132,7 @@
 | 131 | [Hang guard after setup and on fatal errors](131-hang-guard.md) | PC part done, device check pending | 127 |
 | 132 | [At most one GC16 full per scheduled wake](132-one-full-per-scheduled-wake.md) | PC part done, device check pending | 127 |
 | 133 | [Run all tests on every push](133-ci-on-push.md) | done | none |
-| 134 | [Wi-Fi auth failure on a weak signal retries](134-wifi-auth-retry.md) | in-progress (device check failed) | none |
+| 134 | [Wi-Fi auth failure on a weak signal retries](134-wifi-auth-retry.md) | done | none |
 | 135 | [Battery percent and low-battery shutdown from resting voltage](135-battery-low-limit.md) | todo (waits for logs) | none |
 | 136 | [First service call hangs 8 s and fails all queued taps](136-stuck-first-call.md) | PC part done, device check pending | 126, 130 |
 
