@@ -201,6 +201,15 @@ void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEp
     plan.rtc_alarm_at = nowEpoch + TEST_POWEROFF_ALARM_S;
   }
 #endif
+#ifdef GT911_SLEEP_TEST
+  // Task 139 experiment: rocker-only deep sleep, no RTC alarm, 20 s timer wake (set below).
+  if (session != power::Session::LowBattery) {
+    plan.mode = power::SleepMode::DeepSleep;
+    plan.button_wake = true;
+    plan.touch_wake = false;
+    plan.rtc_alarm_at.reset();
+  }
+#endif
   const app_logic::SleepPath sp = app_logic::planSleepPath(plan, session, nowEpoch);
 
   std::string wake;
@@ -272,6 +281,17 @@ void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEp
     // Task 035: GPIO2 stays high through deep sleep. IT8951 in STANDBY (image memory kept). The GT911
     // stays awake: its wake needs INT driven by the host and GPIO36 is input-only (see SleepExec).
     g_usbAtSleepRtc = -1;  // not tested on this path
+#ifdef GT911_SLEEP_TEST
+    {  // 0x8040 = 0x05 (screen off) over I2C, no INT drive; try both GT911 addresses
+      static constexpr uint8_t cmd[] = {0x80, 0x40, 0x05};
+      const uint8_t addrs[] = {0x5D, 0x14};
+      int acked = 0;
+      for (uint8_t a : addrs) {
+        if (lgfx::i2c::transactionWrite(I2C_NUM_1, a, cmd, 3, 400000).has_value()) { acked = a; break; }
+      }
+      Serial.printf("SLEEP: gt911_sleep_cmd=%s addr=0x%02x\n", acked ? "ack" : "noack", acked);
+    }
+#endif
     wakelog::setSleptPath("deepsleep_hold");
 #ifdef EPD_SLEEP_OFF
     const bool epdOk = ex.epd_standby && boot::controllerSleep();
@@ -305,6 +325,9 @@ void enter(const power::SleepPlan &planIn, power::Session session, int64_t nowEp
     esp_sleep_enable_ext1_wakeup(1ULL << kPinRockerPush, ESP_EXT1_WAKEUP_ALL_LOW);
   }
   if (sp.wake_timer_s) esp_sleep_enable_timer_wakeup(uint64_t(*sp.wake_timer_s) * 1000000ULL);
+#ifdef GT911_SLEEP_TEST
+  esp_sleep_enable_timer_wakeup(20ULL * 1000000ULL);
+#endif
   Serial.flush();
   esp_deep_sleep_start();
 }

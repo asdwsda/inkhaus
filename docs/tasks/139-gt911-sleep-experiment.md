@@ -1,6 +1,6 @@
 # 139: GT911 sleep in Deep sleep / Power off modes (experiment)
 
-Status: todo (after 138; user accepted the risk of a dead touch panel, 2026-11-27)
+Status: done, NOT adopted (was: after 138; user accepted the risk of a dead touch panel, 2026-11-27)
 Depends on: 138, 035 (research in its Notes)
 UI spec: none
 Needs device: yes
@@ -28,3 +28,8 @@ GPIO36 (input-only) and RST is not wired, so a sleeping GT911 may never answer a
 - [ ] `pio test -e native` and `pio run` pass.
 
 ## Notes
+- Result (2026-11-27, build env m5paper-gt911sleep, flag GT911_SLEEP_TEST, serial `sleepnow`, 20 s timer wake): the GT911 acks the 0x8040=0x05 write
+  (addr 0x14) but after the wake it never answers again: cycle 1 noack (`touch_init=fail`, `gt911_after_sleep=noack`), cycles 2 and 3 the
+  sleep command itself got noack (still asleep). Evidence: scratchpad cycles.log. A serial DTR/RTS hardware reset (EN) brought it back
+  (`gt911_after_sleep=ok addr=0x5d id=911`): so GT911 RST seems tied to EN, but a deep-sleep wake does not pulse it.
+- Decision: do not adopt; touch stays awake in rocker-only sleep. No power-cycle recovery tried. Step 3 (NVS fallback) not built.

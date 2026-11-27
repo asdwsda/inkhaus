@@ -154,6 +154,13 @@ bool handle(const std::string &line, const Hooks &hk) {
     Serial.printf("CMD: tap %d %d\n", x, y);
     return true;
   }
+  if (line == "sleepnow") {  // task 139: same as the 2.5 s rocker hold
+    input::Event e;
+    e.kind = input::Event::SleepNow;
+    input::inject(e);
+    Serial.println("CMD: sleepnow");
+    return true;
+  }
   if (line.rfind("key ", 0) == 0) {
     input::Event e;
     e.kind = input::Event::Key;

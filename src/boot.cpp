@@ -252,6 +252,18 @@ bool attachNoResetDisplay() {
     d.setBrightness(d.getBrightness());
     const bool touchOk = g_parts->panel.initTouch();
     boot::log("touch_init", touchOk ? "ok" : "fail");
+#ifdef GT911_SLEEP_TEST
+    {  // task 139: does the GT911 answer a real register read (product id 0x8140)?
+      static constexpr uint8_t reg[] = {0x81, 0x40};
+      uint8_t id[4] = {0, 0, 0, 0};
+      int ok = 0;
+      for (uint8_t a : {uint8_t(0x5D), uint8_t(0x14)})
+        if (lgfx::i2c::transactionWriteRead(I2C_NUM_1, a, reg, 2, id, 4, 400000).has_value()) { ok = a; break; }
+      Serial.printf("BOOT: gt911_after_sleep=%s addr=0x%02x id=%c%c%c%c\n", ok ? "ok" : "noack", ok,
+                    id[0] >= 32 ? id[0] : '?', id[1] >= 32 ? id[1] : '?', id[2] >= 32 ? id[2] : '?',
+                    id[3] >= 32 ? id[3] : '?');
+    }
+#endif
     // From here M5GFX::init_impl returns early, so M5.begin() keeps this display.
     BoardAccess::set(d, lgfx::board_t::board_M5Paper);
     return true;
