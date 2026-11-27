@@ -167,7 +167,6 @@ void setup() {
     wakelog::writeDeferred();
     boot::log("fatal", "frame_alloc_failed");
     present::showError("Out of memory");
-    boot::log("version", "017");
     boot::log("settle_bst_end", boot::endBurstRead() ? 1L : 0L);
     boot::setupDone();
     fatalSleep();  // task 131: Wi-Fi and the net task are running; power down and sleep (button wake)
@@ -206,7 +205,6 @@ void setup() {
   ota::setPoster([]() { if (!g_net.running()) return false; g_net.postOtaCheck(); return true; });
   ota::setYield([]() { return g_net.userWaiting(); });
 
-  boot::log("version", "017");
   boot::log("orientation", (long)rotation);
   boot::logHealth();
   // Leave the controller idle: close any read burst before a restart or sleep.

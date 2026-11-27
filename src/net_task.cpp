@@ -100,7 +100,7 @@ void NetTask::loop() {
   for (;;) {
     Cmd c;
     if (!cmds_.pop(c)) {
-      vTaskDelay(pdMS_TO_TICKS(20));
+      ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // task 138: sleep until post()/postOtaCheck() notifies
       continue;
     }
     const bool ota = c.cmd.type == app_logic::NetCommand::Type::OtaCheck;
@@ -186,6 +186,7 @@ void NetTask::post(const app_logic::NetCommand &cmd) {
   const app_logic::Lane lane = app_logic::laneOf(cmd);
   cmds_.push(lane, std::move(c));
   if (lane == app_logic::Lane::User) yield_ = true;
+  wake();
 }
 
 void NetTask::postOtaCheck() {
@@ -194,6 +195,11 @@ void NetTask::postOtaCheck() {
   c.enqueuedMs = millis();
   c.cmd.type = app_logic::NetCommand::Type::OtaCheck;
   cmds_.push(app_logic::Lane::Background, std::move(c));
+  wake();
+}
+
+void NetTask::wake() {
+  if (handle_) xTaskNotifyGive((TaskHandle_t)handle_);  // UNVERIFIED: wake latency on device equals the old 20 ms poll or better
 }
 
 bool NetTask::poll(app_logic::NetEvent &out) {

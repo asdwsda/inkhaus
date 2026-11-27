@@ -99,12 +99,9 @@ HttpResponse ArduinoHttpTransport::Raw::send(const std::string& method, const st
       port = (uint16_t)atoi(host.c_str() + colon + 1);
       host.resize(colon);
     }
-    IPAddress ip;
-    uint32_t t = millis();
-    WiFi.hostByName(host.c_str(), ip);
-    dns_ms = millis() - t;
+    // Task 138: one DNS lookup per connection, inside connect(); its time is part of tcp= (dns stays 0).
     net_timing_tls_reset();
-    t = millis();
+    const uint32_t t = millis();
     const bool connected = client->connect(host.c_str(), port, connect_timeout_ms_);
     conn_ms = millis() - t;
     tls_ms = net_timing_tls_ms();
