@@ -26,3 +26,7 @@ the voltage-to-% mapping is poor at the low end.
 - [ ] Device: one full charge logged with no low-battery shutdown above ~10 %.
 
 ## Notes
+- 2026-11-27 user: the past weeks ran Sleep mode = Deep sleep (rocker wake), updates every 6 h. Still only
+  ~5 days per charge. The sleep log says `path=deepsleep_hold epd=standby touch=awake` in this mode: the GT911
+  stays powered though touch can't wake it. Check standby current with touch asleep (see 035) and the
+  Wi-Fi time per wake (weak AP, task 137).
