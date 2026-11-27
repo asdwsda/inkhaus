@@ -1,6 +1,6 @@
 # 136: First service call hangs 8 s and fails all queued taps
 
-Status: done (PC; device check open)
+Status: PC part done (device check pending)
 Depends on: 126, 130
 UI spec: none
 Needs device: no (device check later)
